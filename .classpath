@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/JavaLib"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/CheS-Map"/>
+	<classpathentry kind="lib" path="lib/cdk-1.2.6.1.jar"/>
+	<classpathentry kind="lib" path="lib/commons-math-1.2.jar"/>
+	<classpathentry kind="lib" path="lib/forms-1.2.1.jar"/>
+	<classpathentry kind="lib" path="lib/Jmol-12.0.47.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
