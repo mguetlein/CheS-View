@@ -15,7 +15,6 @@ import javax.vecmath.Vector3f;
 import org.jmol.viewer.Viewer;
 
 import util.Vector3fUtil;
-import data.SmilesOwner;
 import dataInterface.ClusterData;
 import dataInterface.ClusteringDataUtil;
 import dataInterface.MoleculeProperty;
@@ -279,13 +278,6 @@ public class Cluster
 		return order.get(key);
 	}
 
-	public List<SmilesOwner> getModelsSmilesOwner()
-	{
-		List<SmilesOwner> l = new ArrayList<SmilesOwner>();
-		for (Model m : models)
-			l.add(m);
-		return l;
-	}
 
 	public String getName()
 	{

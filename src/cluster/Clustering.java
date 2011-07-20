@@ -1,7 +1,7 @@
 package cluster;
 
-import gui.CheckBoxSelectDialog;
 import gui.CheSViewer;
+import gui.CheckBoxSelectDialog;
 import io.SDFUtil;
 
 import java.beans.PropertyChangeEvent;
@@ -25,8 +25,8 @@ import util.ArrayUtil;
 import util.SelectionModel;
 import util.Vector3fUtil;
 import util.VectorUtil;
-import data.CDKService;
 import data.ClusteringData;
+import data.DatasetFile;
 import dataInterface.ClusterData;
 import dataInterface.ClusteringDataUtil;
 import dataInterface.MoleculeProperty;
@@ -298,8 +298,8 @@ public class Clustering
 
 			addSingleCluster(d.getCluster(i));
 			if (CheSViewer.initProgress != null)
-				CheSViewer.initProgress.update(66 * ((i + 1) / (double) d.getSize()),
-						"Loading cluster dataset " + (i + 1));
+				CheSViewer.initProgress.update(66 * ((i + 1) / (double) d.getSize()), "Loading cluster dataset "
+						+ (i + 1));
 		}
 		if (CheSViewer.initProgress != null)
 			CheSViewer.initProgress.update(66, "Loading graphics");
@@ -343,13 +343,14 @@ public class Clustering
 			for (int i = 0; i < indices.length; i++)
 				for (Model m : getCluster(indices[i]).getModels())
 					l.add(m.getModelOrigIndex());
-			JFileChooser f = new JFileChooser(clusteringData.getFilename());//origSDFFile);
+			JFileChooser f = new JFileChooser(clusteringData.getSDFFilename());//origSDFFile);
 			int i = f.showSaveDialog(Settings.TOP_LEVEL_COMPONENT);
 			if (i == JFileChooser.APPROVE_OPTION)
 			{
 				String dest = f.getSelectedFile().getAbsolutePath();
-				CDKService.clear(dest);
-				SDFUtil.filter(clusteringData.getFilename(), dest, ArrayUtil.toPrimitiveIntArray(l));
+				// file may be overwritten, and then reloaded -> clear
+				DatasetFile.clearFilesWithSDF(dest);
+				SDFUtil.filter(clusteringData.getSDFFilename(), dest, ArrayUtil.toPrimitiveIntArray(l));
 			}
 		}
 	}
@@ -361,7 +362,7 @@ public class Clustering
 
 	public String getOrigSdfFile()
 	{
-		return clusteringData.getFilename();
+		return clusteringData.getSDFFilename();
 	}
 
 	public void removeSelectedCluster()
@@ -426,7 +427,8 @@ public class Clustering
 						e.printStackTrace();
 					}
 				}
-				r.run();
+				if (r != null)
+					r.run();
 			}
 		});
 		th.start();

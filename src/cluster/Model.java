@@ -7,16 +7,14 @@ import javax.vecmath.Vector3f;
 import org.jmol.script.Token;
 import org.jmol.viewer.Viewer;
 
-import data.SmilesOwner;
 import dataInterface.CompoundData;
 import dataInterface.MoleculeProperty;
 
-public class Model implements SmilesOwner
+public class Model
 {
 	Viewer viewer;
 	int modelIndex;
 	BitSet bitSet;
-	String smiles;
 	double values[];
 
 	CompoundData compoundData;
@@ -63,14 +61,9 @@ public class Model implements SmilesOwner
 		return compoundData.getIndex();
 	}
 
-	public void setSmiles(String s)
-	{
-		this.smiles = s;
-	}
-
 	public String getSmiles()
 	{
-		return smiles;
+		return compoundData.getSmiles();
 	}
 
 	public void modelIndexOffset(int offset)

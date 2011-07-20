@@ -11,6 +11,8 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.SwingUtilities;
 
+import main.Settings;
+import util.SwingUtil;
 import cluster.Clustering;
 import data.ClusteringData;
 
@@ -72,18 +74,27 @@ public class MenuBar extends JMenuBar
 	private void newClustering(int startPanel)
 	{
 		final CheSMapperWizard wwd = new CheSMapperWizard((JFrame) SwingUtilities.getRoot(this), startPanel);
+		Settings.TOP_LEVEL_COMPONENT = MenuBar.this.getTopLevelAncestor();
 		if (wwd.isWorkflowSelected())
 		{
-
+			SwingUtilities.invokeLater(new Runnable()
+			{
+				@Override
+				public void run()
+				{
+					clustering.clear();
+				}
+			});
 			Thread th = new Thread(new Runnable()
 			{
 				@Override
 				public void run()
 				{
+					SwingUtil.waitForAWTEventThread();
+					clustering.invokeAfterViewer(null);
 					ClusteringData d = CheSViewer.doMapping(wwd);
 					if (d != null)
 					{
-						clustering.clear();
 						clustering.newClustering(d);
 					}
 				}

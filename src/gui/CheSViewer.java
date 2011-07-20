@@ -140,7 +140,7 @@ public class CheSViewer implements GUIControler
 
 	public void show(boolean undecorated, Dimension size, Point location)
 	{
-		frame = new JFrame(Settings.TITLE + " Wizard (" + Settings.VERSION_STRING + ")");
+		frame = new JFrame(Settings.TITLE + " (" + Settings.VERSION_STRING + ")");
 		Settings.TOP_LEVEL_COMPONENT = frame;
 
 		frame.setUndecorated(undecorated);
