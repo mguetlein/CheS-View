@@ -18,6 +18,7 @@ import util.Vector3fUtil;
 import dataInterface.ClusterData;
 import dataInterface.ClusteringDataUtil;
 import dataInterface.MoleculeProperty;
+import dataInterface.SubstructureSmartsType;
 
 public class Cluster
 {
@@ -278,7 +279,6 @@ public class Cluster
 		return order.get(key);
 	}
 
-
 	public String getName()
 	{
 		return clusterData.getName();
@@ -363,9 +363,9 @@ public class Cluster
 		return radius;
 	}
 
-	public String getSubstructureSmarts()
+	public String getSubstructureSmarts(SubstructureSmartsType type)
 	{
-		return clusterData.getSubstructureSmarts();
+		return clusterData.getSubstructureSmarts(type);
 	}
 
 }

@@ -23,6 +23,7 @@ import cluster.Cluster;
 import cluster.Clustering;
 import cluster.Model;
 import dataInterface.MoleculeProperty;
+import dataInterface.SubstructureSmartsType;
 
 public class InfoPanel extends JPanel
 {
@@ -223,8 +224,8 @@ public class InfoPanel extends JPanel
 				Cluster c = clustering.getCluster(index);
 				model.addRow(new Object[] { "Cluster", c.getName() });
 				model.addRow(new Object[] { "Num molecules", c.getModels().size() });
-				if (clustering.hasSubstructures())
-					model.addRow(new Object[] { "Substructure", c.getSubstructureSmarts() });
+				for (SubstructureSmartsType type : clustering.getSubstructures())
+					model.addRow(new Object[] { type.toString(), c.getSubstructureSmarts(type) });
 				for (MoleculeProperty p : clustering.getFeatures())
 					model.addRow(new Object[] { p, c.getProperty(p) });
 				for (MoleculeProperty p : clustering.getProperties())
@@ -235,6 +236,9 @@ public class InfoPanel extends JPanel
 				model.addRow(new Object[] { "Model", viewer.getModelName(index) });
 				model.addRow(new Object[] { "Num atoms", viewer.getAtomCountInModel(index) });
 				model.addRow(new Object[] { "Smiles", clustering.getModelWithModelIndex(index).getSmiles() });
+				for (SubstructureSmartsType type : clustering.getSubstructures())
+					model.addRow(new Object[] { type.toString(),
+							clustering.getClusterForModelIndex(index).getSubstructureSmarts(type) });
 				Model m = clustering.getModelWithModelIndex(index);
 				for (MoleculeProperty p : clustering.getFeatures())
 					model.addRow(new Object[] { p, m.getTemperature(p) });

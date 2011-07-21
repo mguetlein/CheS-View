@@ -9,6 +9,7 @@ import org.jmol.viewer.Viewer;
 
 import dataInterface.CompoundData;
 import dataInterface.MoleculeProperty;
+import dataInterface.SubstructureSmartsType;
 
 public class Model
 {
@@ -23,7 +24,7 @@ public class Model
 	boolean showLabel = false;
 	boolean showBox = false;
 	boolean hidden = false;
-	boolean substructureHighlighted = false;
+	SubstructureSmartsType substructureHighlighted = null;
 
 	public Model(Viewer viewer, int modelIndex, CompoundData compoundData)
 	{
@@ -111,14 +112,14 @@ public class Model
 		this.hidden = hidden;
 	}
 
-	public boolean isSubstructureHighlighted()
+	public SubstructureSmartsType getSubstructureHighlighted()
 	{
 		return substructureHighlighted;
 	}
 
-	public void setSubstructureHighlighted(boolean substructureHighlighted)
+	public void setSubstructureHighlighted(SubstructureSmartsType type)
 	{
-		this.substructureHighlighted = substructureHighlighted;
+		substructureHighlighted = type;
 	}
 
 	public void moveTo(Vector3f clusterPos)

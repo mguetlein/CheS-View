@@ -19,7 +19,6 @@ import javax.vecmath.Vector3f;
 import main.Settings;
 
 import org.jmol.viewer.Viewer;
-import org.omegahat.Environment.System.NotImplementedException;
 
 import util.ArrayUtil;
 import util.SelectionModel;
@@ -30,6 +29,7 @@ import data.DatasetFile;
 import dataInterface.ClusterData;
 import dataInterface.ClusteringDataUtil;
 import dataInterface.MoleculeProperty;
+import dataInterface.SubstructureSmartsType;
 
 public class Clustering
 {
@@ -265,7 +265,7 @@ public class Clustering
 
 	public void chooseClustersToAdd()
 	{
-		throw new NotImplementedException();
+		throw new sun.reflect.generics.reflectiveObjects.NotImplementedException();
 
 		//		// String filenames[] = SdfProvider.chooseSdfFiles();
 		//		// if (filenames != null)
@@ -440,9 +440,9 @@ public class Clustering
 			c.setTemperature(highlightProperty);
 	}
 
-	public boolean hasSubstructures()
+	public List<SubstructureSmartsType> getSubstructures()
 	{
-		return clusters.get(0).getSubstructureSmarts() != null;
+		return clusteringData.getSubstructureSmartsTypes();
 	}
 
 	//	public static interface SuperImposeListener

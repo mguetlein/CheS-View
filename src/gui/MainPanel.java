@@ -35,6 +35,7 @@ import cluster.Clustering;
 import cluster.Model;
 import data.ClusteringData;
 import dataInterface.MoleculeProperty;
+import dataInterface.SubstructureSmartsType;
 
 public class MainPanel extends JPanel implements ViewControler
 {
@@ -53,8 +54,8 @@ public class MainPanel extends JPanel implements ViewControler
 	String modelInactiveSuffix = "; color translucent 0.9";
 	String modelActiveSuffix = "";
 
-	public static final Highlighter DEFAULT_HIGHLIGHTER = new FakeHighlighter("Atom types");
-	public static final Highlighter SUBSTRUCTURE_HIGHLIGHTER = new FakeHighlighter("Substructures");
+	public static final Highlighter DEFAULT_HIGHLIGHTER = new SimpleHighlighter("Atom types");
+	//	public static final Highlighter SUBSTRUCTURE_HIGHLIGHTER = new FakeHighlighter("Substructures");
 
 	HashMap<String, Highlighter[]> highlighters;
 	Highlighter selectedHighlighter = DEFAULT_HIGHLIGHTER;
@@ -214,14 +215,6 @@ public class MainPanel extends JPanel implements ViewControler
 		}
 	}
 
-	public static class FeatureHighlighter extends DefaultHighlighter
-	{
-		public FeatureHighlighter(MoleculeProperty prop)
-		{
-			super(prop);
-		}
-	}
-
 	@Override
 	public HashMap<String, Highlighter[]> getHighlighters()
 	{
@@ -244,12 +237,12 @@ public class MainPanel extends JPanel implements ViewControler
 
 			if (highlighter == DEFAULT_HIGHLIGHTER)
 				color = DEFAULT_COLOR;
-			else if (highlighter == SUBSTRUCTURE_HIGHLIGHTER)
+			else if (highlighter instanceof SubstructureHighlighter)
 				color = DEFAULT_COLOR;
-			else
+			else if (highlighter instanceof MoleculePropertyHighlighter)
 			{
 				color = "color temperature";
-				clustering.setTemperature(highlighter.getProperty());
+				clustering.setTemperature(((MoleculePropertyHighlighter) highlighter).getProperty());
 			}
 
 			updateAllClusters();
@@ -369,8 +362,9 @@ public class MainPanel extends JPanel implements ViewControler
 			if (numModels >= max)
 			{
 				List<Model> models;
-				if (selectedHighlighter instanceof FeatureHighlighter)
-					models = c.getModelsInOrder(selectedHighlighter.getProperty(), highlightSorting);
+				if (selectedHighlighter instanceof MoleculePropertyHighlighter)
+					models = c.getModelsInOrder(((MoleculePropertyHighlighter) selectedHighlighter).getProperty(),
+							highlightSorting);
 				else
 					models = c.getModels();
 
@@ -448,7 +442,7 @@ public class MainPanel extends JPanel implements ViewControler
 		boolean showBox = false;
 		boolean showLabel = false;
 		boolean translucent = true;
-		boolean substructure = false;
+		SubstructureSmartsType substructure = null;
 
 		if (forceUpdate || clus == activeCluster)
 		{
@@ -458,7 +452,7 @@ public class MainPanel extends JPanel implements ViewControler
 				if (clustering.getModelWatched().isSelected(i) || clustering.getModelActive().isSelected(i))
 				{
 					translucent = false;
-					if (selectedHighlighter instanceof FeatureHighlighter)
+					if (selectedHighlighter instanceof MoleculePropertyHighlighter)
 						showLabel = true;
 					if (clustering.getModelWatched().isSelected(i) && !c.isOverlap())
 						showBox = true;
@@ -467,18 +461,19 @@ public class MainPanel extends JPanel implements ViewControler
 			else
 			{
 				List<Model> models;
-				if (selectedHighlighter instanceof FeatureHighlighter)
-					models = c.getModelsInOrder(selectedHighlighter.getProperty(), highlightSorting);
+				if (selectedHighlighter instanceof MoleculePropertyHighlighter)
+					models = c.getModelsInOrder(((MoleculePropertyHighlighter) selectedHighlighter).getProperty(),
+							highlightSorting);
 				else
 					models = c.getModels();
 
-				if (selectedHighlighter instanceof FeatureHighlighter && models.indexOf(m) == 0)
+				if (selectedHighlighter instanceof MoleculePropertyHighlighter && models.indexOf(m) == 0)
 					showLabel = true;
 				translucent = (models.indexOf(m) > 0);
 			}
 
-			if (selectedHighlighter == SUBSTRUCTURE_HIGHLIGHTER)
-				substructure = true;
+			if (selectedHighlighter instanceof SubstructureHighlighter)
+				substructure = ((SubstructureHighlighter) selectedHighlighter).getType();
 		}
 		else
 		{
@@ -510,15 +505,14 @@ public class MainPanel extends JPanel implements ViewControler
 		}
 
 		// CHANGES SELECTION !!!
-		if (substructure != m.isSubstructureHighlighted())
+		if (substructure != m.getSubstructureHighlighted())
 		{
 			System.out.println("sub " + i + " " + substructure);
-
 			//			m.setSubstructureHighlighted(substructure);
 			//			viewer.script("subset selected");
-			if (substructure)
+			if (substructure != null)
 			{
-				viewer.scriptWait("select selected AND search(\"" + c.getSubstructureSmarts() + "\")");
+				viewer.scriptWait("select selected AND search(\"" + c.getSubstructureSmarts(substructure) + "\")");
 				viewer.scriptWait("color orange");
 			}
 			else if (!forceUpdate)
@@ -536,12 +530,13 @@ public class MainPanel extends JPanel implements ViewControler
 				BitSet empty = new BitSet(bs.length());
 				empty.set(bs.nextSetBit(0));
 				viewer.select(empty, false);
-				Object val = clustering.getModelWithModelIndex(i).getTemperature(selectedHighlighter.getProperty());
+				Object val = clustering.getModelWithModelIndex(i).getTemperature(
+						((MoleculePropertyHighlighter) selectedHighlighter).getProperty());
 				Double d = DoubleUtil.parseDouble(val + "");
 				if (d != null)
 					val = StringUtil.formatDouble(d);
 				//				System.err.println("label : " + i + " : " + c + " : " + val);
-				String l = selectedHighlighter.getProperty() + ": " + val;
+				String l = ((MoleculePropertyHighlighter) selectedHighlighter).getProperty() + ": " + val;
 				viewer.scriptWait("label \"" + l + "\"");
 			}
 			else
@@ -646,23 +641,24 @@ public class MainPanel extends JPanel implements ViewControler
 		setStyle(getStyle(), true);
 
 		Highlighter[] h = new Highlighter[] { DEFAULT_HIGHLIGHTER };
-		if (clustering.hasSubstructures())
-			h = ArrayUtil.concat(Highlighter.class, h, new Highlighter[] { SUBSTRUCTURE_HIGHLIGHTER });
+		if (clustering.getSubstructures().size() > 0)
+			for (SubstructureSmartsType type : clustering.getSubstructures())
+				h = ArrayUtil.concat(Highlighter.class, h, new Highlighter[] { new SubstructureHighlighter(type) });
 		highlighters = new LinkedHashMap<String, ViewControler.Highlighter[]>();
 		highlighters.put("", h);
 
 		List<MoleculeProperty> props = clustering.getFeatures();
-		FeatureHighlighter featureHighlighters[] = new FeatureHighlighter[props.size()];
+		MoleculePropertyHighlighter featureHighlighters[] = new MoleculePropertyHighlighter[props.size()];
 		int fCount = 0;
 		for (MoleculeProperty p : props)
-			featureHighlighters[fCount++] = new FeatureHighlighter(p);
+			featureHighlighters[fCount++] = new MoleculePropertyHighlighter(p);
 		highlighters.put("Properties used for clustering", featureHighlighters);
 
 		props = clustering.getProperties();
-		featureHighlighters = new FeatureHighlighter[props.size()];
+		featureHighlighters = new MoleculePropertyHighlighter[props.size()];
 		fCount = 0;
 		for (MoleculeProperty p : props)
-			featureHighlighters[fCount++] = new FeatureHighlighter(p);
+			featureHighlighters[fCount++] = new MoleculePropertyHighlighter(p);
 		highlighters.put("Additional compound properties", featureHighlighters);
 
 		fireViewChange(PROPERTY_NEW_HIGHLIGHTERS);

@@ -1,9 +1,9 @@
 package gui;
 
 import gui.ComponentFactory.StyleButton;
-import gui.MainPanel.FeatureHighlighter;
 import gui.ViewControler.HighlightSorting;
 import gui.ViewControler.Highlighter;
+import gui.ViewControler.MoleculePropertyHighlighter;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
@@ -395,7 +395,7 @@ public class SideBar extends JPanel
 						public void run()
 						{
 							viewControler.setHighlighter((Highlighter) highlightCombobox.getSelectedItem());
-							boolean featHighSel = ((Highlighter) highlightCombobox.getSelectedItem()) instanceof FeatureHighlighter;
+							boolean featHighSel = ((Highlighter) highlightCombobox.getSelectedItem()) instanceof MoleculePropertyHighlighter;
 							labelCheckbox.setVisible(featHighSel);
 							highlightMinMaxCombobox.setVisible(featHighSel);
 						}
@@ -468,7 +468,7 @@ public class SideBar extends JPanel
 						highlightCombobox.setSelectedItem(viewControler.getHighlighter());
 						labelCheckbox.setSelected(viewControler.isHighlighterLabelsVisible());
 						highlightMinMaxCombobox.setSelectedItem(viewControler.getHighlightSorting());
-						boolean featHighSel = ((Highlighter) highlightCombobox.getSelectedItem()) instanceof FeatureHighlighter;
+						boolean featHighSel = ((Highlighter) highlightCombobox.getSelectedItem()) instanceof MoleculePropertyHighlighter;
 						labelCheckbox.setVisible(featHighSel);
 						highlightMinMaxCombobox.setVisible(featHighSel);
 					}
@@ -478,7 +478,7 @@ public class SideBar extends JPanel
 						highlightCombobox.setSelectedItem(viewControler.getHighlighter());
 						labelCheckbox.setSelected(viewControler.isHighlighterLabelsVisible());
 						highlightMinMaxCombobox.setSelectedItem(viewControler.getHighlightSorting());
-						boolean featHighSel = ((Highlighter) highlightCombobox.getSelectedItem()) instanceof FeatureHighlighter;
+						boolean featHighSel = ((Highlighter) highlightCombobox.getSelectedItem()) instanceof MoleculePropertyHighlighter;
 						labelCheckbox.setVisible(featHighSel);
 						highlightMinMaxCombobox.setVisible(featHighSel);
 					}

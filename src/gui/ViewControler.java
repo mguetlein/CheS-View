@@ -4,6 +4,7 @@ import java.beans.PropertyChangeListener;
 import java.util.HashMap;
 
 import dataInterface.MoleculeProperty;
+import dataInterface.SubstructureSmartsType;
 
 public interface ViewControler
 {
@@ -48,57 +49,52 @@ public interface ViewControler
 
 	public interface Highlighter
 	{
-		public MoleculeProperty getProperty();
 	}
 
-	public class DefaultHighlighter implements Highlighter
+	public class SimpleHighlighter implements Highlighter
+	{
+		private String name;
+
+		public SimpleHighlighter(String name)
+		{
+			this.name = name;
+		}
+
+		public String toString()
+		{
+			return name;
+		}
+	}
+
+	public class MoleculePropertyHighlighter extends SimpleHighlighter
 	{
 		private MoleculeProperty prop;
 
-		public DefaultHighlighter(MoleculeProperty prop)
+		public MoleculePropertyHighlighter(MoleculeProperty prop)
 		{
+			super(prop.toString());
 			this.prop = prop;
 		}
 
-		@Override
 		public MoleculeProperty getProperty()
 		{
 			return prop;
 		}
-
-		@Override
-		public String toString()
-		{
-			return prop.toString();
-		}
 	}
 
-	class FakeProperty implements MoleculeProperty
+	public class SubstructureHighlighter extends SimpleHighlighter
 	{
-		public String s;
+		private SubstructureSmartsType type;
 
-		public FakeProperty(String s)
+		public SubstructureHighlighter(SubstructureSmartsType type)
 		{
-			this.s = s;
+			super(type.toString());
+			this.type = type;
 		}
 
-		public String toString()
+		public SubstructureSmartsType getType()
 		{
-			return s;
-		}
-
-		@Override
-		public boolean isNumeric()
-		{
-			return false;
-		}
-	}
-
-	public class FakeHighlighter extends DefaultHighlighter
-	{
-		public FakeHighlighter(String prop)
-		{
-			super(new FakeProperty(prop));
+			return type;
 		}
 	}
 
