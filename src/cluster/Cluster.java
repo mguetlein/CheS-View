@@ -34,7 +34,7 @@ public class Cluster
 	double maxDist;
 	int radius;
 
-	public Cluster(Viewer viewer, dataInterface.ClusterData clusterData, boolean firstCluster, boolean clusterAligend)
+	public Cluster(Viewer viewer, dataInterface.ClusterData clusterData, boolean firstCluster)
 	{
 		this.viewer = viewer;
 		this.clusterData = clusterData;
@@ -82,7 +82,7 @@ public class Cluster
 		resetCenter();
 
 		translate(clusterData.getPosition());
-		if (!clusterAligend)
+		if (!clusterData.isAligned())
 			for (Model m : models)
 				m.moveTo(clusterData.getPosition());
 

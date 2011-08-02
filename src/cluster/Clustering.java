@@ -96,7 +96,7 @@ public class Clustering
 	private Cluster addSingleCluster(ClusterData clusterData)
 	{
 
-		Cluster c = new Cluster(viewer, clusterData, clusters.size() == 0, clusteringData.isClusterFilesAligned());
+		Cluster c = new Cluster(viewer, clusterData, clusters.size() == 0);
 
 		@SuppressWarnings("unchecked")
 		Vector<Cluster> old = (Vector<Cluster>) VectorUtil.clone(Clustering.this.clusters);
