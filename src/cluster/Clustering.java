@@ -349,7 +349,7 @@ public class Clustering
 			{
 				String dest = f.getSelectedFile().getAbsolutePath();
 				// file may be overwritten, and then reloaded -> clear
-				DatasetFile.clearFilesWithSDF(dest);
+				DatasetFile.clearFilesWith3DSDF(dest);
 				SDFUtil.filter(clusteringData.getSDFFilename(), dest, ArrayUtil.toPrimitiveIntArray(l));
 			}
 		}
