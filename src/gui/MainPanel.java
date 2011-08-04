@@ -507,10 +507,11 @@ public class MainPanel extends JPanel implements ViewControler
 		// CHANGES SELECTION !!!
 		if (substructure != m.getSubstructureHighlighted())
 		{
-			System.out.println("sub " + i + " " + substructure);
-			//			m.setSubstructureHighlighted(substructure);
-			//			viewer.script("subset selected");
-			if (substructure != null)
+			System.out.println("highlighting: " + i + " " + substructure + " smarts: "
+					+ c.getSubstructureSmarts(substructure) + " smiles: " + m.getSmiles());
+
+			if (substructure != null && c.getSubstructureSmarts(substructure) != null
+					&& c.getSubstructureSmarts(substructure).length() > 0)
 			{
 				viewer.scriptWait("select selected AND search(\"" + c.getSubstructureSmarts(substructure) + "\")");
 				viewer.scriptWait("color orange");
