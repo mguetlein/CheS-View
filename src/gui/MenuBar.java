@@ -97,6 +97,7 @@ public class MenuBar extends JMenuBar
 					{
 						clustering.newClustering(d);
 					}
+					guiControler.unblock();
 				}
 			});
 			th.start();
