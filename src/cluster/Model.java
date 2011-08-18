@@ -9,6 +9,7 @@ import org.jmol.viewer.Viewer;
 
 import dataInterface.CompoundData;
 import dataInterface.MoleculeProperty;
+import dataInterface.MoleculeProperty.Type;
 import dataInterface.SubstructureSmartsType;
 
 public class Model
@@ -35,15 +36,28 @@ public class Model
 		this.viewer = viewer;
 	}
 
-	public Object getTemperature(MoleculeProperty property)
+	public String getTemperature(MoleculeProperty property)
 	{
-		return compoundData.getObjectValue(property, false);
+		if (property.getType() == Type.NUMERIC)
+			return getDoubleValue(property) + "";
+		else
+			return getStringValue(property);
+	}
+
+	public String getStringValue(MoleculeProperty property)
+	{
+		return compoundData.getStringValue(property);
+	}
+
+	public Double getDoubleValue(MoleculeProperty property)
+	{
+		return compoundData.getDoubleValue(property);
 	}
 
 	public void setTemperature(MoleculeProperty property)
 	{
 		// string properties do have a normalized double value as well
-		double v = compoundData.getValue(property, true);
+		double v = compoundData.getNormalizedValue(property);
 		viewer.setAtomProperty(bitSet, Token.temperature, (int) v, (float) v, v + "", null, null);
 	}
 

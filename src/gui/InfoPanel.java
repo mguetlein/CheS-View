@@ -227,9 +227,9 @@ public class InfoPanel extends JPanel
 				for (SubstructureSmartsType type : clustering.getSubstructures())
 					model.addRow(new Object[] { type.toString(), c.getSubstructureSmarts(type) });
 				for (MoleculeProperty p : clustering.getFeatures())
-					model.addRow(new Object[] { p, c.getProperty(p) });
+					model.addRow(new Object[] { p, c.getSummaryStringValue(p) });
 				for (MoleculeProperty p : clustering.getProperties())
-					model.addRow(new Object[] { p, c.getProperty(p) });
+					model.addRow(new Object[] { p, c.getSummaryStringValue(p) });
 			}
 			else
 			{

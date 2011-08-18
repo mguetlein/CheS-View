@@ -18,6 +18,7 @@ import util.Vector3fUtil;
 import dataInterface.ClusterData;
 import dataInterface.ClusteringDataUtil;
 import dataInterface.MoleculeProperty;
+import dataInterface.MoleculeProperty.Type;
 import dataInterface.SubstructureSmartsType;
 
 public class Cluster
@@ -106,9 +107,9 @@ public class Cluster
 	//		return properties.keySet();
 	//	}
 	//
-	public Object getProperty(MoleculeProperty property)
+	public String getSummaryStringValue(MoleculeProperty property)
 	{
-		return clusterData.getObjectValue(property, false);
+		return clusterData.getSummaryStringValue(property);
 	}
 
 	public String toString()
@@ -240,10 +241,10 @@ public class Cluster
 					}
 					else if (o2 == null)
 						res = -1;
-					else if (property.isNumeric())
+					else if (property.getType() == Type.NUMERIC)
 					{
-						Double d1 = (Double) o1.getTemperature(property);
-						Double d2 = (Double) o2.getTemperature(property);
+						Double d1 = o1.getDoubleValue(property);
+						Double d2 = o2.getDoubleValue(property);
 						if (d1 == null)
 						{
 							if (d2 == null)
@@ -254,10 +255,10 @@ public class Cluster
 						else if (d2 == null)
 							res = -1;
 						else
-							res = ((Double) o1.getTemperature(property)).compareTo((Double) o2.getTemperature(property));
+							res = d1.compareTo(d2);
 					}
 					else
-						res = (o1.getTemperature(property) + "").compareTo(o2.getTemperature(property) + "");
+						res = (o1.getStringValue(property) + "").compareTo(o2.getStringValue(property) + "");
 					return (finalSorting == HighlightSorting.Max ? -1 : 1) * res;
 				}
 			});
