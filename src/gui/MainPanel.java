@@ -415,6 +415,10 @@ public class MainPanel extends JPanel implements ViewControler
 			if (clus == activeCluster)
 			{
 				translucent = false;
+				if (c.isSuperimposed() && !clustering.getModelWatched().isSelected(i)
+						&& !clustering.getModelActive().isSelected(i))
+					translucent = true;
+
 				if (clustering.getModelWatched().isSelected(i) || clustering.getModelActive().isSelected(i))
 				{
 					if (selectedHighlighter instanceof MoleculePropertyHighlighter)
@@ -697,7 +701,7 @@ public class MainPanel extends JPanel implements ViewControler
 
 				if (oldC != null)
 				{
-					oldC.setOverlap(true, View.MoveAnimation.NONE);
+					oldC.setOverlap(true, View.MoveAnimation.NONE, false);
 					for (Model m : oldC.getModels())
 						updateModel(m.getModelIndex());
 				}
@@ -712,7 +716,7 @@ public class MainPanel extends JPanel implements ViewControler
 				{
 					view.zoomIn(c.getCenter());
 				}
-				c.setOverlap(false, View.MoveAnimation.SLOW);
+				c.setOverlap(false, View.MoveAnimation.SLOW, false);
 			}
 			else
 			{
@@ -722,7 +726,7 @@ public class MainPanel extends JPanel implements ViewControler
 				for (Model m : c.getModels())
 					updateModel(m.getModelIndex(), true);
 
-				c.setOverlap(true, View.MoveAnimation.FAST);
+				c.setOverlap(true, View.MoveAnimation.FAST, false);
 				//viewerUtils.zoomOut(true, new Vector3f(0, 0, 0), 0.5);
 				view.zoomOut(clustering.getCenter(), 0.5f, zoomFactor, clustering.getRadius()); //, clustering.getBitSetAll());
 
@@ -780,13 +784,32 @@ public class MainPanel extends JPanel implements ViewControler
 		if (c.isOverlap())
 		{
 			view.zoomOut(c.getNonOverlapCenter(), 0.5f, zoomFactor, c.getRadius()); //, c.getBitSet());
-			c.setOverlap(false, View.MoveAnimation.SLOW);
+			c.setOverlap(false, View.MoveAnimation.SLOW, false);
 		}
 		else
 		{
-			c.setOverlap(true, View.MoveAnimation.SLOW);
-			view.zoomIn(c.getCenter());
+			c.setOverlap(true, View.MoveAnimation.SLOW, true);
+			// the center is changed in the animation superimposition
+			view.afterAnimation(new Runnable()
+			{
+				@Override
+				public void run()
+				{
+					view.zoomIn(c.getCenter());
+				}
+			}, "zoom to new(!) center");
 		}
+
+		view.afterAnimation(new Runnable()
+		{
+			@Override
+			public void run()
+			{
+				for (Model m : c.getModels())
+					updateModel(m.getModelIndex(), false);
+			}
+		}, "set models translucent");
+
 	}
 
 	List<PropertyChangeListener> viewListeners = new ArrayList<PropertyChangeListener>();

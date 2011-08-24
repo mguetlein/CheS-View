@@ -30,6 +30,7 @@ public class Cluster
 	Vector3f center;
 
 	boolean overlap = true;
+	boolean superimposed = false;
 	double maxDist;
 	int radius;
 
@@ -261,12 +262,27 @@ public class Cluster
 		dirty = true;
 	}
 
+	/**
+	 * the compounds are drawn on the same location (because cluster view or manually superimposed)
+	 * 
+	 * @return
+	 */
 	public boolean isOverlap()
 	{
 		return overlap;
 	}
 
-	public void setOverlap(boolean overlap, View.MoveAnimation anim)
+	/**
+	 * the compounds are drawn on the same location manually superimposed 
+	 * 
+	 * @return
+	 */
+	public boolean isSuperimposed()
+	{
+		return superimposed;
+	}
+
+	public void setOverlap(boolean overlap, View.MoveAnimation anim, boolean superimposed)
 	{
 		if (this.overlap != overlap)
 		{
@@ -289,6 +305,9 @@ public class Cluster
 				}
 			}, "after superimpose: invert vectors");
 		}
+		if (superimposed && !overlap)
+			throw new IllegalArgumentException();
+		this.superimposed = superimposed;
 	}
 
 	public void modelIndexOffset(int offset)
