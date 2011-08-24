@@ -1,5 +1,6 @@
 package cluster;
 
+import gui.View;
 import gui.ViewControler.HighlightSorting;
 
 import java.util.ArrayList;
@@ -12,8 +13,6 @@ import java.util.Vector;
 
 import javax.vecmath.Vector3f;
 
-import org.jmol.viewer.Viewer;
-
 import util.Vector3fUtil;
 import dataInterface.ClusterData;
 import dataInterface.ClusteringDataUtil;
@@ -23,7 +22,6 @@ import dataInterface.SubstructureSmartsType;
 
 public class Cluster
 {
-	Viewer viewer;
 	Vector<Model> models;
 	ClusterData clusterData;
 
@@ -35,14 +33,13 @@ public class Cluster
 	double maxDist;
 	int radius;
 
-	public Cluster(Viewer viewer, dataInterface.ClusterData clusterData, boolean firstCluster)
+	public Cluster(dataInterface.ClusterData clusterData, boolean firstCluster)
 	{
-		this.viewer = viewer;
 		this.clusterData = clusterData;
 
-		int before = firstCluster ? 0 : viewer.getModelCount();
-		viewer.loadModelFromFile(null, clusterData.getFilename(), null, null, !firstCluster, null, null, 0);
-		int after = viewer.getModelCount();
+		int before = firstCluster ? 0 : View.instance.getModelCount();
+		View.instance.loadModelFromFile(null, clusterData.getFilename(), null, null, !firstCluster, null, null, 0);
+		int after = View.instance.getModelCount();
 
 		Vector3f positions[] = ClusteringDataUtil.getCompoundPositions(clusterData);
 
@@ -56,57 +53,18 @@ public class Cluster
 			v3f.scale(scale);
 		radius = (int) (Vector3fUtil.maxDist(positions));
 
-		//		HashMap<String, Object> props = new LinkedHashMap<String, Object>();
-		//		int pCount = 0;
-		//		for (Object o : clusterProperties)
-		//			props.put(properties[pCount++], o);
-
 		models = new Vector<Model>();
 		int mCount = 0;
 		for (int i = before; i < after; i++)
-		{
-			//			LinkedHashMap<String, Double> nProps = new LinkedHashMap<String, Double>();
-			//			props = new LinkedHashMap<String, Object>();
-			//			pCount = 0;
-			//			for (Object o : modelValues.get(mCount))
-			//				props.put(properties[pCount++], o);
-			//			pCount = 0;
-			//			for (Object d : normalizedValues.get(mCount))
-			//				nProps.put(properties[pCount++], (Double) d);
-
-			addModel(new Model(viewer, i, clusterData.getCompounds().get(mCount++))); //  modelOrigIndices[mCount], props, nProps));
-			//			mCount++;
-		}
-
-		//		CDKService.computeSmiles(filePath, c.getModelsSmilesOwner());
-		//		c.
+			addModel(new Model(i, clusterData.getCompounds().get(mCount++))); //  modelOrigIndices[mCount], props, nProps));
 		resetCenter();
 
 		translate(clusterData.getPosition());
 		if (!clusterData.isAligned())
 			for (Model m : models)
 				m.moveTo(clusterData.getPosition());
-
-		//		initModelPositions();
-
-		//		this.name = name;
-		//		this.viewer = viewer;
-		//		this.propertyNames = ArrayUtil.reverse(propertyNames);
-		//		this.properties = properties;
-		//		this.radius = radius;
-		//		this.substructureSmarts = substructureSmarts;
 	}
 
-	//	public int numProperties()
-	//	{
-	//		return properties.size();
-	//	}
-	//
-	//	public Iterable<String> getProperties()
-	//	{
-	//		return properties.keySet();
-	//	}
-	//
 	public String getSummaryStringValue(MoleculeProperty property)
 	{
 		return clusterData.getSummaryStringValue(property);
@@ -125,7 +83,7 @@ public class Cluster
 		bitSet = new BitSet();
 		for (Model m : models)
 			bitSet.or(m.getBitSet());
-		center = new Vector3f(viewer.getAtomSetCenter(bitSet));
+		center = new Vector3f(View.instance.getAtomSetCenter(bitSet));
 
 		dirty = false;
 	}
@@ -291,7 +249,7 @@ public class Cluster
 		Vector3f c = new Vector3f(center);
 		c.negate();
 		// viewer.setAtomCoord(bitSet, Token.xyz, c);
-		viewer.setAtomCoordRelative(c, bitSet);
+		View.instance.setAtomCoordRelative(c, bitSet);
 
 		dirty = true;
 	}
@@ -299,7 +257,7 @@ public class Cluster
 	public void translate(Vector3f newCenter)
 	{
 		Vector3f v = new Vector3f(newCenter);
-		viewer.setAtomCoordRelative(v, getBitSet());
+		View.instance.setAtomCoordRelative(v, getBitSet());
 		dirty = true;
 	}
 
@@ -308,42 +266,28 @@ public class Cluster
 		return overlap;
 	}
 
-	public static enum OverlapAnimation
-	{
-		SLOW, FAST, NONE
-	}
-
-	public void setOverlap(boolean overlap, OverlapAnimation anim)
+	public void setOverlap(boolean overlap, View.MoveAnimation anim)
 	{
 		if (this.overlap != overlap)
 		{
 			this.overlap = overlap;
-			Vector3f modelPositions[] = ClusteringDataUtil.getCompoundPositions(clusterData);
+			final Vector3f modelPositions[] = ClusteringDataUtil.getCompoundPositions(clusterData);
 
-			if (anim == OverlapAnimation.NONE)
+			BitSet bitsets[] = new BitSet[modelPositions.length];
+			for (int j = 0; j < modelPositions.length; j++)
+				bitsets[j] = models.get(j).getBitSet();
+			View.instance.setAtomCoordRelative(modelPositions, bitsets, anim);
+
+			View.instance.afterAnimation(new Runnable()
 			{
-				for (int j = 0; j < modelPositions.length; j++)
-					viewer.setAtomCoordRelative(modelPositions[j], models.get(j).getBitSet());
-			}
-			else
-			{
-				int n = (anim == OverlapAnimation.SLOW) ? 12 : 25;
-				for (int i = 0; i < n; i++)
+				@Override
+				public void run()
 				{
-					for (int j = 0; j < modelPositions.length; j++)
-					{
-						Vector3f v = new Vector3f(modelPositions[j]);
-						v.scale(1 / (float) n);
-						viewer.setAtomCoordRelative(v, models.get(j).getBitSet());
-					}
-					viewer.scriptWait("delay 0.01");
+					for (Vector3f vector3f : modelPositions)
+						vector3f.scale(-1);
+					dirty = true;
 				}
-			}
-
-			for (Vector3f vector3f : modelPositions)
-				vector3f.scale(-1);
-
-			dirty = true;
+			}, "after superimpose: invert vectors");
 		}
 	}
 

@@ -71,37 +71,32 @@ public class MenuBar extends JMenuBar
 
 	}
 
-	private void newClustering(int startPanel)
+	private void newClustering(final int startPanel)
 	{
-		final CheSMapperWizard wwd = new CheSMapperWizard((JFrame) SwingUtilities.getRoot(this), startPanel);
-		Settings.TOP_LEVEL_COMPONENT = MenuBar.this.getTopLevelAncestor();
-		if (wwd.isWorkflowSelected())
+		Thread noAWTThread = new Thread(new Runnable()
 		{
-			SwingUtilities.invokeLater(new Runnable()
+			public void run()
 			{
-				@Override
-				public void run()
+				final CheSMapperWizard wwd = new CheSMapperWizard((JFrame) SwingUtilities.getRoot(MenuBar.this),
+						startPanel);
+				Settings.TOP_LEVEL_COMPONENT = MenuBar.this.getTopLevelAncestor();
+				SwingUtil.waitWhileVisible(wwd);
+				if (wwd.isWorkflowSelected())
 				{
+					guiControler.block();
+					View.instance.setAnimated(false);
+					
 					clustering.clear();
-				}
-			});
-			Thread th = new Thread(new Runnable()
-			{
-				@Override
-				public void run()
-				{
-					SwingUtil.waitForAWTEventThread();
-					clustering.invokeAfterViewer(null);
 					ClusteringData d = CheSViewer.doMapping(wwd);
 					if (d != null)
-					{
 						clustering.newClustering(d);
-					}
+					
+					View.instance.setAnimated(true);
 					guiControler.unblock();
 				}
-			});
-			th.start();
-		}
+			}
+		});
+		noAWTThread.start();
 	}
 
 	private void buildMenu()
@@ -121,7 +116,9 @@ public class MenuBar extends JMenuBar
 			@Override
 			public void actionPerformed(ActionEvent e)
 			{
+				View.instance.setAnimated(false);
 				clustering.chooseClustersToRemove();
+				View.instance.setAnimated(true);
 			}
 		}));
 

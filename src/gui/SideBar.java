@@ -32,9 +32,6 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
 import main.Settings;
-
-import org.jmol.viewer.Viewer;
-
 import cluster.Cluster;
 import cluster.Clustering;
 
@@ -52,18 +49,15 @@ public class SideBar extends JPanel
 
 	ModelListPanel infoPanel;
 
-	Viewer viewer;
 	Clustering clustering;
 	ViewControler viewControler;
 
-	public SideBar(Clustering clustering, Viewer viewer, ViewControler viewControler)
+	public SideBar(Clustering clustering, ViewControler viewControler)
 	{
-		this.viewer = viewer;
 		this.clustering = clustering;
 		this.viewControler = viewControler;
 
 		buildLayout();
-		updateList();
 		installListeners();
 	}
 
@@ -88,7 +82,7 @@ public class SideBar extends JPanel
 				else
 					clustering.getClusterWatched().setSelected(clustering.indexOf(c));
 
-				unblock();
+				selfBlock = false;
 			}
 		});
 		clusterList.addMouseListener(new MouseAdapter()
@@ -99,36 +93,22 @@ public class SideBar extends JPanel
 					return;
 				selfBlock = true;
 
-				// if (e.getClickCount() > 1)
-				// {
-
 				final Cluster c = (Cluster) clusterList.getSelectedValue();
 				if (c == null)
 					clustering.getClusterActive().clearSelection();
 				else
 				{
 					int cIndex = clustering.indexOf(c);
-					// ZOOM OUT HACK
 					if (clustering.getClusterActive().getSelected() == cIndex)
 					{
-						clustering.invokeAfterViewer(new Runnable()
-						{
-							@Override
-							public void run()
-							{
-								((MainPanel) viewControler).guiControler.block();
-								((MainPanel) viewControler).viewerUtils.zoomOut(false, c.getNonOverlapCenter(), 0.5f,
-										((MainPanel) viewControler).zoomFactor, c.getRadius()); //, c.getBitSet());
-								((MainPanel) viewControler).guiControler.unblock();
-							}
-						});
+						clustering.getModelActive().clearSelection();
+						clustering.getModelWatched().clearSelection();
 					}
 					clustering.getClusterActive().setSelected(cIndex);
 				}
 				clustering.getClusterWatched().clearSelection();
 
-				// }
-				unblock();
+				selfBlock = false;
 			}
 		});
 
@@ -141,31 +121,10 @@ public class SideBar extends JPanel
 				// return;
 				selfBlock = true;
 				updateList();
-				unblock();
-			}
-		});
-	}
-
-	private void unblock()
-	{
-		clustering.invokeAfterViewer(new Runnable()
-		{
-			@Override
-			public void run()
-			{
 				selfBlock = false;
 			}
 		});
 	}
-
-	// private int getListSelectedCluster()
-	// {
-	// Integer val = (Integer) clusterList.getSelectedValue();
-	// if (val == null)
-	// return -1;
-	// else
-	// return val;
-	// }
 
 	private void updateList()
 	{
@@ -263,7 +222,7 @@ public class SideBar extends JPanel
 		// EmptyBorder(5, 5, 5, 5)));
 		clusterList.setBorder(new EmptyBorder(5, 5, 5, 5));
 
-		infoPanel = new ModelListPanel(clustering, viewer, viewControler);
+		infoPanel = new ModelListPanel(clustering, viewControler);
 		//		SwingUtil.setDebugBorder(infoPanel);
 
 		// setLayout(new GridLayout(2, 1));
@@ -320,7 +279,7 @@ public class SideBar extends JPanel
 		else
 			clusterList.setSelectedValue(clustering.getCluster(index), true);
 
-		unblock();
+		selfBlock = false;
 	}
 
 	class ControlPanel extends JPanel
@@ -493,17 +452,20 @@ public class SideBar extends JPanel
 			(((DescriptionListCellRenderer) highlightCombobox.getRenderer())).clearDescriptions();
 
 			HashMap<String, Highlighter[]> h = viewControler.getHighlighters();
-			int index = 0;
-			for (String desc : h.keySet())
+			if (h != null)
 			{
-				if (desc != null && desc.length() > 0)
-					(((DescriptionListCellRenderer) highlightCombobox.getRenderer())).addDescription(index, desc);
-				index += h.get(desc).length;
-				for (Highlighter hh : h.get(desc))
-					highlightCombobox.addItem(hh);
+				int index = 0;
+				for (String desc : h.keySet())
+				{
+					if (desc != null && desc.length() > 0)
+						(((DescriptionListCellRenderer) highlightCombobox.getRenderer())).addDescription(index, desc);
+					index += h.get(desc).length;
+					for (Highlighter hh : h.get(desc))
+						highlightCombobox.addItem(hh);
+				}
+				Dimension dim = highlightCombobox.getPreferredSize();
+				highlightCombobox.setPreferredSize(new Dimension(250, dim.height));
 			}
-			Dimension dim = highlightCombobox.getPreferredSize();
-			highlightCombobox.setPreferredSize(new Dimension(250, dim.height));
 		}
 	}
 }

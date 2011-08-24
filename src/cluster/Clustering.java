@@ -2,6 +2,7 @@ package cluster;
 
 import gui.CheSViewer;
 import gui.CheckBoxSelectDialog;
+import gui.View;
 import io.SDFUtil;
 
 import java.beans.PropertyChangeEvent;
@@ -17,9 +18,6 @@ import javax.swing.JFrame;
 import javax.vecmath.Vector3f;
 
 import main.Settings;
-
-import org.jmol.viewer.Viewer;
-
 import util.ArrayUtil;
 import util.SelectionModel;
 import util.Vector3fUtil;
@@ -33,8 +31,6 @@ import dataInterface.SubstructureSmartsType;
 
 public class Clustering
 {
-	Viewer viewer;
-
 	private Vector<Cluster> clusters;
 	private ClusteringData clusteringData;
 
@@ -57,9 +53,8 @@ public class Clustering
 
 	Vector3f center;
 
-	public Clustering(Viewer viewer)
+	public Clustering()
 	{
-		this.viewer = viewer;
 		listeners = new Vector<PropertyChangeListener>();
 		init();
 	}
@@ -68,24 +63,9 @@ public class Clustering
 	{
 		clusterActive = new SelectionModel();
 		clusterWatched = new SelectionModel();
-		modelActive = new SelectionModel(true);
+		modelActive = new SelectionModel();
 		modelWatched = new SelectionModel();
 		clusters = new Vector<Cluster>();
-	}
-
-	public void clear()
-	{
-		@SuppressWarnings("unchecked")
-		Vector<Cluster> old = (Vector<Cluster>) VectorUtil.clone(Clustering.this.clusters);
-		clusterActive.clearSelection();
-		clusterWatched.clearSelection();
-		modelActive.clearSelection();
-		modelWatched.clearSelection();
-		clusters.removeAllElements();
-		viewer.zap(true, true, true);
-		dirty = true;
-		for (PropertyChangeListener l : listeners)
-			l.propertyChange(new PropertyChangeEvent(this, "removed", old, clusters));
 	}
 
 	public void addRemoveAddClusterListener(PropertyChangeListener l)
@@ -96,7 +76,7 @@ public class Clustering
 	private Cluster addSingleCluster(ClusterData clusterData)
 	{
 
-		Cluster c = new Cluster(viewer, clusterData, clusters.size() == 0);
+		Cluster c = new Cluster(clusterData, clusters.size() == 0);
 
 		@SuppressWarnings("unchecked")
 		Vector<Cluster> old = (Vector<Cluster>) VectorUtil.clone(Clustering.this.clusters);
@@ -107,8 +87,8 @@ public class Clustering
 			for (PropertyChangeListener l : listeners)
 				l.propertyChange(new PropertyChangeEvent(this, CLUSTER_ADDED, old, clusters));
 
-		for (Model m : c.getModels())
-			modelActive.setSelected(m.getModelIndex());
+		//		for (Model m : c.getModels())
+		//			modelActive.setSelected(m.getModelIndex());
 
 		return c;
 	}
@@ -210,41 +190,40 @@ public class Clustering
 		return bitSetAll;
 	}
 
+	private void clearSelection()
+	{
+		modelActive.clearSelection();
+		modelWatched.clearSelection();
+		clusterActive.clearSelection();
+		clusterWatched.clearSelection();
+	}
+
+	public void clear()
+	{
+		@SuppressWarnings("unchecked")
+		Vector<Cluster> old = (Vector<Cluster>) VectorUtil.clone(Clustering.this.clusters);
+		clearSelection();
+		clusters.removeAllElements();
+		View.instance.zap(true, true, true);
+		dirty = true;
+		for (PropertyChangeListener l : listeners)
+			l.propertyChange(new PropertyChangeEvent(this, "removed", old, clusters));
+	}
+
 	private void removeCluster(final Cluster... clusters)
 	{
+		clearSelection();
+
+		@SuppressWarnings("unchecked")
+		Vector<Cluster> old = (Vector<Cluster>) VectorUtil.clone(Clustering.this.clusters);
 		for (Cluster c : clusters)
 		{
-			int i = indexOf(c);
-			if (getModelWatched().getSelected() != -1
-					&& getClusterIndexForModelIndex(getModelWatched().getSelected()) == i)
-				getModelWatched().clearSelection();
-			int[] activeModels = getModelActive().getSelectedIndices();
-			for (int m : activeModels)
-				if (getClusterIndexForModelIndex(m) == i)
-					getModelActive().setSelected(m, false);
-			if (getClusterWatched().getSelected() == i)
-				getClusterWatched().clearSelection();
-			if (getClusterActive().getSelected() == i)
-				getClusterActive().clearSelection();
+			View.instance.deleteAtoms(c.getBitSet(), false);
+			Clustering.this.clusters.remove(c);
 		}
-
-		invokeAfterViewer(new Runnable()
-		{
-			@Override
-			public void run()
-			{
-				@SuppressWarnings("unchecked")
-				Vector<Cluster> old = (Vector<Cluster>) VectorUtil.clone(Clustering.this.clusters);
-				for (Cluster c : clusters)
-				{
-					viewer.deleteAtoms(c.getBitSet(), false);
-					Clustering.this.clusters.remove(c);
-				}
-				dirty = true;
-				for (PropertyChangeListener l : listeners)
-					l.propertyChange(new PropertyChangeEvent(this, "removed", old, Clustering.this.clusters));
-			}
-		});
+		dirty = true;
+		for (PropertyChangeListener l : listeners)
+			l.propertyChange(new PropertyChangeEvent(this, "removed", old, Clustering.this.clusters));
 	}
 
 	private void removeModel(Model m)
@@ -381,59 +360,6 @@ public class Clustering
 		}
 	}
 
-	Thread th;
-	Thread oldThread;
-
-	public void invokeAfterViewer(Runnable r)
-	{
-		invokeAfterViewer(false, r);
-	}
-
-	public void invokeAfterViewer(final boolean sleep, final Runnable r)
-	{
-		if (th == null)
-			oldThread = th;
-
-		th = new Thread(new Runnable()
-		{
-			@Override
-			public void run()
-			{
-				if (oldThread != null && oldThread.isAlive())
-				{
-					System.err.println("waiting for old Thread to die");
-					try
-					{
-						oldThread.join();
-					}
-					catch (InterruptedException e)
-					{
-						e.printStackTrace();
-					}
-					System.err.println("old Thread died");
-				}
-				viewer.scriptWait("");
-				if (sleep)
-				{
-					try
-					{
-						System.out.print("intentional sleep ...");
-						Thread.sleep(5000);
-						System.out.println("over");
-					}
-					catch (InterruptedException e)
-					{
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-				}
-				if (r != null)
-					r.run();
-			}
-		});
-		th.start();
-	}
-
 	public void setTemperature(MoleculeProperty highlightProperty)
 	{
 		for (Cluster c : clusters)
@@ -444,18 +370,6 @@ public class Clustering
 	{
 		return clusteringData.getSubstructureSmartsTypes();
 	}
-
-	//	public static interface SuperImposeListener
-	//	{
-	//		public void superimpose(boolean superimpose);
-	//	}
-
-	//	List<SuperImposeListener> superImposeListeners = new ArrayList<SuperImposeListener>();
-	//
-	//	public void addSuperimposeListener(SuperImposeListener l)
-	//	{
-	//		superImposeListeners.add(l);
-	//	}
 
 	public float getRadius()
 	{
@@ -479,7 +393,7 @@ public class Clustering
 
 	public int getNumClusters()
 	{
-		return clusteringData.getSize();
+		return clusters.size();
 	}
 
 }

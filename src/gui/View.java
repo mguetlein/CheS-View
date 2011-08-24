@@ -1,0 +1,325 @@
+package gui;
+
+import gui.MainPanel.JmolPanel;
+
+import java.awt.Color;
+import java.util.BitSet;
+import java.util.Hashtable;
+
+import javax.vecmath.Point3f;
+import javax.vecmath.Vector3f;
+
+import org.jmol.viewer.Viewer;
+
+import util.SequentialWorkerThread;
+import util.Vector3fUtil;
+
+public class View
+{
+	private Viewer viewer;
+	boolean animated = true;
+	GUIControler guiControler;
+	public static View instance;
+
+	private View(Viewer viewer, GUIControler guiControler)
+	{
+		this.viewer = viewer;
+		this.guiControler = guiControler;
+	}
+
+	public static void init(JmolPanel jmolPanel, GUIControler guiControler)
+	{
+		instance = new View((Viewer) jmolPanel.getViewer(), guiControler);
+	}
+
+	public synchronized void setCurrentAnimationFrame(int firstModel, int lastModel)
+	{
+		viewer.evalString("frame " + viewer.getModelNumberDotted(firstModel) + " "
+				+ viewer.getModelNumberDotted(lastModel));
+	}
+
+	public synchronized void selectModel(int modelIndex, int modelIndex2)
+	{
+		viewer.setCurrentModelIndex(modelIndex, false);
+		viewer.setAnimationOn(false);
+		viewer.setAnimationDirection(1);
+		viewer.setAnimationRange(modelIndex, modelIndex2);
+		viewer.setCurrentModelIndex(-1, false);
+	}
+
+	public synchronized void setSpinEnabled(boolean spinEnabled)
+	{
+		if (spinEnabled)
+		{
+			viewer.evalString("set spinx 0");
+			viewer.evalString("set spiny 3");
+			viewer.evalString("set spinz 0");
+			viewer.evalString("spin on");
+		}
+		else
+		{
+			viewer.evalString("spin off");
+		}
+	}
+
+	public synchronized void zoomOut(final Vector3f center, final float time, float zoomFactor, float radius)
+	{
+		//		System.out.println("llllllllllllllllll");
+		//		System.out.println("Radius    " + radius);
+		//System.out.println("Rotation  " + viewer.getRotationRadius());
+		//		System.out.println("Rotation2 " + viewer.getModelSet().calcRotationRadius(bs));
+		//		radius = viewer.getModelSet().calcRotationRadius(bs);
+
+		int zoom;
+		if (radius < 10)
+			zoom = 50;
+		else if (radius < 20)
+			zoom = 30;
+		else if (radius < 30)
+			zoom = 30;
+		else if (radius < 40)
+			zoom = 30;
+		else if (radius < 50)
+			zoom = 30;
+		else if (radius < 60)
+			zoom = 25;
+		else if (radius < 80)
+			zoom = 20;
+		else if (radius < 100)
+			zoom = 15;
+		else if (radius < 150)
+			zoom = 10;
+		else if (radius < 200)
+			zoom = 5;
+		else
+			zoom = 5;
+
+		zoom *= zoomFactor;
+		zoom = (int) Math.max(5, zoom);
+
+		//		if (clustering.getOrigSdfFile().matches(".*chang.*"))
+		//			radius *= 0.4;
+		//		else if (clustering.getOrigSdfFile().matches(".*NCTRER_v4b_232_15Feb2008.*"))
+		//			radius *= 0.9;
+		//		radius = Math.max(5, Math.min(radius, 50));
+		//		System.out.println("Zoom    " + radius);
+
+		//radius *= viewer.getRotationRadius() / 8.0;
+		//		}
+
+		//		viewer.moveTo(time, new Point3f(center.x, center.y, center.z), JmolConstants.center, Float.NaN, null, 10f, 0f,
+		//				0f, Float.NaN, null, Float.NaN, Float.NaN, Float.NaN);
+
+		//		int zoom = 10;
+		//		if (radius == 0)
+		//			zoom = 50;
+
+		if (animated)
+		{
+			final int finalZoom = zoom;
+			sequentially(new Runnable()
+			{
+				@Override
+				public void run()
+				{
+					guiControler.block();
+					String cmd = "zoomto " + time + " " + Vector3fUtil.toString(center) + " " + finalZoom;
+					viewer.scriptWait(cmd);
+					guiControler.unblock();
+				}
+			}, "zoom out");
+		}
+		else
+		{
+			String cmd = "zoomto 0 " + Vector3fUtil.toString(center) + " " + zoom;
+			viewer.scriptWait(cmd);
+		}
+
+	}
+
+	public synchronized void zoomIn(final Vector3f center)
+	{
+		if (animated)
+		{
+			sequentially(new Runnable()
+			{
+				@Override
+				public void run()
+				{
+					guiControler.block();
+					viewer.scriptWait("zoomto 1 " + Vector3fUtil.toString(center) + " 50");
+					guiControler.unblock();
+				}
+			}, "zoom in");
+		}
+		else
+		{
+			viewer.scriptWait("zoomto 0 " + Vector3fUtil.toString(center) + " 50");
+		}
+	}
+
+	public synchronized static String color(Color col)
+	{
+		return "[" + col.getRed() + ", " + col.getGreen() + ", " + col.getBlue() + "]";
+	}
+
+	public synchronized void setBackground(Color col)
+	{
+		viewer.script("background " + color(col));
+	}
+
+	public synchronized int findNearestAtomIndex(int x, int y)
+	{
+		return viewer.findNearestAtomIndex(x, y);
+	}
+
+	public synchronized int getAtomModelIndex(int atomIndex)
+	{
+		return viewer.getAtomModelIndex(atomIndex);
+	}
+
+	public synchronized void selectAll()
+	{
+		viewer.selectAll();
+	}
+
+	public synchronized void select(BitSet bitSet, boolean b)
+	{
+		viewer.select(bitSet, b);
+	}
+
+	public synchronized void scriptWait(String script)
+	{
+		viewer.scriptWait(script);
+	}
+
+	public synchronized void evalString(String script)
+	{
+		viewer.evalString(script);
+	}
+
+	public synchronized void clearBfactorRange()
+	{
+		viewer.clearBfactorRange();
+	}
+
+	public synchronized BitSet getModelUndeletedAtomsBitSet(int modelIndex)
+	{
+		return viewer.getModelUndeletedAtomsBitSet(modelIndex);
+	}
+
+	public synchronized String getModelNumberDotted(int i)
+	{
+		return viewer.getModelNumberDotted(i);
+	}
+
+	public synchronized Point3f getAtomSetCenter(BitSet bitSet)
+	{
+		return viewer.getAtomSetCenter(bitSet);
+	}
+
+	public synchronized void zap(boolean b, boolean c, boolean d)
+	{
+		viewer.zap(b, c, d);
+	}
+
+	public synchronized int deleteAtoms(BitSet bitSet, boolean b)
+	{
+		return viewer.deleteAtoms(bitSet, b);
+	}
+
+	public synchronized void loadModelFromFile(String s, String filename, String s2[], Object o, boolean b,
+			Hashtable<?, ?> t, StringBuffer sb, int i)
+	{
+		viewer.loadModelFromFile(s, filename, s2, o, b, t, sb, i);
+	}
+
+	public synchronized int getModelCount()
+	{
+		return viewer.getModelCount();
+	}
+
+	public synchronized void setAtomCoordRelative(Vector3f c, BitSet bitSet)
+	{
+		viewer.setAtomCoordRelative(c, bitSet);
+	}
+
+	public static enum MoveAnimation
+	{
+		SLOW, FAST, NONE
+	}
+
+	public synchronized void setAtomCoordRelative(final Vector3f[] c, final BitSet[] bitSet,
+			final MoveAnimation overlapAnim)
+	{
+		if (animated && overlapAnim != MoveAnimation.NONE && c.length > 1)
+		{
+			sequentially(new Runnable()
+			{
+				@Override
+				public void run()
+				{
+					guiControler.block();
+					int n = (overlapAnim == MoveAnimation.SLOW) ? 12 : 25;
+					for (int i = 0; i < n; i++)
+					{
+						for (int j = 0; j < bitSet.length; j++)
+						{
+							Vector3f v = new Vector3f(c[j]);
+							v.scale(1 / (float) n);
+							viewer.setAtomCoordRelative(v, bitSet[j]);
+						}
+						viewer.scriptWait("delay 0.01");
+					}
+					guiControler.unblock();
+				}
+			}, "move bitsets");
+		}
+		else
+		{
+			for (int i = 0; i < bitSet.length; i++)
+				viewer.setAtomCoordRelative(c[i], bitSet[i]);
+		}
+	}
+
+	public synchronized void setAtomProperty(BitSet bitSet, int temperature, int v, float v2, String string, float f[],
+			String s[])
+	{
+		viewer.setAtomProperty(bitSet, temperature, v, v2, string, f, s);
+	}
+
+	public synchronized String getModelName(int index)
+	{
+		return viewer.getModelName(index);
+	}
+
+	public synchronized int getAtomCountInModel(int index)
+	{
+		return viewer.getAtomCountInModel(index);
+	}
+
+	public void setAnimated(boolean b)
+	{
+		this.animated = b;
+	}
+
+	public boolean isAnimated()
+	{
+		return animated;
+	}
+
+	SequentialWorkerThread swt = new SequentialWorkerThread();
+
+	private void sequentially(final Runnable r, final String name)
+	{
+		swt.addJob(r, name);
+	}
+
+	public void afterAnimation(final Runnable r, final String name)
+	{
+		if (animated)
+			swt.addJob(r, name);
+		else
+			r.run();
+	}
+}

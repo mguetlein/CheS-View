@@ -15,6 +15,7 @@ import javax.swing.SwingUtilities;
 
 import main.CheSMapping;
 import main.Settings;
+import util.SwingUtil;
 import cluster.Clustering;
 import data.ClusteringData;
 
@@ -41,28 +42,9 @@ public class CheSViewer implements GUIControler
 	public CheSViewer(ClusteringData clusteredDataset, boolean startNextToScreen)
 	{
 
-		glass = new JPanel();// (JPanel) getGlassPane();
-
-		// CBListener listener = new CBListener();// aButton, menuBar, this,
-		// contentPane);
-
-		// glass.setVisible(true);
+		glass = new JPanel();
 		LayoutManager layout = new OverlayLayout(glass);
 		glass.setLayout(layout);
-
-		// FormLayout l = new FormLayout("center:pref:grow",
-		// "center:pref:grow");
-		// messagePanel = new JPanel(l);// new Bor.setBackground(Color.BLACK);derLayout());
-		// messagePanel.setOpaque(false);
-		// messageLabel = ComponentFactory.createLabel();
-		// messageLabel.setHorizontalAlignment(SwingConstants.CENTER);
-		// messageLabel.setOpaque(true);
-		// messageLabel.setBackground(new Color(0, 0, 0, 200));
-		// messageLabel.setFont(messageLabel.getFont().deriveFont(24f));
-		// CellConstraints cc = new CellConstraints();
-		// messagePanel.add(messageLabel, cc.xy(1, 1));
-		// messagePanel.setVisible(false);
-		// glass.add(messagePanel);
 
 		coverPanel = new JPanel();
 		coverPanel.setOpaque(false);
@@ -75,26 +57,7 @@ public class CheSViewer implements GUIControler
 		coverPanel.setCursor(new Cursor(Cursor.WAIT_CURSOR));
 		glass.add(coverPanel);
 
-		// JPanel p = new JPanel(new BorderLayout());
-		// p.setOpaque(false);
-		// p.add(new SideBar(mainPanel), BorderLayout.WEST);
-		// JPanel pp = new JPanel(new BorderLayout());
-		// pp.setOpaque(false);
-		// pp.add(new ModelInfoPanel(mainPanel), BorderLayout.SOUTH);
-		// pp.setBorder(new EmptyBorder(0, 0, 50, 0));
-		// p.add(pp);
-		// glass.add(p);
-
-		clusterPanel = new ClusterPanel(this, clusteredDataset);
-		clustering = clusterPanel.getClustering();
-
-		// glass.add(new SideBar(mainPanel), BorderLayout.WEST);
-		// JPanel pp = new JPanel(new BorderLayout());
-		// pp.setOpaque(false);
-		// pp.add(new ModelInfoPanel(mainPanel), BorderLayout.SOUTH);
-		// pp.setBorder(new EmptyBorder(0, 0, 50, 0));
-		// glass.add(pp);
-		// glass.setBorder(new EmptyBorder(10, 0, 0, 0));
+		clusterPanel = new ClusterPanel(this);
 
 		Dimension full = Toolkit.getDefaultToolkit().getScreenSize();
 		oldSize = new Dimension(full.width - 100, full.height - 100);
@@ -106,6 +69,9 @@ public class CheSViewer implements GUIControler
 			oldSize = new Dimension(1280, 1024);
 			oldLocation = new Point(Toolkit.getDefaultToolkit().getScreenSize().width, 0);
 		}
+
+		clusterPanel.init(clusteredDataset);
+		clustering = clusterPanel.getClustering();
 		setFullScreen(false, true);
 	}
 
@@ -140,6 +106,9 @@ public class CheSViewer implements GUIControler
 
 	public void show(boolean undecorated, Dimension size, Point location)
 	{
+		if (clustering == null)
+			throw new Error("clustering is null");
+
 		frame = new JFrame(Settings.TITLE + " (" + Settings.VERSION_STRING + ")");
 		Settings.TOP_LEVEL_COMPONENT = frame;
 
@@ -181,17 +150,12 @@ public class CheSViewer implements GUIControler
 
 	public void block()
 	{
-		// SwingUtilities.invokeLater(new Runnable()
-		// {
-		// @Override
-		// public void run()
-		// {
+		if (clusterPanel == null)
+			throw new Error("cluster panel not yet set");
 
 		System.out.println("BLOCK------------------");
 		coverPanel.setVisible(true);
 		coverPanel.requestFocus();
-		// }
-		// });
 	}
 
 	@Override
@@ -227,6 +191,7 @@ public class CheSViewer implements GUIControler
 			while (clusteringData == null)
 			{
 				CheSMapperWizard wwd = new CheSMapperWizard(null);
+				SwingUtil.waitWhileVisible(wwd);
 				if (wwd.isWorkflowSelected())
 					clusteringData = doMapping(wwd);
 				else

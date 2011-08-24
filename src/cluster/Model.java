@@ -1,11 +1,12 @@
 package cluster;
 
+import gui.View;
+
 import java.util.BitSet;
 
 import javax.vecmath.Vector3f;
 
 import org.jmol.script.Token;
-import org.jmol.viewer.Viewer;
 
 import dataInterface.CompoundData;
 import dataInterface.MoleculeProperty;
@@ -14,26 +15,23 @@ import dataInterface.SubstructureSmartsType;
 
 public class Model
 {
-	Viewer viewer;
 	int modelIndex;
 	BitSet bitSet;
 	double values[];
 
 	CompoundData compoundData;
 
-	boolean translucent = true;
+	boolean translucent = false;
 	boolean showLabel = false;
 	boolean showBox = false;
 	boolean hidden = false;
 	SubstructureSmartsType substructureHighlighted = null;
 
-	public Model(Viewer viewer, int modelIndex, CompoundData compoundData)
+	public Model(int modelIndex, CompoundData compoundData)
 	{
 		this.modelIndex = modelIndex;
 		this.compoundData = compoundData;
-		bitSet = viewer.getModelUndeletedAtomsBitSet(modelIndex);
-
-		this.viewer = viewer;
+		bitSet = View.instance.getModelUndeletedAtomsBitSet(modelIndex);
 	}
 
 	public String getTemperature(MoleculeProperty property)
@@ -58,7 +56,7 @@ public class Model
 	{
 		// string properties do have a normalized double value as well
 		double v = compoundData.getNormalizedValue(property);
-		viewer.setAtomProperty(bitSet, Token.temperature, (int) v, (float) v, v + "", null, null);
+		View.instance.setAtomProperty(bitSet, Token.temperature, (int) v, (float) v, v + "", null, null);
 	}
 
 	public BitSet getBitSet()
@@ -138,9 +136,9 @@ public class Model
 
 	public void moveTo(Vector3f clusterPos)
 	{
-		Vector3f center = new Vector3f(viewer.getAtomSetCenter(getBitSet()));
+		Vector3f center = new Vector3f(View.instance.getAtomSetCenter(getBitSet()));
 		Vector3f dest = new Vector3f(clusterPos);
 		dest.sub(center);
-		viewer.setAtomCoordRelative(dest, getBitSet());
+		View.instance.setAtomCoordRelative(dest, getBitSet());
 	}
 }

@@ -16,9 +16,6 @@ import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
 
 import main.Settings;
-
-import org.jmol.viewer.Viewer;
-
 import cluster.Cluster;
 import cluster.Clustering;
 import cluster.Model;
@@ -27,22 +24,14 @@ import dataInterface.SubstructureSmartsType;
 
 public class InfoPanel extends JPanel
 {
-	//	JLabel labelName;
-	//	JLabel labelNumAtoms;
-	//	JLabel labelSmiles;
-
 	JTable table;
 	DefaultTableModel model;
 	JScrollPane scroll;
-
-	Viewer viewer;
 	Clustering clustering;
-
 	LinkButton resizeButton;
 
-	public InfoPanel(Clustering clustering, Viewer viewer)
+	public InfoPanel(Clustering clustering)
 	{
-		this.viewer = viewer;
 		this.clustering = clustering;
 
 		buildLayout();
@@ -75,18 +64,6 @@ public class InfoPanel extends JPanel
 
 	private void buildLayout()
 	{
-		//		FormLayout layout = new FormLayout("pref:grow");
-		//		DefaultFormBuilder builder = new DefaultFormBuilder(layout);
-		//		builder.setLineGapSize(new ConstantSize(2, ConstantSize.PX));
-		//
-		//		builder.append(labelName = ComponentFactory.createLabel());
-		//		labelName.setForeground(ComponentFactory.LIST_SELECTION_FOREGROUND);
-		//		labelName.setBackground(ComponentFactory.LIST_ACTIVE_BACKGROUND);
-		//		labelName.setOpaque(true);
-		//		builder.append(labelNumAtoms = ComponentFactory.createLabel());
-		//		builder.append(labelSmiles = ComponentFactory.createLabel());
-		//		JPanel p = builder.getPanel();
-
 		JPanel p = new JPanel(new BorderLayout(2, 2));
 		p.setOpaque(false);
 
@@ -97,19 +74,10 @@ public class InfoPanel extends JPanel
 			public void actionPerformed(ActionEvent e)
 			{
 				setSmall(!small);
-				//				resize();
-				//				InfoPanel.this.invalidate();
-				//				InfoPanel.this.repaint();
-
 				if (InfoPanel.this.clustering.getClusterActive().getSelected() == -1)
 					update(true, InfoPanel.this.clustering.getClusterWatched().getSelected());
 				else
 					update(false, InfoPanel.this.clustering.getModelWatched().getSelected());
-
-				//				if (InfoPanel.this.clustering.getClusterActive().getSelected() == -1)
-				//					InfoPanel.this.clustering.getClusterWatched().clearSelection();
-				//				else
-				//					InfoPanel.this.clustering.getModelWatched().clearSelection();
 			}
 		});
 
@@ -233,8 +201,8 @@ public class InfoPanel extends JPanel
 			}
 			else
 			{
-				model.addRow(new Object[] { "Model", viewer.getModelName(index) });
-				model.addRow(new Object[] { "Num atoms", viewer.getAtomCountInModel(index) });
+				model.addRow(new Object[] { "Model", View.instance.getModelName(index) });
+				model.addRow(new Object[] { "Num atoms", View.instance.getAtomCountInModel(index) });
 				model.addRow(new Object[] { "Smiles", clustering.getModelWithModelIndex(index).getSmiles() });
 				for (SubstructureSmartsType type : clustering.getSubstructures())
 					model.addRow(new Object[] { type.toString(),

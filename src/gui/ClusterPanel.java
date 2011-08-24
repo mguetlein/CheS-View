@@ -29,11 +29,11 @@ public class ClusterPanel extends JPanel
 	JLabel messageLabel;
 	private MainPanel mainPanel;
 
-	public ClusterPanel(GUIControler guiControler, ClusteringData clusteredDataset)
+	public ClusterPanel(GUIControler guiControler)
 	{
 		this.guiControler = guiControler;
 
-		mainPanel = new MainPanel(guiControler, clusteredDataset);
+		mainPanel = new MainPanel(guiControler);
 
 		LayoutManager layout = new OverlayLayout(this);
 		setLayout(layout);
@@ -53,13 +53,13 @@ public class ClusterPanel extends JPanel
 
 		JPanel sideBarContainer = new JPanel(new BorderLayout());
 		sideBarContainer.setOpaque(false);
-		SideBar sideBar = new SideBar(mainPanel.getClustering(), mainPanel.getViewer(), mainPanel);
+		SideBar sideBar = new SideBar(mainPanel.getClustering(), mainPanel);
 		sideBarContainer.add(sideBar, BorderLayout.WEST);
 		add(sideBarContainer, BorderLayout.WEST);
 
 		JPanel pp = new JPanel(new BorderLayout());
 		pp.setOpaque(false);
-		InfoPanel info = new InfoPanel(mainPanel.getClustering(), mainPanel.getViewer());
+		InfoPanel info = new InfoPanel(mainPanel.getClustering());
 		JPanel infoContainer = new JPanel(new BorderLayout());
 		infoContainer.setOpaque(false);
 		infoContainer.add(info, BorderLayout.WEST);
@@ -73,6 +73,16 @@ public class ClusterPanel extends JPanel
 		add(mainPanel);
 		setOpaque(false);
 		installListeners();
+	}
+
+	public void init(ClusteringData clusteredDataset)
+	{
+		mainPanel.init(clusteredDataset);
+	}
+
+	public Clustering getClustering()
+	{
+		return mainPanel.getClustering();
 	}
 
 	private void installListeners()
@@ -163,8 +173,4 @@ public class ClusterPanel extends JPanel
 		th.start();
 	}
 
-	public Clustering getClustering()
-	{
-		return mainPanel.getClustering();
-	}
 }
