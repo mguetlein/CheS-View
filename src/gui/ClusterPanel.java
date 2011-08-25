@@ -118,7 +118,8 @@ public class ClusterPanel extends JPanel
 					// .addCluster(
 					// "C:\\Users\\martin\\workspace\\ClusterViewer\\cox2_3d_WithReals\\thresh_0.6\\cluster1.0.sdf");
 					// else
-					mainPanel.getClustering().chooseClustersToAdd();
+
+					//					mainPanel.getClustering().chooseClustersToAdd();
 				}
 				if (e.getKeyCode() == KeyEvent.VK_DELETE && e.isControlDown())
 				{

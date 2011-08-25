@@ -242,19 +242,6 @@ public class Clustering
 		return clusters;
 	}
 
-	public void chooseClustersToAdd()
-	{
-		throw new sun.reflect.generics.reflectiveObjects.NotImplementedException();
-
-		//		// String filenames[] = SdfProvider.chooseSdfFiles();
-		//		// if (filenames != null)
-		//		// addCluster(filenames);
-		//		
-		//		ClusteredDataset clusteredDataset = ClusteredDatasetWorflow.chooseDataset();
-		//		if (clusteredDataset != null)
-		//			addCluster(clusteredDataset);
-	}
-
 	public void newClustering(ClusteringData d)
 	{
 		@SuppressWarnings("unchecked")
