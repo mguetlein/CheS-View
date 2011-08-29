@@ -400,8 +400,10 @@ public class MainPanel extends JPanel implements ViewControler
 		Cluster c = clustering.getCluster(clus);
 		Model m = clustering.getModelWithModelIndex(i);
 		if (m == null)
-			throw new IllegalStateException("model is null!");
-
+		{
+			System.err.println("model is null!");
+			return;
+		}
 		int activeCluster = clustering.getClusterActive().getSelected();
 
 		boolean showBox = false;
@@ -620,9 +622,6 @@ public class MainPanel extends JPanel implements ViewControler
 		{
 			clustering.getClusterActive().setSelected(0);
 		}
-
-		if (CheSViewer.initProgress != null)
-			CheSViewer.initProgress.close();
 	}
 
 	private void updateClusterRemoved()

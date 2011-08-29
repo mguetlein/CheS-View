@@ -85,12 +85,15 @@ public class MenuBar extends JMenuBar
 				{
 					guiControler.block();
 					View.instance.setAnimated(false);
-					
+
 					clustering.clear();
 					ClusteringData d = CheSViewer.doMapping(wwd);
 					if (d != null)
+					{
 						clustering.newClustering(d);
-					
+						CheSViewer.finalizeTask();
+					}
+
 					View.instance.setAnimated(true);
 					guiControler.unblock();
 				}

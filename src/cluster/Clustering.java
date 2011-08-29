@@ -1,6 +1,5 @@
 package cluster;
 
-import gui.CheSViewer;
 import gui.CheckBoxSelectDialog;
 import gui.View;
 import io.SDFUtil;
@@ -18,6 +17,7 @@ import javax.swing.JFrame;
 import javax.vecmath.Vector3f;
 
 import main.Settings;
+import main.TaskProvider;
 import util.ArrayUtil;
 import util.SelectionModel;
 import util.Vector3fUtil;
@@ -263,12 +263,9 @@ public class Clustering
 			//				substructure = d.getClusterSubstructureSmarts()[i];
 
 			addSingleCluster(d.getCluster(i));
-			if (CheSViewer.initProgress != null)
-				CheSViewer.initProgress.update(66 * ((i + 1) / (double) d.getSize()), "Loading cluster dataset "
-						+ (i + 1));
+			TaskProvider.task().update("Loading cluster dataset " + (i + 1));
 		}
-		if (CheSViewer.initProgress != null)
-			CheSViewer.initProgress.update(66, "Loading graphics");
+		TaskProvider.task().update(90, "Loading graphics");
 
 		radius = Vector3fUtil.maxDist(positions);
 		center = Vector3fUtil.center(positions);

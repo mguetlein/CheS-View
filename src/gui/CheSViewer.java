@@ -15,14 +15,13 @@ import javax.swing.SwingUtilities;
 
 import main.CheSMapping;
 import main.Settings;
+import main.TaskProvider;
 import util.SwingUtil;
 import cluster.Clustering;
 import data.ClusteringData;
 
 public class CheSViewer implements GUIControler
 {
-	public static Progressable initProgress;
-
 	JFrame frame;
 	JPanel glass;
 	JPanel coverPanel;
@@ -41,7 +40,6 @@ public class CheSViewer implements GUIControler
 
 	public CheSViewer(ClusteringData clusteredDataset, boolean startNextToScreen)
 	{
-
 		glass = new JPanel();
 		LayoutManager layout = new OverlayLayout(glass);
 		glass.setLayout(layout);
@@ -184,7 +182,7 @@ public class CheSViewer implements GUIControler
 		boolean startNextToScreen = args.length > 1 && args[1].equals("true");
 
 		if (args.length > 0 && args[0].equals("true"))
-			start(CheSMapping.testWorkflow().doMapping(null), startNextToScreen);
+			start(CheSMapping.testWorkflow().doMapping(), startNextToScreen);
 		else
 		{
 			ClusteringData clusteringData = null;
@@ -206,15 +204,25 @@ public class CheSViewer implements GUIControler
 
 	public static ClusteringData doMapping(CheSMapperWizard wwd)
 	{
-		ProgressDialog progress = ProgressDialog.showProgress(null, "Chemical space mapping", 100);
-		Progressable clusterProgress = SubProgress.create(progress, 0, 66);
-		CheSViewer.initProgress = SubProgress.create(progress, 66, 100);
-		return wwd.loadDataset(clusterProgress);
+		TaskProvider.create("Ches-Mapper-Task");
+		TaskProvider.task().showDialog(null, "Chemical space mapping");
+		ClusteringData d = wwd.loadDataset();
+		return d;
+	}
+
+	public static void finalizeTask()
+	{
+		TaskProvider.task().getDialog().setVisible(false);
+		if (TaskProvider.task().containsWarnings())
+			TaskProvider.task().showWarningDialog(Settings.TOP_LEVEL_COMPONENT, "Warning",
+					"The following non-critical errors occured during the mapping:");
+		TaskProvider.clear();
 	}
 
 	public static void start(ClusteringData clusteredDataset, boolean startNextToScreen)
 	{
 		new CheSViewer(clusteredDataset, startNextToScreen);
+		finalizeTask();
 	}
 
 }
