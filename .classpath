@@ -6,7 +6,7 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/CheS-Map"/>
 	<classpathentry kind="lib" path="lib/commons-math-1.2/commons-math-1.2.jar"/>
 	<classpathentry kind="lib" path="lib/forms-1.2.1/forms-1.2.1.jar"/>
-	<classpathentry kind="lib" path="lib/jmol-12.0.47/Jmol.jar"/>
+	<classpathentry kind="lib" path="lib/jmol-12.0.47/Jmol.jar" sourcepath="/home/martin/workspace/external/jmol-12.0.47/src"/>
 	<classpathentry kind="lib" path="/home/martin/workspace/external/cdk-jar-1.4.0/cdk-1.4.0.jar" sourcepath="/home/martin/workspace/external/cdk-src+libs-1.4.0/src"/>
 	<classpathentry kind="lib" path="lib/cdk-jar-1.4.0/cdk-1.4.0.jar"/>
 	<classpathentry kind="output" path="bin"/>

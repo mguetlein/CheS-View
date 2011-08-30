@@ -3,6 +3,7 @@ package cluster;
 import gui.View;
 
 import java.util.BitSet;
+import java.util.HashMap;
 
 import javax.vecmath.Vector3f;
 
@@ -27,12 +28,14 @@ public class Model
 	boolean hidden = false;
 	SubstructureSmartsType substructureHighlighted = null;
 	private Vector3f position;
+	HashMap<String, BitSet> smartsMatches;
 
 	public Model(int modelIndex, CompoundData compoundData)
 	{
 		this.modelIndex = modelIndex;
 		this.compoundData = compoundData;
 		bitSet = View.instance.getModelUndeletedAtomsBitSet(modelIndex);
+		smartsMatches = new HashMap<String, BitSet>();
 	}
 
 	public String getTemperature(MoleculeProperty property)
@@ -157,4 +160,15 @@ public class Model
 	{
 		position = pos;
 	}
+
+	public void setSmartsMatch(String smarts, BitSet bitSet)
+	{
+		smartsMatches.put(smarts, bitSet);
+	}
+
+	public BitSet getSmartsMatch(String smarts)
+	{
+		return smartsMatches.get(smarts);
+	}
+
 }

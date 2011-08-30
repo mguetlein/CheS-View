@@ -204,7 +204,7 @@ public class CheSViewer implements GUIControler
 
 	public static ClusteringData doMapping(CheSMapperWizard wwd)
 	{
-		TaskProvider.create("Ches-Mapper-Task");
+		TaskProvider.registerThread("Ches-Mapper-Task");
 		TaskProvider.task().showDialog(null, "Chemical space mapping");
 		ClusteringData d = wwd.loadDataset();
 		return d;

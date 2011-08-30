@@ -396,5 +396,4 @@ public class Clustering
 	{
 		return clusters.size();
 	}
-
 }

@@ -103,7 +103,7 @@ public class MainPanel extends JPanel implements ViewControler
 			{
 				if (!SwingUtilities.isLeftMouseButton(e))
 					return;
-				int atomIndex = view.findNearestAtomIndex(e.getX(), e.getY());
+				int atomIndex = view.sloppyFindNearestAtomIndex(e.getX(), e.getY());
 				if (atomIndex != -1)
 				{
 					if (clustering.getClusterActive().getSelected() == -1)
@@ -479,18 +479,44 @@ public class MainPanel extends JPanel implements ViewControler
 		// CHANGES SELECTION !!!
 		if (substructure != m.getSubstructureHighlighted())
 		{
-			System.out.println("highlighting: " + i + " " + substructure + " smarts: "
-					+ c.getSubstructureSmarts(substructure) + " smiles: " + m.getSmiles());
-
-			if (substructure != null && c.getSubstructureSmarts(substructure) != null
-					&& c.getSubstructureSmarts(substructure).length() > 0)
+			boolean match = false;
+			String smarts = null;
+			if (substructure != null)
+				smarts = c.getSubstructureSmarts(substructure);
+			if (smarts != null && smarts.length() > 0)
 			{
-				view.scriptWait("select selected AND search(\"" + c.getSubstructureSmarts(substructure) + "\")");
-				view.scriptWait("color orange");
+				BitSet matchBitSet = m.getSmartsMatch(smarts);
+				//compute match dynamically
+				if (matchBitSet == null)
+				{
+					System.out.println("smarts-matching: " + i + " " + substructure + " smarts: " + smarts
+							+ " smiles: " + m.getSmiles());
+					m.setSmartsMatch(smarts, view.getSmartsMatch(smarts, m.getBitSet()));
+					if (m.getSmartsMatch(smarts).cardinality() == 0)
+					{
+						System.out.flush();
+						System.err.println("could not match smarts!");
+						System.err.flush();
+					}
+					matchBitSet = m.getSmartsMatch(smarts);
+				}
+				if (matchBitSet.cardinality() > 0)
+				{
+					match = true;
+					view.select(matchBitSet, false);
+					if (m.isTranslucent())
+						view.scriptWait("color orange" + modelInactiveSuffix);
+					else
+						view.scriptWait("color orange" + modelActiveSuffix);
+				}
 			}
-			else if (!forceUpdate)
-				view.scriptWait(color + modelActiveSuffix);
-			//			viewer.script("subset all");
+			if (!match && !forceUpdate)
+			{
+				if (m.isTranslucent())
+					view.scriptWait(color + modelInactiveSuffix);
+				else
+					view.scriptWait(color + modelActiveSuffix);
+			}
 		}
 
 		// CHANGES SELECTION !!!

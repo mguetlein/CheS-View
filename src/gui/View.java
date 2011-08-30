@@ -173,6 +173,24 @@ public class View
 		return viewer.findNearestAtomIndex(x, y);
 	}
 
+	public synchronized int sloppyFindNearestAtomIndex(int x, int y)
+	{
+		// 6px is the hard coded "epsilon" for clicking atoms
+		// -> making it 36 ( (12+6)*2 )
+		int xx[] = new int[] { x - 12, x, x + 12 };
+		int yy[] = new int[] { y - 12, y, y + 12 };
+		for (int i = 0; i < yy.length; i++)
+		{
+			for (int j = 0; j < yy.length; j++)
+			{
+				int index = viewer.findNearestAtomIndex(xx[i], yy[i]);
+				if (index != -1)
+					return index;
+			}
+		}
+		return -1;
+	}
+
 	public synchronized int getAtomModelIndex(int atomIndex)
 	{
 		return viewer.getAtomModelIndex(atomIndex);
@@ -185,11 +203,13 @@ public class View
 
 	public synchronized void select(BitSet bitSet, boolean b)
 	{
+		//		System.err.println("XX> selecting bitset: " + bitSet);
 		viewer.select(bitSet, b);
 	}
 
 	public synchronized void scriptWait(String script)
 	{
+		//		System.err.println("XX> " + script);
 		viewer.scriptWait(script);
 	}
 
@@ -296,6 +316,11 @@ public class View
 	public synchronized int getAtomCountInModel(int index)
 	{
 		return viewer.getAtomCountInModel(index);
+	}
+
+	public synchronized BitSet getSmartsMatch(String smarts, BitSet bitSet)
+	{
+		return viewer.getSmartsMatch(smarts, bitSet);
 	}
 
 	public void setAnimated(boolean b)
