@@ -25,7 +25,6 @@ import util.VectorUtil;
 import data.ClusteringData;
 import data.DatasetFile;
 import dataInterface.ClusterData;
-import dataInterface.ClusteringDataUtil;
 import dataInterface.MoleculeProperty;
 import dataInterface.SubstructureSmartsType;
 
@@ -250,29 +249,47 @@ public class Clustering
 
 		clusteringData = d;
 
-		Vector3f[] positions = ClusteringDataUtil.getClusterPositions(d);
-		float scale = ClusterUtil.getScaleFactor(positions);
-
 		for (int i = 0; i < d.getSize(); i++)
 		{
-			Vector3f pos = d.getCluster(i).getPosition();
-			pos.scale(scale);
-
 			//String substructure = null;
 			//			if (d.getClusterSubstructureSmarts() != null)
 			//				substructure = d.getClusterSubstructureSmarts()[i];
 
 			addSingleCluster(d.getCluster(i));
-			TaskProvider.task().update("Loading cluster dataset " + (i + 1));
+			TaskProvider.task().update("Loading cluster dataset " + (i + 1) + "/" + d.getSize());
 		}
 		TaskProvider.task().update(90, "Loading graphics");
-
-		radius = Vector3fUtil.maxDist(positions);
-		center = Vector3fUtil.center(positions);
 
 		suppresAddEvent = false;
 		for (PropertyChangeListener l : listeners)
 			l.propertyChange(new PropertyChangeEvent(this, CLUSTER_ADDED, old, Clustering.this.clusters));
+
+		updatePositions();
+	}
+
+	public void updatePositions()
+	{
+		getClusterWatched().clearSelection();
+		getModelWatched().clearSelection();
+
+		Vector3f[] positions = ClusteringUtil.getClusterPositions(this, true);
+		float scale = ClusterUtil.getScaleFactor(positions);
+
+		for (int i = 0; i < positions.length; i++)
+		{
+			Vector3f pos = new Vector3f(positions[i]);
+			//Vector3f pos = clusters.get(i).getPosition();
+			pos.scale(scale);
+			clusters.get(i).setPosition(pos);
+
+			clusters.get(i).updatePositions();
+		}
+
+		positions = ClusteringUtil.getClusterPositions(this, false);
+		radius = Vector3fUtil.maxDist(positions);
+		center = Vector3fUtil.center(positions);
+
+		View.instance.scriptWait("");
 	}
 
 	private int[] clusterChooser(String title, String description, boolean allSelected)

@@ -15,6 +15,10 @@ public interface ViewControler
 
 	public void setSpinEnabled(boolean spinEnabled);
 
+	public boolean isMaxDensitiy();
+
+	public void setDensitiyHigher(boolean higher);
+
 	public String getStyle();
 
 	public void setStyle(String style);
@@ -29,6 +33,7 @@ public interface ViewControler
 
 	public static final String PROPERTY_HIGHLIGHT_CHANGED = "propertyHighlightChanged";
 	public static final String PROPERTY_NEW_HIGHLIGHTERS = "propertyNewHighlighters";
+	public static final String PROPERTY_DENSITY_CHANGED = "propertyDensityChanged";
 
 	public boolean isHighlighterLabelsVisible();
 

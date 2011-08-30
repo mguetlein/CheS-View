@@ -26,6 +26,7 @@ public class Model
 	boolean showBox = false;
 	boolean hidden = false;
 	SubstructureSmartsType substructureHighlighted = null;
+	private Vector3f position;
 
 	public Model(int modelIndex, CompoundData compoundData)
 	{
@@ -140,5 +141,20 @@ public class Model
 		Vector3f dest = new Vector3f(clusterPos);
 		dest.sub(center);
 		View.instance.setAtomCoordRelative(dest, getBitSet());
+	}
+
+	public Vector3f getOrigPosition()
+	{
+		return compoundData.getPosition();
+	}
+
+	public Vector3f getPosition()
+	{
+		return position;
+	}
+
+	public void setPosition(Vector3f pos)
+	{
+		position = pos;
 	}
 }

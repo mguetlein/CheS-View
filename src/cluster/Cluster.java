@@ -1,6 +1,7 @@
 package cluster;
 
 import gui.View;
+import gui.View.MoveAnimation;
 import gui.ViewControler.HighlightSorting;
 
 import java.util.ArrayList;
@@ -15,7 +16,6 @@ import javax.vecmath.Vector3f;
 
 import util.Vector3fUtil;
 import dataInterface.ClusterData;
-import dataInterface.ClusteringDataUtil;
 import dataInterface.MoleculeProperty;
 import dataInterface.MoleculeProperty.Type;
 import dataInterface.SubstructureSmartsType;
@@ -34,6 +34,8 @@ public class Cluster
 	double maxDist;
 	int radius;
 
+	private Vector3f position;
+
 	public Cluster(dataInterface.ClusterData clusterData, boolean firstCluster)
 	{
 		this.clusterData = clusterData;
@@ -42,28 +44,48 @@ public class Cluster
 		View.instance.loadModelFromFile(null, clusterData.getFilename(), null, null, !firstCluster, null, null, 0);
 		int after = View.instance.getModelCount();
 
-		Vector3f positions[] = ClusteringDataUtil.getCompoundPositions(clusterData);
-
-		if ((after - before) != positions.length)
+		if ((after - before) != clusterData.getSize())
 			throw new IllegalStateException("models in file: " + (after - before) + " != model props passed: "
-					+ positions.length);
-
-		float scale = ClusterUtil.getScaleFactor(positions);
-		//		System.out.println("SSSSSSSSSSSSSSSSSSSSSSSSSSS model scaling: " + scale);
-		for (Vector3f v3f : positions)
-			v3f.scale(scale);
-		radius = (int) (Vector3fUtil.maxDist(positions));
+					+ clusterData.getSize());
 
 		models = new Vector<Model>();
 		int mCount = 0;
 		for (int i = before; i < after; i++)
 			addModel(new Model(i, clusterData.getCompounds().get(mCount++))); //  modelOrigIndices[mCount], props, nProps));
+	}
+
+	public void updatePositions()
+	{
+		boolean overlap = this.overlap;
+		boolean superimposed = this.superimposed;
+		if (!overlap)
+			setOverlap(true, MoveAnimation.NONE, false);
+
+		Vector3f positions[] = ClusterUtil.getModelPositions(this, true);
+		float scale = ClusterUtil.getScaleFactor(positions);
+		//		System.out.println("SSSSSSSSSSSSSSSSSSSSSSSSSSS model scaling: " + scale);
+
+		//		for (Vector3f v3f : positions)
+		//			v3f.scale(scale);
+		for (int i = 0; i < positions.length; i++)
+		{
+			Vector3f pos = new Vector3f(positions[i]);
+			pos.scale(scale);
+			models.get(i).setPosition(pos);
+		}
+
+		positions = ClusterUtil.getModelPositions(this, false);
+		radius = (int) (Vector3fUtil.maxDist(positions));
+
 		resetCenter();
 
-		translate(clusterData.getPosition());
+		translate(getPosition());
 		if (!clusterData.isAligned())
 			for (Model m : models)
-				m.moveTo(clusterData.getPosition());
+				m.moveTo(getPosition());
+
+		if (!overlap)
+			setOverlap(false, MoveAnimation.NONE, superimposed);
 	}
 
 	public String getSummaryStringValue(MoleculeProperty property)
@@ -149,7 +171,7 @@ public class Cluster
 		else
 		{
 			Vector3f c = new Vector3f(getCenter());
-			c.add(Vector3fUtil.center(ClusteringDataUtil.getCompoundPositions(clusterData)));
+			c.add(Vector3fUtil.center(ClusterUtil.getModelPositions(this, false)));
 			nonOverlapCenter = c;
 			System.out.println("computed " + nonOverlapCenter);
 		}
@@ -287,7 +309,7 @@ public class Cluster
 		if (this.overlap != overlap)
 		{
 			this.overlap = overlap;
-			final Vector3f modelPositions[] = ClusteringDataUtil.getCompoundPositions(clusterData);
+			final Vector3f modelPositions[] = ClusterUtil.getModelPositions(this, false);
 
 			BitSet bitsets[] = new BitSet[modelPositions.length];
 			for (int j = 0; j < modelPositions.length; j++)
@@ -330,6 +352,21 @@ public class Cluster
 	public String getSubstructureSmarts(SubstructureSmartsType type)
 	{
 		return clusterData.getSubstructureSmarts(type);
+	}
+
+	public Vector3f getPosition()
+	{
+		return position;
+	}
+
+	public void setPosition(Vector3f pos)
+	{
+		position = pos;
+	}
+
+	public Vector3f getOrigPosition()
+	{
+		return clusterData.getPosition();
 	}
 
 }

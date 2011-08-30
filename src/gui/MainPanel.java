@@ -28,6 +28,7 @@ import util.ArrayUtil;
 import util.DoubleUtil;
 import util.StringUtil;
 import cluster.Cluster;
+import cluster.ClusterUtil;
 import cluster.Clustering;
 import cluster.Model;
 import data.ClusteringData;
@@ -823,6 +824,32 @@ public class MainPanel extends JPanel implements ViewControler
 	{
 		for (PropertyChangeListener l : viewListeners)
 			l.propertyChange(new PropertyChangeEvent(this, prop, "old", "new"));
+	}
+
+	@Override
+	public boolean isMaxDensitiy()
+	{
+		return ClusterUtil.DENSITY <= 0.1f;
+	}
+
+	@Override
+	public void setDensitiyHigher(boolean higher)
+	{
+		if (higher)
+		{
+			if (!isMaxDensitiy())
+			{
+				ClusterUtil.DENSITY = ClusterUtil.DENSITY - 0.05f;
+				clustering.updatePositions();
+				fireViewChange(PROPERTY_DENSITY_CHANGED);
+			}
+		}
+		else
+		{
+			ClusterUtil.DENSITY = ClusterUtil.DENSITY + 0.05f;
+			clustering.updatePositions();
+			fireViewChange(PROPERTY_DENSITY_CHANGED);
+		}
 	}
 
 }

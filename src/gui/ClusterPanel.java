@@ -94,9 +94,13 @@ public class ClusterPanel extends JPanel
 				if (e.isControlDown() && (e.getKeyCode() == KeyEvent.VK_PLUS || e.getKeyCode() == KeyEvent.VK_MINUS))
 				{
 					if (e.getKeyCode() == KeyEvent.VK_PLUS)
-						mainPanel.zoomFactor += 0.1f;
-					if (e.getKeyCode() == KeyEvent.VK_MINUS)
-						mainPanel.zoomFactor -= 0.1f;
+					{
+						mainPanel.setDensitiyHigher(false);
+					}
+					if (e.getKeyCode() == KeyEvent.VK_MINUS && !mainPanel.isMaxDensitiy())
+					{
+						mainPanel.setDensitiyHigher(true);
+					}
 				}
 
 				if (e.getKeyCode() == KeyEvent.VK_F4 && e.isAltDown())
