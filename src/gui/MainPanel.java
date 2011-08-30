@@ -421,11 +421,11 @@ public class MainPanel extends JPanel implements ViewControler
 				if (c.isSuperimposed() && !clustering.getModelWatched().isSelected(i)
 						&& !clustering.getModelActive().isSelected(i))
 					translucent = true;
+				if (selectedHighlighter instanceof MoleculePropertyHighlighter)
+					showLabel = true;
 
 				if (clustering.getModelWatched().isSelected(i) || clustering.getModelActive().isSelected(i))
 				{
-					if (selectedHighlighter instanceof MoleculePropertyHighlighter)
-						showLabel = true;
 					if (clustering.getModelWatched().isSelected(i) && !c.isOverlap())
 						showBox = true;
 				}
