@@ -486,20 +486,6 @@ public class MainPanel extends JPanel implements ViewControler
 			if (smarts != null && smarts.length() > 0)
 			{
 				BitSet matchBitSet = m.getSmartsMatch(smarts);
-				//compute match dynamically
-				if (matchBitSet == null)
-				{
-					System.out.println("smarts-matching: " + i + " " + substructure + " smarts: " + smarts
-							+ " smiles: " + m.getSmiles());
-					m.setSmartsMatch(smarts, view.getSmartsMatch(smarts, m.getBitSet()));
-					if (m.getSmartsMatch(smarts).cardinality() == 0)
-					{
-						System.out.flush();
-						System.err.println("could not match smarts!");
-						System.err.flush();
-					}
-					matchBitSet = m.getSmartsMatch(smarts);
-				}
 				if (matchBitSet.cardinality() > 0)
 				{
 					match = true;

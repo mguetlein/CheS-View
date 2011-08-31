@@ -161,13 +161,20 @@ public class Model
 		position = pos;
 	}
 
-	public void setSmartsMatch(String smarts, BitSet bitSet)
-	{
-		smartsMatches.put(smarts, bitSet);
-	}
-
 	public BitSet getSmartsMatch(String smarts)
 	{
+		//compute match dynamically
+		if (!smartsMatches.containsKey(smarts))
+		{
+			System.out.println("smarts-matching smarts: " + smarts + " smiles: " + getSmiles());
+			smartsMatches.put(smarts, View.instance.getSmartsMatch(smarts, bitSet));
+			if (smartsMatches.get(smarts).cardinality() == 0)
+			{
+				System.out.flush();
+				System.err.println("could not match smarts!");
+				System.err.flush();
+			}
+		}
 		return smartsMatches.get(smarts);
 	}
 

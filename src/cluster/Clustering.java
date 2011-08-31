@@ -260,11 +260,11 @@ public class Clustering
 		}
 		TaskProvider.task().update(90, "Loading graphics");
 
+		updatePositions();
+
 		suppresAddEvent = false;
 		for (PropertyChangeListener l : listeners)
 			l.propertyChange(new PropertyChangeEvent(this, CLUSTER_ADDED, old, Clustering.this.clusters));
-
-		updatePositions();
 	}
 
 	public void updatePositions()
