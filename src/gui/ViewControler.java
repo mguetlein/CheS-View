@@ -15,7 +15,7 @@ public interface ViewControler
 
 	public void setSpinEnabled(boolean spinEnabled);
 
-	public boolean isMaxDensitiy();
+	public boolean canChangeDensitiy(boolean higher);
 
 	public void setDensitiyHigher(boolean higher);
 

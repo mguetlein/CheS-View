@@ -93,13 +93,15 @@ public class ClusterPanel extends JPanel
 			{
 				if (e.isControlDown() && (e.getKeyCode() == KeyEvent.VK_PLUS || e.getKeyCode() == KeyEvent.VK_MINUS))
 				{
+					if (e.getKeyCode() == KeyEvent.VK_MINUS)
+					{
+						if (mainPanel.canChangeDensitiy(false))
+							mainPanel.setDensitiyHigher(false);
+					}
 					if (e.getKeyCode() == KeyEvent.VK_PLUS)
 					{
-						mainPanel.setDensitiyHigher(false);
-					}
-					if (e.getKeyCode() == KeyEvent.VK_MINUS && !mainPanel.isMaxDensitiy())
-					{
-						mainPanel.setDensitiyHigher(true);
+						if (mainPanel.canChangeDensitiy(true))
+							mainPanel.setDensitiyHigher(true);
 					}
 				}
 

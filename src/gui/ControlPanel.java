@@ -149,7 +149,7 @@ public class ControlPanel extends JPanel
 		{
 			public void actionPerformed(ActionEvent e)
 			{
-				viewControler.setDensitiyHigher(e.getSource() == buttonMinus);
+				viewControler.setDensitiyHigher(e.getSource() == buttonPlus);
 			}
 		};
 		buttonPlus.addActionListener(l2);
@@ -228,7 +228,8 @@ public class ControlPanel extends JPanel
 				}
 				else if (evt.getPropertyName().equals(ViewControler.PROPERTY_DENSITY_CHANGED))
 				{
-					buttonMinus.setEnabled(!viewControler.isMaxDensitiy());
+					buttonPlus.setEnabled(viewControler.canChangeDensitiy(true));
+					buttonMinus.setEnabled(viewControler.canChangeDensitiy(false));
 				}
 				updateByViewControler = false;
 			}
@@ -271,12 +272,6 @@ public class ControlPanel extends JPanel
 			@Override
 			public void setSpinEnabled(boolean spinEnabled)
 			{
-			}
-
-			@Override
-			public boolean isMaxDensitiy()
-			{
-				return false;
 			}
 
 			@Override
@@ -343,6 +338,12 @@ public class ControlPanel extends JPanel
 			@Override
 			public void addViewListener(PropertyChangeListener l)
 			{
+			}
+
+			@Override
+			public boolean canChangeDensitiy(boolean higher)
+			{
+				return true;
 			}
 
 		}));

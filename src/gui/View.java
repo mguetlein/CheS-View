@@ -25,6 +25,13 @@ public class View
 	{
 		this.viewer = viewer;
 		this.guiControler = guiControler;
+
+		viewer.script("set disablePopupMenu on");
+		//		viewer.script("hover OFF");
+		//		viewer.script("label OFF");
+		//		viewer.script("set drawHover OFF");
+		//		viewer.script("set labelAtom OFF");
+		//		viewer.script("set hoverLabel ''");
 	}
 
 	public static void init(JmolPanel jmolPanel, GUIControler guiControler)
@@ -62,57 +69,12 @@ public class View
 		}
 	}
 
-	public synchronized void zoomOut(final Vector3f center, final float time, float zoomFactor, float radius)
+	public synchronized void zoomOut(final Vector3f center, final float time, float radius)
 	{
-		//		System.out.println("llllllllllllllllll");
-		//		System.out.println("Radius    " + radius);
-		//System.out.println("Rotation  " + viewer.getRotationRadius());
-		//		System.out.println("Rotation2 " + viewer.getModelSet().calcRotationRadius(bs));
-		//		radius = viewer.getModelSet().calcRotationRadius(bs);
-
-		int zoom;
-		if (radius < 10)
-			zoom = 50;
-		else if (radius < 20)
-			zoom = 30;
-		else if (radius < 30)
-			zoom = 30;
-		else if (radius < 40)
-			zoom = 30;
-		else if (radius < 50)
-			zoom = 30;
-		else if (radius < 60)
-			zoom = 25;
-		else if (radius < 80)
-			zoom = 20;
-		else if (radius < 100)
-			zoom = 15;
-		else if (radius < 150)
-			zoom = 10;
-		else if (radius < 200)
-			zoom = 5;
-		else
-			zoom = 5;
-
-		zoom *= zoomFactor;
+		//		System.err.println("Radius    " + radius);
+		int zoom = (int) (1200 / radius);
+		//		System.err.println("zoom " + zoom);
 		zoom = (int) Math.max(5, zoom);
-
-		//		if (clustering.getOrigSdfFile().matches(".*chang.*"))
-		//			radius *= 0.4;
-		//		else if (clustering.getOrigSdfFile().matches(".*NCTRER_v4b_232_15Feb2008.*"))
-		//			radius *= 0.9;
-		//		radius = Math.max(5, Math.min(radius, 50));
-		//		System.out.println("Zoom    " + radius);
-
-		//radius *= viewer.getRotationRadius() / 8.0;
-		//		}
-
-		//		viewer.moveTo(time, new Point3f(center.x, center.y, center.z), JmolConstants.center, Float.NaN, null, 10f, 0f,
-		//				0f, Float.NaN, null, Float.NaN, Float.NaN, Float.NaN);
-
-		//		int zoom = 10;
-		//		if (radius == 0)
-		//			zoom = 50;
 
 		if (animated)
 		{

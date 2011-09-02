@@ -281,7 +281,6 @@ public class Clustering
 			//Vector3f pos = clusters.get(i).getPosition();
 			pos.scale(scale);
 			clusters.get(i).setPosition(pos);
-
 			clusters.get(i).updatePositions();
 		}
 
@@ -289,7 +288,7 @@ public class Clustering
 		radius = Vector3fUtil.maxDist(positions);
 		center = Vector3fUtil.center(positions);
 
-		View.instance.scriptWait("");
+		//		View.instance.scriptWait("");
 	}
 
 	private int[] clusterChooser(String title, String description, boolean allSelected)

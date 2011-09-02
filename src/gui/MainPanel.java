@@ -41,7 +41,7 @@ public class MainPanel extends JPanel implements ViewControler
 	JmolPanel jmolPanel;
 	View view;
 	private Clustering clustering;
-	private boolean spinEnabled = true;
+	private boolean spinEnabled = false;
 
 	private static final String DEFAULT_COLOR = "color cpk";
 
@@ -57,8 +57,6 @@ public class MainPanel extends JPanel implements ViewControler
 	Highlighter selectedHighlighter = DEFAULT_HIGHLIGHTER;
 	boolean highlighterLabelsVisible = true;
 	HighlightSorting highlightSorting = HighlightSorting.Med;
-
-	public float zoomFactor = 1f;
 
 	public Clustering getClustering()
 	{
@@ -101,29 +99,31 @@ public class MainPanel extends JPanel implements ViewControler
 		{
 			public void mouseClicked(MouseEvent e)
 			{
-				if (!SwingUtilities.isLeftMouseButton(e))
-					return;
-				int atomIndex = view.sloppyFindNearestAtomIndex(e.getX(), e.getY());
-				if (atomIndex != -1)
+				if (SwingUtilities.isLeftMouseButton(e))
 				{
-					if (clustering.getClusterActive().getSelected() == -1)
+					System.err.println("left");
+					int atomIndex = view.sloppyFindNearestAtomIndex(e.getX(), e.getY());
+					if (atomIndex != -1)
 					{
-						// no cluster active at the moment
-						// set a cluster to active (zooming will be done in listener)
-						clustering.getClusterActive().setSelected(
-								clustering.getClusterIndexForModelIndex(view.getAtomModelIndex(atomIndex)));
-						clustering.getClusterWatched().clearSelection();
+						if (clustering.getClusterActive().getSelected() == -1)
+						{
+							// no cluster active at the moment
+							// set a cluster to active (zooming will be done in listener)
+							clustering.getClusterActive().setSelected(
+									clustering.getClusterIndexForModelIndex(view.getAtomModelIndex(atomIndex)));
+							clustering.getClusterWatched().clearSelection();
+						}
+						else
+						{
+							// already a cluster active, zooming into model
+							//						final Model m = clustering.getModelWithModelIndex(view.getAtomModelIndex(atomIndex));
+							clustering.getModelWatched().clearSelection();
+							clustering.getModelActive().setSelected(view.getAtomModelIndex(atomIndex));
+						}
 					}
 					else
-					{
-						// already a cluster active, zooming into model
-						//						final Model m = clustering.getModelWithModelIndex(view.getAtomModelIndex(atomIndex));
-						clustering.getModelWatched().clearSelection();
-						clustering.getModelActive().setSelected(view.getAtomModelIndex(atomIndex));
-					}
+						clustering.getClusterWatched().clearSelection();
 				}
-				else
-					clustering.getClusterWatched().clearSelection();
 			}
 		});
 
@@ -628,7 +628,7 @@ public class MainPanel extends JPanel implements ViewControler
 		view.evalString("frame " + view.getModelNumberDotted(0) + " "
 				+ view.getModelNumberDotted(clustering.numModels() - 1));
 
-		view.zoomOut(clustering.getCenter(), 0, zoomFactor, clustering.getRadius());//, clustering.getBitSetAll());
+		view.zoomOut(clustering.getCenter(), 0, clustering.getRadius());//, clustering.getBitSetAll());
 		setSpinEnabled(isSpinEnabled(), true);
 
 		if (clustering.getNumClusters() == 1)
@@ -661,7 +661,7 @@ public class MainPanel extends JPanel implements ViewControler
 			else if (mIndex == -1 && mIndexOld != -1)
 			{
 				final Cluster c = getClustering().getClusterForModelIndex(mIndexOld);
-				view.zoomOut(c.getNonOverlapCenter(), 0.5f, zoomFactor, c.getRadius());
+				view.zoomOut(c.getNonOverlapCenter(), 0.5f, c.getRadius());
 			}
 		}
 	}
@@ -723,7 +723,7 @@ public class MainPanel extends JPanel implements ViewControler
 
 				//				System.out.println(c.getRadius());
 				if (c.getModels().size() > 1)
-					view.zoomOut(c.getNonOverlapCenter(), 0.5f, zoomFactor, c.getRadius());//, c.getBitSet());
+					view.zoomOut(c.getNonOverlapCenter(), 0.5f, c.getRadius());//, c.getBitSet());
 				else
 				{
 					view.zoomIn(c.getCenter());
@@ -740,7 +740,7 @@ public class MainPanel extends JPanel implements ViewControler
 
 				c.setOverlap(true, View.MoveAnimation.FAST, false);
 				//viewerUtils.zoomOut(true, new Vector3f(0, 0, 0), 0.5);
-				view.zoomOut(clustering.getCenter(), 0.5f, zoomFactor, clustering.getRadius()); //, clustering.getBitSetAll());
+				view.zoomOut(clustering.getCenter(), 0.5f, clustering.getRadius()); //, clustering.getBitSetAll());
 
 				view.afterAnimation(new Runnable()
 				{
@@ -795,7 +795,7 @@ public class MainPanel extends JPanel implements ViewControler
 
 		if (c.isOverlap())
 		{
-			view.zoomOut(c.getNonOverlapCenter(), 0.5f, zoomFactor, c.getRadius()); //, c.getBitSet());
+			view.zoomOut(c.getNonOverlapCenter(), 0.5f, c.getRadius()); //, c.getBitSet());
 			c.setOverlap(false, View.MoveAnimation.SLOW, false);
 		}
 		else
@@ -822,6 +822,7 @@ public class MainPanel extends JPanel implements ViewControler
 			}
 		}, "set models translucent");
 
+		fireViewChange(PROPERTY_DENSITY_CHANGED);
 	}
 
 	List<PropertyChangeListener> viewListeners = new ArrayList<PropertyChangeListener>();
@@ -839,29 +840,48 @@ public class MainPanel extends JPanel implements ViewControler
 	}
 
 	@Override
-	public boolean isMaxDensitiy()
+	public boolean canChangeDensitiy(boolean higher)
 	{
-		return ClusterUtil.DENSITY <= 0.1f;
+		if (higher && ClusterUtil.DENSITY <= 0.1f)
+			return false;
+		Cluster activeCluster = clustering.getCluster(clustering.getClusterActive().getSelected());
+		if (activeCluster == null)
+			return true;
+		else
+			return !activeCluster.isSuperimposed();
 	}
 
 	@Override
 	public void setDensitiyHigher(boolean higher)
 	{
-		if (higher)
+		Cluster activeCluster = clustering.getCluster(clustering.getClusterActive().getSelected());
+		if (activeCluster != null && activeCluster.isSuperimposed())
+			throw new IllegalStateException("does not make sense, because superimposed!");
+
+		if (activeCluster != null)
 		{
-			if (!isMaxDensitiy())
-			{
-				ClusterUtil.DENSITY = ClusterUtil.DENSITY - 0.05f;
-				clustering.updatePositions();
-				fireViewChange(PROPERTY_DENSITY_CHANGED);
-			}
+			if (clustering.getModelActive().getSelected() != -1)
+				clustering.getModelActive().clearSelection();
+		}
+
+		if (higher)
+			ClusterUtil.DENSITY = ClusterUtil.DENSITY - 0.1f;
+		else
+			ClusterUtil.DENSITY = ClusterUtil.DENSITY + 0.1f;
+
+		clustering.updatePositions();
+
+		if (activeCluster != null)
+		{
+			System.out.println("zooming out - cluster");
+			view.zoomOut(activeCluster.getNonOverlapCenter(), 0f, activeCluster.getRadius());
 		}
 		else
 		{
-			ClusterUtil.DENSITY = ClusterUtil.DENSITY + 0.05f;
-			clustering.updatePositions();
-			fireViewChange(PROPERTY_DENSITY_CHANGED);
+			System.out.println("zooming out - home");
+			view.zoomOut(clustering.getCenter(), 0f, clustering.getRadius());
 		}
+		fireViewChange(PROPERTY_DENSITY_CHANGED);
 	}
 
 }
