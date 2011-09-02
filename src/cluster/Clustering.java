@@ -265,6 +265,8 @@ public class Clustering
 		suppresAddEvent = false;
 		for (PropertyChangeListener l : listeners)
 			l.propertyChange(new PropertyChangeEvent(this, CLUSTER_ADDED, old, Clustering.this.clusters));
+
+		View.instance.scriptWait("hover off");
 	}
 
 	public void updatePositions()

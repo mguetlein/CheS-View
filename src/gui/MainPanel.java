@@ -101,7 +101,6 @@ public class MainPanel extends JPanel implements ViewControler
 			{
 				if (SwingUtilities.isLeftMouseButton(e))
 				{
-					System.err.println("left");
 					int atomIndex = view.sloppyFindNearestAtomIndex(e.getX(), e.getY());
 					if (atomIndex != -1)
 					{

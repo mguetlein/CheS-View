@@ -27,11 +27,6 @@ public class View
 		this.guiControler = guiControler;
 
 		viewer.script("set disablePopupMenu on");
-		//		viewer.script("hover OFF");
-		//		viewer.script("label OFF");
-		//		viewer.script("set drawHover OFF");
-		//		viewer.script("set labelAtom OFF");
-		//		viewer.script("set hoverLabel ''");
 	}
 
 	public static void init(JmolPanel jmolPanel, GUIControler guiControler)
