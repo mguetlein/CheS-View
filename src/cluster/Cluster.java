@@ -14,6 +14,7 @@ import java.util.Vector;
 
 import javax.vecmath.Vector3f;
 
+import util.ArrayUtil;
 import util.Vector3fUtil;
 import dataInterface.ClusterData;
 import dataInterface.MoleculeProperty;
@@ -22,19 +23,26 @@ import dataInterface.SubstructureSmartsType;
 
 public class Cluster
 {
-	Vector<Model> models;
-	ClusterData clusterData;
+	private Vector<Model> models;
+	private ClusterData clusterData;
 
-	boolean dirty = true;
-	BitSet bitSet;
-	Vector3f center;
+	private boolean dirty = true;
+	private BitSet bitSet;
+	private Vector3f center;
 
-	boolean overlap = true;
-	boolean superimposed = false;
-	double maxDist;
-	int radius;
+	private boolean overlap = true;
+	private boolean superimposed = false;
+	private int radius;
 
 	private Vector3f position;
+
+	HashMap<String, List<Model>> modelsOrderedByPropterty = new HashMap<String, List<Model>>();
+
+	private boolean watched;
+	private boolean visible;
+	private MoleculeProperty highlightProp;
+	private HighlightSorting highlightSorting;
+	private boolean someModelsHidden;
 
 	public Cluster(dataInterface.ClusterData clusterData, boolean firstCluster)
 	{
@@ -98,16 +106,18 @@ public class Cluster
 		return getName();
 	}
 
-	public void update()
+	public void updateValues()
 	{
 		if (!dirty)
 			return;
 
+		nonOverlapCenter = null;
 		bitSet = new BitSet();
 		for (Model m : models)
 			bitSet.or(m.getBitSet());
 		center = new Vector3f(View.instance.getAtomSetCenter(bitSet));
-
+		Vector3f positions[] = ClusterUtil.getModelPositions(this, false);
+		radius = (int) (Vector3fUtil.maxDist(positions));
 		dirty = false;
 	}
 
@@ -147,13 +157,13 @@ public class Cluster
 
 	public BitSet getBitSet()
 	{
-		update();
+		updateValues();
 		return bitSet;
 	}
 
 	public Vector3f getCenter()
 	{
-		update();
+		updateValues();
 		return center;
 	}
 
@@ -161,6 +171,7 @@ public class Cluster
 
 	public Vector3f getNonOverlapCenter()
 	{
+		updateValues();
 		//		if (nonOverlapCenter == null)
 		//		{
 		if (!overlap)
@@ -168,7 +179,7 @@ public class Cluster
 			nonOverlapCenter = getCenter();
 			System.out.println("exact " + nonOverlapCenter);
 		}
-		else
+		else if (nonOverlapCenter == null)
 		{
 			Vector3f c = new Vector3f(getCenter());
 			c.add(Vector3fUtil.center(ClusterUtil.getModelPositions(this, false)));
@@ -192,12 +203,10 @@ public class Cluster
 		return models;
 	}
 
-	HashMap<String, List<Model>> order = new HashMap<String, List<Model>>();
-
 	public List<Model> getModelsInOrder(final MoleculeProperty property, HighlightSorting sorting)
 	{
 		String key = property + "_" + sorting;
-		if (!order.containsKey(key))
+		if (!modelsOrderedByPropterty.containsKey(key))
 		{
 			List<Model> m = new ArrayList<Model>();
 			for (Model model : models)
@@ -245,20 +254,50 @@ public class Cluster
 			});
 			if (sorting == HighlightSorting.Med)
 			{
+				/**
+				 * median sorting:
+				 * - first order by max to compute median
+				 * - create a dist-to-median array, sort models according to that array
+				 */
 				Model medianModel = m.get(m.size() / 2);
-				m.clear();
-				for (Model model : models)
-					m.add(model);
-				m.remove(medianModel);
-				m.add(0, medianModel);
+				double distToMedian[] = new double[m.size()];
+				if (property.getType() == Type.NUMERIC)
+				{
+					Double med = medianModel.getDoubleValue(property);
+					for (int i = 0; i < distToMedian.length; i++)
+					{
+						Double d = m.get(i).getDoubleValue(property);
+						if (med == null)
+						{
+							if (d == null)
+								distToMedian[i] = 0;
+							else
+								distToMedian[i] = Double.MAX_VALUE;
+						}
+						else if (d == null)
+							distToMedian[i] = Double.MAX_VALUE;
+						else
+							distToMedian[i] = Math.abs(med - d);
+					}
+				}
+				else
+				{
+					String medStr = medianModel.getStringValue(property);
+					for (int i = 0; i < distToMedian.length; i++)
+						distToMedian[i] = (m.get(i).getStringValue(property) + "").compareTo(medStr + "");
+				}
+				int order[] = ArrayUtil.getOrdering(distToMedian, true);
+				Model a[] = new Model[m.size()];
+				Model s[] = ArrayUtil.sortAccordingToOrdering(order, m.toArray(a));
+				m = ArrayUtil.toList(s);
 			}
-			order.put(key, m);
+			modelsOrderedByPropterty.put(key, m);
 		}
 		//		System.err.println("in order: ");
 		//		for (Model m : order.get(key))
 		//			System.err.print(m.getModelOrigIndex() + " ");
 		//		System.err.println("");
-		return order.get(key);
+		return modelsOrderedByPropterty.get(key);
 	}
 
 	public String getName()
@@ -268,12 +307,11 @@ public class Cluster
 
 	public void resetCenter()
 	{
-		update();
+		updateValues();
 		Vector3f c = new Vector3f(center);
 		c.negate();
 		// viewer.setAtomCoord(bitSet, Token.xyz, c);
 		View.instance.setAtomCoordRelative(c, bitSet);
-
 		dirty = true;
 	}
 
@@ -332,20 +370,9 @@ public class Cluster
 		this.superimposed = superimposed;
 	}
 
-	public void modelIndexOffset(int offset)
-	{
-		for (Model m : models)
-			m.modelIndexOffset(offset);
-	}
-
-	public void setTemperature(MoleculeProperty highlightProperty)
-	{
-		for (Model m : models)
-			m.setTemperature(highlightProperty);
-	}
-
 	public int getRadius()
 	{
+		updateValues();
 		return radius;
 	}
 
@@ -367,6 +394,79 @@ public class Cluster
 	public Vector3f getOrigPosition()
 	{
 		return clusterData.getPosition();
+	}
+
+	public void remove(int[] modelIndices)
+	{
+		List<Model> toDel = new ArrayList<Model>();
+		for (int i : modelIndices)
+			toDel.add(getModelWithModelIndex(i));
+		BitSet bs = new BitSet();
+		for (Model m : toDel)
+		{
+			bs.or(m.getBitSet());
+			models.remove(m);
+		}
+		View.instance.hide(bs);
+
+		modelsOrderedByPropterty.clear();
+		dirty = true;
+
+		if (models.size() == 1)
+		{
+			models.get(0).setOrigPosition(new Vector3f(0, 0, 0));
+			updatePositions();
+		}
+	}
+
+	public boolean isWatched()
+	{
+		return watched;
+	}
+
+	public void setWatched(boolean watched)
+	{
+		this.watched = watched;
+	}
+
+	public boolean isVisible()
+	{
+		return visible;
+	}
+
+	public void setVisible(boolean visible)
+	{
+		this.visible = visible;
+	}
+
+	public void setHighlighProperty(MoleculeProperty highlightProp)
+	{
+		this.highlightProp = highlightProp;
+	}
+
+	public MoleculeProperty getHighlightProperty()
+	{
+		return highlightProp;
+	}
+
+	public void setHighlightSorting(HighlightSorting highlightSorting)
+	{
+		this.highlightSorting = highlightSorting;
+	}
+
+	public HighlightSorting getHighlightSorting()
+	{
+		return highlightSorting;
+	}
+
+	public void setSomeModelsHidden(boolean someModelsHidden)
+	{
+		this.someModelsHidden = someModelsHidden;
+	}
+
+	public boolean someModelsHidden()
+	{
+		return someModelsHidden;
 	}
 
 }

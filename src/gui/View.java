@@ -21,6 +21,8 @@ public class View
 	GUIControler guiControler;
 	public static View instance;
 
+	public static int FONT_SIZE = 10;
+
 	private View(Viewer viewer, GUIControler guiControler)
 	{
 		this.viewer = viewer;
@@ -32,21 +34,6 @@ public class View
 	public static void init(JmolPanel jmolPanel, GUIControler guiControler)
 	{
 		instance = new View((Viewer) jmolPanel.getViewer(), guiControler);
-	}
-
-	public synchronized void setCurrentAnimationFrame(int firstModel, int lastModel)
-	{
-		viewer.evalString("frame " + viewer.getModelNumberDotted(firstModel) + " "
-				+ viewer.getModelNumberDotted(lastModel));
-	}
-
-	public synchronized void selectModel(int modelIndex, int modelIndex2)
-	{
-		viewer.setCurrentModelIndex(modelIndex, false);
-		viewer.setAnimationOn(false);
-		viewer.setAnimationDirection(1);
-		viewer.setAnimationRange(modelIndex, modelIndex2);
-		viewer.setCurrentModelIndex(-1, false);
 	}
 
 	public synchronized void setSpinEnabled(boolean spinEnabled)
@@ -66,23 +53,28 @@ public class View
 
 	public synchronized void zoomOut(final Vector3f center, final float time, float radius)
 	{
-		//		System.err.println("Radius    " + radius);
-		int zoom = (int) (1200 / radius);
+
+		//System.err.println("Radius     " + radius);
+		//System.err.println("Rot radius " + viewer.getRotationRadius());
+
+		int zoom = (int) ((1200 / (15 / viewer.getRotationRadius())) / radius);
+		//int zoom = (int) (1200 / radius);
+
 		//		System.err.println("zoom " + zoom);
 		zoom = (int) Math.max(5, zoom);
 
 		if (animated)
 		{
+			guiControler.block("zoom out " + Vector3fUtil.toString(center));
 			final int finalZoom = zoom;
 			sequentially(new Runnable()
 			{
 				@Override
 				public void run()
 				{
-					guiControler.block();
 					String cmd = "zoomto " + time + " " + Vector3fUtil.toString(center) + " " + finalZoom;
 					viewer.scriptWait(cmd);
-					guiControler.unblock();
+					guiControler.unblock("zoom out " + Vector3fUtil.toString(center));
 				}
 			}, "zoom out");
 		}
@@ -98,14 +90,14 @@ public class View
 	{
 		if (animated)
 		{
+			guiControler.block("zoom into " + Vector3fUtil.toString(center));
 			sequentially(new Runnable()
 			{
 				@Override
 				public void run()
 				{
-					guiControler.block();
 					viewer.scriptWait("zoomto 1 " + Vector3fUtil.toString(center) + " 50");
-					guiControler.unblock();
+					guiControler.unblock("zoom into " + Vector3fUtil.toString(center));
 				}
 			}, "zoom in");
 		}
@@ -133,9 +125,8 @@ public class View
 	public synchronized int sloppyFindNearestAtomIndex(int x, int y)
 	{
 		// 6px is the hard coded "epsilon" for clicking atoms
-		// -> making it 36 ( (12+6)*2 )
-		int xx[] = new int[] { x - 12, x, x + 12 };
-		int yy[] = new int[] { y - 12, y, y + 12 };
+		int xx[] = new int[] { x - 18, x - 6, x + 6, x + 18 };
+		int yy[] = new int[] { y - 18, y - 6, y + 6, y + 18 };
 		for (int i = 0; i < yy.length; i++)
 		{
 			for (int j = 0; j < yy.length; j++)
@@ -153,9 +144,9 @@ public class View
 		return viewer.getAtomModelIndex(atomIndex);
 	}
 
-	public synchronized void selectAll()
+	public synchronized void clearSelection()
 	{
-		viewer.selectAll();
+		viewer.clearSelection();
 	}
 
 	public synchronized void select(BitSet bitSet, boolean b)
@@ -164,15 +155,49 @@ public class View
 		viewer.select(bitSet, b);
 	}
 
+	private void evalScript(String script)
+	{
+		if (script.matches("(?i).*hide.*") || script.matches("(?i).*subset.*") || script.matches("(?i).*display.*"))
+			throw new Error("use wrap methods");
+	}
+
 	public synchronized void scriptWait(String script)
 	{
+		evalScript(script);
 		//		System.err.println("XX> " + script);
 		viewer.scriptWait(script);
 	}
 
 	public synchronized void evalString(String script)
 	{
+		//		System.err.println("XX> " + script);
+		evalScript(script);
 		viewer.evalString(script);
+	}
+
+	public synchronized void selectAll()
+	{
+		viewer.scriptWait("select not hidden");
+	}
+
+	public synchronized void hide(BitSet bs)
+	{
+		//		System.err.println("XX> hide " + bs);
+		viewer.select(bs, false);
+		hideSelected();
+	}
+
+	public synchronized void hideSelected()
+	{
+		//		System.err.println("XX> select selected OR hidden; hide selected");
+		viewer.scriptWait("select selected OR hidden; hide selected");
+	}
+
+	public synchronized void display(BitSet bs)
+	{
+		//		System.err.println("XX> display " + bs);
+		viewer.select(bs, false);
+		viewer.scriptWait("select (not hidden) OR selected; select not selected; hide selected");
 	}
 
 	public synchronized void clearBfactorRange()
@@ -198,11 +223,6 @@ public class View
 	public synchronized void zap(boolean b, boolean c, boolean d)
 	{
 		viewer.zap(b, c, d);
-	}
-
-	public synchronized int deleteAtoms(BitSet bitSet, boolean b)
-	{
-		return viewer.deleteAtoms(bitSet, b);
 	}
 
 	public synchronized void loadModelFromFile(String s, String filename, String s2[], Object o, boolean b,
@@ -231,12 +251,12 @@ public class View
 	{
 		if (animated && overlapAnim != MoveAnimation.NONE && c.length > 1)
 		{
+			guiControler.block("spread cluster");
 			sequentially(new Runnable()
 			{
 				@Override
 				public void run()
 				{
-					guiControler.block();
 					int n = (overlapAnim == MoveAnimation.SLOW) ? 12 : 25;
 					for (int i = 0; i < n; i++)
 					{
@@ -248,7 +268,7 @@ public class View
 						}
 						viewer.scriptWait("delay 0.01");
 					}
-					guiControler.unblock();
+					guiControler.unblock("spread cluster");
 				}
 			}, "move bitsets");
 		}
@@ -263,11 +283,6 @@ public class View
 			String s[])
 	{
 		viewer.setAtomProperty(bitSet, temperature, v, v2, string, f, s);
-	}
-
-	public synchronized String getModelName(int index)
-	{
-		return viewer.getModelName(index);
 	}
 
 	public synchronized int getAtomCountInModel(int index)

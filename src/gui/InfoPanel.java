@@ -191,7 +191,7 @@ public class InfoPanel extends JPanel
 			{
 				Cluster c = clustering.getCluster(index);
 				model.addRow(new Object[] { "Cluster", c.getName() });
-				model.addRow(new Object[] { "Num molecules", c.getModels().size() });
+				model.addRow(new Object[] { "Num compounds", c.getModels().size() });
 				for (SubstructureSmartsType type : clustering.getSubstructures())
 					model.addRow(new Object[] { type.toString(), c.getSubstructureSmarts(type) });
 				for (MoleculeProperty p : clustering.getFeatures())
@@ -201,7 +201,7 @@ public class InfoPanel extends JPanel
 			}
 			else
 			{
-				model.addRow(new Object[] { "Model", View.instance.getModelName(index) });
+				model.addRow(new Object[] { "Compound", index });
 				model.addRow(new Object[] { "Num atoms", View.instance.getAtomCountInModel(index) });
 				model.addRow(new Object[] { "Smiles", clustering.getModelWithModelIndex(index).getSmiles() });
 				for (SubstructureSmartsType type : clustering.getSubstructures())

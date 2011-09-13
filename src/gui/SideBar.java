@@ -84,11 +84,9 @@ public class SideBar extends JPanel
 				else
 				{
 					int cIndex = clustering.indexOf(c);
+					clustering.getModelWatched().clearSelection();
 					if (clustering.getClusterActive().getSelected() == cIndex)
-					{
 						clustering.getModelActive().clearSelection();
-						clustering.getModelWatched().clearSelection();
-					}
 					clustering.getClusterActive().setSelected(cIndex);
 				}
 				clustering.getClusterWatched().clearSelection();
@@ -97,16 +95,20 @@ public class SideBar extends JPanel
 			}
 		});
 
-		clustering.addRemoveAddClusterListener(new PropertyChangeListener()
+		clustering.addListener(new PropertyChangeListener()
 		{
 			@Override
 			public void propertyChange(PropertyChangeEvent evt)
 			{
-				// if (selfBlock)
-				// return;
-				selfBlock = true;
-				updateList();
-				selfBlock = false;
+				if (evt.getPropertyName().equals(Clustering.CLUSTER_ADDED)
+						|| evt.getPropertyName().equals(Clustering.CLUSTER_REMOVED))
+				{
+					// if (selfBlock)
+					// return;
+					selfBlock = true;
+					updateList();
+					selfBlock = false;
+				}
 			}
 		});
 	}

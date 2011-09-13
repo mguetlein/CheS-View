@@ -11,6 +11,10 @@ public interface ViewControler
 	public static final String STYLE_WIREFRAME = "spacefill 0; wireframe";
 	public static final String STYLE_BALLS_AND_STICKS = "wireframe 25; spacefill 15%";
 
+	public boolean isHideUnselected();
+
+	public void setHideUnselected(boolean hide);
+
 	public boolean isSpinEnabled();
 
 	public void setSpinEnabled(boolean spinEnabled);

@@ -1,13 +1,11 @@
 package gui;
 
 import java.awt.BorderLayout;
-import java.awt.Container;
 import java.awt.LayoutManager;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.OverlayLayout;
@@ -89,7 +87,8 @@ public class ClusterPanel extends JPanel
 	{
 		KeyListener listener = new KeyAdapter()
 		{
-			public void keyPressed(KeyEvent e)
+			@Override
+			public void keyReleased(KeyEvent e)
 			{
 				if (e.isControlDown() && (e.getKeyCode() == KeyEvent.VK_PLUS || e.getKeyCode() == KeyEvent.VK_MINUS))
 				{
@@ -104,51 +103,12 @@ public class ClusterPanel extends JPanel
 							mainPanel.setDensitiyHigher(true);
 					}
 				}
+				if (e.getKeyCode() == KeyEvent.VK_R && e.isAltDown())
+				{
+					View.instance.scriptWait("set disablePopupMenu off");
+				}
 
-				if (e.getKeyCode() == KeyEvent.VK_F4 && e.isAltDown())
-				{
-					Container anc = getTopLevelAncestor();
-					if (anc instanceof JFrame)
-						((JFrame) anc).setVisible(false);
-					System.exit(0);
-				}
-				if (e.getKeyCode() == KeyEvent.VK_ENTER && e.isAltDown())
-				{
-					guiControler.setFullScreen(true);
-				}
-				if (e.getKeyCode() == KeyEvent.VK_O && e.isControlDown())
-				{
-					// if (e.isShiftDown()) // DEBUG HACK
-					// mainPanel
-					// .getClustering()
-					// .addCluster(
-					// "C:\\Users\\martin\\workspace\\ClusterViewer\\cox2_3d_WithReals\\thresh_0.6\\cluster1.0.sdf");
-					// else
-
-					//					mainPanel.getClustering().chooseClustersToAdd();
-				}
-				if (e.getKeyCode() == KeyEvent.VK_DELETE && e.isControlDown())
-				{
-					if (e.isShiftDown())
-					{
-						// mainPanel.getClustering().chooseClustersToRemove();
-					}
-					else
-						mainPanel.getClustering().removeSelectedCluster();
-				}
-				if (e.getKeyCode() == KeyEvent.VK_ESCAPE)
-				{
-					guiControler.setFullScreen(false);
-				}
-				if (e.getKeyCode() == KeyEvent.VK_C && e.isControlDown())
-				{
-					mainPanel.getClustering().clear();
-				}
-				//				if (e.getKeyCode() == KeyEvent.VK_SPACE)
-				//				{
-				//					mainPanel.toggleSelectedCluster();
-				//				}
-
+				guiControler.handleKeyEvent(e);
 			}
 		};
 		addKeyListener(listener);

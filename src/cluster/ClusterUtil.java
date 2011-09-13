@@ -16,7 +16,7 @@ public class ClusterUtil
 	 */
 	public static float getScaleFactor(Vector3f[] v)
 	{
-		// the average min distance mean distance of each compount to its closest neighbor compound
+		// the average min distance mean distance of each compound to its closest neighbor compound
 		float d = Vector3fUtil.avgMinDist(v);
 		// the smaller the distance, the higher the scale factor
 		// the neigbhor should be on average 30units away
@@ -24,7 +24,7 @@ public class ClusterUtil
 		//System.out.println("d: " + d + ", s: " + (1 / d * 30));
 
 		// we want to set a max dist of 350units
-		float max_scale = 350 / Vector3fUtil.maxDist(v);
+		float max_scale = 300 / Vector3fUtil.maxDist(v);
 		//System.out.println("max_s: " + max_scale);
 		s = Math.min(s, max_scale);
 

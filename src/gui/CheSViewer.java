@@ -5,11 +5,15 @@ import java.awt.Dimension;
 import java.awt.LayoutManager;
 import java.awt.Point;
 import java.awt.Toolkit;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.OverlayLayout;
 import javax.swing.SwingUtilities;
 
@@ -22,16 +26,25 @@ import data.ClusteringData;
 
 public class CheSViewer implements GUIControler
 {
+	//	static
+	//	{
+	//		System.err.println(JmolConstants.version);
+	//	}
+
 	JFrame frame;
 	JPanel glass;
 	JPanel coverPanel;
 
 	ClusterPanel clusterPanel;
 	Clustering clustering;
+	MenuBar menuBar;
 
 	boolean undecorated = false;
 	Dimension oldSize;
 	Point oldLocation;
+
+	private static boolean DEBUG = false;
+	List<String> block = new ArrayList<String>();
 
 	public CheSViewer(ClusteringData clusteredDataset)
 	{
@@ -70,6 +83,7 @@ public class CheSViewer implements GUIControler
 
 		clusterPanel.init(clusteredDataset);
 		clustering = clusterPanel.getClustering();
+		menuBar = new MenuBar(this, clustering);
 		setFullScreen(false, true);
 	}
 
@@ -102,6 +116,12 @@ public class CheSViewer implements GUIControler
 		}
 	}
 
+	@Override
+	public boolean isFullScreen()
+	{
+		return frame.isUndecorated();
+	}
+
 	public void show(boolean undecorated, Dimension size, Point location)
 	{
 		if (clustering == null)
@@ -113,7 +133,7 @@ public class CheSViewer implements GUIControler
 		frame.setUndecorated(undecorated);
 
 		if (!undecorated)
-			frame.setJMenuBar(new MenuBar(this, clustering));
+			frame.setJMenuBar(menuBar);
 
 		frame.setSize(size);
 		if (location == null)
@@ -140,18 +160,21 @@ public class CheSViewer implements GUIControler
 
 		String msg;
 		if (frame.isUndecorated())
-			msg = "Press 'ESCAPE' to leave fullscreen mode";
+			msg = "Press 'ALT+ENTER' to leave fullscreen mode";
 		else
 			msg = "Press 'ALT+ENTER' for fullscreen mode";
 		clusterPanel.showMessage(msg);
 	}
 
-	public void block()
+	public void block(String blocker)
 	{
 		if (clusterPanel == null)
 			throw new Error("cluster panel not yet set");
-
-		System.out.println("BLOCK------------------");
+		if (block.contains(blocker))
+			throw new Error("already blocking");
+		block.add(blocker);
+		if (DEBUG)
+			System.out.println("BLOCK (" + block.size() + ") '" + blocker + "' ------------------");
 		coverPanel.setVisible(true);
 		coverPanel.requestFocus();
 	}
@@ -162,18 +185,25 @@ public class CheSViewer implements GUIControler
 		return coverPanel.isVisible();
 	}
 
-	public void unblock()
+	public void unblock(String blocker)
 	{
-		SwingUtilities.invokeLater(new Runnable()
-		{
-			@Override
-			public void run()
+		if (!block.contains(blocker))
+			throw new Error("use block first");
+
+		block.remove(blocker);
+
+		if (block.size() == 0)
+			SwingUtilities.invokeLater(new Runnable()
 			{
-				coverPanel.setVisible(false);
-				clusterPanel.requestFocus();
-				System.out.println("----------------UNBLOCK");
-			}
-		});
+				@Override
+				public void run()
+				{
+					coverPanel.setVisible(false);
+					clusterPanel.requestFocus();
+					if (DEBUG)
+						System.out.println("---------------- UNBLOCK");
+				}
+			});
 	}
 
 	public static void main(String args[])
@@ -223,6 +253,18 @@ public class CheSViewer implements GUIControler
 	{
 		new CheSViewer(clusteredDataset, startNextToScreen);
 		finalizeTask();
+	}
+
+	@Override
+	public JPopupMenu getPopup()
+	{
+		return menuBar.getPopup();
+	}
+
+	@Override
+	public void handleKeyEvent(KeyEvent e)
+	{
+		menuBar.handleKeyEvent(e);
 	}
 
 }

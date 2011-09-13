@@ -9,6 +9,7 @@ import javax.vecmath.Vector3f;
 
 import org.jmol.script.Token;
 
+import data.CompoundDataImpl;
 import dataInterface.CompoundData;
 import dataInterface.MoleculeProperty;
 import dataInterface.MoleculeProperty.Type;
@@ -16,19 +17,21 @@ import dataInterface.SubstructureSmartsType;
 
 public class Model
 {
-	int modelIndex;
-	BitSet bitSet;
-	double values[];
+	private int modelIndex;
+	private BitSet bitSet;
 
-	CompoundData compoundData;
+	private CompoundData compoundData;
 
-	boolean translucent = false;
-	boolean showLabel = false;
-	boolean showBox = false;
-	boolean hidden = false;
-	SubstructureSmartsType substructureHighlighted = null;
+	private boolean translucent = false;
+	private boolean showLabel = false;
+	private boolean showHoverBox = false;
+	private boolean showActiveBox = false;
+	private SubstructureSmartsType substructureHighlighted = null;
 	private Vector3f position;
-	HashMap<String, BitSet> smartsMatches;
+	private HashMap<String, BitSet> smartsMatches;
+	private String color;
+	private MoleculeProperty highlightMoleculeProperty;
+	private String style;
 
 	public Model(int modelIndex, CompoundData compoundData)
 	{
@@ -56,26 +59,30 @@ public class Model
 		return compoundData.getDoubleValue(property);
 	}
 
-	public void setTemperature(MoleculeProperty property)
-	{
-		// string properties do have a normalized double value as well
-		double v = compoundData.getNormalizedValue(property);
-		View.instance.setAtomProperty(bitSet, Token.temperature, (int) v, (float) v, v + "", null, null);
-	}
-
 	public BitSet getBitSet()
 	{
 		return bitSet;
 	}
 
+	/**
+	 * index in jmol
+	 */
 	public int getModelIndex()
 	{
 		return modelIndex;
 	}
 
+	/**
+	 * index in original data file
+	 */
 	public int getModelOrigIndex()
 	{
 		return compoundData.getIndex();
+	}
+
+	public String toString()
+	{
+		return "Compound " + getModelIndex();
 	}
 
 	public String getSmiles()
@@ -108,24 +115,24 @@ public class Model
 		this.showLabel = showLabel;
 	}
 
-	public boolean isShowBox()
+	public boolean isShowHoverBox()
 	{
-		return showBox;
+		return showHoverBox;
 	}
 
-	public void setShowBox(boolean showBox)
+	public void setShowHoverBox(boolean showBox)
 	{
-		this.showBox = showBox;
+		this.showHoverBox = showBox;
 	}
 
-	public boolean isHidden()
+	public boolean isShowActiveBox()
 	{
-		return hidden;
+		return showActiveBox;
 	}
 
-	public void setHidden(boolean hidden)
+	public void setShowActiveBox(boolean showBox)
 	{
-		this.hidden = hidden;
+		this.showActiveBox = showBox;
 	}
 
 	public SubstructureSmartsType getSubstructureHighlighted()
@@ -149,6 +156,11 @@ public class Model
 	public Vector3f getOrigPosition()
 	{
 		return compoundData.getPosition();
+	}
+
+	public void setOrigPosition(Vector3f vector3f)
+	{
+		((CompoundDataImpl) compoundData).setPosition(vector3f);
 	}
 
 	public Vector3f getPosition()
@@ -176,6 +188,42 @@ public class Model
 			}
 		}
 		return smartsMatches.get(smarts);
+	}
+
+	public void setColor(String color)
+	{
+		this.color = color;
+	}
+
+	public String getColor()
+	{
+		return color;
+	}
+
+	public void setHighlightMoleculeProperty(MoleculeProperty highlightMoleculeProperty)
+	{
+		this.highlightMoleculeProperty = highlightMoleculeProperty;
+		if (highlightMoleculeProperty != null)
+		{
+			// string properties do have a normalized double value as well
+			double v = compoundData.getNormalizedValue(highlightMoleculeProperty);
+			View.instance.setAtomProperty(bitSet, Token.temperature, (int) v, (float) v, v + "", null, null);
+		}
+	}
+
+	public Object getHighlightMoleculeProperty()
+	{
+		return highlightMoleculeProperty;
+	}
+
+	public void setStyle(String style)
+	{
+		this.style = style;
+	}
+
+	public String getStyle()
+	{
+		return style;
 	}
 
 }

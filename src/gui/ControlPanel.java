@@ -185,7 +185,15 @@ public class ControlPanel extends JPanel
 			{
 				if (updateByViewControler)
 					return;
-				viewControler.setHighlighterLabelsVisible(labelCheckbox.isSelected());
+				SwingUtilities.invokeLater(new Runnable()
+				{
+
+					@Override
+					public void run()
+					{
+						viewControler.setHighlighterLabelsVisible(labelCheckbox.isSelected());
+					}
+				});
 			}
 		});
 		highlightMinMaxCombobox.addActionListener(new ActionListener()
@@ -195,7 +203,15 @@ public class ControlPanel extends JPanel
 			{
 				if (updateByViewControler)
 					return;
-				viewControler.setHighlightSorting((HighlightSorting) highlightMinMaxCombobox.getSelectedItem());
+				SwingUtilities.invokeLater(new Runnable()
+				{
+
+					@Override
+					public void run()
+					{
+						viewControler.setHighlightSorting((HighlightSorting) highlightMinMaxCombobox.getSelectedItem());
+					}
+				});
 			}
 		});
 
@@ -344,6 +360,17 @@ public class ControlPanel extends JPanel
 			public boolean canChangeDensitiy(boolean higher)
 			{
 				return true;
+			}
+
+			@Override
+			public boolean isHideUnselected()
+			{
+				return false;
+			}
+
+			@Override
+			public void setHideUnselected(boolean hide)
+			{
 			}
 
 		}));

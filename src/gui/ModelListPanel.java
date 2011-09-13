@@ -38,6 +38,7 @@ public class ModelListPanel extends JPanel
 	JLabel clusterNameVal;
 	JLabel clusterNumVal;
 	JCheckBox superimposeCheckBox;
+	JCheckBox hideUnselectedCheckBox;
 
 	JScrollPane listScrollPane;
 	MouseOverList list;
@@ -46,10 +47,12 @@ public class ModelListPanel extends JPanel
 	boolean selfBlock = false;
 
 	Clustering clustering;
+	ViewControler controler;
 
 	public ModelListPanel(Clustering clustering, ViewControler controler)
 	{
 		this.clustering = clustering;
+		this.controler = controler;
 
 		this.clusterActive = clustering.getClusterActive();
 		this.clusterWatched = clustering.getClusterWatched();
@@ -64,6 +67,18 @@ public class ModelListPanel extends JPanel
 
 	private void installListeners(final ViewControler controler)
 	{
+		clustering.addListener(new PropertyChangeListener()
+		{
+			@Override
+			public void propertyChange(PropertyChangeEvent evt)
+			{
+				if (evt.getPropertyName().equals(Clustering.CLUSTER_MODIFIED))
+				{
+					update(clusterActive.getSelected(), false);
+				}
+			}
+		});
+
 		clusterActive.addListener(new PropertyChangeListener()
 		{
 			@Override
@@ -72,6 +87,7 @@ public class ModelListPanel extends JPanel
 				updateCluster(clusterActive.getSelected(), true);
 			}
 		});
+
 		clusterWatched.addListener(new PropertyChangeListener()
 		{
 			@Override
@@ -120,6 +136,22 @@ public class ModelListPanel extends JPanel
 				if (selfBlock)
 					return;
 				controler.setSuperimpose(superimposeCheckBox.isSelected());
+
+				// hack listen to controler instead
+				selfBlock = true;
+				hideUnselectedCheckBox.setSelected(controler.isHideUnselected());
+				selfBlock = false;
+			}
+		});
+
+		hideUnselectedCheckBox.addActionListener(new ActionListener()
+		{
+			@Override
+			public void actionPerformed(ActionEvent e)
+			{
+				if (selfBlock)
+					return;
+				controler.setHideUnselected(hideUnselectedCheckBox.isSelected());
 			}
 		});
 
@@ -131,9 +163,13 @@ public class ModelListPanel extends JPanel
 					return;
 				selfBlock = true;
 
-				int m = getModelIndexFromList(list.getSelectedIndex());
-
-				modelActive.setSelected(m);
+				int m = getModelIndexFromList(list.getLastSelectedIndex());
+				if (m < 0)
+					throw new IllegalStateException();
+				if (e.isControlDown())
+					modelActive.setSelectedInverted(m);
+				else
+					modelActive.setSelected(m);
 				modelWatched.clearSelection();
 				selfBlock = false;
 			}
@@ -169,6 +205,7 @@ public class ModelListPanel extends JPanel
 			update(index, false);
 			// moveing out of cluster -> deselct box
 			superimposeCheckBox.setSelected(false);
+			hideUnselectedCheckBox.setSelected(controler.isHideUnselected());
 		}
 		else
 		{
@@ -176,6 +213,7 @@ public class ModelListPanel extends JPanel
 			if (clusterActive.getSelected() == -1)
 				update(index, true);
 		}
+
 		selfBlock = false;
 	}
 
@@ -225,10 +263,10 @@ public class ModelListPanel extends JPanel
 			{
 				super.getListCellRendererComponent(list, value, i, isSelected, cellHasFocus);
 				int model = getModelIndexFromList(i);
-				setOpaque(isSelected || model == modelActive.getSelected());
+				setOpaque(isSelected || modelActive.isSelected(model));
 
 				setForeground(Settings.FOREGROUND);
-				if (model == modelActive.getSelected())
+				if (modelActive.isSelected(model))
 				{
 					setBackground(Settings.LIST_ACTIVE_BACKGROUND);
 					setForeground(Settings.LIST_SELECTION_FOREGROUND);
@@ -249,6 +287,11 @@ public class ModelListPanel extends JPanel
 		//builder.append(listPanel, 3);
 		listScrollPane = ComponentFactory.createScrollpane(list);
 		builder.append(listScrollPane, 3);
+		builder.nextLine();
+
+		hideUnselectedCheckBox = ComponentFactory.createCheckBox("Hide not-selected compounds");
+		hideUnselectedCheckBox.setOpaque(false);
+		builder.append(hideUnselectedCheckBox, 3);
 		builder.nextLine();
 
 		builder.getPanel().setOpaque(false);
@@ -277,6 +320,7 @@ public class ModelListPanel extends JPanel
 			clusterNameVal.setText(" ");
 			clusterNumVal.setText(" ");
 			superimposeCheckBox.setVisible(false);
+			hideUnselectedCheckBox.setVisible(false);
 
 			listScrollPane.setVisible(false);
 		}
@@ -292,9 +336,10 @@ public class ModelListPanel extends JPanel
 			{
 				Cluster c = clustering.getCluster(index);
 				clusterNameVal.setText(c.getName());
-				clusterNumVal.setText("Num molecules: " + c.size());
+				clusterNumVal.setText("Num compounds: " + c.size());
 
 				superimposeCheckBox.setVisible(true);
+				hideUnselectedCheckBox.setVisible(true);
 
 				for (Model m : c.getModels())
 				{
