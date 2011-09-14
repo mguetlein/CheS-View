@@ -208,7 +208,6 @@ public class MainPanel extends JPanel implements ViewControler
 		{
 			selectedHighlighter = highlighter;
 			selectedHighlightMoleculeProperty = null;
-			view.clearBfactorRange();
 
 			if (highlighter == DEFAULT_HIGHLIGHTER)
 				color = DEFAULT_COLOR;
@@ -216,7 +215,7 @@ public class MainPanel extends JPanel implements ViewControler
 				color = DEFAULT_COLOR;
 			else if (highlighter instanceof MoleculePropertyHighlighter)
 			{
-				color = "color temperature";
+				color = "color FIXEDTEMPERATURE";
 				selectedHighlightMoleculeProperty = ((MoleculePropertyHighlighter) highlighter).getProperty();
 			}
 

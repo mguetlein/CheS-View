@@ -57,17 +57,31 @@ public class ClusterPanel extends JPanel
 
 		JPanel pp = new JPanel(new BorderLayout());
 		pp.setOpaque(false);
+
 		InfoPanel info = new InfoPanel(mainPanel.getClustering());
+		JPanel ppp = new JPanel(new BorderLayout());
+		ppp.setOpaque(false);
+		ppp.add(info, BorderLayout.SOUTH);
+
 		JPanel infoContainer = new JPanel(new BorderLayout());
 		infoContainer.setOpaque(false);
-		infoContainer.add(info, BorderLayout.WEST);
+		infoContainer.add(ppp, BorderLayout.WEST);
 		pp.add(infoContainer, BorderLayout.SOUTH);
 		pp.setBorder(new EmptyBorder(0, 0, 25, 0));
 
+		ChartPanel cp = new ChartPanel(mainPanel.getClustering(), mainPanel);
+		cp.setBorder(new EmptyBorder(0, 0, 0, 25));
+		infoContainer.add(cp, BorderLayout.EAST);
+
 		sideBarContainer.add(pp);
-		//add(pp);
-		//		SwingUtil.setDebugBorder(sideBar);
-		//		SwingUtil.setDebugBorder(info);
+
+		//		SwingUtil.setDebugBorder(sideBarContainer, Color.RED);
+		//		SwingUtil.setDebugBorder(pp, Color.GREEN);
+		//		SwingUtil.setDebugBorder(sideBar, Color.ORANGE);
+		//		SwingUtil.setDebugBorder(info, Color.BLUE);
+		//		SwingUtil.setDebugBorder(ppp, Color.MAGENTA);
+		//		SwingUtil.setDebugBorder(infoContainer, Color.CYAN);
+
 		add(mainPanel);
 		setOpaque(false);
 		installListeners();

@@ -206,7 +206,9 @@ public class Model
 		if (highlightMoleculeProperty != null)
 		{
 			// string properties do have a normalized double value as well
-			double v = compoundData.getNormalizedValue(highlightMoleculeProperty);
+			// values are normalize between 0-1, fixed temp scheme from jmol expects values between 0-100 => multiply with 100
+			double v = compoundData.getNormalizedValue(highlightMoleculeProperty) * 100.0;
+			//			System.err.println(getModelOrigIndex() + " " + highlightMoleculeProperty + " " + v);
 			View.instance.setAtomProperty(bitSet, Token.temperature, (int) v, (float) v, v + "", null, null);
 		}
 	}

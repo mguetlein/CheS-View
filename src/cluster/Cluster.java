@@ -254,12 +254,18 @@ public class Cluster
 			});
 			if (sorting == HighlightSorting.Med)
 			{
+				//				System.err.println("max order: ");
+				//				for (Model mm : m)
+				//					System.err.print(mm.getStringValue(property) + " ");
+				//				System.err.println();
+
 				/**
 				 * median sorting:
 				 * - first order by max to compute median
 				 * - create a dist-to-median array, sort models according to that array
 				 */
 				Model medianModel = m.get(m.size() / 2);
+				//				System.err.println(medianModel.getStringValue(property));
 				double distToMedian[] = new double[m.size()];
 				if (property.getType() == Type.NUMERIC)
 				{
@@ -284,12 +290,17 @@ public class Cluster
 				{
 					String medStr = medianModel.getStringValue(property);
 					for (int i = 0; i < distToMedian.length; i++)
-						distToMedian[i] = (m.get(i).getStringValue(property) + "").compareTo(medStr + "");
+						distToMedian[i] = Math.abs((m.get(i).getStringValue(property) + "").compareTo(medStr + ""));
 				}
 				int order[] = ArrayUtil.getOrdering(distToMedian, true);
 				Model a[] = new Model[m.size()];
 				Model s[] = ArrayUtil.sortAccordingToOrdering(order, m.toArray(a));
 				m = ArrayUtil.toList(s);
+
+				//				System.err.println("med order: ");
+				//				for (Model mm : m)
+				//					System.err.print(mm.getStringValue(property) + " ");
+				//				System.err.println();
 			}
 			modelsOrderedByPropterty.put(key, m);
 		}
@@ -467,6 +478,22 @@ public class Cluster
 	public boolean someModelsHidden()
 	{
 		return someModelsHidden;
+	}
+
+	public String[] getStringValues(MoleculeProperty property)
+	{
+		String v[] = new String[models.size()];
+		for (int i = 0; i < v.length; i++)
+			v[i] = models.get(i).getStringValue(property);
+		return v;
+	}
+
+	public Double[] getDoubleValues(MoleculeProperty property)
+	{
+		Double v[] = new Double[models.size()];
+		for (int i = 0; i < v.length; i++)
+			v[i] = models.get(i).getDoubleValue(property);
+		return v;
 	}
 
 }

@@ -200,11 +200,6 @@ public class View
 		viewer.scriptWait("select (not hidden) OR selected; select not selected; hide selected");
 	}
 
-	public synchronized void clearBfactorRange()
-	{
-		viewer.clearBfactorRange();
-	}
-
 	public synchronized BitSet getModelUndeletedAtomsBitSet(int modelIndex)
 	{
 		return viewer.getModelUndeletedAtomsBitSet(modelIndex);
