@@ -73,7 +73,7 @@ public class CheSViewer implements GUIControler
 		Dimension full = Toolkit.getDefaultToolkit().getScreenSize();
 		oldSize = new Dimension(full.width - 100, full.height - 100);
 		oldLocation = null;
-		//oldSize = new Dimension(1024, 768);
+		//		oldSize = new Dimension(1024, 768);
 		//oldLocation = new Point(0, 0);
 		if (startNextToScreen)
 		{

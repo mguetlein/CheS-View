@@ -1,37 +1,49 @@
 package gui;
 
+import gui.ViewControler.MoleculePropertyHighlighter;
+
 import java.awt.BorderLayout;
 import java.awt.Dimension;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
-import javax.swing.table.DefaultTableModel;
+import javax.swing.JTextArea;
 
-import main.Settings;
 import cluster.Cluster;
 import cluster.Clustering;
 import cluster.Model;
+
+import com.jgoodies.forms.builder.DefaultFormBuilder;
+import com.jgoodies.forms.layout.FormLayout;
+
 import dataInterface.MoleculeProperty;
 import dataInterface.SubstructureSmartsType;
 
 public class InfoPanel extends JPanel
 {
-	JTable table;
-	DefaultTableModel model;
-	JScrollPane scroll;
 	Clustering clustering;
-	LinkButton resizeButton;
+	ViewControler viewControler;
 
-	public InfoPanel(Clustering clustering)
+	JPanel clusterPanel;
+	JLabel clusterNameLabel = ComponentFactory.createLabel();
+	JLabel clusterSizeLabel = ComponentFactory.createLabel();
+	JLabel clusterAlgLabel = ComponentFactory.createLabel();
+	JLabel clusterEmbedLabel = ComponentFactory.createLabel();
+	JLabel clusterAlignLabel = ComponentFactory.createLabel();
+	JLabel clusterMCSLabelHeader = ComponentFactory.createLabel("MCS:");
+	JLabel clusterMCSLabel = ComponentFactory.createLabel();
+
+	JPanel compoundPanel;
+	JLabel compoundNameLabel = ComponentFactory.createLabel();
+	JTextArea compoundSmilesLabel = ComponentFactory.createTextArea("", false, false);
+	JLabel compoundFeatureLabelHeader = ComponentFactory.createLabel();
+	JLabel compoundFeatureLabel = ComponentFactory.createLabel();
+
+	public InfoPanel(ViewControler viewControler, Clustering clustering)
 	{
+		this.viewControler = viewControler;
 		this.clustering = clustering;
 
 		buildLayout();
@@ -40,7 +52,15 @@ public class InfoPanel extends JPanel
 			@Override
 			public void propertyChange(PropertyChangeEvent evt)
 			{
-				update(false, InfoPanel.this.clustering.getModelWatched().getSelected());
+				updateCompound();
+			}
+		});
+		clustering.getModelActive().addListener(new PropertyChangeListener()
+		{
+			@Override
+			public void propertyChange(PropertyChangeEvent evt)
+			{
+				updateCompound();
 			}
 		});
 		clustering.getClusterWatched().addListener(new PropertyChangeListener()
@@ -48,8 +68,7 @@ public class InfoPanel extends JPanel
 			@Override
 			public void propertyChange(PropertyChangeEvent evt)
 			{
-				if (InfoPanel.this.clustering.getClusterActive().getSelected() == -1)
-					update(true, InfoPanel.this.clustering.getClusterWatched().getSelected());
+				updateCluster();
 			}
 		});
 		clustering.getClusterActive().addListener(new PropertyChangeListener()
@@ -57,167 +76,137 @@ public class InfoPanel extends JPanel
 			@Override
 			public void propertyChange(PropertyChangeEvent evt)
 			{
-				update(true, -1);
+				updateCluster();
+			}
+		});
+		viewControler.addViewListener(new PropertyChangeListener()
+		{
+
+			@Override
+			public void propertyChange(PropertyChangeEvent evt)
+			{
+				if (evt.getPropertyName().equals(ViewControler.PROPERTY_HIGHLIGHT_CHANGED)
+						|| evt.getPropertyName().equals(ViewControler.PROPERTY_NEW_HIGHLIGHTERS))
+					updateCompound();
 			}
 		});
 	}
 
 	private void buildLayout()
 	{
-		JPanel p = new JPanel(new BorderLayout(2, 2));
-		p.setOpaque(false);
+		DefaultFormBuilder b1 = new DefaultFormBuilder(new FormLayout("p,3dlu,p"));
+		b1.append(ComponentFactory.createLabel("<html><b>Cluster:</b><html>"));
+		b1.append(clusterNameLabel);
+		b1.nextLine();
+		b1.append(ComponentFactory.createLabel("<html>Num compounds:<html>"));
+		b1.append(clusterSizeLabel);
+		b1.nextLine();
+		b1.append(ComponentFactory.createLabel("<html>Cluster algorithm:<html>"));
+		b1.append(clusterAlgLabel);
+		b1.nextLine();
+		b1.append(ComponentFactory.createLabel("<html>3D Embedding:<html>"));
+		b1.append(clusterEmbedLabel);
+		b1.nextLine();
+		b1.append(ComponentFactory.createLabel("<html>3D Alignement:<html>"));
+		b1.append(clusterAlignLabel);
+		b1.nextLine();
+		b1.append(clusterMCSLabelHeader);
+		b1.append(clusterMCSLabel);
 
-		resizeButton = ComponentFactory.createLinkButton("");
-		resizeButton.addActionListener(new ActionListener()
-		{
-			@Override
-			public void actionPerformed(ActionEvent e)
-			{
-				setSmall(!small);
-				if (InfoPanel.this.clustering.getClusterActive().getSelected() == -1)
-					update(true, InfoPanel.this.clustering.getClusterWatched().getSelected());
-				else
-					update(false, InfoPanel.this.clustering.getModelWatched().getSelected());
-			}
-		});
+		clusterPanel = b1.getPanel();
+		clusterPanel.setOpaque(false);
+		clusterPanel.setVisible(false);
 
-		LinkButton clearButton = ComponentFactory.createLinkButton("close");
-		clearButton.addActionListener(new ActionListener()
-		{
-			@Override
-			public void actionPerformed(ActionEvent e)
-			{
-				if (InfoPanel.this.clustering.getClusterActive().getSelected() == -1)
-					InfoPanel.this.clustering.getClusterWatched().clearSelection();
-				else
-					InfoPanel.this.clustering.getModelWatched().clearSelection();
-			}
-		});
+		DefaultFormBuilder b2 = new DefaultFormBuilder(new FormLayout("p,3dlu,p"));
+		b2.append(ComponentFactory.createLabel("<html><b>Compound:</b><html>"));
+		b2.append(compoundNameLabel);
+		b2.nextLine();
+		b2.append(ComponentFactory.createLabel("<html>Smiles:<html>"));
+		b2.append(compoundSmilesLabel);
+		b2.nextLine();
+		b2.append(compoundFeatureLabelHeader);
+		b2.append(compoundFeatureLabel);
 
-		JPanel buttons = new JPanel();
-		buttons.setOpaque(false);
-		buttons.add(resizeButton);
-		buttons.add(new JLabel("|"));
-		buttons.add(clearButton);
+		compoundPanel = b2.getPanel();
+		compoundPanel.setOpaque(false);
+		compoundPanel.setVisible(false);
 
-		JPanel pp = new JPanel(new BorderLayout());
-		pp.setOpaque(false);
-		pp.add(buttons, BorderLayout.EAST);
-		p.add(pp, BorderLayout.NORTH);
-
-		table = ComponentFactory.createTable();
-
-		table.addKeyListener(new KeyAdapter()
-		{
-			public void keyPressed(KeyEvent e)
-			{
-				if (e.getKeyCode() == KeyEvent.VK_DELETE)
-				{
-					if (table.getSelectedRow() != -1)
-					{
-						model.removeRow(table.getSelectedRow());
-						//										maxNumRows--;
-						//										resize();
-						//										repaint();
-					}
-				}
-			}
-		});
-
-		model = (DefaultTableModel) table.getModel();
-		model.addColumn("Property");
-		model.addColumn("Value");
-		scroll = ComponentFactory.createScrollpane(table);
-
-		//JPanel p = new JPanel();
-		//p.add(scroll);
-
-		scroll.setOpaque(true);
-		scroll.setBackground(Settings.TRANSPARENT_BACKGROUND);
-
-		//p.setBorder(new CompoundBorder(ComponentFactory.createLineBorder(1), new EmptyBorder(5, 5, 5, 5)));
-		p.add(scroll, BorderLayout.CENTER);
-
-		add(p);
+		setLayout(new BorderLayout(10, 10));
+		add(clusterPanel, BorderLayout.NORTH);
+		add(compoundPanel, BorderLayout.SOUTH);
 		setOpaque(false);
-		//setBackground(Settings.TRANSPARENT_BACKGROUND);
-		setVisible(false);
 	}
 
-	int maxNumRows;
-	int maxWidth;
-
-	boolean small = true;
-
-	private void setSmall(boolean small)
+	private void updateCompound()
 	{
-		this.small = small;
-		if (small)
-		{
-			resizeButton.setText("bigger");
-			table.getColumnModel().getColumn(0).setPreferredWidth(150);
-			table.getColumnModel().getColumn(0).setMaxWidth(150);
-			maxNumRows = 2;
-			maxWidth = 400;
-		}
-		else
-		{
-			resizeButton.setText("smaller");
-			table.getColumnModel().getColumn(0).setPreferredWidth(200);
-			table.getColumnModel().getColumn(0).setMaxWidth(200);
-			maxNumRows = 8;
-			maxWidth = 550;
-		}
-	}
-
-	private void resize()
-	{
-		int num = Math.min(maxNumRows, model.getRowCount());
-		scroll.setPreferredSize(new Dimension(maxWidth, num * (table.getRowHeight() + 1)));
-	}
-
-	private void update(boolean updateCluster, int index)
-	{
+		int index = InfoPanel.this.clustering.getModelActive().getSelected();
 		if (index == -1)
-			setVisible(false);
+			index = InfoPanel.this.clustering.getModelWatched().getSelected();
+
+		if (index == -1)
+			compoundPanel.setVisible(false);
 		else
 		{
-			setIgnoreRepaint(true);
+			compoundPanel.setIgnoreRepaint(true);
 
-			while (model.getRowCount() > 0)
-				model.removeRow(0);
+			Model m = clustering.getModelWithModelIndex(index);
+			compoundNameLabel.setText("Compound " + index);
+			compoundSmilesLabel.setText(m.getSmiles());
 
-			if (updateCluster)
+			compoundPanel.setIgnoreRepaint(false);
+			compoundPanel.setVisible(true);
+
+			if (viewControler.getHighlighter() instanceof MoleculePropertyHighlighter)
 			{
-				Cluster c = clustering.getCluster(index);
-				model.addRow(new Object[] { "Cluster", c.getName() });
-				model.addRow(new Object[] { "Num compounds", c.getModels().size() });
-				for (SubstructureSmartsType type : clustering.getSubstructures())
-					model.addRow(new Object[] { type.toString(), c.getSubstructureSmarts(type) });
-				for (MoleculeProperty p : clustering.getFeatures())
-					model.addRow(new Object[] { p, c.getSummaryStringValue(p) });
-				for (MoleculeProperty p : clustering.getProperties())
-					model.addRow(new Object[] { p, c.getSummaryStringValue(p) });
+				MoleculeProperty p = ((MoleculePropertyHighlighter) viewControler.getHighlighter()).getProperty();
+				compoundFeatureLabelHeader.setText(p.getName() + ":");
+				compoundFeatureLabel.setText(m.getTemperature(p));
+				compoundFeatureLabel.setVisible(true);
+				compoundFeatureLabelHeader.setVisible(true);
 			}
 			else
 			{
-				model.addRow(new Object[] { "Compound", index });
-				model.addRow(new Object[] { "Num atoms", View.instance.getAtomCountInModel(index) });
-				model.addRow(new Object[] { "Smiles", clustering.getModelWithModelIndex(index).getSmiles() });
-				for (SubstructureSmartsType type : clustering.getSubstructures())
-					model.addRow(new Object[] { type.toString(),
-							clustering.getClusterForModelIndex(index).getSubstructureSmarts(type) });
-				Model m = clustering.getModelWithModelIndex(index);
-				for (MoleculeProperty p : clustering.getFeatures())
-					model.addRow(new Object[] { p, m.getTemperature(p) });
-				for (MoleculeProperty p : clustering.getProperties())
-					model.addRow(new Object[] { p, m.getTemperature(p) });
+				compoundFeatureLabel.setVisible(false);
+				compoundFeatureLabelHeader.setVisible(false);
 			}
-			setSmall(small);
-			resize();
-			setIgnoreRepaint(false);
-			setVisible(true);
-			repaint();
 		}
+	}
+
+	private void updateCluster()
+	{
+		int index = InfoPanel.this.clustering.getClusterActive().getSelected();
+		if (index == -1)
+			index = InfoPanel.this.clustering.getClusterWatched().getSelected();
+
+		if (index == -1)
+		{
+			clusterPanel.setVisible(false);
+			compoundPanel.setVisible(false);
+		}
+		else
+		{
+			clusterPanel.setIgnoreRepaint(true);
+
+			Cluster c = clustering.getCluster(index);
+			clusterNameLabel.setText(c.getName());
+			clusterSizeLabel.setText(c.size() + "");
+			clusterAlgLabel.setText(c.getClusterAlgorithm());
+			clusterEmbedLabel.setText(c.getEmbedAlgorithm());
+			clusterAlignLabel.setText(c.getAlignAlgorithm());
+			String mcs = c.getSubstructureSmarts(SubstructureSmartsType.MCS);
+			clusterMCSLabelHeader.setVisible(mcs != null);
+			clusterMCSLabel.setVisible(mcs != null);
+			clusterMCSLabel.setText(mcs);
+
+			clusterPanel.setIgnoreRepaint(false);
+			clusterPanel.setVisible(true);
+		}
+	}
+
+	public Dimension getPreferredSize()
+	{
+		Dimension dim = super.getPreferredSize();
+		dim.width = Math.min(400, dim.width);
+		return dim;
 	}
 }

@@ -292,9 +292,9 @@ public class MenuBar extends JMenuBar
 	{
 		JTextPane t = new JTextPane();
 		t.setContentType("text/html");
-		t.setText("<html><h3>"
+		t.setText("<html><h5>"
 				+ Settings.TITLE
-				+ "</h3><table><tr><td>Version:</td><td>"
+				+ "</h5><table><tr><td>Version:</td><td>"
 				+ Settings.VERSION_STRING
 				+ "</td></tr><tr><td>Homepage:</td><td>"
 				+ Settings.HOMEPAGE

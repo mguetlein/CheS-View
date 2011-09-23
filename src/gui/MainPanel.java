@@ -47,18 +47,28 @@ public class MainPanel extends JPanel implements ViewControler
 
 	private static final String DEFAULT_COLOR = "color cpk";
 
-	String style = STYLE_BALLS_AND_STICKS;
+	String style = STYLE_WIREFRAME;
 	String color = DEFAULT_COLOR;
 
-	String modelInactiveSuffix = "; color translucent 0.9";
+	private String getModelInactiveSuffix()
+	{
+		if (style.equals(STYLE_WIREFRAME))
+			return "; color translucent 0.8";
+		else if (style.equals(STYLE_BALLS_AND_STICKS))
+			return "; color translucent 0.9";
+		else
+			throw new Error();
+	}
+
+	//	String modelInactiveSuffix = "; color translucent 0.9";
 	String modelActiveSuffix = "";
 
-	public static final Highlighter DEFAULT_HIGHLIGHTER = new SimpleHighlighter("Atom types");
+	public static final Highlighter DEFAULT_HIGHLIGHTER = new SimpleHighlighter("None (show atom types)");
 
 	HashMap<String, Highlighter[]> highlighters;
 	Highlighter selectedHighlighter = DEFAULT_HIGHLIGHTER;
 	MoleculeProperty selectedHighlightMoleculeProperty = null;
-	boolean highlighterLabelsVisible = true;
+	boolean highlighterLabelsVisible = false;
 	HighlightSorting highlightSorting = HighlightSorting.Med;
 
 	public Clustering getClustering()
@@ -106,7 +116,7 @@ public class MainPanel extends JPanel implements ViewControler
 			{
 				if (SwingUtilities.isLeftMouseButton(e))
 				{
-					int atomIndex = view.sloppyFindNearestAtomIndex(e.getX(), e.getY());
+					int atomIndex = view.findNearestAtomIndex(e.getX(), e.getY());
 					if (atomIndex != -1)
 					{
 						if (clustering.getClusterActive().getSelected() == -1)
@@ -283,12 +293,12 @@ public class MainPanel extends JPanel implements ViewControler
 			c.setWatched(watch);
 			if (watch)
 			{
-				view.select(c.getBitSet(), false);
+				view.select(c.getBitSet());
 				view.scriptWait("boundbox { selected }");
 				view.scriptWait("boundbox off");
 				view.scriptWait("draw ID bb" + clusterIndex + " BOUNDBOX color "
 						+ ColorUtil.toJMolString(Settings.LIST_WATCH_BACKGROUND) + " translucent " + boxTranslucency
-						+ " MESH NOFILL \"" + c.getName() + " (#" + c.size() + ")" + "\"");
+						+ " MESH NOFILL \"" + c + "\"");
 			}
 			else
 				view.scriptWait("draw bb" + clusterIndex + " off");
@@ -375,7 +385,7 @@ public class MainPanel extends JPanel implements ViewControler
 
 	/**
 	 * udpates single model
-	 * forceUpdate = true -> everything is reset (indipendent of model is part of active cluster or if single props habve changed)
+	 * forceUpdate = true -> everything is reset (independent of model is part of active cluster or if single props habve changed)
 	 * 
 	 * shows/hides box around model
 	 * show/hides model label
@@ -398,7 +408,6 @@ public class MainPanel extends JPanel implements ViewControler
 		boolean showActiveBox = false;
 		boolean showLabel = false;
 		boolean translucent = true;
-		SubstructureSmartsType substructure = null;
 
 		// inside the active cluster
 		if (clus == activeCluster)
@@ -432,17 +441,23 @@ public class MainPanel extends JPanel implements ViewControler
 			translucent = (models.indexOf(m) > 0);
 		}
 
+		String smarts = null;
 		if (selectedHighlighter instanceof SubstructureHighlighter)
-			substructure = ((SubstructureHighlighter) selectedHighlighter).getType();
+			smarts = c.getSubstructureSmarts(((SubstructureHighlighter) selectedHighlighter).getType());
+		else if (selectedHighlighter instanceof MoleculePropertyHighlighter
+				&& ((MoleculePropertyHighlighter) selectedHighlighter).getProperty().isSmartsProperty())
+			smarts = ((MoleculePropertyHighlighter) selectedHighlighter).getProperty().getSmarts();
 
 		if (!highlighterLabelsVisible)
 			showLabel = false;
 
 		BitSet bs = view.getModelUndeletedAtomsBitSet(i);
-		view.select(bs, false);
+		view.select(bs);
 
+		boolean translucentUpdate = false;
 		if (forceUpdate || !style.equals(m.getStyle()))
 		{
+			translucentUpdate = true;
 			m.setStyle(style);
 			view.scriptWait(style);
 		}
@@ -451,7 +466,7 @@ public class MainPanel extends JPanel implements ViewControler
 				&& (!color.equals(m.getColor()) || selectedHighlightMoleculeProperty != m
 						.getHighlightMoleculeProperty());
 
-		if (forceUpdate || translucent != m.isTranslucent() || !color.equals(m.getColor())
+		if (forceUpdate || translucentUpdate || translucent != m.isTranslucent() || !color.equals(m.getColor())
 				|| selectedHighlightMoleculeProperty != m.getHighlightMoleculeProperty())
 		{
 			m.setTranslucent(translucent);
@@ -459,7 +474,7 @@ public class MainPanel extends JPanel implements ViewControler
 			m.setHighlightMoleculeProperty(selectedHighlightMoleculeProperty);
 
 			if (translucent)
-				view.scriptWait(color + modelInactiveSuffix);
+				view.scriptWait(color + getModelInactiveSuffix());
 			else
 				view.scriptWait(color + modelActiveSuffix);
 		}
@@ -499,21 +514,18 @@ public class MainPanel extends JPanel implements ViewControler
 		}
 
 		// CHANGES JMOL SELECTION !!!
-		if (substructure != m.getSubstructureHighlighted())
+		if (smarts != m.getHighlightedSmarts())
 		{
 			boolean match = false;
-			String smarts = null;
-			if (substructure != null)
-				smarts = c.getSubstructureSmarts(substructure);
 			if (smarts != null && smarts.length() > 0)
 			{
 				BitSet matchBitSet = m.getSmartsMatch(smarts);
 				if (matchBitSet.cardinality() > 0)
 				{
 					match = true;
-					view.select(matchBitSet, false);
+					view.select(matchBitSet);
 					if (m.isTranslucent())
-						view.scriptWait("color orange" + modelInactiveSuffix);
+						view.scriptWait("color orange" + getModelInactiveSuffix());
 					else
 						view.scriptWait("color orange" + modelActiveSuffix);
 				}
@@ -521,7 +533,7 @@ public class MainPanel extends JPanel implements ViewControler
 			if (!match && !forceUpdate)
 			{
 				if (m.isTranslucent())
-					view.scriptWait(color + modelInactiveSuffix);
+					view.scriptWait(color + getModelInactiveSuffix());
 				else
 					view.scriptWait(color + modelActiveSuffix);
 			}
@@ -531,12 +543,12 @@ public class MainPanel extends JPanel implements ViewControler
 		if (forceUpdate || labelUpdate || showLabel != m.isShowLabel())
 		{
 			m.setShowLabel(showLabel);
+			BitSet empty = new BitSet(bs.length());
+			empty.set(bs.nextSetBit(0));
+			view.select(empty);
 			if (showLabel)
 			{
 
-				BitSet empty = new BitSet(bs.length());
-				empty.set(bs.nextSetBit(0));
-				view.select(empty, false);
 				Object val = clustering.getModelWithModelIndex(i).getTemperature(
 						((MoleculePropertyHighlighter) selectedHighlighter).getProperty());
 				Double d = DoubleUtil.parseDouble(val + "");
@@ -630,14 +642,14 @@ public class MainPanel extends JPanel implements ViewControler
 		int fCount = 0;
 		for (MoleculeProperty p : props)
 			featureHighlighters[fCount++] = new MoleculePropertyHighlighter(p);
-		highlighters.put("Properties used for clustering", featureHighlighters);
+		highlighters.put("Features used for mapping", featureHighlighters);
 
 		props = clustering.getProperties();
 		featureHighlighters = new MoleculePropertyHighlighter[props.size()];
 		fCount = 0;
 		for (MoleculeProperty p : props)
 			featureHighlighters[fCount++] = new MoleculePropertyHighlighter(p);
-		highlighters.put("Additional compound properties", featureHighlighters);
+		highlighters.put("Features NOT used for mapping", featureHighlighters);
 
 		fireViewChange(PROPERTY_NEW_HIGHLIGHTERS);
 

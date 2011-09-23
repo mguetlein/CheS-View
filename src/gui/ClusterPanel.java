@@ -58,20 +58,20 @@ public class ClusterPanel extends JPanel
 		JPanel pp = new JPanel(new BorderLayout());
 		pp.setOpaque(false);
 
-		InfoPanel info = new InfoPanel(mainPanel.getClustering());
+		InfoPanel info = new InfoPanel(mainPanel, mainPanel.getClustering());
 		JPanel ppp = new JPanel(new BorderLayout());
 		ppp.setOpaque(false);
-		ppp.add(info, BorderLayout.SOUTH);
+		ppp.add(info, BorderLayout.NORTH);
 
 		JPanel infoContainer = new JPanel(new BorderLayout());
 		infoContainer.setOpaque(false);
-		infoContainer.add(ppp, BorderLayout.WEST);
-		pp.add(infoContainer, BorderLayout.SOUTH);
-		pp.setBorder(new EmptyBorder(0, 0, 25, 0));
+		infoContainer.add(ppp, BorderLayout.EAST);
+		pp.add(infoContainer, BorderLayout.EAST);
+		pp.setBorder(new EmptyBorder(25, 25, 25, 25));
 
 		ChartPanel cp = new ChartPanel(mainPanel.getClustering(), mainPanel);
-		cp.setBorder(new EmptyBorder(0, 0, 0, 25));
-		infoContainer.add(cp, BorderLayout.EAST);
+		cp.setBorder(new EmptyBorder(0, 0, 0, 0));
+		infoContainer.add(cp, BorderLayout.SOUTH);
 
 		sideBarContainer.add(pp);
 

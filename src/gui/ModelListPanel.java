@@ -16,6 +16,7 @@ import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
@@ -235,20 +236,13 @@ public class ModelListPanel extends JPanel
 
 	private void buildLayout()
 	{
-		FormLayout layout = new FormLayout("pref:grow, 4dlu, pref");
+		FormLayout layout = new FormLayout("pref");
 
 		DefaultFormBuilder builder = new DefaultFormBuilder(layout);
 		builder.setLineGapSize(new ConstantSize(2, ConstantSize.PX));
 
-		builder.append(clusterNameVal = ComponentFactory.createLabel(), 3);
-		builder.nextLine();
-		builder.append(clusterNumVal = ComponentFactory.createLabel());
-		builder.nextLine();
-
-		superimposeCheckBox = ComponentFactory.createCheckBox("Superimpose compounds");
-		superimposeCheckBox.setOpaque(false);
-		builder.append(superimposeCheckBox, 3);
-		builder.nextLine();
+		clusterNameVal = ComponentFactory.createLabel();
+		clusterNumVal = ComponentFactory.createLabel();
 
 		listModel = new DefaultListModel();
 
@@ -261,7 +255,8 @@ public class ModelListPanel extends JPanel
 			public Component getListCellRendererComponent(JList list, Object value, int i, boolean isSelected,
 					boolean cellHasFocus)
 			{
-				super.getListCellRendererComponent(list, value, i, isSelected, cellHasFocus);
+				super.getListCellRendererComponent(list, "Compound " + value, i, isSelected, cellHasFocus);
+
 				int model = getModelIndexFromList(i);
 				setOpaque(isSelected || modelActive.isSelected(model));
 
@@ -282,16 +277,22 @@ public class ModelListPanel extends JPanel
 
 		list.setOpaque(false);
 		list.setFocusable(false);
+		list.setBorder(new EmptyBorder(5, 5, 5, 5));
 
 		builder.appendRow("fill:pref:grow");
 		//builder.append(listPanel, 3);
 		listScrollPane = ComponentFactory.createScrollpane(list);
-		builder.append(listScrollPane, 3);
+		builder.append(listScrollPane, 1);
 		builder.nextLine();
 
-		hideUnselectedCheckBox = ComponentFactory.createCheckBox("Hide not-selected compounds");
+		superimposeCheckBox = ComponentFactory.createCheckBox("Superimpose");
+		superimposeCheckBox.setOpaque(false);
+		builder.append(superimposeCheckBox);
+		builder.nextLine();
+
+		hideUnselectedCheckBox = ComponentFactory.createCheckBox("Hide not-selected");
 		hideUnselectedCheckBox.setOpaque(false);
-		builder.append(hideUnselectedCheckBox, 3);
+		builder.append(hideUnselectedCheckBox);
 		builder.nextLine();
 
 		builder.getPanel().setOpaque(false);
@@ -335,8 +336,8 @@ public class ModelListPanel extends JPanel
 			else
 			{
 				Cluster c = clustering.getCluster(index);
-				clusterNameVal.setText(c.getName());
-				clusterNumVal.setText("Num compounds: " + c.size());
+				clusterNameVal.setText(c.toString());
+				clusterNumVal.setText(" ");
 
 				superimposeCheckBox.setVisible(true);
 				hideUnselectedCheckBox.setVisible(true);

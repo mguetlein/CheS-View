@@ -109,14 +109,20 @@ public class ControlPanel extends JPanel
 
 		JPanel p2 = new JPanel();
 		p2.setOpaque(false);
-		p2.add(ComponentFactory.createLabel("Highlight:"));
+		p2.add(ComponentFactory.createLabel("<html><b>Feature:</b></html>"));
 		p2.add(highlightCombobox);
 		p2.add(labelCheckbox);
 		p2.add(highlightMinMaxCombobox);
 
 		setLayout(new BorderLayout());
-		add(p, BorderLayout.NORTH);
-		add(p2, BorderLayout.WEST);
+		JPanel pp = new JPanel(new BorderLayout());
+		pp.setOpaque(false);
+		pp.add(p, BorderLayout.WEST);
+		add(pp, BorderLayout.NORTH);
+		JPanel pp2 = new JPanel(new BorderLayout());
+		pp2.setOpaque(false);
+		pp2.add(p2, BorderLayout.WEST);
+		add(pp2, BorderLayout.SOUTH);
 	}
 
 	private void addListeners()

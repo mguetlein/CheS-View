@@ -29,6 +29,7 @@ public class View
 		this.guiControler = guiControler;
 
 		viewer.script("set disablePopupMenu on");
+		viewer.script("set minPixelSelRadius 30");
 	}
 
 	public static void init(JmolPanel jmolPanel, GUIControler guiControler)
@@ -122,22 +123,22 @@ public class View
 		return viewer.findNearestAtomIndex(x, y);
 	}
 
-	public synchronized int sloppyFindNearestAtomIndex(int x, int y)
-	{
-		// 6px is the hard coded "epsilon" for clicking atoms
-		int xx[] = new int[] { x - 18, x - 6, x + 6, x + 18 };
-		int yy[] = new int[] { y - 18, y - 6, y + 6, y + 18 };
-		for (int i = 0; i < yy.length; i++)
-		{
-			for (int j = 0; j < yy.length; j++)
-			{
-				int index = viewer.findNearestAtomIndex(xx[i], yy[i]);
-				if (index != -1)
-					return index;
-			}
-		}
-		return -1;
-	}
+	//	public synchronized int sloppyFindNearestAtomIndex(int x, int y)
+	//	{
+	//		// 6px is the hard coded "epsilon" for clicking atoms
+	//		int xx[] = new int[] { x - 18, x - 6, x + 6, x + 18 };
+	//		int yy[] = new int[] { y - 18, y - 6, y + 6, y + 18 };
+	//		for (int i = 0; i < yy.length; i++)
+	//		{
+	//			for (int j = 0; j < yy.length; j++)
+	//			{
+	//				int index = viewer.findNearestAtomIndex(xx[i], yy[i]);
+	//				if (index != -1)
+	//					return index;
+	//			}
+	//		}
+	//		return -1;
+	//	}
 
 	public synchronized int getAtomModelIndex(int atomIndex)
 	{
@@ -149,10 +150,10 @@ public class View
 		viewer.clearSelection();
 	}
 
-	public synchronized void select(BitSet bitSet, boolean b)
+	public synchronized void select(BitSet bitSet)
 	{
 		//		System.err.println("XX> selecting bitset: " + bitSet);
-		viewer.select(bitSet, b);
+		viewer.select(bitSet, false, null, false);
 	}
 
 	private void evalScript(String script)
@@ -183,7 +184,7 @@ public class View
 	public synchronized void hide(BitSet bs)
 	{
 		//		System.err.println("XX> hide " + bs);
-		viewer.select(bs, false);
+		viewer.select(bs, false, null, false);
 		hideSelected();
 	}
 
@@ -196,7 +197,7 @@ public class View
 	public synchronized void display(BitSet bs)
 	{
 		//		System.err.println("XX> display " + bs);
-		viewer.select(bs, false);
+		viewer.select(bs, false, null, false);
 		viewer.scriptWait("select (not hidden) OR selected; select not selected; hide selected");
 	}
 
@@ -221,7 +222,7 @@ public class View
 	}
 
 	public synchronized void loadModelFromFile(String s, String filename, String s2[], Object o, boolean b,
-			Hashtable<?, ?> t, StringBuffer sb, int i)
+			Hashtable<String, Object> t, StringBuffer sb, int i)
 	{
 		viewer.loadModelFromFile(s, filename, s2, o, b, t, sb, i);
 	}
@@ -287,7 +288,14 @@ public class View
 
 	public synchronized BitSet getSmartsMatch(String smarts, BitSet bitSet)
 	{
-		return viewer.getSmartsMatch(smarts, bitSet);
+		BitSet b = viewer.getSmartsMatch(smarts, bitSet);
+		if (b == null)
+		{
+			System.err.println("jmol did not like: " + smarts + " " + bitSet);
+			return new BitSet();
+		}
+		else
+			return b;
 	}
 
 	public void setAnimated(boolean b)

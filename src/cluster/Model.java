@@ -13,7 +13,6 @@ import data.CompoundDataImpl;
 import dataInterface.CompoundData;
 import dataInterface.MoleculeProperty;
 import dataInterface.MoleculeProperty.Type;
-import dataInterface.SubstructureSmartsType;
 
 public class Model
 {
@@ -26,7 +25,7 @@ public class Model
 	private boolean showLabel = false;
 	private boolean showHoverBox = false;
 	private boolean showActiveBox = false;
-	private SubstructureSmartsType substructureHighlighted = null;
+	private String smarts = null;
 	private Vector3f position;
 	private HashMap<String, BitSet> smartsMatches;
 	private String color;
@@ -135,14 +134,14 @@ public class Model
 		this.showActiveBox = showBox;
 	}
 
-	public SubstructureSmartsType getSubstructureHighlighted()
+	public String getHighlightedSmarts()
 	{
-		return substructureHighlighted;
+		return smarts;
 	}
 
-	public void setSubstructureHighlighted(SubstructureSmartsType type)
+	public void setHighlightedSmarts(String smarts)
 	{
-		substructureHighlighted = type;
+		smarts = smarts;
 	}
 
 	public void moveTo(Vector3f clusterPos)
@@ -180,12 +179,12 @@ public class Model
 		{
 			System.out.println("smarts-matching smarts: " + smarts + " smiles: " + getSmiles());
 			smartsMatches.put(smarts, View.instance.getSmartsMatch(smarts, bitSet));
-			if (smartsMatches.get(smarts).cardinality() == 0)
-			{
-				System.out.flush();
-				System.err.println("could not match smarts!");
-				System.err.flush();
-			}
+			//			if (smartsMatches.get(smarts).cardinality() == 0)
+			//			{
+			////				System.out.flush();
+			////				System.err.println("could not match smarts!");
+			////				System.err.flush();
+			//			}
 		}
 		return smartsMatches.get(smarts);
 	}

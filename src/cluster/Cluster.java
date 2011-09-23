@@ -103,7 +103,27 @@ public class Cluster
 
 	public String toString()
 	{
-		return getName();
+		return getName() + " (#" + size() + ")";
+	}
+
+	public String getName()
+	{
+		return clusterData.getName();
+	}
+
+	public String getClusterAlgorithm()
+	{
+		return clusterData.getClusterAlgorithm();
+	}
+
+	public String getEmbedAlgorithm()
+	{
+		return clusterData.getEmbedAlgorithm();
+	}
+
+	public String getAlignAlgorithm()
+	{
+		return clusterData.getAlignAlgorithm();
 	}
 
 	public void updateValues()
@@ -309,11 +329,6 @@ public class Cluster
 		//			System.err.print(m.getModelOrigIndex() + " ");
 		//		System.err.println("");
 		return modelsOrderedByPropterty.get(key);
-	}
-
-	public String getName()
-	{
-		return clusterData.getName();
 	}
 
 	public void resetCenter()

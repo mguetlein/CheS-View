@@ -1,5 +1,6 @@
 package gui;
 
+import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -115,7 +116,8 @@ public class SideBar extends JPanel
 
 	private void updateList()
 	{
-		datasetNameLabel.setText(clustering.getName());
+		datasetNameLabel.setText("<html><b>Dataset: </b>" + clustering.getName() + "</html>");
+		//				+ " some endless long name just to make really really really really sure");
 
 		// clusterList.setIgnoreRepaint(true);
 		listModel.clear();
@@ -123,6 +125,11 @@ public class SideBar extends JPanel
 			listModel.addElement(null);
 		for (Cluster c : clustering.getClusters())
 			listModel.addElement(c);
+
+		clusterList.setVisibleRowCount(16);//Math.min(16, clustering.numClusters() + 1));
+
+		scroll.setVisible(listModel.size() > 1);
+
 		// clusterList.setIgnoreRepaint(false);
 		// clusterList.setVisibleRowCount(Math.min(16, clustering.numClusters()
 		// + 1));
@@ -148,6 +155,8 @@ public class SideBar extends JPanel
 		clusterList = new MouseOverList(listModel);
 		clusterList.setClearOnExit(false);
 		clusterList.setFocusable(false);
+
+		//		clusterList.setVisibleRowCount(5);
 
 		clusterList.setBackground(Settings.TRANSPARENT_BACKGROUND);
 		// clusterList.setOpaque(false);
@@ -184,6 +193,8 @@ public class SideBar extends JPanel
 				int i = clustering.indexOf(c);
 				if (value == null)
 					value = "All clusters";
+				else
+					value = c.toString();
 				super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
 				setOpaque(isSelected || i == clustering.getClusterActive().getSelected());
 
@@ -216,28 +227,36 @@ public class SideBar extends JPanel
 		// add(clusterList);
 		// add(infoPanel);
 
-		FormLayout layout = new FormLayout("left:pref:grow",
-				"pref, 5, fill:pref:grow, 15, fill:pref:grow, 10, pref, 0, pref");
+		setLayout(new BorderLayout(10, 10));
 
-		JPanel panel = this;
-		setLayout(layout);
+		FormLayout layout = new FormLayout("pref,10,pref",
+		//"pref, 5, "
+				"fill:pref");//, 15, fill:pref:grow, 10, pref, 0, pref");
+		JPanel panel = new JPanel();
+		panel.setOpaque(false);
+		panel.setLayout(layout);
 		// PanelBuilder panel = new PanelBuilder(layout, new FormDebugPanel());
 
 		CellConstraints cc = new CellConstraints();
-		int lineCount = 1;
+		//		int lineCount = 1;
 
 		scroll = new JScrollPane(clusterList);
 		scroll.setOpaque(false);
 		scroll.getViewport().setOpaque(false);
 
-		datasetNameLabel.setBorder(new EmptyBorder(0, 5, 0, 0));
-		panel.add(datasetNameLabel, cc.xy(1, lineCount));
-		lineCount += 2;
-		panel.add(scroll, cc.xy(1, lineCount));
-		lineCount += 2;
-		panel.add(infoPanel, cc.xy(1, lineCount));
-		lineCount += 2;
-		panel.add(new ControlPanel(viewControler), cc.xy(1, lineCount));
+		//		datasetNameLabel.setBorder(new EmptyBorder(0, 5, 0, 0));
+		//		panel.add(datasetNameLabel, cc.xy(1, lineCount));
+		//		lineCount += 2;
+		panel.add(scroll, cc.xy(1, 1));
+		//		lineCount += 2;
+		panel.add(infoPanel, cc.xy(3, 1));
+		//		lineCount += 2;
+		//		panel.add(new ControlPanel(viewControler), cc.xyw(1, lineCount, 2));
+
+		add(datasetNameLabel, BorderLayout.NORTH);
+		add(panel, BorderLayout.WEST);
+		add(new ControlPanel(viewControler), BorderLayout.SOUTH);
+
 		//		lineCount += 2;
 		//		JLabel la = ComponentFactory.createLabel(" " + Settings.VERSION_STRING);
 		//		la.setFont(la.getFont().deriveFont(Font.ITALIC));
