@@ -304,6 +304,7 @@ public class ChartPanel extends JPanel
 							p.setShadowVisible(false);
 							p.setIntegerTickUnits();
 							p.setPreferredSize(new Dimension(400, 220));
+
 						}
 						removeAll();
 						if (p != null)

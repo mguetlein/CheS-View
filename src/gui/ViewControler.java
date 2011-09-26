@@ -35,7 +35,12 @@ public interface ViewControler
 
 	public void setSuperimpose(boolean superimpose);
 
+	public boolean isHideHydrogens();
+
+	public void setHideHydrogens(boolean b);
+
 	public static final String PROPERTY_HIGHLIGHT_CHANGED = "propertyHighlightChanged";
+	public static final String PROPERTY_SHOW_HYDROGENS = "propertyShowHydrogens";
 	public static final String PROPERTY_NEW_HIGHLIGHTERS = "propertyNewHighlighters";
 	public static final String PROPERTY_DENSITY_CHANGED = "propertyDensityChanged";
 

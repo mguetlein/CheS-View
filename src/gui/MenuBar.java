@@ -11,6 +11,7 @@ import java.util.Vector;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
+import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
@@ -33,7 +34,9 @@ public class MenuBar extends JMenuBar
 {
 	static interface MyMenuItem
 	{
+		public boolean isMenu();
 
+		public Action getAction();
 	}
 
 	static class DefaultMyMenuItem implements MyMenuItem
@@ -43,6 +46,23 @@ public class MenuBar extends JMenuBar
 		public DefaultMyMenuItem(Action action)
 		{
 			this.action = action;
+		}
+
+		public DefaultMyMenuItem(Action action, boolean checkbox)
+		{
+			this.action = action;
+		}
+
+		@Override
+		public boolean isMenu()
+		{
+			return false;
+		}
+
+		@Override
+		public Action getAction()
+		{
+			return action;
 		}
 	}
 
@@ -65,6 +85,18 @@ public class MenuBar extends JMenuBar
 			for (MyMenuItem item : items)
 				this.items.add(item);
 		}
+
+		@Override
+		public boolean isMenu()
+		{
+			return true;
+		}
+
+		@Override
+		public Action getAction()
+		{
+			return null;
+		}
 	}
 
 	static class MyMenuBar
@@ -81,17 +113,18 @@ public class MenuBar extends JMenuBar
 			{
 				for (MyMenuItem i : m.items)
 				{
-					if (i instanceof DefaultMyMenuItem)
-						actions.add(((DefaultMyMenuItem) i).action);
-					else if (i instanceof MyMenu)
+					if (!i.isMenu())
+						actions.add(i.getAction());
+					else
 						for (MyMenuItem ii : ((MyMenu) i).items)
-							actions.add(((DefaultMyMenuItem) ii).action);
+							actions.add(ii.getAction());
 				}
 			}
 		}
 	}
 
 	GUIControler guiControler;
+	ViewControler viewControler;
 	Clustering clustering;
 
 	MyMenuBar menuBar;
@@ -107,12 +140,14 @@ public class MenuBar extends JMenuBar
 	Action eActionExportModels;
 	//view
 	Action vActionFullScreen;
+	Action vActionHideHydrogens;
 
 	//help
 
-	public MenuBar(GUIControler guiControler, Clustering clustering)
+	public MenuBar(GUIControler guiControler, ViewControler viewControler, Clustering clustering)
 	{
 		this.guiControler = guiControler;
+		this.viewControler = viewControler;
 		this.clustering = clustering;
 		buildActions();
 		buildMenu();
@@ -127,8 +162,16 @@ public class MenuBar extends JMenuBar
 			JMenu menu = new JMenu(m.name);
 			for (MyMenuItem i : m.items)
 			{
-				if (i instanceof DefaultMyMenuItem)
-					menu.add(((DefaultMyMenuItem) i).action);
+				if (!i.isMenu())
+				{
+					if (i.getAction().getValue(Action.SELECTED_KEY) != null)
+					{
+						JCheckBoxMenuItem c = new JCheckBoxMenuItem(i.getAction());
+						menu.add(c);
+					}
+					else
+						menu.add(i.getAction());
+				}
 				else if (i instanceof MyMenu)
 				{
 					JMenu mm = new JMenu(((MyMenu) i).name);
@@ -153,9 +196,17 @@ public class MenuBar extends JMenuBar
 				first = false;
 			for (MyMenuItem i : m.items)
 			{
-				if (i instanceof DefaultMyMenuItem)
-					p.add(((DefaultMyMenuItem) i).action);
-				else if (i instanceof MyMenu)
+				if (!i.isMenu())
+				{
+					if (i.getAction().getValue(Action.SELECTED_KEY) != null)
+					{
+						JCheckBoxMenuItem c = new JCheckBoxMenuItem(i.getAction());
+						p.add(c);
+					}
+					else
+						p.add(i.getAction());
+				}
+				else
 				{
 					JMenu mm = new JMenu(((MyMenu) i).name);
 					for (MyMenuItem ii : ((MyMenu) i).items)
@@ -263,7 +314,7 @@ public class MenuBar extends JMenuBar
 		MyMenu exportMenu = new MyMenu("Export", eActionExportCurrent, eActionExportClusters, eActionExportModels);
 		MyMenu editMenu = new MyMenu("Edit", removeMenu, exportMenu);
 
-		vActionFullScreen = new AbstractAction("Fullscreen ON/OFF")
+		vActionFullScreen = new AbstractAction("Fullscreen")
 		{
 			@Override
 			public void actionPerformed(ActionEvent e)
@@ -271,9 +322,41 @@ public class MenuBar extends JMenuBar
 				guiControler.setFullScreen(!guiControler.isFullScreen());
 			}
 		};
+		vActionFullScreen.putValue(Action.SELECTED_KEY, guiControler.isFullScreen());
 		((AbstractAction) vActionFullScreen).putValue(Action.ACCELERATOR_KEY,
 				KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, ActionEvent.ALT_MASK));
-		MyMenu viewMenu = new MyMenu("View", vActionFullScreen);
+		guiControler.addPropertyChangeListener(new PropertyChangeListener()
+		{
+			@Override
+			public void propertyChange(PropertyChangeEvent evt)
+			{
+				if (evt.getPropertyName().equals(GUIControler.PROPERTY_FULLSCREEN_CHANGED))
+					vActionFullScreen.putValue(Action.SELECTED_KEY, guiControler.isFullScreen());
+			}
+		});
+		vActionHideHydrogens = new AbstractAction("Hide Hydrogens")
+		{
+			@Override
+			public void actionPerformed(ActionEvent e)
+			{
+				viewControler.setHideHydrogens(!viewControler.isHideHydrogens());
+			}
+		};
+		((AbstractAction) vActionHideHydrogens).putValue(Action.ACCELERATOR_KEY,
+				KeyStroke.getKeyStroke(KeyEvent.VK_H, ActionEvent.ALT_MASK));
+		vActionHideHydrogens.putValue(Action.SELECTED_KEY, viewControler.isHideHydrogens());
+		viewControler.addViewListener(new PropertyChangeListener()
+		{
+
+			@Override
+			public void propertyChange(PropertyChangeEvent evt)
+			{
+				if (evt.getPropertyName().equals(ViewControler.PROPERTY_SHOW_HYDROGENS))
+					vActionHideHydrogens.putValue(Action.SELECTED_KEY, viewControler.isHideHydrogens());
+			}
+		});
+
+		MyMenu viewMenu = new MyMenu("View", vActionFullScreen, vActionHideHydrogens);
 
 		Action hActionAbout = new AbstractAction("About " + Settings.TITLE)
 		{

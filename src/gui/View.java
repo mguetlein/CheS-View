@@ -23,18 +23,19 @@ public class View
 
 	public static int FONT_SIZE = 10;
 
-	private View(Viewer viewer, GUIControler guiControler)
+	private View(Viewer viewer, GUIControler guiControler, boolean hideHydrogens)
 	{
 		this.viewer = viewer;
 		this.guiControler = guiControler;
 
 		viewer.script("set disablePopupMenu on");
 		viewer.script("set minPixelSelRadius 30");
+		hideHydrogens(hideHydrogens);
 	}
 
-	public static void init(JmolPanel jmolPanel, GUIControler guiControler)
+	public static void init(JmolPanel jmolPanel, GUIControler guiControler, boolean hideHydrogens)
 	{
-		instance = new View((Viewer) jmolPanel.getViewer(), guiControler);
+		instance = new View((Viewer) jmolPanel.getViewer(), guiControler, hideHydrogens);
 	}
 
 	public synchronized void setSpinEnabled(boolean spinEnabled)
@@ -321,5 +322,10 @@ public class View
 			swt.addJob(r, name);
 		else
 			r.run();
+	}
+
+	public void hideHydrogens(boolean b)
+	{
+		scriptWait("set showHydrogens " + (b ? "FALSE" : "TRUE"));
 	}
 }

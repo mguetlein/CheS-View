@@ -7,6 +7,8 @@ import java.awt.Point;
 import java.awt.Toolkit;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -46,6 +48,8 @@ public class CheSViewer implements GUIControler
 	private static boolean DEBUG = false;
 	List<String> block = new ArrayList<String>();
 
+	List<PropertyChangeListener> listeners = new ArrayList<PropertyChangeListener>();
+
 	public CheSViewer(ClusteringData clusteredDataset)
 	{
 		this(clusteredDataset, false);
@@ -83,7 +87,7 @@ public class CheSViewer implements GUIControler
 
 		clusterPanel.init(clusteredDataset);
 		clustering = clusterPanel.getClustering();
-		menuBar = new MenuBar(this, clustering);
+		menuBar = new MenuBar(this, clusterPanel.getViewControler(), clustering);
 		setFullScreen(false, true);
 	}
 
@@ -113,13 +117,17 @@ public class CheSViewer implements GUIControler
 			{
 				show(b, oldSize, oldLocation);
 			}
+			fireEvent(PROPERTY_FULLSCREEN_CHANGED);
 		}
 	}
 
 	@Override
 	public boolean isFullScreen()
 	{
-		return frame.isUndecorated();
+		if (frame == null)
+			return false;
+		else
+			return frame.isUndecorated();
 	}
 
 	public void show(boolean undecorated, Dimension size, Point location)
@@ -265,6 +273,18 @@ public class CheSViewer implements GUIControler
 	public void handleKeyEvent(KeyEvent e)
 	{
 		menuBar.handleKeyEvent(e);
+	}
+
+	@Override
+	public void addPropertyChangeListener(PropertyChangeListener l)
+	{
+		listeners.add(l);
+	}
+
+	private void fireEvent(String prop)
+	{
+		for (PropertyChangeListener ll : listeners)
+			ll.propertyChange(new PropertyChangeEvent(this, prop, false, true));
 	}
 
 }

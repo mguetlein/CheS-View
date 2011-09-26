@@ -154,4 +154,9 @@ public class ClusterPanel extends JPanel
 		th.start();
 	}
 
+	public ViewControler getViewControler()
+	{
+		return mainPanel;
+	}
+
 }

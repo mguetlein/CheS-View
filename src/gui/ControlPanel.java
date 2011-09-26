@@ -379,6 +379,20 @@ public class ControlPanel extends JPanel
 			{
 			}
 
+			@Override
+			public boolean isHideHydrogens()
+			{
+				// TODO Auto-generated method stub
+				return false;
+			}
+
+			@Override
+			public void setHideHydrogens(boolean b)
+			{
+				// TODO Auto-generated method stub
+
+			}
+
 		}));
 	}
 }

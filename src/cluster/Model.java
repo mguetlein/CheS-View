@@ -141,7 +141,7 @@ public class Model
 
 	public void setHighlightedSmarts(String smarts)
 	{
-		smarts = smarts;
+		this.smarts = smarts;
 	}
 
 	public void moveTo(Vector3f clusterPos)

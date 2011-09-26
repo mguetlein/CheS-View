@@ -44,6 +44,7 @@ public class MainPanel extends JPanel implements ViewControler
 	View view;
 	private Clustering clustering;
 	private boolean spinEnabled = false;
+	private boolean hideHydrogens = false;
 
 	private static final String DEFAULT_COLOR = "color cpk";
 
@@ -104,7 +105,7 @@ public class MainPanel extends JPanel implements ViewControler
 		add(jmolPanel);
 
 		clustering = new Clustering();
-		View.init(jmolPanel, guiControler);
+		View.init(jmolPanel, guiControler, hideHydrogens);
 		view = View.instance;
 
 		// mouse listener to click atoms or clusters (zoom in)
@@ -941,5 +942,18 @@ public class MainPanel extends JPanel implements ViewControler
 		for (Model m : activeCluster.getModels())
 			updateModel(m.getModelIndex(), true);
 
+	}
+
+	@Override
+	public boolean isHideHydrogens()
+	{
+		return hideHydrogens;
+	}
+
+	@Override
+	public void setHideHydrogens(boolean b)
+	{
+		this.hideHydrogens = b;
+		view.hideHydrogens(b);
 	}
 }
