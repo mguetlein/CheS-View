@@ -165,8 +165,8 @@ public class MainPanel extends JPanel implements ViewControler
 				{
 					if (atomIndex == -1)
 					{
-						// do not clear cluster selection
-						//clustering.getClusterWatched().clearSelection();
+						// // do not clear cluster selection
+						clustering.getClusterWatched().clearSelection();
 					}
 					else
 						clustering.getClusterWatched().setSelected(
@@ -176,8 +176,8 @@ public class MainPanel extends JPanel implements ViewControler
 				{
 					if (atomIndex == -1)
 					{
-						// do not clear model selection
-						//clustering.getModelWatched().clearSelection();
+						// // do not clear model selection
+						clustering.getModelWatched().clearSelection();
 					}
 					else
 						clustering.getModelWatched().setSelected(view.getAtomModelIndex(atomIndex));
@@ -269,7 +269,7 @@ public class MainPanel extends JPanel implements ViewControler
 		return highlightSorting;
 	}
 
-	private static double boxTranslucency = 0.2;
+	private static double boxTranslucency = 0.05;
 
 	/**
 	 * updates cluster with index i
@@ -300,6 +300,8 @@ public class MainPanel extends JPanel implements ViewControler
 				view.scriptWait("draw ID bb" + clusterIndex + " BOUNDBOX color "
 						+ ColorUtil.toJMolString(Settings.LIST_WATCH_BACKGROUND) + " translucent " + boxTranslucency
 						+ " MESH NOFILL \"" + c + "\"");
+
+				//				jmolPanel.repaint(); // HACK to avoid label display errors
 			}
 			else
 				view.scriptWait("draw bb" + clusterIndex + " off");
@@ -489,7 +491,8 @@ public class MainPanel extends JPanel implements ViewControler
 				view.scriptWait("boundbox off");
 				view.scriptWait("draw ID bb" + m.getModelIndex() + "h BOUNDBOX color "
 						+ ColorUtil.toJMolString(Settings.LIST_WATCH_BACKGROUND) + " translucent " + boxTranslucency
-						+ " MESH NOFILL \"" + "Compound " + m.getModelIndex() + "\"");
+						+ " MESH NOFILL \"" + m.toString() + "\"");
+				//				jmolPanel.repaint(); // HACK to avoid label display errors
 			}
 			else
 			{
@@ -507,6 +510,7 @@ public class MainPanel extends JPanel implements ViewControler
 				view.scriptWait("draw ID bb" + m.getModelIndex() + "a BOUNDBOX color "
 						+ ColorUtil.toJMolString(Settings.LIST_ACTIVE_BACKGROUND) + " translucent " + boxTranslucency
 						+ " MESH NOFILL");
+				//				jmolPanel.repaint(); // HACK to avoid label display errors
 			}
 			else
 			{
@@ -706,7 +710,7 @@ public class MainPanel extends JPanel implements ViewControler
 				if (mIndex.length != 1)
 					throw new IllegalStateException();
 				final Model m = clustering.getModelWithModelIndex(mIndex[0]);
-				view.zoomIn(new Vector3f(view.getAtomSetCenter(m.getBitSet())));
+				view.zoomIn(new Vector3f(view.getAtomSetCenter(m.getBitSet())), 0.5f);
 			}
 			else if (mIndex.length == 0 && mIndexOld.length > 0)
 			{
@@ -754,7 +758,8 @@ public class MainPanel extends JPanel implements ViewControler
 					view.zoomOut(c.getNonOverlapCenter(), 0.5f, c.getRadius());//, c.getBitSet());
 				else
 				{
-					view.zoomIn(c.getCenter());
+					//twice zoom time as zoom into cluster with more that one compund, because of model translation
+					view.zoomIn(c.getCenter(), 1f);
 				}
 				c.setOverlap(false, View.MoveAnimation.SLOW, false);
 			}
@@ -805,7 +810,8 @@ public class MainPanel extends JPanel implements ViewControler
 		{
 			getSize(currentSize);
 			g.getClipBounds(rectClip);
-			viewer.renderScreenImage(g, currentSize, rectClip);
+			if (g != null && currentSize != null && rectClip != null)
+				viewer.renderScreenImage(g, currentSize, rectClip);
 		}
 	}
 
@@ -823,7 +829,7 @@ public class MainPanel extends JPanel implements ViewControler
 
 		if (c.isOverlap())
 		{
-			view.zoomOut(c.getNonOverlapCenter(), 0.5f, c.getRadius()); //, c.getBitSet());
+			view.zoomOut(c.getNonOverlapCenter(), 0.33f, c.getRadius()); //, c.getBitSet());
 			c.setOverlap(false, View.MoveAnimation.SLOW, false);
 		}
 		else
@@ -835,7 +841,7 @@ public class MainPanel extends JPanel implements ViewControler
 				@Override
 				public void run()
 				{
-					view.zoomIn(c.getCenter());
+					view.zoomIn(c.getCenter(), 0.33f);
 				}
 			}, "zoom to new(!) center");
 		}

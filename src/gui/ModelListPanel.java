@@ -108,7 +108,7 @@ public class ModelListPanel extends JPanel
 				selfBlock = true;
 
 				//updateCheckboxSelection();
-				updateSelectedModel();
+				updateActiveModelSelection();
 				selfBlock = false;
 
 			}
@@ -124,7 +124,7 @@ public class ModelListPanel extends JPanel
 				if (modelWatched.getSelected() == -1)
 					list.clearSelection();
 				else
-					list.setSelectedValue(modelWatched.getSelected(), true);
+					list.setSelectedValue(clustering.getModelWithModelIndex(modelWatched.getSelected()), true);
 				selfBlock = false;
 			}
 		});
@@ -164,13 +164,13 @@ public class ModelListPanel extends JPanel
 					return;
 				selfBlock = true;
 
-				int m = getModelIndexFromList(list.getLastSelectedIndex());
-				if (m < 0)
+				Model m = (Model) listModel.elementAt(list.getLastSelectedIndex());
+				if (m == null)
 					throw new IllegalStateException();
 				if (e.isControlDown())
-					modelActive.setSelectedInverted(m);
+					modelActive.setSelectedInverted(m.getModelIndex());
 				else
-					modelActive.setSelected(m);
+					modelActive.setSelected(m.getModelIndex());
 				modelWatched.clearSelection();
 				selfBlock = false;
 			}
@@ -190,7 +190,7 @@ public class ModelListPanel extends JPanel
 					//modelWatched.clearSelection();
 				}
 				else
-					modelWatched.setSelected(getModelIndexFromList(index));
+					modelWatched.setSelected(((Model) listModel.elementAt(index)).getModelIndex());
 				selfBlock = false;
 			}
 		});
@@ -218,22 +218,6 @@ public class ModelListPanel extends JPanel
 		selfBlock = false;
 	}
 
-	private int getModelIndexFromList(int listIndex)
-	{
-		if (listIndex == -1)
-			return -1;
-		Integer val = (Integer) listModel.getElementAt(listIndex);
-		if (val == null)
-			return -1;
-		else
-			return val;
-	}
-
-	private int getListIndexFromModel(int modelIndex)
-	{
-		return listModel.indexOf(modelIndex);
-	}
-
 	private void buildLayout()
 	{
 		FormLayout layout = new FormLayout("pref");
@@ -255,13 +239,13 @@ public class ModelListPanel extends JPanel
 			public Component getListCellRendererComponent(JList list, Object value, int i, boolean isSelected,
 					boolean cellHasFocus)
 			{
-				super.getListCellRendererComponent(list, "Compound " + value, i, isSelected, cellHasFocus);
+				super.getListCellRendererComponent(list, value, i, isSelected, cellHasFocus);
 
-				int model = getModelIndexFromList(i);
-				setOpaque(isSelected || modelActive.isSelected(model));
+				int modelIndex = ((Model) value).getModelIndex();
+				setOpaque(isSelected || modelActive.isSelected(modelIndex));
 
 				setForeground(Settings.FOREGROUND);
-				if (modelActive.isSelected(model))
+				if (modelActive.isSelected(modelIndex))
 				{
 					setBackground(Settings.LIST_ACTIVE_BACKGROUND);
 					setForeground(Settings.LIST_SELECTION_FOREGROUND);
@@ -305,9 +289,9 @@ public class ModelListPanel extends JPanel
 		// setFocusable(false);
 	}
 
-	private void updateSelectedModel()
+	private void updateActiveModelSelection()
 	{
-		list.setSelectedIndex(getListIndexFromModel(modelActive.getSelected()));
+		list.setSelectedValue(clustering.getModelWithModelIndex(modelActive.getSelected()), true);
 	}
 
 	private void update(int index, boolean noList)
@@ -344,9 +328,9 @@ public class ModelListPanel extends JPanel
 
 				for (Model m : c.getModels())
 				{
-					listModel.addElement(m.getModelIndex());
+					listModel.addElement(m);
 				}
-				updateSelectedModel();
+				updateActiveModelSelection();
 				listScrollPane.setVisible(true);
 			}
 		}

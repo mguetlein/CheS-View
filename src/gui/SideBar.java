@@ -81,13 +81,21 @@ public class SideBar extends JPanel
 
 				final Cluster c = (Cluster) clusterList.getSelectedValue();
 				if (c == null)
+				{
+					View.instance.setAnimated(false);
+					clustering.getModelWatched().clearSelection();
+					clustering.getModelActive().clearSelection();
+					View.instance.setAnimated(true);
 					clustering.getClusterActive().clearSelection();
+				}
 				else
 				{
 					int cIndex = clustering.indexOf(c);
 					clustering.getModelWatched().clearSelection();
-					if (clustering.getClusterActive().getSelected() == cIndex)
-						clustering.getModelActive().clearSelection();
+					if (clustering.getClusterActive().getSelected() != cIndex)
+						View.instance.setAnimated(false);
+					clustering.getModelActive().clearSelection();
+					View.instance.setAnimated(true);
 					clustering.getClusterActive().setSelected(cIndex);
 				}
 				clustering.getClusterWatched().clearSelection();

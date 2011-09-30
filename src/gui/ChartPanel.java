@@ -21,6 +21,7 @@ import util.DefaultComparator;
 import util.ToStringComparator;
 import cluster.Cluster;
 import cluster.Clustering;
+import cluster.Model;
 
 import com.jgoodies.forms.builder.DefaultFormBuilder;
 import com.jgoodies.forms.layout.FormLayout;
@@ -39,6 +40,7 @@ public class ChartPanel extends JPanel
 	ViewControler viewControler;
 
 	Cluster cluster;
+	Model model;
 	MoleculeProperty property;
 
 	HashMap<String, PlotData> cache = new HashMap<String, ChartPanel.PlotData>();
@@ -137,11 +139,27 @@ public class ChartPanel extends JPanel
 				update(false);
 			}
 		});
+		clustering.getModelActive().addListener(new PropertyChangeListener()
+		{
+			@Override
+			public void propertyChange(PropertyChangeEvent evt)
+			{
+				update(false);
+			}
+		});
+		clustering.getModelWatched().addListener(new PropertyChangeListener()
+		{
+			@Override
+			public void propertyChange(PropertyChangeEvent evt)
+			{
+				update(false);
+			}
+		});
 	}
 
-	private static String getKey(Cluster c, MoleculeProperty p)
+	private static String getKey(Cluster c, MoleculeProperty p, Model m)
 	{
-		return (c == null ? "null" : c.getName()) + "_" + p.toString();
+		return (c == null ? "null" : c.getName()) + "_" + p.toString() + "_" + (m == null ? "null" : m.toString());
 	}
 
 	private abstract class PlotData
@@ -154,25 +172,24 @@ public class ChartPanel extends JPanel
 		List<String> captions;
 		List<double[]> vals;
 
-		public NumericPlotData(Cluster c, MoleculeProperty p)
+		public NumericPlotData(Cluster c, MoleculeProperty p, Model m)
 		{
 			Double v[] = new Double[0];
 			for (Cluster cc : clustering.getClusters())
 				v = ArrayUtil.concat(Double.class, v, cc.getDoubleValues(p));
 			captions = new ArrayList<String>();
 			vals = new ArrayList<double[]>();
-			if (c == null)
+			captions.add("Dataset");
+			vals.add(ArrayUtil.toPrimitiveDoubleArray(ArrayUtil.removeNullValues(v)));
+			if (c != null)
 			{
-				captions.add("Dataset");
-				vals.add(ArrayUtil.toPrimitiveDoubleArray(ArrayUtil.removeNullValues(v)));
-			}
-			else
-			{
-				captions.add("Dataset");
-				vals.add(ArrayUtil.toPrimitiveDoubleArray(ArrayUtil.removeNullValues(v)));
 				captions.add(c.getName());
 				vals.add(ArrayUtil.toPrimitiveDoubleArray(ArrayUtil.removeNullValues(c.getDoubleValues(p))));
-
+			}
+			if (m != null)
+			{
+				captions.add(m.toString());
+				vals.add(new double[] { m.getDoubleValue(p) });
 			}
 		}
 
@@ -188,20 +205,19 @@ public class ChartPanel extends JPanel
 		LinkedHashMap<String, List<Double>> data;
 		String vals[];
 
-		public NominalPlotData(Cluster c, MoleculeProperty p)
+		public NominalPlotData(Cluster c, MoleculeProperty p, Model m)
 		{
 			String v[] = new String[0];
 			for (Cluster cc : clustering.getClusters())
 				if (cc != c)
-					v = ArrayUtil.concat(String.class, v, cc.getStringValues(p));
+					v = ArrayUtil.concat(String.class, v, cc.getStringValues(p, m));
 			CountedSet<String> datasetSet = CountedSet.fromArray(v);
 			List<String> datasetValues = datasetSet.values(new DefaultComparator<String>());
 
 			CountedSet<String> clusterSet = null;
-			List<Double> clusterCounts = new ArrayList<Double>();
 			if (c != null)
 			{
-				v = c.getStringValues(p);
+				v = c.getStringValues(p, m);
 				clusterSet = CountedSet.fromArray(v);
 				List<String> clusterValues = clusterSet.values(new DefaultComparator<String>());
 
@@ -215,10 +231,28 @@ public class ChartPanel extends JPanel
 				if (newVal)
 					Collections.sort(datasetValues, new ToStringComparator());
 			}
+			String compoundVal = null;
+			if (m != null)
+			{
+				compoundVal = m.getStringValue(p);
 
+				if (!datasetValues.contains(compoundVal))
+				{
+					datasetValues.add(compoundVal);
+					Collections.sort(datasetValues, new ToStringComparator());
+				}
+			}
 			data = new LinkedHashMap<String, List<Double>>();
+			if (m != null)
+			{
+				List<Double> compoundCounts = new ArrayList<Double>();
+				for (String o : datasetValues)
+					compoundCounts.add(compoundVal.equals(o) ? 1.0 : 0.0);
+				data.put(m.toString(), compoundCounts);
+			}
 			if (c != null)
 			{
+				List<Double> clusterCounts = new ArrayList<Double>();
 				for (String o : datasetValues)
 					clusterCounts.add((double) clusterSet.getCount(o));
 				data.put(c.getName(), clusterCounts);
@@ -242,6 +276,8 @@ public class ChartPanel extends JPanel
 		}
 	}
 
+	private static Color COMPOUND = Color.YELLOW;
+
 	private void update(final boolean force)
 	{
 		Highlighter h = viewControler.getHighlighter();
@@ -256,23 +292,32 @@ public class ChartPanel extends JPanel
 		if (clustering.getNumClusters() == 1)
 			c = null;
 
-		if (force || cluster != c || property != prop)
+		int mIndex = clustering.getModelWatched().getSelected();
+		if (mIndex == -1)
+			mIndex = clustering.getModelActive().getSelected();
+		Model m = null;
+		if (mIndex != -1)
+			m = clustering.getModelWithModelIndex(mIndex);
+
+		if (force || cluster != c || property != prop || model != m)
 		{
 			cluster = c;
 			property = prop;
+			model = m;
 
-			setVisible(false);
-
-			if (property != null)
+			if (property == null)
+				setVisible(false);
+			else
 			{
 				final Cluster fCluster = this.cluster;
 				final MoleculeProperty fProperty = this.property;
+				final Model fModel = this.model;
 
 				Thread th = new Thread(new Runnable()
 				{
 					public void run()
 					{
-						String key = getKey(fCluster, fProperty);
+						String key = getKey(fCluster, fProperty, fModel);
 						if (force && cache.containsKey(key))
 							cache.remove(key);
 						PlotData d = null;
@@ -280,9 +325,9 @@ public class ChartPanel extends JPanel
 						{
 							MoleculeProperty.Type type = fProperty.getType();
 							if (type == Type.NOMINAL)
-								d = new NominalPlotData(fCluster, fProperty);
+								d = new NominalPlotData(fCluster, fProperty, fModel);
 							else if (type == Type.NUMERIC)
-								d = new NumericPlotData(fCluster, fProperty);
+								d = new NumericPlotData(fCluster, fProperty, fModel);
 							cache.put(key, d);
 						}
 						d = cache.get(key);
@@ -290,14 +335,29 @@ public class ChartPanel extends JPanel
 						if (d != null)
 						{
 							p = d.getPlot();
-							setIgnoreRepaint(true);
-
 							if (fCluster == null)
-								p.setSeriesColor(0, Color.BLUE);
+							{
+								if (fModel == null)
+									p.setSeriesColor(0, Color.BLUE);
+								else
+								{
+									p.setSeriesColor(0, COMPOUND);
+									p.setSeriesColor(1, Color.BLUE);
+								}
+							}
 							else
 							{
-								p.setSeriesColor(1, Color.BLUE);
-								p.setSeriesColor(0, Color.RED);
+								if (fModel == null)
+								{
+									p.setSeriesColor(0, Color.RED);
+									p.setSeriesColor(1, Color.BLUE);
+								}
+								else
+								{
+									p.setSeriesColor(0, COMPOUND);
+									p.setSeriesColor(1, Color.RED);
+									p.setSeriesColor(2, Color.BLUE);
+								}
 							}
 							p.setOpaqueFalse();
 							p.setForegroundColor(Settings.FOREGROUND);
@@ -306,9 +366,9 @@ public class ChartPanel extends JPanel
 							p.setPreferredSize(new Dimension(400, 220));
 
 						}
+
+						setIgnoreRepaint(true);
 						removeAll();
-						if (p != null)
-							add(p);
 
 						featureNameLabel.setText(fProperty.toString());
 						featureSetLabel.setText(fProperty.getMoleculePropertySet().toString());
@@ -323,13 +383,13 @@ public class ChartPanel extends JPanel
 						featureMappingLabel
 								.setText((fProperty.getMoleculePropertySet().isUsedForMapping() ? "Used for clustering and/or embedding."
 										: "NOT used for clustering and/or embedding."));
-						add(featurePanel, BorderLayout.NORTH);
 
-						//						setPreferredSize(new Dimension(400, getPreferredSize().height));
-						setIgnoreRepaint(false);
-						invalidate();
-						repaint();
+						add(featurePanel, BorderLayout.NORTH);
+						if (p != null)
+							add(p, BorderLayout.CENTER);
+						revalidate();
 						setVisible(true);
+						setIgnoreRepaint(false);
 					}
 				});
 				th.start();

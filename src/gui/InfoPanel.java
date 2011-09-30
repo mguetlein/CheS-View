@@ -139,9 +139,9 @@ public class InfoPanel extends JPanel
 
 	private void updateCompound()
 	{
-		int index = InfoPanel.this.clustering.getModelActive().getSelected();
+		int index = InfoPanel.this.clustering.getModelWatched().getSelected();
 		if (index == -1)
-			index = InfoPanel.this.clustering.getModelWatched().getSelected();
+			index = InfoPanel.this.clustering.getModelActive().getSelected();
 
 		if (index == -1)
 			compoundPanel.setVisible(false);
@@ -150,7 +150,7 @@ public class InfoPanel extends JPanel
 			compoundPanel.setIgnoreRepaint(true);
 
 			Model m = clustering.getModelWithModelIndex(index);
-			compoundNameLabel.setText("Compound " + index);
+			compoundNameLabel.setText(m.toString());
 			compoundSmilesLabel.setText(m.getSmiles());
 
 			compoundPanel.setIgnoreRepaint(false);

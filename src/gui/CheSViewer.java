@@ -228,6 +228,7 @@ public class CheSViewer implements GUIControler
 			{
 				CheSMapperWizard wwd = new CheSMapperWizard(null);
 				SwingUtil.waitWhileVisible(wwd);
+
 				if (wwd.isWorkflowSelected())
 					clusteringData = doMapping(wwd);
 				else
@@ -242,6 +243,8 @@ public class CheSViewer implements GUIControler
 
 	public static ClusteringData doMapping(CheSMapperWizard wwd)
 	{
+		if (TaskProvider.exists())
+			TaskProvider.clear();
 		TaskProvider.registerThread("Ches-Mapper-Task");
 		TaskProvider.task().showDialog(null, "Chemical space mapping");
 		ClusteringData d = wwd.loadDataset();

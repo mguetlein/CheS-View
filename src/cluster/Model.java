@@ -81,7 +81,7 @@ public class Model
 
 	public String toString()
 	{
-		return "Compound " + getModelIndex();
+		return "Compound " + (getModelOrigIndex() + 1);
 	}
 
 	public String getSmiles()

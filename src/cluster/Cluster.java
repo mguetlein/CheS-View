@@ -495,12 +495,17 @@ public class Cluster
 		return someModelsHidden;
 	}
 
-	public String[] getStringValues(MoleculeProperty property)
+	public String[] getStringValues(MoleculeProperty property, Model excludeModel)
 	{
-		String v[] = new String[models.size()];
-		for (int i = 0; i < v.length; i++)
-			v[i] = models.get(i).getStringValue(property);
-		return v;
+		List<String> l = new ArrayList<String>();
+		for (int i = 0; i < models.size(); i++)
+		{
+			Model m = models.get(i);
+			if (m != excludeModel)
+				l.add(m.getStringValue(property));
+		}
+		String v[] = new String[l.size()];
+		return l.toArray(v);
 	}
 
 	public Double[] getDoubleValues(MoleculeProperty property)

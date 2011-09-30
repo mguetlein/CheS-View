@@ -416,8 +416,10 @@ public class MenuBar extends JMenuBar
 		{
 			if (m.length == 1)
 			{
-				((AbstractAction) eActionRemoveCurrent).putValue(Action.NAME, "Remove Compound " + m[0]);
-				((AbstractAction) eActionExportCurrent).putValue(Action.NAME, "Export Compound " + m[0]);
+				((AbstractAction) eActionRemoveCurrent).putValue(Action.NAME,
+						"Remove " + clustering.getModelWithModelIndex(m[0]));
+				((AbstractAction) eActionExportCurrent).putValue(Action.NAME,
+						"Export " + clustering.getModelWithModelIndex(m[0]));
 			}
 			else if (m.length > 1)
 			{
@@ -426,10 +428,10 @@ public class MenuBar extends JMenuBar
 			}
 			else if (c != -1)
 			{
-				((AbstractAction) eActionRemoveCurrent).putValue(Action.NAME, "Remove Cluster '"
-						+ clustering.getCluster(c).getName() + "'");
-				((AbstractAction) eActionExportCurrent).putValue(Action.NAME, "Export Cluster '"
-						+ clustering.getCluster(c).getName() + "'");
+				((AbstractAction) eActionRemoveCurrent).putValue(Action.NAME, "Remove "
+						+ clustering.getCluster(c).getName());
+				((AbstractAction) eActionExportCurrent).putValue(Action.NAME, "Export "
+						+ clustering.getCluster(c).getName());
 			}
 			eActionRemoveCurrent.setEnabled(true);
 			eActionExportCurrent.setEnabled(true);

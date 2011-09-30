@@ -88,7 +88,7 @@ public class View
 
 	}
 
-	public synchronized void zoomIn(final Vector3f center)
+	public synchronized void zoomIn(final Vector3f center, final float time)
 	{
 		if (animated)
 		{
@@ -98,7 +98,7 @@ public class View
 				@Override
 				public void run()
 				{
-					viewer.scriptWait("zoomto 1 " + Vector3fUtil.toString(center) + " 50");
+					viewer.scriptWait("zoomto " + time + " " + Vector3fUtil.toString(center) + " 50");
 					guiControler.unblock("zoom into " + Vector3fUtil.toString(center));
 				}
 			}, "zoom in");
@@ -254,7 +254,7 @@ public class View
 				@Override
 				public void run()
 				{
-					int n = (overlapAnim == MoveAnimation.SLOW) ? 12 : 25;
+					int n = (overlapAnim == MoveAnimation.SLOW) ? 12 : 10;
 					for (int i = 0; i < n; i++)
 					{
 						for (int j = 0; j < bitSet.length; j++)
