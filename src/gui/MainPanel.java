@@ -457,21 +457,20 @@ public class MainPanel extends JPanel implements ViewControler
 		BitSet bs = view.getModelUndeletedAtomsBitSet(i);
 		view.select(bs);
 
-		boolean translucentUpdate = false;
-		if (forceUpdate || !style.equals(m.getStyle()))
-		{
-			translucentUpdate = true;
-			m.setStyle(style);
-			view.scriptWait(style);
-		}
-
 		boolean labelUpdate = showLabel
 				&& (!color.equals(m.getColor()) || selectedHighlightMoleculeProperty != m
 						.getHighlightMoleculeProperty());
 
-		if (forceUpdate || translucentUpdate || translucent != m.isTranslucent() || !color.equals(m.getColor())
-				|| selectedHighlightMoleculeProperty != m.getHighlightMoleculeProperty())
+		boolean colorUpdated = false;
+		if (forceUpdate || translucent != m.isTranslucent() || !color.equals(m.getColor())
+				|| selectedHighlightMoleculeProperty != m.getHighlightMoleculeProperty() || !style.equals(m.getStyle()))
 		{
+			colorUpdated = true;
+			if (forceUpdate || !style.equals(m.getStyle()))
+			{
+				m.setStyle(style);
+				view.scriptWait(style);
+			}
 			m.setTranslucent(translucent);
 			m.setColor(color);
 			m.setHighlightMoleculeProperty(selectedHighlightMoleculeProperty);
@@ -519,7 +518,7 @@ public class MainPanel extends JPanel implements ViewControler
 		}
 
 		// CHANGES JMOL SELECTION !!!
-		if (smarts != m.getHighlightedSmarts())
+		if (forceUpdate || colorUpdated || smarts != m.getHighlightedSmarts())
 		{
 			boolean match = false;
 			if (smarts != null && smarts.length() > 0)
@@ -528,6 +527,7 @@ public class MainPanel extends JPanel implements ViewControler
 				if (matchBitSet.cardinality() > 0)
 				{
 					match = true;
+					m.setHighlightedSmarts(smarts);
 					view.select(matchBitSet);
 					if (m.isTranslucent())
 						view.scriptWait("color orange" + getModelInactiveSuffix());
@@ -535,8 +535,9 @@ public class MainPanel extends JPanel implements ViewControler
 						view.scriptWait("color orange" + modelActiveSuffix);
 				}
 			}
-			if (!match && !forceUpdate)
+			if (!match)// || forceUpdate || translucentUpdate)
 			{
+				m.setHighlightedSmarts(null);
 				if (m.isTranslucent())
 					view.scriptWait(color + getModelInactiveSuffix());
 				else
