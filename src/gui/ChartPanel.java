@@ -16,6 +16,7 @@ import javax.swing.JPanel;
 
 import main.Settings;
 import util.ArrayUtil;
+import util.ColorUtil;
 import util.CountedSet;
 import util.DefaultComparator;
 import util.ToStringComparator;
@@ -28,6 +29,7 @@ import com.jgoodies.forms.layout.FormLayout;
 
 import dataInterface.MoleculeProperty;
 import dataInterface.MoleculeProperty.Type;
+import dataInterface.MoleculePropertyUtil;
 import freechart.AbstractFreeChartPanel;
 import freechart.HistogramPanel;
 import freechart.StackedBarPlot;
@@ -276,8 +278,6 @@ public class ChartPanel extends JPanel
 		}
 	}
 
-	private static Color COMPOUND = Color.YELLOW;
-
 	private void update(final boolean force)
 	{
 		Highlighter h = viewControler.getHighlighter();
@@ -298,6 +298,8 @@ public class ChartPanel extends JPanel
 		Model m = null;
 		if (mIndex != -1)
 			m = clustering.getModelWithModelIndex(mIndex);
+		if (prop != null && prop.getType() == Type.NOMINAL)
+			m = null;
 
 		if (force || cluster != c || property != prop || model != m)
 		{
@@ -335,30 +337,69 @@ public class ChartPanel extends JPanel
 						if (d != null)
 						{
 							p = d.getPlot();
+							int dIndex = -1;
+							int cIndex = -1;
+							int mIndex = -1;
+
 							if (fCluster == null)
 							{
 								if (fModel == null)
-									p.setSeriesColor(0, Color.BLUE);
+									dIndex = 0;
 								else
 								{
-									p.setSeriesColor(0, COMPOUND);
-									p.setSeriesColor(1, Color.BLUE);
+									mIndex = 0;
+									dIndex = 1;
 								}
 							}
 							else
 							{
 								if (fModel == null)
 								{
-									p.setSeriesColor(0, Color.RED);
-									p.setSeriesColor(1, Color.BLUE);
+									cIndex = 0;
+									dIndex = 1;
 								}
 								else
 								{
-									p.setSeriesColor(0, COMPOUND);
-									p.setSeriesColor(1, Color.RED);
-									p.setSeriesColor(2, Color.BLUE);
+									mIndex = 0;
+									cIndex = 1;
+									dIndex = 2;
 								}
 							}
+
+							p.setSeriesColor(dIndex, MoleculePropertyUtil.AVAILABLE_COLORS[0]);
+							if (cIndex != -1)
+								p.setSeriesColor(cIndex, MoleculePropertyUtil.AVAILABLE_COLORS[1]);
+							if (mIndex != -1)
+								p.setSeriesColor(mIndex, MoleculePropertyUtil.AVAILABLE_COLORS[2]);
+
+							if (p instanceof StackedBarPlot)
+							{
+								if (mIndex != -1)
+									throw new IllegalArgumentException(
+											"does help much in terms of visualisation (color code should be enough), difficult to realize in terms of color brightness");
+
+								Color cols[] = MoleculePropertyUtil.getNominalColors(fProperty);
+								if (cIndex == -1)
+								{
+									p.setSeriesColor(dIndex,
+											ColorUtil.grayscale(MoleculePropertyUtil.AVAILABLE_COLORS[0]));
+									((StackedBarPlot) p).setSeriesCategoryColors(dIndex, cols);
+								}
+								else
+								{
+									p.setSeriesColor(dIndex, ColorUtil
+											.grayscale(MoleculePropertyUtil.AVAILABLE_COLORS[0].darker().darker()));
+									p.setSeriesColor(cIndex,
+											ColorUtil.grayscale(MoleculePropertyUtil.AVAILABLE_COLORS[0]).brighter()
+													.brighter());
+
+									((StackedBarPlot) p).setSeriesCategoryColors(dIndex,
+											ColorUtil.darker(ColorUtil.darker(cols)));
+									((StackedBarPlot) p).setSeriesCategoryColors(cIndex,
+											ColorUtil.brighter(ColorUtil.brighter(cols)));
+								}
+							}
+
 							p.setOpaqueFalse();
 							p.setForegroundColor(Settings.FOREGROUND);
 							p.setShadowVisible(false);

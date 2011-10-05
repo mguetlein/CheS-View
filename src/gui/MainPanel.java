@@ -35,6 +35,8 @@ import cluster.Clustering;
 import cluster.Model;
 import data.ClusteringData;
 import dataInterface.MoleculeProperty;
+import dataInterface.MoleculeProperty.Type;
+import dataInterface.MoleculePropertyUtil;
 import dataInterface.SubstructureSmartsType;
 
 public class MainPanel extends JPanel implements ViewControler
@@ -46,12 +48,21 @@ public class MainPanel extends JPanel implements ViewControler
 	private boolean spinEnabled = false;
 	private boolean hideHydrogens = false;
 
-	private static final String DEFAULT_COLOR = "color cpk";
+	private String style = STYLE_WIREFRAME;
 
-	String style = STYLE_WIREFRAME;
-	String color = DEFAULT_COLOR;
+	private String getColor(Model m)
+	{
+		if (selectedHighlightMoleculeProperty == null)
+			return "color cpk";
+		else if (selectedHighlightMoleculeProperty.getType() == Type.NOMINAL)
+			return "color "
+					+ ColorUtil.toJMolString(MoleculePropertyUtil.getNominalColor(selectedHighlightMoleculeProperty,
+							m.getStringValue(selectedHighlightMoleculeProperty)));
+		else
+			return "color FIXEDTEMPERATURE";
+	}
 
-	private String getModelInactiveSuffix()
+	private String getColorSuffixModelInactive()
 	{
 		if (style.equals(STYLE_WIREFRAME))
 			return "; color translucent 0.8";
@@ -218,17 +229,10 @@ public class MainPanel extends JPanel implements ViewControler
 		if (this.selectedHighlighter != highlighter)
 		{
 			selectedHighlighter = highlighter;
-			selectedHighlightMoleculeProperty = null;
-
-			if (highlighter == DEFAULT_HIGHLIGHTER)
-				color = DEFAULT_COLOR;
-			else if (highlighter instanceof SubstructureHighlighter)
-				color = DEFAULT_COLOR;
-			else if (highlighter instanceof MoleculePropertyHighlighter)
-			{
-				color = "color FIXEDTEMPERATURE";
+			if (selectedHighlighter instanceof MoleculePropertyHighlighter)
 				selectedHighlightMoleculeProperty = ((MoleculePropertyHighlighter) highlighter).getProperty();
-			}
+			else
+				selectedHighlightMoleculeProperty = null;
 
 			updateAllClustersAndModels(false);
 			fireViewChange(PROPERTY_HIGHLIGHT_CHANGED);
@@ -456,6 +460,7 @@ public class MainPanel extends JPanel implements ViewControler
 
 		BitSet bs = view.getModelUndeletedAtomsBitSet(i);
 		view.select(bs);
+		String color = getColor(m);
 
 		boolean labelUpdate = showLabel
 				&& (!color.equals(m.getColor()) || selectedHighlightMoleculeProperty != m
@@ -476,7 +481,7 @@ public class MainPanel extends JPanel implements ViewControler
 			m.setHighlightMoleculeProperty(selectedHighlightMoleculeProperty);
 
 			if (translucent)
-				view.scriptWait(color + getModelInactiveSuffix());
+				view.scriptWait(color + getColorSuffixModelInactive());
 			else
 				view.scriptWait(color + modelActiveSuffix);
 		}
@@ -530,7 +535,7 @@ public class MainPanel extends JPanel implements ViewControler
 					m.setHighlightedSmarts(smarts);
 					view.select(matchBitSet);
 					if (m.isTranslucent())
-						view.scriptWait("color orange" + getModelInactiveSuffix());
+						view.scriptWait("color orange" + getColorSuffixModelInactive());
 					else
 						view.scriptWait("color orange" + modelActiveSuffix);
 				}
@@ -539,7 +544,7 @@ public class MainPanel extends JPanel implements ViewControler
 			{
 				m.setHighlightedSmarts(null);
 				if (m.isTranslucent())
-					view.scriptWait(color + getModelInactiveSuffix());
+					view.scriptWait(color + getColorSuffixModelInactive());
 				else
 					view.scriptWait(color + modelActiveSuffix);
 			}
