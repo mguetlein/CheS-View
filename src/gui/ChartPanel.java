@@ -366,12 +366,6 @@ public class ChartPanel extends JPanel
 								}
 							}
 
-							p.setSeriesColor(dIndex, MoleculePropertyUtil.AVAILABLE_COLORS[0]);
-							if (cIndex != -1)
-								p.setSeriesColor(cIndex, MoleculePropertyUtil.AVAILABLE_COLORS[1]);
-							if (mIndex != -1)
-								p.setSeriesColor(mIndex, MoleculePropertyUtil.AVAILABLE_COLORS[2]);
-
 							if (p instanceof StackedBarPlot)
 							{
 								if (mIndex != -1)
@@ -398,6 +392,20 @@ public class ChartPanel extends JPanel
 									((StackedBarPlot) p).setSeriesCategoryColors(cIndex,
 											ColorUtil.brighter(ColorUtil.brighter(cols)));
 								}
+							}
+							else
+							{
+								if (cIndex == -1)
+									p.setSeriesColor(dIndex, MoleculePropertyUtil.AVAILABLE_COLORS[0]);
+								else
+								{
+									p.setSeriesColor(dIndex, MoleculePropertyUtil.AVAILABLE_COLORS[0].darker().darker());
+									p.setSeriesColor(cIndex, MoleculePropertyUtil.AVAILABLE_COLORS[0].brighter()
+											.brighter());
+								}
+
+								if (mIndex != -1)
+									p.setSeriesColor(mIndex, MoleculePropertyUtil.AVAILABLE_COLORS[1]);
 							}
 
 							p.setOpaqueFalse();

@@ -521,4 +521,9 @@ public class Clustering
 	{
 		return clusters.size();
 	}
+
+	public int getNumCompounds()
+	{
+		return clusteringData.getCompounds().size();
+	}
 }

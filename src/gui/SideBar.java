@@ -124,7 +124,8 @@ public class SideBar extends JPanel
 
 	private void updateList()
 	{
-		datasetNameLabel.setText("<html><b>Dataset: </b>" + clustering.getName() + "</html>");
+		datasetNameLabel.setText("<html><b>Dataset: </b>" + clustering.getName() + " (#" + clustering.getNumCompounds()
+				+ ")</html>");
 		//				+ " some endless long name just to make really really really really sure");
 
 		// clusterList.setIgnoreRepaint(true);

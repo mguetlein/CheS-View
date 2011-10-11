@@ -8,7 +8,7 @@ import dataInterface.SubstructureSmartsType;
 
 public interface ViewControler
 {
-	public static final String STYLE_WIREFRAME = "spacefill 0; wireframe";
+	public static final String STYLE_WIREFRAME = "spacefill 0; wireframe 0.02";
 	public static final String STYLE_BALLS_AND_STICKS = "wireframe 25; spacefill 15%";
 
 	public boolean isHideUnselected();
