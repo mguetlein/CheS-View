@@ -179,7 +179,7 @@ public class CheSViewer implements GUIControler
 		if (clusterPanel == null)
 			throw new Error("cluster panel not yet set");
 		if (block.contains(blocker))
-			throw new Error("already blocking");
+			throw new Error("already blocking for: " + blocker);
 		block.add(blocker);
 		if (DEBUG)
 			System.out.println("BLOCK (" + block.size() + ") '" + blocker + "' ------------------");
@@ -196,7 +196,7 @@ public class CheSViewer implements GUIControler
 	public void unblock(String blocker)
 	{
 		if (!block.contains(blocker))
-			throw new Error("use block first");
+			throw new Error("use block first for " + blocker);
 
 		block.remove(blocker);
 

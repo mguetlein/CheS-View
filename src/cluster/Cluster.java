@@ -1,7 +1,6 @@
 package cluster;
 
 import gui.View;
-import gui.View.MoveAnimation;
 import gui.ViewControler.HighlightSorting;
 
 import java.util.ArrayList;
@@ -16,6 +15,7 @@ import javax.vecmath.Vector3f;
 
 import util.ArrayUtil;
 import util.Vector3fUtil;
+import data.ClusterDataImpl;
 import dataInterface.ClusterData;
 import dataInterface.MoleculeProperty;
 import dataInterface.MoleculeProperty.Type;
@@ -26,15 +26,10 @@ public class Cluster
 	private Vector<Model> models;
 	private ClusterData clusterData;
 
-	private boolean dirty = true;
 	private BitSet bitSet;
-	private Vector3f center;
 
-	private boolean overlap = true;
-	private boolean superimposed = false;
-	private int radius;
-
-	private Vector3f position;
+	private boolean superimpose = true;
+	private int nonSuperimposeRadius;
 
 	HashMap<String, List<Model>> modelsOrderedByPropterty = new HashMap<String, List<Model>>();
 
@@ -43,6 +38,7 @@ public class Cluster
 	private MoleculeProperty highlightProp;
 	private HighlightSorting highlightSorting;
 	private boolean someModelsHidden;
+	private boolean showLabel = false;
 
 	public Cluster(dataInterface.ClusterData clusterData, boolean firstCluster)
 	{
@@ -59,41 +55,50 @@ public class Cluster
 		models = new Vector<Model>();
 		int mCount = 0;
 		for (int i = before; i < after; i++)
-			addModel(new Model(i, clusterData.getCompounds().get(mCount++))); //  modelOrigIndices[mCount], props, nProps));
+			models.add(new Model(i, clusterData.getCompounds().get(mCount++)));
+
+		update();
 	}
+
+	boolean alignedCompoundsCalibrated = false;
 
 	public void updatePositions()
 	{
-		boolean overlap = this.overlap;
-		boolean superimposed = this.superimposed;
-		if (!overlap)
-			setOverlap(true, MoveAnimation.NONE, false);
+		Vector3f[] positions = ClusterUtil.getModelPositions(this);
+		nonSuperimposeRadius = (int) (Vector3fUtil.maxDist(positions));
 
-		Vector3f positions[] = ClusterUtil.getModelPositions(this, true);
-		float scale = ClusterUtil.getScaleFactor(positions);
-		//		System.out.println("SSSSSSSSSSSSSSSSSSSSSSSSSSS model scaling: " + scale);
-
-		//		for (Vector3f v3f : positions)
-		//			v3f.scale(scale);
-		for (int i = 0; i < positions.length; i++)
+		if (!clusterData.isAligned())
 		{
-			Vector3f pos = new Vector3f(positions[i]);
-			pos.scale(scale);
-			models.get(i).setPosition(pos);
+			// the compounds have not been aligned
+			// the compounds may have a center != 0, calibrate to 0
+			for (Model m : models)
+				m.moveTo(new Vector3f(0f, 0f, 0f));
+		}
+		else
+		{
+			// the compounds are aligned, cannot calibrate to 0, this would brake the alignment
+			// however, the compound center may have an offset, calculate and remove
+			if (!alignedCompoundsCalibrated)
+			{
+				Vector3f[] origCenters = new Vector3f[models.size()];
+				for (int i = 0; i < origCenters.length; i++)
+					origCenters[i] = models.get(i).origCenter;
+				Vector3f center = Vector3fUtil.center(origCenters);
+				for (int i = 0; i < origCenters.length; i++)
+					models.get(i).origCenter.sub(center);
+				alignedCompoundsCalibrated = true;
+			}
+			for (Model m : models)
+				m.moveTo(m.origCenter);
 		}
 
-		positions = ClusterUtil.getModelPositions(this, false);
-		radius = (int) (Vector3fUtil.maxDist(positions));
+		// translate compounds to the cluster position
+		View.instance.setAtomCoordRelative(getPosition(), getBitSet());
+	}
 
-		resetCenter();
-
-		translate(getPosition());
-		if (!clusterData.isAligned())
-			for (Model m : models)
-				m.moveTo(getPosition());
-
-		if (!overlap)
-			setOverlap(false, MoveAnimation.NONE, superimposed);
+	public void setOverlap(boolean overlap)
+	{
+		this.superimpose = overlap;
 	}
 
 	public String getSummaryStringValue(MoleculeProperty property)
@@ -111,40 +116,23 @@ public class Cluster
 		return clusterData.getName();
 	}
 
-	public String getClusterAlgorithm()
-	{
-		return clusterData.getClusterAlgorithm();
-	}
-
-	public String getEmbedAlgorithm()
-	{
-		return clusterData.getEmbedAlgorithm();
-	}
-
 	public String getAlignAlgorithm()
 	{
 		return clusterData.getAlignAlgorithm();
 	}
 
-	public void updateValues()
+	private void update()
 	{
-		if (!dirty)
-			return;
-
-		nonOverlapCenter = null;
 		bitSet = new BitSet();
 		for (Model m : models)
 			bitSet.or(m.getBitSet());
-		center = new Vector3f(View.instance.getAtomSetCenter(bitSet));
-		Vector3f positions[] = ClusterUtil.getModelPositions(this, false);
-		radius = (int) (Vector3fUtil.maxDist(positions));
-		dirty = false;
-	}
 
-	public void addModel(Model model)
-	{
-		models.add(model);
-		dirty = true;
+		//updating cluster position:
+		Vector3f[] positions = ClusterUtil.getModelPositions(this, false);
+		((ClusterDataImpl) clusterData).setPosition(Vector3fUtil.center(positions));
+
+		positions = ClusterUtil.getModelPositions(this);
+		nonSuperimposeRadius = (int) (Vector3fUtil.maxDist(positions));
 	}
 
 	public Model getModelWithModelIndex(int modelIndex)
@@ -177,37 +165,7 @@ public class Cluster
 
 	public BitSet getBitSet()
 	{
-		updateValues();
 		return bitSet;
-	}
-
-	public Vector3f getCenter()
-	{
-		updateValues();
-		return center;
-	}
-
-	Vector3f nonOverlapCenter;
-
-	public Vector3f getNonOverlapCenter()
-	{
-		updateValues();
-		//		if (nonOverlapCenter == null)
-		//		{
-		if (!overlap)
-		{
-			nonOverlapCenter = getCenter();
-			System.out.println("exact " + nonOverlapCenter);
-		}
-		else if (nonOverlapCenter == null)
-		{
-			Vector3f c = new Vector3f(getCenter());
-			c.add(Vector3fUtil.center(ClusterUtil.getModelPositions(this, false)));
-			nonOverlapCenter = c;
-			System.out.println("computed " + nonOverlapCenter);
-		}
-		//		}
-		return nonOverlapCenter;
 	}
 
 	public boolean containsModelIndex(int modelIndex)
@@ -331,75 +289,30 @@ public class Cluster
 		return modelsOrderedByPropterty.get(key);
 	}
 
-	public void resetCenter()
-	{
-		updateValues();
-		Vector3f c = new Vector3f(center);
-		c.negate();
-		// viewer.setAtomCoord(bitSet, Token.xyz, c);
-		View.instance.setAtomCoordRelative(c, bitSet);
-		dirty = true;
-	}
-
-	public void translate(Vector3f newCenter)
-	{
-		Vector3f v = new Vector3f(newCenter);
-		View.instance.setAtomCoordRelative(v, getBitSet());
-		dirty = true;
-	}
-
-	/**
-	 * the compounds are drawn on the same location (because cluster view or manually superimposed)
-	 * 
-	 * @return
-	 */
-	public boolean isOverlap()
-	{
-		return overlap;
-	}
-
-	/**
-	 * the compounds are drawn on the same location manually superimposed 
-	 * 
-	 * @return
-	 */
 	public boolean isSuperimposed()
 	{
-		return superimposed;
+		return superimpose;
 	}
 
-	public void setOverlap(boolean overlap, View.MoveAnimation anim, boolean superimposed)
+	public boolean isSpreadable()
 	{
-		if (this.overlap != overlap)
-		{
-			this.overlap = overlap;
-			final Vector3f modelPositions[] = ClusterUtil.getModelPositions(this, false);
+		return nonSuperimposeRadius > 0;
+	}
 
-			BitSet bitsets[] = new BitSet[modelPositions.length];
-			for (int j = 0; j < modelPositions.length; j++)
-				bitsets[j] = models.get(j).getBitSet();
-			View.instance.setAtomCoordRelative(modelPositions, bitsets, anim);
-
-			View.instance.afterAnimation(new Runnable()
-			{
-				@Override
-				public void run()
-				{
-					for (Vector3f vector3f : modelPositions)
-						vector3f.scale(-1);
-					dirty = true;
-				}
-			}, "after superimpose: invert vectors");
-		}
-		if (superimposed && !overlap)
-			throw new IllegalArgumentException();
-		this.superimposed = superimposed;
+	public int getSuperimposeRadius(boolean superimpose)
+	{
+		if (superimpose)
+			return 0;
+		else
+			return nonSuperimposeRadius;
 	}
 
 	public int getRadius()
 	{
-		updateValues();
-		return radius;
+		if (this.superimpose)
+			return 0;
+		else
+			return nonSuperimposeRadius;
 	}
 
 	public String getSubstructureSmarts(SubstructureSmartsType type)
@@ -409,17 +322,9 @@ public class Cluster
 
 	public Vector3f getPosition()
 	{
-		return position;
-	}
-
-	public void setPosition(Vector3f pos)
-	{
-		position = pos;
-	}
-
-	public Vector3f getOrigPosition()
-	{
-		return clusterData.getPosition();
+		Vector3f v = new Vector3f(clusterData.getPosition());
+		v.scale(ClusteringUtil.SCALE);
+		return v;
 	}
 
 	public void remove(int[] modelIndices)
@@ -436,13 +341,8 @@ public class Cluster
 		View.instance.hide(bs);
 
 		modelsOrderedByPropterty.clear();
-		dirty = true;
 
-		if (models.size() == 1)
-		{
-			models.get(0).setOrigPosition(new Vector3f(0, 0, 0));
-			updatePositions();
-		}
+		update();
 	}
 
 	public boolean isWatched()
@@ -514,6 +414,16 @@ public class Cluster
 		for (int i = 0; i < v.length; i++)
 			v[i] = models.get(i).getDoubleValue(property);
 		return v;
+	}
+
+	public void setShowLabel(boolean showLabel)
+	{
+		this.showLabel = showLabel;
+	}
+
+	public boolean isShowLabel()
+	{
+		return showLabel;
 	}
 
 }

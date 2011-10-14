@@ -141,6 +141,8 @@ public class MenuBar extends JMenuBar
 	//view
 	Action vActionFullScreen;
 	Action vActionHideHydrogens;
+	Action vActionHideUnselectedCompounds;
+	Action vActionSpin;
 
 	//help
 
@@ -356,7 +358,52 @@ public class MenuBar extends JMenuBar
 			}
 		});
 
-		MyMenu viewMenu = new MyMenu("View", vActionFullScreen, vActionHideHydrogens);
+		vActionHideUnselectedCompounds = new AbstractAction("Hide Un-Selected Compounds")
+		{
+			@Override
+			public void actionPerformed(ActionEvent e)
+			{
+				viewControler.setHideUnselected(!viewControler.isHideUnselected());
+			}
+		};
+		((AbstractAction) vActionHideUnselectedCompounds).putValue(Action.ACCELERATOR_KEY,
+				KeyStroke.getKeyStroke(KeyEvent.VK_V, ActionEvent.ALT_MASK));
+		vActionHideUnselectedCompounds.putValue(Action.SELECTED_KEY, viewControler.isHideUnselected());
+		viewControler.addViewListener(new PropertyChangeListener()
+		{
+
+			@Override
+			public void propertyChange(PropertyChangeEvent evt)
+			{
+				if (evt.getPropertyName().equals(ViewControler.PROPERTY_HIDE_UNSELECT_CHANGED))
+					vActionHideUnselectedCompounds.putValue(Action.SELECTED_KEY, viewControler.isHideUnselected());
+			}
+		});
+
+		vActionSpin = new AbstractAction("Spin")
+		{
+			@Override
+			public void actionPerformed(ActionEvent e)
+			{
+				viewControler.setSpinEnabled(!viewControler.isSpinEnabled());
+			}
+		};
+		((AbstractAction) vActionSpin).putValue(Action.ACCELERATOR_KEY,
+				KeyStroke.getKeyStroke(KeyEvent.VK_S, ActionEvent.ALT_MASK));
+		vActionSpin.putValue(Action.SELECTED_KEY, viewControler.isSpinEnabled());
+		viewControler.addViewListener(new PropertyChangeListener()
+		{
+
+			@Override
+			public void propertyChange(PropertyChangeEvent evt)
+			{
+				if (evt.getPropertyName().equals(ViewControler.PROPERTY_SPIN_CHANGED))
+					vActionSpin.putValue(Action.SELECTED_KEY, viewControler.isSpinEnabled());
+			}
+		});
+
+		MyMenu viewMenu = new MyMenu("View", vActionFullScreen, vActionHideHydrogens, vActionHideUnselectedCompounds,
+				vActionSpin);
 
 		Action hActionAbout = new AbstractAction("About " + Settings.TITLE)
 		{

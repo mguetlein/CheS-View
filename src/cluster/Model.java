@@ -1,5 +1,6 @@
 package cluster;
 
+import gui.MainPanel.Translucency;
 import gui.View;
 
 import java.util.BitSet;
@@ -9,7 +10,6 @@ import javax.vecmath.Vector3f;
 
 import org.jmol.script.Token;
 
-import data.CompoundDataImpl;
 import dataInterface.CompoundData;
 import dataInterface.MoleculeProperty;
 import dataInterface.MoleculeProperty.Type;
@@ -21,22 +21,25 @@ public class Model
 
 	private CompoundData compoundData;
 
-	private boolean translucent = false;
-	private boolean showLabel = false;
+	private Translucency translucency = Translucency.None;
+	private String label = null;
 	private boolean showHoverBox = false;
 	private boolean showActiveBox = false;
 	private String smarts = null;
-	private Vector3f position;
+
 	private HashMap<String, BitSet> smartsMatches;
 	private String color;
 	private MoleculeProperty highlightMoleculeProperty;
 	private String style;
+
+	public final Vector3f origCenter;
 
 	public Model(int modelIndex, CompoundData compoundData)
 	{
 		this.modelIndex = modelIndex;
 		this.compoundData = compoundData;
 		bitSet = View.instance.getModelUndeletedAtomsBitSet(modelIndex);
+		origCenter = new Vector3f(View.instance.getAtomSetCenter(bitSet));
 		smartsMatches = new HashMap<String, BitSet>();
 	}
 
@@ -94,24 +97,24 @@ public class Model
 		modelIndex += offset;
 	}
 
-	public boolean isTranslucent()
+	public Translucency getTranslucency()
 	{
-		return translucent;
+		return translucency;
 	}
 
-	public void setTranslucent(boolean translucent)
+	public void setTranslucency(Translucency translucency)
 	{
-		this.translucent = translucent;
+		this.translucency = translucency;
 	}
 
-	public boolean isShowLabel()
+	public String getLabel()
 	{
-		return showLabel;
+		return label;
 	}
 
-	public void setShowLabel(boolean showLabel)
+	public void setLabel(String label)
 	{
-		this.showLabel = showLabel;
+		this.label = label;
 	}
 
 	public boolean isShowHoverBox()
@@ -152,24 +155,17 @@ public class Model
 		View.instance.setAtomCoordRelative(dest, getBitSet());
 	}
 
-	public Vector3f getOrigPosition()
+	public Vector3f getPosition(boolean scaled)
 	{
-		return compoundData.getPosition();
-	}
-
-	public void setOrigPosition(Vector3f vector3f)
-	{
-		((CompoundDataImpl) compoundData).setPosition(vector3f);
+		Vector3f v = new Vector3f(compoundData.getPosition());
+		if (scaled)
+			v.scale(ClusteringUtil.SCALE);
+		return v;
 	}
 
 	public Vector3f getPosition()
 	{
-		return position;
-	}
-
-	public void setPosition(Vector3f pos)
-	{
-		position = pos;
+		return getPosition(true);
 	}
 
 	public BitSet getSmartsMatch(String smarts)

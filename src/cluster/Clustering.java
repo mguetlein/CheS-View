@@ -2,6 +2,7 @@ package cluster;
 
 import gui.CheckBoxSelectDialog;
 import gui.View;
+import gui.View.MoveAnimation;
 import io.SDFUtil;
 
 import java.beans.PropertyChangeEvent;
@@ -51,13 +52,16 @@ public class Clustering
 
 	boolean dirty = true;
 	int numModels = -1;
-	float radius;
+	float clusterRadius;
+	float compoundRadius;
 
 	BitSet bitSetAll;
 	HashMap<Integer, Model> modelIndexToModel;
 	HashMap<Integer, Cluster> modelIndexToCluster;
 
 	Vector3f center;
+
+	private boolean superimpose = false;
 
 	public Clustering()
 	{
@@ -88,19 +92,12 @@ public class Clustering
 
 	private Cluster addSingleCluster(ClusterData clusterData)
 	{
-
 		Cluster c = new Cluster(clusterData, clusters.size() == 0);
-
 		@SuppressWarnings("unchecked")
 		Vector<Cluster> old = (Vector<Cluster>) VectorUtil.clone(Clustering.this.clusters);
 		clusters.add(c);
 		dirty = true;
-
 		fire(CLUSTER_ADDED, old, clusters);
-
-		//		for (Model m : c.getModels())
-		//			modelActive.setSelected(m.getModelIndex());
-
 		return c;
 	}
 
@@ -237,7 +234,7 @@ public class Clustering
 		if (getNumClusters() == 1)
 			getClusterActive().setSelected(0);
 		else if (getNumClusters() > 1)
-			View.instance.zoomOut(getCenter(), 0, getRadius());
+			View.instance.zoomTo(getCenter(), 0, getRadius());
 
 		fire(CLUSTER_REMOVED, old, clusters);
 	}
@@ -284,26 +281,63 @@ public class Clustering
 
 	public void updatePositions()
 	{
+		ClusteringUtil.updateScaleFactor(this);
+
 		getClusterWatched().clearSelection();
 		getModelWatched().clearSelection();
 
-		Vector3f[] positions = ClusteringUtil.getClusterPositions(this, true);
-		float scale = ClusterUtil.getScaleFactor(positions);
+		Vector3f[] positions = ClusteringUtil.getClusterPositions(this);
 
 		for (int i = 0; i < positions.length; i++)
 		{
-			Vector3f pos = new Vector3f(positions[i]);
-			//Vector3f pos = clusters.get(i).getPosition();
-			pos.scale(scale);
-			clusters.get(i).setPosition(pos);
-			clusters.get(i).updatePositions();
+			Cluster c = clusters.get(i);
+			if (!superimpose)
+				setClusterOverlap(c, true, MoveAnimation.NONE);
+			c.updatePositions();
+			if (!superimpose)
+				setClusterOverlap(c, false, MoveAnimation.NONE);
 		}
 
-		positions = ClusteringUtil.getClusterPositions(this, false);
-		radius = Vector3fUtil.maxDist(positions);
+		positions = ClusteringUtil.getClusterPositions(this);
+		clusterRadius = Vector3fUtil.maxDist(positions);
 		center = Vector3fUtil.center(positions);
 
-		//		View.instance.scriptWait("");
+		positions = ClusteringUtil.getModelPositions(this);
+		compoundRadius = Vector3fUtil.maxDist(positions);
+	}
+
+	public void setClusterOverlap(List<Cluster> clusters, boolean overlap, View.MoveAnimation anim)
+	{
+		List<Vector3f> modelPositions = new ArrayList<Vector3f>();
+		List<BitSet> bitsets = new ArrayList<BitSet>();
+
+		for (Cluster cluster : clusters)
+		{
+			if (cluster.isSuperimposed() != overlap)
+			{
+				for (int i = 0; i < cluster.size(); i++)
+				{
+					bitsets.add(cluster.getModel(i).getBitSet());
+
+					// destination is model position
+					Vector3f pos = cluster.getModel(i).getPosition();
+					// model is already at cluster position, sub to get relative vector
+					pos.sub(cluster.getPosition());
+					if (overlap)
+						pos.scale(-1);
+					modelPositions.add(pos);
+				}
+			}
+			cluster.setOverlap(overlap);
+		}
+		View.instance.setAtomCoordRelative(modelPositions, bitsets, anim);
+	}
+
+	public void setClusterOverlap(Cluster cluster, boolean overlap, View.MoveAnimation anim)
+	{
+		List<Cluster> l = new ArrayList<Cluster>();
+		l.add(cluster);
+		setClusterOverlap(l, overlap, anim);
 	}
 
 	private int[] clusterChooser(String title, String description)
@@ -497,9 +531,20 @@ public class Clustering
 		return clusteringData.getSubstructureSmartsTypes();
 	}
 
+	public float getSuperimposeRadius(boolean superimpose)
+	{
+		if (superimpose)
+			return clusterRadius;
+		else
+			return compoundRadius;
+	}
+
 	public float getRadius()
 	{
-		return radius;
+		if (this.superimpose)
+			return clusterRadius;
+		else
+			return compoundRadius;
 	}
 
 	public List<MoleculeProperty> getFeatures()
@@ -522,8 +567,41 @@ public class Clustering
 		return clusters.size();
 	}
 
+	public boolean isSuperimpose()
+	{
+		return superimpose;
+	}
+
+	public void setSuperimpose(boolean superimpose)
+	{
+		this.superimpose = superimpose;
+	}
+
 	public int getNumCompounds()
 	{
-		return clusteringData.getCompounds().size();
+		int sum = 0;
+		for (Cluster c : clusters)
+			sum += c.size();
+		return sum;
 	}
+
+	public Iterable<Model> getModels()
+	{
+		List<Model> m = new ArrayList<Model>();
+		for (Cluster c : clusters)
+			for (Model mm : c.getModels())
+				m.add(mm);
+		return m;
+	}
+
+	public String getClusterAlgorithm()
+	{
+		return clusteringData.getClusterAlgorithm();
+	}
+
+	public String getEmbedAlgorithm()
+	{
+		return clusteringData.getEmbedAlgorithm();
+	}
+
 }

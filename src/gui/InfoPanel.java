@@ -26,14 +26,20 @@ public class InfoPanel extends JPanel
 	Clustering clustering;
 	ViewControler viewControler;
 
+	JPanel datasetPanel;
+	JLabel datasetNameLabel = ComponentFactory.createLabel();
+	JLabel datasetSizeLabel = ComponentFactory.createLabel();
+	JLabel datasetAlgLabel = ComponentFactory.createLabel();
+	JLabel datasetEmbedLabel = ComponentFactory.createLabel();
+
 	JPanel clusterPanel;
 	JLabel clusterNameLabel = ComponentFactory.createLabel();
 	JLabel clusterSizeLabel = ComponentFactory.createLabel();
-	JLabel clusterAlgLabel = ComponentFactory.createLabel();
-	JLabel clusterEmbedLabel = ComponentFactory.createLabel();
 	JLabel clusterAlignLabel = ComponentFactory.createLabel();
 	JLabel clusterMCSLabelHeader = ComponentFactory.createLabel("MCS:");
 	JLabel clusterMCSLabel = ComponentFactory.createLabel();
+	JLabel clusterFeatureLabelHeader = ComponentFactory.createLabel();
+	JLabel clusterFeatureLabel = ComponentFactory.createLabel();
 
 	JPanel compoundPanel;
 	JLabel compoundNameLabel = ComponentFactory.createLabel();
@@ -45,6 +51,15 @@ public class InfoPanel extends JPanel
 	{
 		this.viewControler = viewControler;
 		this.clustering = clustering;
+
+		clustering.addListener(new PropertyChangeListener()
+		{
+			@Override
+			public void propertyChange(PropertyChangeEvent evt)
+			{
+				updateDataset();
+			}
+		});
 
 		buildLayout();
 		clustering.getModelWatched().addListener(new PropertyChangeListener()
@@ -95,44 +110,63 @@ public class InfoPanel extends JPanel
 	private void buildLayout()
 	{
 		DefaultFormBuilder b1 = new DefaultFormBuilder(new FormLayout("p,3dlu,p"));
-		b1.append(ComponentFactory.createLabel("<html><b>Cluster:</b><html>"));
-		b1.append(clusterNameLabel);
+		b1.append(ComponentFactory.createLabel("<html><b>Dataset:</b><html>"));
+		b1.append(datasetNameLabel);
 		b1.nextLine();
 		b1.append(ComponentFactory.createLabel("<html>Num compounds:<html>"));
-		b1.append(clusterSizeLabel);
+		b1.append(datasetSizeLabel);
 		b1.nextLine();
 		b1.append(ComponentFactory.createLabel("<html>Cluster algorithm:<html>"));
-		b1.append(clusterAlgLabel);
+		b1.append(datasetAlgLabel);
 		b1.nextLine();
 		b1.append(ComponentFactory.createLabel("<html>3D Embedding:<html>"));
-		b1.append(clusterEmbedLabel);
-		b1.nextLine();
-		b1.append(ComponentFactory.createLabel("<html>3D Alignement:<html>"));
-		b1.append(clusterAlignLabel);
-		b1.nextLine();
-		b1.append(clusterMCSLabelHeader);
-		b1.append(clusterMCSLabel);
+		b1.append(datasetEmbedLabel);
 
-		clusterPanel = b1.getPanel();
+		datasetPanel = b1.getPanel();
+		datasetPanel.setOpaque(false);
+		datasetPanel.setVisible(true);
+
+		DefaultFormBuilder b2 = new DefaultFormBuilder(new FormLayout("p,3dlu,p"));
+		b2.append(ComponentFactory.createLabel("<html><b>Cluster:</b><html>"));
+		b2.append(clusterNameLabel);
+		b2.nextLine();
+		b2.append(ComponentFactory.createLabel("<html>Num compounds:<html>"));
+		b2.append(clusterSizeLabel);
+		b2.nextLine();
+		b2.append(ComponentFactory.createLabel("<html>3D Alignement:<html>"));
+		b2.append(clusterAlignLabel);
+		b2.nextLine();
+		b2.append(clusterMCSLabelHeader);
+		b2.append(clusterMCSLabel);
+		b2.nextLine();
+		b2.append(clusterFeatureLabelHeader);
+		b2.append(clusterFeatureLabel);
+
+		clusterPanel = b2.getPanel();
 		clusterPanel.setOpaque(false);
 		clusterPanel.setVisible(false);
 
-		DefaultFormBuilder b2 = new DefaultFormBuilder(new FormLayout("p,3dlu,p"));
-		b2.append(ComponentFactory.createLabel("<html><b>Compound:</b><html>"));
-		b2.append(compoundNameLabel);
-		b2.nextLine();
-		b2.append(ComponentFactory.createLabel("<html>Smiles:<html>"));
-		b2.append(compoundSmilesLabel);
-		b2.nextLine();
-		b2.append(compoundFeatureLabelHeader);
-		b2.append(compoundFeatureLabel);
+		DefaultFormBuilder b3 = new DefaultFormBuilder(new FormLayout("p,3dlu,p"));
+		b3.append(ComponentFactory.createLabel("<html><b>Compound:</b><html>"));
+		b3.append(compoundNameLabel);
+		b3.nextLine();
+		b3.append(ComponentFactory.createLabel("<html>Smiles:<html>"));
+		b3.append(compoundSmilesLabel);
+		b3.nextLine();
+		b3.append(compoundFeatureLabelHeader);
+		b3.append(compoundFeatureLabel);
 
-		compoundPanel = b2.getPanel();
+		compoundPanel = b3.getPanel();
 		compoundPanel.setOpaque(false);
 		compoundPanel.setVisible(false);
 
+		JPanel p = new JPanel(new BorderLayout(10, 10));
+		p.setOpaque(false);
+		p.add(datasetPanel, BorderLayout.NORTH);
+		p.add(clusterPanel, BorderLayout.SOUTH);
+
 		setLayout(new BorderLayout(10, 10));
-		add(clusterPanel, BorderLayout.NORTH);
+		add(p, BorderLayout.NORTH);
 		add(compoundPanel, BorderLayout.SOUTH);
 		setOpaque(false);
 	}
@@ -172,6 +206,20 @@ public class InfoPanel extends JPanel
 		}
 	}
 
+	private void updateDataset()
+	{
+		if (clustering.getNumClusters() == 0)
+			datasetPanel.setVisible(false);
+		else
+		{
+			datasetPanel.setVisible(true);
+			datasetNameLabel.setText(clustering.getName());
+			datasetSizeLabel.setText(clustering.getNumCompounds() + "");
+			datasetAlgLabel.setText(clustering.getClusterAlgorithm());
+			datasetEmbedLabel.setText(clustering.getEmbedAlgorithm());
+		}
+	}
+
 	private void updateCluster()
 	{
 		int index = InfoPanel.this.clustering.getClusterActive().getSelected();
@@ -190,13 +238,25 @@ public class InfoPanel extends JPanel
 			Cluster c = clustering.getCluster(index);
 			clusterNameLabel.setText(c.getName());
 			clusterSizeLabel.setText(c.size() + "");
-			clusterAlgLabel.setText(c.getClusterAlgorithm());
-			clusterEmbedLabel.setText(c.getEmbedAlgorithm());
 			clusterAlignLabel.setText(c.getAlignAlgorithm());
 			String mcs = c.getSubstructureSmarts(SubstructureSmartsType.MCS);
 			clusterMCSLabelHeader.setVisible(mcs != null);
 			clusterMCSLabel.setVisible(mcs != null);
 			clusterMCSLabel.setText(mcs);
+
+			if (viewControler.getHighlighter() instanceof MoleculePropertyHighlighter)
+			{
+				MoleculeProperty p = ((MoleculePropertyHighlighter) viewControler.getHighlighter()).getProperty();
+				clusterFeatureLabelHeader.setText(p.getName() + ":");
+				clusterFeatureLabel.setText(c.getSummaryStringValue(p));
+				clusterFeatureLabel.setVisible(true);
+				clusterFeatureLabelHeader.setVisible(true);
+			}
+			else
+			{
+				clusterFeatureLabel.setVisible(false);
+				clusterFeatureLabelHeader.setVisible(false);
+			}
 
 			clusterPanel.setIgnoreRepaint(false);
 			clusterPanel.setVisible(true);

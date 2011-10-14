@@ -5,6 +5,7 @@ import gui.MainPanel.JmolPanel;
 import java.awt.Color;
 import java.util.BitSet;
 import java.util.Hashtable;
+import java.util.List;
 
 import javax.vecmath.Point3f;
 import javax.vecmath.Vector3f;
@@ -29,7 +30,7 @@ public class View
 		this.guiControler = guiControler;
 
 		viewer.script("set disablePopupMenu on");
-		viewer.script("set minPixelSelRadius 30");
+		viewer.script("set minPixelSelRadius 40");
 		hideHydrogens(hideHydrogens);
 	}
 
@@ -53,21 +54,29 @@ public class View
 		}
 	}
 
-	public synchronized void zoomOut(final Vector3f center, final float time, float radius)
+	public synchronized void zoomTo(Vector3f center, float time)
 	{
+		zoomTo(center, time);
+	}
 
-		//System.err.println("Radius     " + radius);
+	public synchronized void zoomTo(final Vector3f center, final float time, float radius)
+	{
+		System.err.println("Radius     " + radius);
 		//System.err.println("Rot radius " + viewer.getRotationRadius());
 
-		int zoom = (int) ((1200 / (15 / viewer.getRotationRadius())) / radius);
-		//int zoom = (int) (1200 / radius);
-
-		//		System.err.println("zoom " + zoom);
-		zoom = (int) Math.max(5, zoom);
+		int zoom;
+		if (radius <= 15)
+			zoom = 50;
+		else
+		{
+			zoom = (int) ((1200 / (15 / viewer.getRotationRadius())) / radius);
+			//		System.err.println("zoom " + zoom);
+			zoom = (int) Math.max(5, zoom);
+		}
 
 		if (animated)
 		{
-			guiControler.block("zoom out " + Vector3fUtil.toString(center));
+			guiControler.block("zoom to " + Vector3fUtil.toString(center));
 			final int finalZoom = zoom;
 			sequentially(new Runnable()
 			{
@@ -76,7 +85,7 @@ public class View
 				{
 					String cmd = "zoomto " + time + " " + Vector3fUtil.toString(center) + " " + finalZoom;
 					viewer.scriptWait(cmd);
-					guiControler.unblock("zoom out " + Vector3fUtil.toString(center));
+					guiControler.unblock("zoom to " + Vector3fUtil.toString(center));
 				}
 			}, "zoom out");
 		}
@@ -86,27 +95,6 @@ public class View
 			viewer.scriptWait(cmd);
 		}
 
-	}
-
-	public synchronized void zoomIn(final Vector3f center, final float time)
-	{
-		if (animated)
-		{
-			guiControler.block("zoom into " + Vector3fUtil.toString(center));
-			sequentially(new Runnable()
-			{
-				@Override
-				public void run()
-				{
-					viewer.scriptWait("zoomto " + time + " " + Vector3fUtil.toString(center) + " 50");
-					guiControler.unblock("zoom into " + Vector3fUtil.toString(center));
-				}
-			}, "zoom in");
-		}
-		else
-		{
-			viewer.scriptWait("zoomto 0 " + Vector3fUtil.toString(center) + " 50");
-		}
 	}
 
 	public synchronized static String color(Color col)
@@ -123,23 +111,6 @@ public class View
 	{
 		return viewer.findNearestAtomIndex(x, y);
 	}
-
-	//	public synchronized int sloppyFindNearestAtomIndex(int x, int y)
-	//	{
-	//		// 6px is the hard coded "epsilon" for clicking atoms
-	//		int xx[] = new int[] { x - 18, x - 6, x + 6, x + 18 };
-	//		int yy[] = new int[] { y - 18, y - 6, y + 6, y + 18 };
-	//		for (int i = 0; i < yy.length; i++)
-	//		{
-	//			for (int j = 0; j < yy.length; j++)
-	//			{
-	//				int index = viewer.findNearestAtomIndex(xx[i], yy[i]);
-	//				if (index != -1)
-	//					return index;
-	//			}
-	//		}
-	//		return -1;
-	//	}
 
 	public synchronized int getAtomModelIndex(int atomIndex)
 	{
@@ -243,36 +214,36 @@ public class View
 		SLOW, FAST, NONE
 	}
 
-	public synchronized void setAtomCoordRelative(final Vector3f[] c, final BitSet[] bitSet,
+	public synchronized void setAtomCoordRelative(final List<Vector3f> c, final List<BitSet> bitSet,
 			final MoveAnimation overlapAnim)
 	{
-		if (animated && overlapAnim != MoveAnimation.NONE && c.length > 1)
+		if (animated && overlapAnim != MoveAnimation.NONE && c.size() > 1)
 		{
-			guiControler.block("spread cluster");
+			guiControler.block("spread cluster " + c);
 			sequentially(new Runnable()
 			{
 				@Override
 				public void run()
 				{
-					int n = (overlapAnim == MoveAnimation.SLOW) ? 12 : 10;
+					int n = (overlapAnim == MoveAnimation.SLOW) ? 24 : 10;
 					for (int i = 0; i < n; i++)
 					{
-						for (int j = 0; j < bitSet.length; j++)
+						for (int j = 0; j < bitSet.size(); j++)
 						{
-							Vector3f v = new Vector3f(c[j]);
+							Vector3f v = new Vector3f(c.get(j));
 							v.scale(1 / (float) n);
-							viewer.setAtomCoordRelative(v, bitSet[j]);
+							viewer.setAtomCoordRelative(v, bitSet.get(j));
 						}
 						viewer.scriptWait("delay 0.01");
 					}
-					guiControler.unblock("spread cluster");
+					guiControler.unblock("spread cluster " + c);
 				}
 			}, "move bitsets");
 		}
 		else
 		{
-			for (int i = 0; i < bitSet.length; i++)
-				viewer.setAtomCoordRelative(c[i], bitSet[i]);
+			for (int i = 0; i < bitSet.size(); i++)
+				viewer.setAtomCoordRelative(c.get(i), bitSet.get(i));
 		}
 	}
 

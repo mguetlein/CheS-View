@@ -24,13 +24,12 @@ import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
 import main.Settings;
-import util.SwingUtil;
 
 public class ControlPanel extends JPanel
 {
 	boolean updateByViewControler = false;
 
-	JCheckBox spinCheckbox;
+	//	JCheckBox spinCheckbox;
 
 	StyleButton buttonWire;
 	StyleButton buttonBalls;
@@ -54,10 +53,10 @@ public class ControlPanel extends JPanel
 
 	private void buildLayout()
 	{
-		spinCheckbox = ComponentFactory.createCheckBox("Spin on/off");
-		spinCheckbox.setSelected(viewControler.isSpinEnabled());
-		spinCheckbox.setOpaque(false);
-		spinCheckbox.setFocusable(false);
+		//		spinCheckbox = ComponentFactory.createCheckBox("Spin on/off");
+		//		spinCheckbox.setSelected(viewControler.isSpinEnabled());
+		//		spinCheckbox.setOpaque(false);
+		//		spinCheckbox.setFocusable(false);
 
 		setBackground(Settings.TRANSPARENT_BACKGROUND);
 
@@ -103,7 +102,7 @@ public class ControlPanel extends JPanel
 		p.add(buttonMinus);
 		p.add(buttonPlus);
 		p.add(new JLabel(" "));
-		p.add(spinCheckbox);
+		//		p.add(spinCheckbox);
 		p.add(buttonWire);
 		p.add(buttonBalls);
 
@@ -127,17 +126,17 @@ public class ControlPanel extends JPanel
 
 	private void addListeners()
 	{
-		spinCheckbox.addActionListener(new ActionListener()
-		{
-
-			@Override
-			public void actionPerformed(ActionEvent e)
-			{
-				if (updateByViewControler)
-					return;
-				viewControler.setSpinEnabled(spinCheckbox.isSelected());
-			}
-		});
+		//		spinCheckbox.addActionListener(new ActionListener()
+		//		{
+		//
+		//			@Override
+		//			public void actionPerformed(ActionEvent e)
+		//			{
+		//				if (updateByViewControler)
+		//					return;
+		//				viewControler.setSpinEnabled(spinCheckbox.isSelected());
+		//			}
+		//		});
 
 		ActionListener l = new ActionListener()
 		{
@@ -280,119 +279,134 @@ public class ControlPanel extends JPanel
 		}
 	}
 
-	public static void main(String args[])
-	{
-		SwingUtil.showInDialog(new ControlPanel(new ViewControler()
-		{
-
-			@Override
-			public boolean isSpinEnabled()
-			{
-				return false;
-			}
-
-			@Override
-			public void setSpinEnabled(boolean spinEnabled)
-			{
-			}
-
-			@Override
-			public void setDensitiyHigher(boolean higher)
-			{
-			}
-
-			@Override
-			public String getStyle()
-			{
-				return ViewControler.STYLE_WIREFRAME;
-			}
-
-			@Override
-			public void setStyle(String style)
-			{
-			}
-
-			@Override
-			public HashMap<String, Highlighter[]> getHighlighters()
-			{
-				return null;
-			}
-
-			@Override
-			public void setHighlighter(Highlighter highlighter)
-			{
-			}
-
-			@Override
-			public Highlighter getHighlighter()
-			{
-				return null;
-			}
-
-			@Override
-			public void setSuperimpose(boolean superimpose)
-			{
-			}
-
-			@Override
-			public boolean isHighlighterLabelsVisible()
-			{
-				return false;
-			}
-
-			@Override
-			public void setHighlighterLabelsVisible(boolean selected)
-			{
-			}
-
-			@Override
-			public void setHighlightSorting(HighlightSorting sorting)
-			{
-
-			}
-
-			@Override
-			public HighlightSorting getHighlightSorting()
-			{
-				return null;
-			}
-
-			@Override
-			public void addViewListener(PropertyChangeListener l)
-			{
-			}
-
-			@Override
-			public boolean canChangeDensitiy(boolean higher)
-			{
-				return true;
-			}
-
-			@Override
-			public boolean isHideUnselected()
-			{
-				return false;
-			}
-
-			@Override
-			public void setHideUnselected(boolean hide)
-			{
-			}
-
-			@Override
-			public boolean isHideHydrogens()
-			{
-				// TODO Auto-generated method stub
-				return false;
-			}
-
-			@Override
-			public void setHideHydrogens(boolean b)
-			{
-				// TODO Auto-generated method stub
-
-			}
-
-		}));
-	}
+	//	public static void main(String args[])
+	//	{
+	//		SwingUtil.showInDialog(new ControlPanel(new ViewControler()
+	//		{
+	//
+	//			@Override
+	//			public boolean isSpinEnabled()
+	//			{
+	//				return false;
+	//			}
+	//
+	//			@Override
+	//			public void setSpinEnabled(boolean spinEnabled)
+	//			{
+	//			}
+	//
+	//			@Override
+	//			public void setDensitiyHigher(boolean higher)
+	//			{
+	//			}
+	//
+	//			@Override
+	//			public String getStyle()
+	//			{
+	//				return ViewControler.STYLE_WIREFRAME;
+	//			}
+	//
+	//			@Override
+	//			public void setStyle(String style)
+	//			{
+	//			}
+	//
+	//			@Override
+	//			public HashMap<String, Highlighter[]> getHighlighters()
+	//			{
+	//				return null;
+	//			}
+	//
+	//			@Override
+	//			public void setHighlighter(Highlighter highlighter)
+	//			{
+	//			}
+	//
+	//			@Override
+	//			public Highlighter getHighlighter()
+	//			{
+	//				return null;
+	//			}
+	//
+	//			@Override
+	//			public boolean isHighlighterLabelsVisible()
+	//			{
+	//				return false;
+	//			}
+	//
+	//			@Override
+	//			public void setHighlighterLabelsVisible(boolean selected)
+	//			{
+	//			}
+	//
+	//			@Override
+	//			public void setHighlightSorting(HighlightSorting sorting)
+	//			{
+	//
+	//			}
+	//
+	//			@Override
+	//			public HighlightSorting getHighlightSorting()
+	//			{
+	//				return null;
+	//			}
+	//
+	//			@Override
+	//			public void addViewListener(PropertyChangeListener l)
+	//			{
+	//			}
+	//
+	//			@Override
+	//			public boolean canChangeDensitiy(boolean higher)
+	//			{
+	//				return true;
+	//			}
+	//
+	//			//			@Override
+	//			//			public boolean isHideUnselected()
+	//			//			{
+	//			//				return false;
+	//			//			}
+	//			//
+	//			//			@Override
+	//			//			public void setHideUnselected(boolean hide)
+	//			//			{
+	//			//			}
+	//
+	//			@Override
+	//			public boolean isHideHydrogens()
+	//			{
+	//				return false;
+	//			}
+	//
+	//			@Override
+	//			public void setHideHydrogens(boolean b)
+	//			{
+	//			}
+	//
+	//			@Override
+	//			public void setSuperimpose(boolean superimpose)
+	//			{
+	//			}
+	//
+	//			@Override
+	//			public boolean isSuperimpose()
+	//			{
+	//				return false;
+	//			}
+	//
+	//			@Override
+	//			public boolean isAllClustersSpreadable()
+	//			{
+	//				return false;
+	//			}
+	//
+	//			@Override
+	//			public boolean isSingleClusterSpreadable()
+	//			{
+	//				return false;
+	//			}
+	//
+	//		}));
+	//	}
 }

@@ -2,6 +2,9 @@ package gui;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
@@ -9,7 +12,7 @@ import java.beans.PropertyChangeListener;
 
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.DefaultListModel;
-import javax.swing.JLabel;
+import javax.swing.JCheckBox;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -24,21 +27,25 @@ import cluster.Clustering;
 import com.jgoodies.forms.layout.CellConstraints;
 import com.jgoodies.forms.layout.FormLayout;
 
-public class SideBar extends JPanel
+public class ClusterListPanel extends JPanel
 {
-	JLabel datasetNameLabel;
+	//	JLabel datasetNameLabel;
+
+	JPanel clusterPanel;
 
 	DefaultListModel listModel;
 	MouseOverList clusterList;
 	JScrollPane scroll;
 	boolean selfBlock = false;
 
-	ModelListPanel infoPanel;
+	ModelListPanel modelListPanel;
 
 	Clustering clustering;
 	ViewControler viewControler;
 
-	public SideBar(Clustering clustering, ViewControler viewControler)
+	JCheckBox superimposeCheckBox;
+
+	public ClusterListPanel(Clustering clustering, ViewControler viewControler)
 	{
 		this.clustering = clustering;
 		this.viewControler = viewControler;
@@ -49,6 +56,39 @@ public class SideBar extends JPanel
 
 	private void installListeners()
 	{
+		superimposeCheckBox.addActionListener(new ActionListener()
+		{
+			@Override
+			public void actionPerformed(ActionEvent e)
+			{
+				if (selfBlock)
+					return;
+				viewControler.setSuperimpose(superimposeCheckBox.isSelected());
+			}
+		});
+
+		viewControler.addViewListener(new PropertyChangeListener()
+		{
+
+			@Override
+			public void propertyChange(PropertyChangeEvent evt)
+			{
+				if (evt.getPropertyName().equals(ViewControler.PROPERTY_SUPERIMPOSE_CHANGED))
+				{
+					updateSuperimposeCheckBox();
+				}
+			}
+		});
+
+		clustering.getClusterActive().addListener(new PropertyChangeListener()
+		{
+			@Override
+			public void propertyChange(PropertyChangeEvent evt)
+			{
+				updateSuperimposeCheckBox();
+			}
+		});
+
 		clusterList.addListSelectionListener(new ListSelectionListener()
 		{
 			@Override
@@ -122,13 +162,29 @@ public class SideBar extends JPanel
 		});
 	}
 
+	private void updateSuperimposeCheckBox()
+	{
+		selfBlock = true;
+		superimposeCheckBox.setSelected(viewControler.isSuperimpose());
+		if (clustering.getClusterActive().getSelected() == -1)
+			superimposeCheckBox.setVisible(viewControler.isAllClustersSpreadable());
+		else
+			superimposeCheckBox.setVisible(viewControler.isSingleClusterSpreadable());
+		selfBlock = false;
+	}
+
 	private void updateList()
 	{
-		datasetNameLabel.setText("<html><b>Dataset: </b>" + clustering.getName() + " (#" + clustering.getNumCompounds()
-				+ ")</html>");
+		//		if (listModel.size() == 0)
+		//			datasetNameLabel.setVisible(false);
+		//		else
+		//		{
+		//			datasetNameLabel.setVisible(true);
+		//			datasetNameLabel.setText("<html><b>Dataset: </b>" + clustering.getName() + " (#"
+		//					+ clustering.getNumCompounds() + ")</html>");
+		//		}
 		//				+ " some endless long name just to make really really really really sure");
 
-		// clusterList.setIgnoreRepaint(true);
 		listModel.clear();
 		if (clustering.getNumClusters() > 1)
 			listModel.addElement(null);
@@ -139,26 +195,23 @@ public class SideBar extends JPanel
 
 		scroll.setVisible(listModel.size() > 1);
 
-		// clusterList.setIgnoreRepaint(false);
-		// clusterList.setVisibleRowCount(Math.min(16, clustering.numClusters()
-		// + 1));
-
-		// clusterList.revalidate();
-		// scroll.getViewport().revalidate();
-		// scroll.revalidate();
-		// scroll.repaint();
+		if (listModel.size() == 0)
+			superimposeCheckBox.setVisible(false);
+		else
+		{
+			updateSuperimposeCheckBox();
+			if (listModel.size() == 1)
+				modelListPanel.appendCheckbox(superimposeCheckBox);
+			else
+				clusterPanel.add(superimposeCheckBox, BorderLayout.SOUTH);
+		}
 
 		revalidate();
-
-		// System.out.println(">> " + Math.min(16, clustering.numClusters() +
-		// 1));
-
-		// clusterList.repaint();
 	}
 
 	private void buildLayout()
 	{
-		datasetNameLabel = ComponentFactory.createLabel();
+		//		datasetNameLabel = ComponentFactory.createLabel();
 
 		listModel = new DefaultListModel();
 		clusterList = new MouseOverList(listModel);
@@ -229,7 +282,16 @@ public class SideBar extends JPanel
 		// EmptyBorder(5, 5, 5, 5)));
 		clusterList.setBorder(new EmptyBorder(5, 5, 5, 5));
 
-		infoPanel = new ModelListPanel(clustering, viewControler);
+		modelListPanel = new ModelListPanel(clustering, viewControler)
+		{
+			public Dimension getPreferredSize()
+			{
+				Dimension dim = super.getPreferredSize();
+				if (dim.width > 0)
+					dim.width = Math.max(dim.width, clusterPanel.getPreferredSize().width);
+				return dim;
+			}
+		};
 		//		SwingUtil.setDebugBorder(infoPanel);
 
 		// setLayout(new GridLayout(2, 1));
@@ -256,13 +318,31 @@ public class SideBar extends JPanel
 		//		datasetNameLabel.setBorder(new EmptyBorder(0, 5, 0, 0));
 		//		panel.add(datasetNameLabel, cc.xy(1, lineCount));
 		//		lineCount += 2;
-		panel.add(scroll, cc.xy(1, 1));
+
+		clusterPanel = new JPanel(new BorderLayout(5, 5))
+		{
+			//			public Dimension getPreferredSize()
+			//			{
+			//				Dimension dim = super.getPreferredSize();
+			//				if (dim.width > 0)
+			//					dim.width = Math.max(dim.width, modelListPanel.getPreferredSize().width);
+			//				return dim;
+			//			}
+		};
+		clusterPanel.setOpaque(false);
+		clusterPanel.add(scroll);
+		superimposeCheckBox = ComponentFactory.createCheckBox("Superimpose");
+		superimposeCheckBox.setSelected(viewControler.isSuperimpose());
+		superimposeCheckBox.setOpaque(false);
+		clusterPanel.add(superimposeCheckBox, BorderLayout.SOUTH);
+		panel.add(clusterPanel, cc.xy(1, 1));
+
 		//		lineCount += 2;
-		panel.add(infoPanel, cc.xy(3, 1));
+		panel.add(modelListPanel, cc.xy(3, 1));
 		//		lineCount += 2;
 		//		panel.add(new ControlPanel(viewControler), cc.xyw(1, lineCount, 2));
 
-		add(datasetNameLabel, BorderLayout.NORTH);
+		//		add(datasetNameLabel, BorderLayout.NORTH);
 		add(panel, BorderLayout.WEST);
 		add(new ControlPanel(viewControler), BorderLayout.SOUTH);
 

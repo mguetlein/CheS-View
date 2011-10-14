@@ -280,6 +280,12 @@ public class ChartPanel extends JPanel
 
 	private void update(final boolean force)
 	{
+		if (clustering.getNumClusters() == 0)
+		{
+			setVisible(false);
+			return;
+		}
+
 		Highlighter h = viewControler.getHighlighter();
 		MoleculeProperty prop = null;
 		if (h instanceof MoleculePropertyHighlighter)

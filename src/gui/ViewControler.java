@@ -35,6 +35,12 @@ public interface ViewControler
 
 	public void setSuperimpose(boolean superimpose);
 
+	public boolean isSuperimpose();
+
+	public boolean isAllClustersSpreadable();
+
+	public boolean isSingleClusterSpreadable();
+
 	public boolean isHideHydrogens();
 
 	public void setHideHydrogens(boolean b);
@@ -43,6 +49,9 @@ public interface ViewControler
 	public static final String PROPERTY_SHOW_HYDROGENS = "propertyShowHydrogens";
 	public static final String PROPERTY_NEW_HIGHLIGHTERS = "propertyNewHighlighters";
 	public static final String PROPERTY_DENSITY_CHANGED = "propertyDensityChanged";
+	public static final String PROPERTY_SUPERIMPOSE_CHANGED = "propertySuperimposeChanged";
+	public static final String PROPERTY_HIDE_UNSELECT_CHANGED = "propertyHideUnselectChanged";
+	public static final String PROPERTY_SPIN_CHANGED = "propertySpinChanged";
 
 	public boolean isHighlighterLabelsVisible();
 

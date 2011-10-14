@@ -51,7 +51,7 @@ public class ClusterPanel extends JPanel
 
 		JPanel sideBarContainer = new JPanel(new BorderLayout());
 		sideBarContainer.setOpaque(false);
-		SideBar sideBar = new SideBar(mainPanel.getClustering(), mainPanel);
+		ClusterListPanel sideBar = new ClusterListPanel(mainPanel.getClustering(), mainPanel);
 		sideBarContainer.add(sideBar, BorderLayout.WEST);
 		add(sideBarContainer, BorderLayout.WEST);
 
