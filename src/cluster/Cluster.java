@@ -133,7 +133,7 @@ public class Cluster implements Zoomable
 		// this is only needed in case a compound was removed
 		Vector3f[] positions = ClusteringUtil.getModelPositions(this);
 		superimposeCenter = Vector3fUtil.center(positions);
-		nonSuperimposeCenter = Vector3fUtil.centerBoundboxConvexHull(positions);
+		nonSuperimposeCenter = Vector3fUtil.centerConvexHull(positions);
 
 		superimposeDiameter = -1;
 		for (Model m : models)

@@ -318,7 +318,7 @@ public class Clustering implements Zoomable
 		View.instance.proceedAnimation("updating clustering positions");
 
 		positions = ClusteringUtil.getClusterPositions(this);
-		superimposedCenter = Vector3fUtil.centerBoundboxConvexHull(positions);
+		superimposedCenter = Vector3fUtil.centerConvexHull(positions);
 
 		// take only cluster points into account (ignore cluster sizes)
 		superimposedDiameter = Vector3fUtil.maxDist(positions);
@@ -328,7 +328,7 @@ public class Clustering implements Zoomable
 
 		// take only model positions into account (ignore model sizes)
 		positions = ClusteringUtil.getModelPositions(this);
-		nonSuperimposedCenter = Vector3fUtil.centerBoundboxConvexHull(positions);
+		nonSuperimposedCenter = Vector3fUtil.centerConvexHull(positions);
 		nonSuperimposedDiameter = Vector3fUtil.maxDist(positions);
 	}
 
