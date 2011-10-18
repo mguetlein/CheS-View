@@ -2,6 +2,7 @@ package cluster;
 
 import gui.MainPanel.Translucency;
 import gui.View;
+import gui.Zoomable;
 
 import java.util.BitSet;
 import java.util.HashMap;
@@ -14,7 +15,7 @@ import dataInterface.CompoundData;
 import dataInterface.MoleculeProperty;
 import dataInterface.MoleculeProperty.Type;
 
-public class Model
+public class Model implements Zoomable
 {
 	private int modelIndex;
 	private BitSet bitSet;
@@ -31,6 +32,8 @@ public class Model
 	private String color;
 	private MoleculeProperty highlightMoleculeProperty;
 	private String style;
+
+	private float diameter = -1;
 
 	public final Vector3f origCenter;
 
@@ -221,6 +224,31 @@ public class Model
 	public String getStyle()
 	{
 		return style;
+	}
+
+	@Override
+	public Vector3f getCenter(boolean superimposed)
+	{
+		return new Vector3f(View.instance.getAtomSetCenter(bitSet));
+	}
+
+	@Override
+	public float getDiameter(boolean superimposed)
+	{
+		return getDiameter();
+	}
+
+	public float getDiameter()
+	{
+		if (diameter == -1)
+			diameter = View.instance.getDiameter(bitSet);
+		return diameter;
+	}
+
+	@Override
+	public boolean isSuperimposed()
+	{
+		return false;
 	}
 
 }

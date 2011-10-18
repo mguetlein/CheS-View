@@ -2,6 +2,7 @@ package cluster;
 
 import gui.View;
 import gui.ViewControler.HighlightSorting;
+import gui.Zoomable;
 
 import java.util.ArrayList;
 import java.util.BitSet;
@@ -15,21 +16,24 @@ import javax.vecmath.Vector3f;
 
 import util.ArrayUtil;
 import util.Vector3fUtil;
-import data.ClusterDataImpl;
 import dataInterface.ClusterData;
 import dataInterface.MoleculeProperty;
 import dataInterface.MoleculeProperty.Type;
 import dataInterface.SubstructureSmartsType;
 
-public class Cluster
+public class Cluster implements Zoomable
 {
 	private Vector<Model> models;
 	private ClusterData clusterData;
 
 	private BitSet bitSet;
 
-	private boolean superimpose = true;
-	private int nonSuperimposeRadius;
+	private boolean superimposed = true;
+	private float superimposeDiameter;
+	private float nonSuperimposeDiameter;
+	private Vector3f superimposeCenter;
+	private Vector3f nonSuperimposeCenter;
+	private boolean allCompoundsHaveSamePosition = false;
 
 	HashMap<String, List<Model>> modelsOrderedByPropterty = new HashMap<String, List<Model>>();
 
@@ -64,8 +68,11 @@ public class Cluster
 
 	public void updatePositions()
 	{
-		Vector3f[] positions = ClusterUtil.getModelPositions(this);
-		nonSuperimposeRadius = (int) (Vector3fUtil.maxDist(positions));
+		// the actual model position that is stored in model is never changed (depends only on scaling)
+		// this method moves all models to the cluster position
+
+		// recalculate non-superimposed diameter
+		update();
 
 		if (!clusterData.isAligned())
 		{
@@ -93,12 +100,7 @@ public class Cluster
 		}
 
 		// translate compounds to the cluster position
-		View.instance.setAtomCoordRelative(getPosition(), getBitSet());
-	}
-
-	public void setOverlap(boolean overlap)
-	{
-		this.superimpose = overlap;
+		View.instance.setAtomCoordRelative(getCenter(true), getBitSet());
 	}
 
 	public String getSummaryStringValue(MoleculeProperty property)
@@ -127,12 +129,24 @@ public class Cluster
 		for (Model m : models)
 			bitSet.or(m.getBitSet());
 
-		//updating cluster position:
-		Vector3f[] positions = ClusterUtil.getModelPositions(this, false);
-		((ClusterDataImpl) clusterData).setPosition(Vector3fUtil.center(positions));
+		// updating (unscaled!) cluster position
+		// this is only needed in case a compound was removed
+		Vector3f[] positions = ClusteringUtil.getModelPositions(this);
+		superimposeCenter = Vector3fUtil.center(positions);
+		nonSuperimposeCenter = Vector3fUtil.centerBoundboxConvexHull(positions);
 
-		positions = ClusterUtil.getModelPositions(this);
-		nonSuperimposeRadius = (int) (Vector3fUtil.maxDist(positions));
+		superimposeDiameter = -1;
+		for (Model m : models)
+			superimposeDiameter = Math.max(superimposeDiameter, m.getDiameter());
+
+		// recompute diameter, depends on the scaling
+		positions = ClusteringUtil.getModelPositions(this);
+		float maxCompoundDist = Vector3fUtil.maxDist(positions);
+		allCompoundsHaveSamePosition = maxCompoundDist == 0;
+
+		// nonSuperimposeDiameter ignores size of compounds, just uses the compound positions
+		// for very small diameter: should be at least as big as superimposed one
+		nonSuperimposeDiameter = Math.max(superimposeDiameter, maxCompoundDist);
 	}
 
 	public Model getModelWithModelIndex(int modelIndex)
@@ -289,42 +303,9 @@ public class Cluster
 		return modelsOrderedByPropterty.get(key);
 	}
 
-	public boolean isSuperimposed()
-	{
-		return superimpose;
-	}
-
-	public boolean isSpreadable()
-	{
-		return nonSuperimposeRadius > 0;
-	}
-
-	public int getSuperimposeRadius(boolean superimpose)
-	{
-		if (superimpose)
-			return 0;
-		else
-			return nonSuperimposeRadius;
-	}
-
-	public int getRadius()
-	{
-		if (this.superimpose)
-			return 0;
-		else
-			return nonSuperimposeRadius;
-	}
-
 	public String getSubstructureSmarts(SubstructureSmartsType type)
 	{
 		return clusterData.getSubstructureSmarts(type);
-	}
-
-	public Vector3f getPosition()
-	{
-		Vector3f v = new Vector3f(clusterData.getPosition());
-		v.scale(ClusteringUtil.SCALE);
-		return v;
 	}
 
 	public void remove(int[] modelIndices)
@@ -426,4 +407,36 @@ public class Cluster
 		return showLabel;
 	}
 
+	public boolean isSuperimposed()
+	{
+		return superimposed;
+	}
+
+	public boolean isSpreadable()
+	{
+		return !allCompoundsHaveSamePosition;
+	}
+
+	@Override
+	public Vector3f getCenter(boolean superimposed)
+	{
+		if (superimposed)
+			return superimposeCenter;
+		else
+			return nonSuperimposeCenter;
+	}
+
+	@Override
+	public float getDiameter(boolean superimposed)
+	{
+		if (superimposed)
+			return superimposeDiameter;
+		else
+			return nonSuperimposeDiameter;
+	}
+
+	public void setSuperimposed(boolean superimposed)
+	{
+		this.superimposed = superimposed;
+	}
 }

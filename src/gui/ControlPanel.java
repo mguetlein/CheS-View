@@ -2,8 +2,8 @@ package gui;
 
 import gui.ComponentFactory.StyleButton;
 import gui.ViewControler.HighlightSorting;
-import gui.ViewControler.Highlighter;
-import gui.ViewControler.MoleculePropertyHighlighter;
+import gui.util.Highlighter;
+import gui.util.MoleculePropertyHighlighter;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;

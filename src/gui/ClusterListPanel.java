@@ -122,20 +122,21 @@ public class ClusterListPanel extends JPanel
 				final Cluster c = (Cluster) clusterList.getSelectedValue();
 				if (c == null)
 				{
-					View.instance.setAnimated(false);
+					View.instance.suspendAnimation("clear cluster selection");
 					clustering.getModelWatched().clearSelection();
 					clustering.getModelActive().clearSelection();
-					View.instance.setAnimated(true);
+					View.instance.proceedAnimation("clear cluster selection");
 					clustering.getClusterActive().clearSelection();
 				}
 				else
 				{
 					int cIndex = clustering.indexOf(c);
 					clustering.getModelWatched().clearSelection();
-					if (clustering.getClusterActive().getSelected() != cIndex)
-						View.instance.setAnimated(false);
+					boolean suspendAnim = clustering.getClusterActive().getSelected() != cIndex;
+					if (suspendAnim)
+						View.instance.suspendAnimation("change cluster selection");
 					clustering.getModelActive().clearSelection();
-					View.instance.setAnimated(true);
+					View.instance.proceedAnimation("change cluster selection");
 					clustering.getClusterActive().setSelected(cIndex);
 				}
 				clustering.getClusterWatched().clearSelection();
@@ -166,10 +167,10 @@ public class ClusterListPanel extends JPanel
 	{
 		selfBlock = true;
 		superimposeCheckBox.setSelected(viewControler.isSuperimpose());
-		if (clustering.getClusterActive().getSelected() == -1)
-			superimposeCheckBox.setVisible(viewControler.isAllClustersSpreadable());
-		else
+		if (clustering.isClusterActive())
 			superimposeCheckBox.setVisible(viewControler.isSingleClusterSpreadable());
+		else
+			superimposeCheckBox.setVisible(viewControler.isAllClustersSpreadable());
 		selfBlock = false;
 	}
 

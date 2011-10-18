@@ -168,7 +168,12 @@ public class ModelListPanel extends JPanel
 				if (e.isControlDown())
 					modelActive.setSelectedInverted(m.getModelIndex());
 				else
-					modelActive.setSelected(m.getModelIndex());
+				{
+					if (modelActive.isSelected(m.getModelIndex()))
+						modelActive.clearSelection();
+					else
+						modelActive.setSelected(m.getModelIndex());
+				}
 				modelWatched.clearSelection();
 				selfBlock = false;
 			}

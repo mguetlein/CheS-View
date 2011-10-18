@@ -1,10 +1,9 @@
 package gui;
 
+import gui.util.Highlighter;
+
 import java.beans.PropertyChangeListener;
 import java.util.HashMap;
-
-import dataInterface.MoleculeProperty;
-import dataInterface.SubstructureSmartsType;
 
 public interface ViewControler
 {
@@ -67,58 +66,4 @@ public interface ViewControler
 	public HighlightSorting getHighlightSorting();
 
 	public void addViewListener(PropertyChangeListener l);
-
-	///////////////
-
-	public interface Highlighter
-	{
-	}
-
-	public class SimpleHighlighter implements Highlighter
-	{
-		private String name;
-
-		public SimpleHighlighter(String name)
-		{
-			this.name = name;
-		}
-
-		public String toString()
-		{
-			return name;
-		}
-	}
-
-	public class MoleculePropertyHighlighter extends SimpleHighlighter
-	{
-		private MoleculeProperty prop;
-
-		public MoleculePropertyHighlighter(MoleculeProperty prop)
-		{
-			super(prop.toString());
-			this.prop = prop;
-		}
-
-		public MoleculeProperty getProperty()
-		{
-			return prop;
-		}
-	}
-
-	public class SubstructureHighlighter extends SimpleHighlighter
-	{
-		private SubstructureSmartsType type;
-
-		public SubstructureHighlighter(SubstructureSmartsType type)
-		{
-			super(type.toString());
-			this.type = type;
-		}
-
-		public SubstructureSmartsType getType()
-		{
-			return type;
-		}
-	}
-
 }

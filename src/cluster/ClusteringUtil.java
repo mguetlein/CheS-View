@@ -11,7 +11,16 @@ public class ClusteringUtil
 		Vector3f list[] = new Vector3f[c.getNumClusters()];
 		int i = 0;
 		for (Cluster cc : c.getClusters())
-			list[i++] = cc.getPosition();
+			list[i++] = cc.getCenter(true);
+		return list;
+	}
+
+	public static Vector3f[] getModelPositions(Cluster c)
+	{
+		Vector3f list[] = new Vector3f[c.size()];
+		int i = 0;
+		for (Model m : c.getModels())
+			list[i++] = m.getPosition();
 		return list;
 	}
 
@@ -24,13 +33,12 @@ public class ClusteringUtil
 	{
 		Vector3f list[] = new Vector3f[c.getNumCompounds()];
 		int i = 0;
-		for (Model cc : c.getModels())
-			list[i++] = cc.getPosition(scale);
+		for (Model m : c.getModels())
+			list[i++] = m.getPosition(scale);
 		return list;
 	}
 
 	public static float DENSITY = 1f;
-
 	public static float SCALE = 0;
 
 	/**

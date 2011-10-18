@@ -1,6 +1,5 @@
 package gui;
 
-import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
@@ -13,16 +12,12 @@ import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFrame;
-import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
-import javax.swing.JTextPane;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
-import javax.swing.text.MutableAttributeSet;
-import javax.swing.text.StyleConstants;
 
 import main.Settings;
 import util.ArrayUtil;
@@ -140,7 +135,7 @@ public class MenuBar extends JMenuBar
 	Action eActionExportModels;
 	//view
 	Action vActionFullScreen;
-	Action vActionHideHydrogens;
+	Action vActionDrawHydrogens;
 	Action vActionHideUnselectedCompounds;
 	Action vActionSpin;
 
@@ -251,12 +246,12 @@ public class MenuBar extends JMenuBar
 			{
 				int[] m = (int[]) ((AbstractAction) eActionRemoveCurrent).getValue("Model");
 				Integer c = (Integer) ((AbstractAction) eActionRemoveCurrent).getValue("Cluster");
-				View.instance.setAnimated(false);
+				View.instance.suspendAnimation("remove selected");
 				if (m.length > 0)
 					clustering.removeModels(m);
 				else if (c != null)
 					clustering.removeCluster(c);
-				View.instance.setAnimated(true);
+				View.instance.proceedAnimation("remove selected");
 			}
 		};
 		eActionRemoveCurrent.setEnabled(false);
@@ -267,9 +262,9 @@ public class MenuBar extends JMenuBar
 			@Override
 			public void actionPerformed(ActionEvent e)
 			{
-				View.instance.setAnimated(false);
+				View.instance.suspendAnimation("remove clusters");
 				clustering.chooseClustersToRemove();
-				View.instance.setAnimated(true);
+				View.instance.proceedAnimation("remove clusters");
 			}
 		};
 		eActionRemoveModels = new AbstractAction("Remove Compound/s")
@@ -277,9 +272,9 @@ public class MenuBar extends JMenuBar
 			@Override
 			public void actionPerformed(ActionEvent e)
 			{
-				View.instance.setAnimated(false);
+				View.instance.suspendAnimation("remove compounds");
 				clustering.chooseModelsToRemove();
-				View.instance.setAnimated(true);
+				View.instance.proceedAnimation("remove compounds");
 			}
 		};
 		MyMenu removeMenu = new MyMenu("Remove", eActionRemoveCurrent, eActionRemoveClusters, eActionRemoveModels);
@@ -336,7 +331,7 @@ public class MenuBar extends JMenuBar
 					vActionFullScreen.putValue(Action.SELECTED_KEY, guiControler.isFullScreen());
 			}
 		});
-		vActionHideHydrogens = new AbstractAction("Hide Hydrogens")
+		vActionDrawHydrogens = new AbstractAction("Draw Hydrogens (if available)")
 		{
 			@Override
 			public void actionPerformed(ActionEvent e)
@@ -344,9 +339,9 @@ public class MenuBar extends JMenuBar
 				viewControler.setHideHydrogens(!viewControler.isHideHydrogens());
 			}
 		};
-		((AbstractAction) vActionHideHydrogens).putValue(Action.ACCELERATOR_KEY,
+		((AbstractAction) vActionDrawHydrogens).putValue(Action.ACCELERATOR_KEY,
 				KeyStroke.getKeyStroke(KeyEvent.VK_H, ActionEvent.ALT_MASK));
-		vActionHideHydrogens.putValue(Action.SELECTED_KEY, viewControler.isHideHydrogens());
+		vActionDrawHydrogens.putValue(Action.SELECTED_KEY, !viewControler.isHideHydrogens());
 		viewControler.addViewListener(new PropertyChangeListener()
 		{
 
@@ -354,11 +349,11 @@ public class MenuBar extends JMenuBar
 			public void propertyChange(PropertyChangeEvent evt)
 			{
 				if (evt.getPropertyName().equals(ViewControler.PROPERTY_SHOW_HYDROGENS))
-					vActionHideHydrogens.putValue(Action.SELECTED_KEY, viewControler.isHideHydrogens());
+					vActionDrawHydrogens.putValue(Action.SELECTED_KEY, !viewControler.isHideHydrogens());
 			}
 		});
 
-		vActionHideUnselectedCompounds = new AbstractAction("Hide Un-Selected Compounds")
+		vActionHideUnselectedCompounds = new AbstractAction("Hide Unselected Compounds")
 		{
 			@Override
 			public void actionPerformed(ActionEvent e)
@@ -402,7 +397,7 @@ public class MenuBar extends JMenuBar
 			}
 		});
 
-		MyMenu viewMenu = new MyMenu("View", vActionFullScreen, vActionHideHydrogens, vActionHideUnselectedCompounds,
+		MyMenu viewMenu = new MyMenu("View", vActionFullScreen, vActionDrawHydrogens, vActionHideUnselectedCompounds,
 				vActionSpin);
 
 		Action hActionAbout = new AbstractAction("About " + Settings.TITLE)
@@ -420,22 +415,11 @@ public class MenuBar extends JMenuBar
 
 	public static void showAboutDialog()
 	{
-		JTextPane t = new JTextPane();
-		t.setContentType("text/html");
-		t.setText("<html><h5>"
-				+ Settings.TITLE
-				+ "</h5><table><tr><td>Version:</td><td>"
-				+ Settings.VERSION_STRING
-				+ "</td></tr><tr><td>Homepage:</td><td>"
-				+ Settings.HOMEPAGE
-				+ "</td></tr><tr><td>Contact:</td><td>Martin Gütlein (martin.guetlein@gmail.com)</td></tr></table></html>");
-		MutableAttributeSet attrs = t.getInputAttributes();
-		Font font = new JLabel().getFont();
-		StyleConstants.setFontFamily(attrs, font.getFamily());
-		StyleConstants.setFontSize(attrs, font.getSize());
-		t.getStyledDocument().setCharacterAttributes(0, t.getText().length() + 1, attrs, true);
-		t.setOpaque(false);
-		JOptionPane.showMessageDialog(Settings.TOP_LEVEL_COMPONENT, t, "About " + Settings.TITLE,
+		TextPanel p = new TextPanel();
+		p.addHeading(Settings.TITLE);
+		p.addTable(new String[][] { { "Version:", Settings.VERSION_STRING }, { "Homepage:", Settings.HOMEPAGE },
+				{ "Contact:", "Martin Gütlein (martin.guetlein@gmail.com)" } });
+		JOptionPane.showMessageDialog(Settings.TOP_LEVEL_COMPONENT, p, "About " + Settings.TITLE,
 				JOptionPane.INFORMATION_MESSAGE, Settings.CHES_MAPPER_IMAGE);
 	}
 
@@ -445,15 +429,14 @@ public class MenuBar extends JMenuBar
 		int m[] = new int[0];
 		Integer c = null;
 
-		if (clustering.getClusterActive().getSelected() != -1)
+		if (clustering.isClusterActive())
 		{
-			if (clustering.getModelActive().getSelected() != -1)
+			if (clustering.isModelActive())
 				m = ArrayUtil.concat(m, clustering.getModelActive().getSelectedIndices());
-			if (clustering.getModelWatched().getSelected() != -1
-					&& ArrayUtil.indexOf(m, clustering.getModelWatched().getSelected()) == -1)
+			if (clustering.isModelWatched() && ArrayUtil.indexOf(m, clustering.getModelWatched().getSelected()) == -1)
 				m = ArrayUtil.concat(m, new int[] { clustering.getModelWatched().getSelected() });
 		}
-		else if (clustering.getClusterWatched().getSelected() != -1)
+		else if (clustering.isClusterWatched())
 			c = clustering.getClusterWatched().getSelected();
 
 		eActionRemoveCurrent.putValue("Cluster", c);
@@ -554,8 +537,7 @@ public class MenuBar extends JMenuBar
 					SwingUtil.waitWhileVisible(wwd);
 					if (wwd.isWorkflowSelected())
 					{
-						View.instance.setAnimated(false);
-
+						View.instance.suspendAnimation("remap");
 						clustering.clear();
 						ClusteringData d = CheSViewer.doMapping(wwd);
 						if (d != null)
@@ -563,8 +545,7 @@ public class MenuBar extends JMenuBar
 							clustering.newClustering(d);
 							CheSViewer.finalizeTask();
 						}
-
-						View.instance.setAnimated(true);
+						View.instance.proceedAnimation("remap");
 					}
 				}
 				finally

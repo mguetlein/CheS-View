@@ -3,7 +3,9 @@ package gui;
 import gui.MainPanel.JmolPanel;
 
 import java.awt.Color;
+import java.util.ArrayList;
 import java.util.BitSet;
+import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.List;
 
@@ -18,11 +20,15 @@ import util.Vector3fUtil;
 public class View
 {
 	private Viewer viewer;
-	boolean animated = true;
 	GUIControler guiControler;
 	public static View instance;
 
 	public static int FONT_SIZE = 10;
+
+	public static enum AnimationSpeed
+	{
+		SLOW, FAST
+	}
 
 	private View(Viewer viewer, GUIControler guiControler, boolean hideHydrogens)
 	{
@@ -54,27 +60,28 @@ public class View
 		}
 	}
 
-	public synchronized void zoomTo(Vector3f center, float time)
+	public synchronized void zoomTo(Zoomable zoomable, AnimationSpeed speed)
 	{
-		zoomTo(center, time);
+		zoomTo(zoomable, speed, null);
 	}
 
-	public synchronized void zoomTo(final Vector3f center, final float time, float radius)
+	public synchronized void zoomTo(Zoomable zoomable, final AnimationSpeed speed, Boolean superimposed)
 	{
-		System.err.println("Radius     " + radius);
-		//System.err.println("Rot radius " + viewer.getRotationRadius());
+		if (superimposed == null)
+			superimposed = zoomable.isSuperimposed();
+		final float diameter = zoomable.getDiameter(superimposed);
+		final Vector3f center = zoomable.getCenter(superimposed);
 
-		int zoom;
-		if (radius <= 15)
-			zoom = 50;
-		else
-		{
-			zoom = (int) ((1200 / (15 / viewer.getRotationRadius())) / radius);
-			//		System.err.println("zoom " + zoom);
-			zoom = (int) Math.max(5, zoom);
-		}
+		System.err.println("Superimposed " + superimposed);
+		System.err.println("Center       " + center);
+		System.err.println("Diameter     " + diameter);
+		//		System.err.println("Rot radius   " + viewer.getRotationRadius());
 
-		if (animated)
+		int zoom = (int) ((1200 / (15 / viewer.getRotationRadius())) / diameter);
+		//		System.err.println("zoom " + zoom);
+		zoom = (int) Math.max(5, zoom);
+
+		if (isAnimated())
 		{
 			guiControler.block("zoom to " + Vector3fUtil.toString(center));
 			final int finalZoom = zoom;
@@ -83,11 +90,12 @@ public class View
 				@Override
 				public void run()
 				{
-					String cmd = "zoomto " + time + " " + Vector3fUtil.toString(center) + " " + finalZoom;
+					String cmd = "zoomto " + (speed == AnimationSpeed.SLOW ? 0.66 : 0.33) + " "
+							+ Vector3fUtil.toString(center) + " " + finalZoom;
 					viewer.scriptWait(cmd);
 					guiControler.unblock("zoom to " + Vector3fUtil.toString(center));
 				}
-			}, "zoom out");
+			}, "zoom to " + zoomable);
 		}
 		else
 		{
@@ -209,15 +217,10 @@ public class View
 		viewer.setAtomCoordRelative(c, bitSet);
 	}
 
-	public static enum MoveAnimation
-	{
-		SLOW, FAST, NONE
-	}
-
 	public synchronized void setAtomCoordRelative(final List<Vector3f> c, final List<BitSet> bitSet,
-			final MoveAnimation overlapAnim)
+			final AnimationSpeed overlapAnim)
 	{
-		if (animated && overlapAnim != MoveAnimation.NONE && c.size() > 1)
+		if (isAnimated() && c.size() > 1)
 		{
 			guiControler.block("spread cluster " + c);
 			sequentially(new Runnable()
@@ -225,7 +228,7 @@ public class View
 				@Override
 				public void run()
 				{
-					int n = (overlapAnim == MoveAnimation.SLOW) ? 24 : 10;
+					int n = (overlapAnim == AnimationSpeed.SLOW) ? 24 : 10;
 					for (int i = 0; i < n; i++)
 					{
 						for (int j = 0; j < bitSet.size(); j++)
@@ -270,33 +273,57 @@ public class View
 			return b;
 	}
 
-	public void setAnimated(boolean b)
+	HashSet<String> animSuspend = new HashSet<String>();
+
+	public synchronized void suspendAnimation(String key)
 	{
-		this.animated = b;
+		if (animSuspend.contains(key))
+			throw new Error("already suspended animation for: " + key);
+		animSuspend.add(key);
 	}
 
-	public boolean isAnimated()
+	public synchronized void proceedAnimation(String key)
 	{
-		return animated;
+		if (!animSuspend.contains(key))
+			throw new Error("use suspend first for " + key);
+		animSuspend.remove(key);
+	}
+
+	public synchronized boolean isAnimated()
+	{
+		return animSuspend.size() == 0;
 	}
 
 	SequentialWorkerThread swt = new SequentialWorkerThread();
 
 	private void sequentially(final Runnable r, final String name)
 	{
-		swt.addJob(r, name);
+		if (swt.runningInThread())
+			r.run();
+		else
+			swt.addJob(r, name);
 	}
 
 	public void afterAnimation(final Runnable r, final String name)
 	{
-		if (animated)
+		if (isAnimated())
 			swt.addJob(r, name);
 		else
 			r.run();
 	}
 
-	public void hideHydrogens(boolean b)
+	public synchronized void hideHydrogens(boolean b)
 	{
 		scriptWait("set showHydrogens " + (b ? "FALSE" : "TRUE"));
+	}
+
+	public float getDiameter(BitSet bitSet)
+	{
+		List<Vector3f> points = new ArrayList<Vector3f>();
+		for (int i = 0; i < bitSet.size(); i++)
+			if (bitSet.get(i))
+				points.add(new Vector3f(viewer.getAtomPoint3f(i)));
+		Vector3f[] a = new Vector3f[points.size()];
+		return Vector3fUtil.maxDist(points.toArray(a));
 	}
 }

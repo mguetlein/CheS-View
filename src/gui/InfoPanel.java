@@ -1,6 +1,6 @@
 package gui;
 
-import gui.ViewControler.MoleculePropertyHighlighter;
+import gui.util.MoleculePropertyHighlighter;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;

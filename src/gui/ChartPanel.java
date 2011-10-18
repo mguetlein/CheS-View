@@ -33,8 +33,8 @@ import dataInterface.MoleculePropertyUtil;
 import freechart.AbstractFreeChartPanel;
 import freechart.HistogramPanel;
 import freechart.StackedBarPlot;
-import gui.ViewControler.Highlighter;
-import gui.ViewControler.MoleculePropertyHighlighter;
+import gui.util.Highlighter;
+import gui.util.MoleculePropertyHighlighter;
 
 public class ChartPanel extends JPanel
 {
