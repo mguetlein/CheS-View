@@ -1,5 +1,8 @@
 package gui;
 
+import gui.swing.ComponentFactory;
+import gui.swing.TransparentViewPanel;
+
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.event.ContainerEvent;
@@ -20,7 +23,6 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
-import main.Settings;
 import util.SelectionModel;
 import cluster.Cluster;
 import cluster.Clustering;
@@ -31,7 +33,7 @@ import com.jgoodies.forms.layout.CellConstraints;
 import com.jgoodies.forms.layout.ConstantSize;
 import com.jgoodies.forms.layout.FormLayout;
 
-public class ModelListPanel extends JPanel
+public class ModelListPanel extends TransparentViewPanel
 {
 	SelectionModel clusterActive;
 	SelectionModel clusterWatched;
@@ -225,8 +227,8 @@ public class ModelListPanel extends JPanel
 		DefaultFormBuilder builder = new DefaultFormBuilder(layout);
 		builder.setLineGapSize(new ConstantSize(2, ConstantSize.PX));
 
-		clusterNameVal = ComponentFactory.createLabel();
-		clusterNumVal = ComponentFactory.createLabel();
+		clusterNameVal = ComponentFactory.createViewLabel();
+		clusterNumVal = ComponentFactory.createViewLabel();
 
 		listModel = new DefaultListModel();
 
@@ -244,16 +246,16 @@ public class ModelListPanel extends JPanel
 				int modelIndex = ((Model) value).getModelIndex();
 				setOpaque(isSelected || modelActive.isSelected(modelIndex));
 
-				setForeground(Settings.FOREGROUND);
+				setForeground(ComponentFactory.FOREGROUND);
 				if (modelActive.isSelected(modelIndex))
 				{
-					setBackground(Settings.LIST_ACTIVE_BACKGROUND);
-					setForeground(Settings.LIST_SELECTION_FOREGROUND);
+					setBackground(ComponentFactory.LIST_ACTIVE_BACKGROUND);
+					setForeground(ComponentFactory.LIST_SELECTION_FOREGROUND);
 				}
 				else if (isSelected)
 				{
-					setBackground(Settings.LIST_WATCH_BACKGROUND);
-					setForeground(Settings.LIST_SELECTION_FOREGROUND);
+					setBackground(ComponentFactory.LIST_WATCH_BACKGROUND);
+					setForeground(ComponentFactory.LIST_SELECTION_FOREGROUND);
 				}
 				return this;
 			}
@@ -268,7 +270,7 @@ public class ModelListPanel extends JPanel
 		CellConstraints cc = new CellConstraints();
 
 		//builder.append(listPanel, 3);
-		listScrollPane = ComponentFactory.createScrollpane(list);
+		listScrollPane = ComponentFactory.createViewScrollpane(list);
 		p.add(listScrollPane, cc.xy(1, 1));
 
 		//		hideUnselectedCheckBox = ComponentFactory.createCheckBox("Hide not-selected");
@@ -296,8 +298,8 @@ public class ModelListPanel extends JPanel
 		p.add(checkBoxContainer, cc.xy(1, 2));//4));
 		setLayout(new BorderLayout());
 		add(p);
-		// setOpaque(false);
-		setBackground(Settings.TRANSPARENT_BACKGROUND);
+		//setOpaque(false);
+		//		setBackground(Settings.TRANSPARENT_BACKGROUND);
 		// setFocusable(false);
 	}
 

@@ -12,6 +12,8 @@ import java.util.List;
 import javax.vecmath.Point3f;
 import javax.vecmath.Vector3f;
 
+import main.Settings;
+
 import org.jmol.viewer.Viewer;
 
 import util.SequentialWorkerThread;
@@ -37,6 +39,10 @@ public class View
 
 		viewer.script("set disablePopupMenu on");
 		viewer.script("set minPixelSelRadius 40");
+
+		if (Settings.SCREENSHOT_SETUP)
+			viewer.script("set antialiasDisplay ON");
+
 		hideHydrogens(hideHydrogens);
 	}
 

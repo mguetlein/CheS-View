@@ -1,5 +1,7 @@
 package gui;
 
+import gui.swing.ComponentFactory;
+
 import java.awt.BorderLayout;
 import java.awt.LayoutManager;
 import java.awt.event.KeyAdapter;
@@ -12,7 +14,6 @@ import javax.swing.OverlayLayout;
 import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
 
-import main.Settings;
 import cluster.Clustering;
 
 import com.jgoodies.forms.layout.CellConstraints;
@@ -39,10 +40,10 @@ public class ClusterPanel extends JPanel
 		FormLayout l = new FormLayout("center:pref:grow", "center:pref:grow");
 		messagePanel = new JPanel(l);// new BorderLayout());
 		messagePanel.setOpaque(false);
-		messageLabel = ComponentFactory.createLabel();
+		messageLabel = ComponentFactory.createTransparentViewLabel();
 		messageLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		messageLabel.setOpaque(true);
-		messageLabel.setBackground(Settings.TRANSPARENT_BACKGROUND);
+		//		messageLabel.setBackground(Settings.TRANSPARENT_BACKGROUND);
 		messageLabel.setFont(messageLabel.getFont().deriveFont(24f));
 		CellConstraints cc = new CellConstraints();
 		messagePanel.add(messageLabel, cc.xy(1, 1));

@@ -1,5 +1,7 @@
 package gui;
 
+import gui.swing.ComponentFactory;
+import gui.swing.TransparentViewPanel;
 import gui.util.MoleculePropertyHighlighter;
 
 import java.awt.BorderLayout;
@@ -21,31 +23,31 @@ import com.jgoodies.forms.layout.FormLayout;
 import dataInterface.MoleculeProperty;
 import dataInterface.SubstructureSmartsType;
 
-public class InfoPanel extends JPanel
+public class InfoPanel extends TransparentViewPanel
 {
 	Clustering clustering;
 	ViewControler viewControler;
 
 	JPanel datasetPanel;
-	JLabel datasetNameLabel = ComponentFactory.createLabel();
-	JLabel datasetSizeLabel = ComponentFactory.createLabel();
-	JLabel datasetAlgLabel = ComponentFactory.createLabel();
-	JLabel datasetEmbedLabel = ComponentFactory.createLabel();
+	JLabel datasetNameLabel = ComponentFactory.createViewLabel();
+	JLabel datasetSizeLabel = ComponentFactory.createViewLabel();
+	JLabel datasetAlgLabel = ComponentFactory.createViewLabel();
+	JLabel datasetEmbedLabel = ComponentFactory.createViewLabel();
 
 	JPanel clusterPanel;
-	JLabel clusterNameLabel = ComponentFactory.createLabel();
-	JLabel clusterSizeLabel = ComponentFactory.createLabel();
-	JLabel clusterAlignLabel = ComponentFactory.createLabel();
-	JLabel clusterMCSLabelHeader = ComponentFactory.createLabel("MCS:");
-	JLabel clusterMCSLabel = ComponentFactory.createLabel();
-	JLabel clusterFeatureLabelHeader = ComponentFactory.createLabel();
-	JLabel clusterFeatureLabel = ComponentFactory.createLabel();
+	JLabel clusterNameLabel = ComponentFactory.createViewLabel();
+	JLabel clusterSizeLabel = ComponentFactory.createViewLabel();
+	JLabel clusterAlignLabel = ComponentFactory.createViewLabel();
+	JLabel clusterMCSLabelHeader = ComponentFactory.createViewLabel("MCS:");
+	JLabel clusterMCSLabel = ComponentFactory.createViewLabel();
+	JLabel clusterFeatureLabelHeader = ComponentFactory.createViewLabel();
+	JLabel clusterFeatureLabel = ComponentFactory.createViewLabel();
 
 	JPanel compoundPanel;
-	JLabel compoundNameLabel = ComponentFactory.createLabel();
-	JTextArea compoundSmilesLabel = ComponentFactory.createTextArea("", false, false);
-	JLabel compoundFeatureLabelHeader = ComponentFactory.createLabel();
-	JLabel compoundFeatureLabel = ComponentFactory.createLabel();
+	JLabel compoundNameLabel = ComponentFactory.createViewLabel();
+	JTextArea compoundSmilesLabel = ComponentFactory.createViewTextArea("", false, false);
+	JLabel compoundFeatureLabelHeader = ComponentFactory.createViewLabel();
+	JLabel compoundFeatureLabel = ComponentFactory.createViewLabel();
 
 	public InfoPanel(ViewControler viewControler, Clustering clustering)
 	{
@@ -110,16 +112,16 @@ public class InfoPanel extends JPanel
 	private void buildLayout()
 	{
 		DefaultFormBuilder b1 = new DefaultFormBuilder(new FormLayout("p,3dlu,p"));
-		b1.append(ComponentFactory.createLabel("<html><b>Dataset:</b><html>"));
+		b1.append(ComponentFactory.createViewLabel("<html><b>Dataset:</b><html>"));
 		b1.append(datasetNameLabel);
 		b1.nextLine();
-		b1.append(ComponentFactory.createLabel("<html>Num compounds:<html>"));
+		b1.append(ComponentFactory.createViewLabel("<html>Num compounds:<html>"));
 		b1.append(datasetSizeLabel);
 		b1.nextLine();
-		b1.append(ComponentFactory.createLabel("<html>Cluster algorithm:<html>"));
+		b1.append(ComponentFactory.createViewLabel("<html>Cluster algorithm:<html>"));
 		b1.append(datasetAlgLabel);
 		b1.nextLine();
-		b1.append(ComponentFactory.createLabel("<html>3D Embedding:<html>"));
+		b1.append(ComponentFactory.createViewLabel("<html>3D Embedding:<html>"));
 		b1.append(datasetEmbedLabel);
 
 		datasetPanel = b1.getPanel();
@@ -127,13 +129,13 @@ public class InfoPanel extends JPanel
 		datasetPanel.setVisible(true);
 
 		DefaultFormBuilder b2 = new DefaultFormBuilder(new FormLayout("p,3dlu,p"));
-		b2.append(ComponentFactory.createLabel("<html><b>Cluster:</b><html>"));
+		b2.append(ComponentFactory.createViewLabel("<html><b>Cluster:</b><html>"));
 		b2.append(clusterNameLabel);
 		b2.nextLine();
-		b2.append(ComponentFactory.createLabel("<html>Num compounds:<html>"));
+		b2.append(ComponentFactory.createViewLabel("<html>Num compounds:<html>"));
 		b2.append(clusterSizeLabel);
 		b2.nextLine();
-		b2.append(ComponentFactory.createLabel("<html>3D Alignement:<html>"));
+		b2.append(ComponentFactory.createViewLabel("<html>3D Alignement:<html>"));
 		b2.append(clusterAlignLabel);
 		b2.nextLine();
 		b2.append(clusterMCSLabelHeader);
@@ -147,10 +149,10 @@ public class InfoPanel extends JPanel
 		clusterPanel.setVisible(false);
 
 		DefaultFormBuilder b3 = new DefaultFormBuilder(new FormLayout("p,3dlu,p"));
-		b3.append(ComponentFactory.createLabel("<html><b>Compound:</b><html>"));
+		b3.append(ComponentFactory.createViewLabel("<html><b>Compound:</b><html>"));
 		b3.append(compoundNameLabel);
 		b3.nextLine();
-		b3.append(ComponentFactory.createLabel("<html>Smiles:<html>"));
+		b3.append(ComponentFactory.createViewLabel("<html>Smiles:<html>"));
 		b3.append(compoundSmilesLabel);
 		b3.nextLine();
 		b3.append(compoundFeatureLabelHeader);
@@ -168,7 +170,9 @@ public class InfoPanel extends JPanel
 		setLayout(new BorderLayout(10, 10));
 		add(p, BorderLayout.NORTH);
 		add(compoundPanel, BorderLayout.SOUTH);
-		setOpaque(false);
+
+		setOpaque(true);
+		//		setBackground(Settings.TRANSPARENT_BACKGROUND);
 	}
 
 	private void updateCompound()

@@ -138,6 +138,7 @@ public class MenuBar extends JMenuBar
 	Action vActionDrawHydrogens;
 	Action vActionHideUnselectedCompounds;
 	Action vActionSpin;
+	Action vActionBlackWhite;
 
 	//help
 
@@ -311,7 +312,7 @@ public class MenuBar extends JMenuBar
 		MyMenu exportMenu = new MyMenu("Export", eActionExportCurrent, eActionExportClusters, eActionExportModels);
 		MyMenu editMenu = new MyMenu("Edit", removeMenu, exportMenu);
 
-		vActionFullScreen = new AbstractAction("Fullscreen")
+		vActionFullScreen = new AbstractAction("Fullscreen mode enabled")
 		{
 			@Override
 			public void actionPerformed(ActionEvent e)
@@ -331,7 +332,7 @@ public class MenuBar extends JMenuBar
 					vActionFullScreen.putValue(Action.SELECTED_KEY, guiControler.isFullScreen());
 			}
 		});
-		vActionDrawHydrogens = new AbstractAction("Draw Hydrogens (if available)")
+		vActionDrawHydrogens = new AbstractAction("Draw hydrogens (if available)")
 		{
 			@Override
 			public void actionPerformed(ActionEvent e)
@@ -353,7 +354,7 @@ public class MenuBar extends JMenuBar
 			}
 		});
 
-		vActionHideUnselectedCompounds = new AbstractAction("Hide Unselected Compounds")
+		vActionHideUnselectedCompounds = new AbstractAction("Hide unselected compounds")
 		{
 			@Override
 			public void actionPerformed(ActionEvent e)
@@ -375,7 +376,7 @@ public class MenuBar extends JMenuBar
 			}
 		});
 
-		vActionSpin = new AbstractAction("Spin")
+		vActionSpin = new AbstractAction("Spin enabled")
 		{
 			@Override
 			public void actionPerformed(ActionEvent e)
@@ -397,8 +398,30 @@ public class MenuBar extends JMenuBar
 			}
 		});
 
+		vActionBlackWhite = new AbstractAction("Background color black")
+		{
+			@Override
+			public void actionPerformed(ActionEvent e)
+			{
+				viewControler.setBlackgroundBlack(!viewControler.isBlackgroundBlack());
+			}
+		};
+		((AbstractAction) vActionBlackWhite).putValue(Action.ACCELERATOR_KEY,
+				KeyStroke.getKeyStroke(KeyEvent.VK_B, ActionEvent.ALT_MASK));
+		vActionBlackWhite.putValue(Action.SELECTED_KEY, viewControler.isBlackgroundBlack());
+		viewControler.addViewListener(new PropertyChangeListener()
+		{
+
+			@Override
+			public void propertyChange(PropertyChangeEvent evt)
+			{
+				if (evt.getPropertyName().equals(ViewControler.PROPERTY_BACKGROUND_CHANGED))
+					vActionBlackWhite.putValue(Action.SELECTED_KEY, viewControler.isBlackgroundBlack());
+			}
+		});
+
 		MyMenu viewMenu = new MyMenu("View", vActionFullScreen, vActionDrawHydrogens, vActionHideUnselectedCompounds,
-				vActionSpin);
+				vActionSpin, vActionBlackWhite);
 
 		Action hActionAbout = new AbstractAction("About " + Settings.TITLE)
 		{

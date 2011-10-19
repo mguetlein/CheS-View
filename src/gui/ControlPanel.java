@@ -1,7 +1,9 @@
 package gui;
 
-import gui.ComponentFactory.StyleButton;
 import gui.ViewControler.HighlightSorting;
+import gui.swing.ComponentFactory;
+import gui.swing.ComponentFactory.StyleButton;
+import gui.swing.TransparentViewPanel;
 import gui.util.Highlighter;
 import gui.util.MoleculePropertyHighlighter;
 
@@ -23,9 +25,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
-import main.Settings;
-
-public class ControlPanel extends JPanel
+public class ControlPanel extends TransparentViewPanel
 {
 	boolean updateByViewControler = false;
 
@@ -58,7 +58,7 @@ public class ControlPanel extends JPanel
 		//		spinCheckbox.setOpaque(false);
 		//		spinCheckbox.setFocusable(false);
 
-		setBackground(Settings.TRANSPARENT_BACKGROUND);
+		//		setBackground(Settings.TRANSPARENT_BACKGROUND);
 
 		buttonWire = new StyleButton("Wireframe", true, ViewControler.STYLE_WIREFRAME);
 		buttonBalls = new StyleButton("Balls & Sticks", false, ViewControler.STYLE_BALLS_AND_STICKS);
@@ -73,21 +73,21 @@ public class ControlPanel extends JPanel
 		buttonWire.setFocusable(false);
 		buttonBalls.setFocusable(false);
 
-		buttonPlus = ComponentFactory.createButton("+", new Insets(1, 3, 1, 3));
-		buttonMinus = ComponentFactory.createButton("-", new Insets(1, 3, 1, 3));
+		buttonPlus = ComponentFactory.createViewButton("+", new Insets(1, 3, 1, 3));
+		buttonMinus = ComponentFactory.createViewButton("-", new Insets(1, 3, 1, 3));
 		buttonMinus.setPreferredSize(buttonPlus.getPreferredSize());
 
-		highlightCombobox = ComponentFactory.createComboBox();
+		highlightCombobox = ComponentFactory.createViewComboBox();
 		loadHighlighters();
 
 		highlightCombobox.setSelectedItem(viewControler.getHighlighter());
 
-		labelCheckbox = ComponentFactory.createCheckBox("Label");
+		labelCheckbox = ComponentFactory.createViewCheckBox("Label");
 		labelCheckbox.setSelected(viewControler.isHighlighterLabelsVisible());
 		labelCheckbox.setOpaque(false);
 		labelCheckbox.setVisible(false);
 
-		highlightMinMaxCombobox = ComponentFactory.createComboBox(HighlightSorting.values());
+		highlightMinMaxCombobox = ComponentFactory.createViewComboBox(HighlightSorting.values());
 
 		highlightMinMaxCombobox.setSelectedItem(viewControler.getHighlightSorting());
 		highlightMinMaxCombobox.setVisible(false);
@@ -108,7 +108,7 @@ public class ControlPanel extends JPanel
 
 		JPanel p2 = new JPanel();
 		p2.setOpaque(false);
-		p2.add(ComponentFactory.createLabel("<html><b>Feature:</b></html>"));
+		p2.add(ComponentFactory.createViewLabel("<html><b>Feature:</b></html>"));
 		p2.add(highlightCombobox);
 		p2.add(labelCheckbox);
 		p2.add(highlightMinMaxCombobox);

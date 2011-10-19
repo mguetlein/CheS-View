@@ -1,6 +1,7 @@
 package gui;
 
 import gui.View.AnimationSpeed;
+import gui.swing.ComponentFactory;
 import gui.util.HighlightAutomatic;
 import gui.util.Highlighter;
 import gui.util.MoleculePropertyHighlighter;
@@ -23,8 +24,6 @@ import java.util.List;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
-
-import main.Settings;
 
 import org.jmol.adapter.smarter.SmarterJmolAdapter;
 import org.jmol.api.JmolAdapter;
@@ -80,32 +79,16 @@ public class MainPanel extends JPanel implements ViewControler
 	{
 		if (t == Translucency.None)
 			return "";
-		else if (t == Translucency.ModerateWeak)
-		{
-			if (style.equals(STYLE_WIREFRAME))
-				return "; color translucent 0.4";
-			else if (style.equals(STYLE_BALLS_AND_STICKS))
-				return "; color translucent 0.5";
-			throw new Error();
-		}
-		else if (t == Translucency.ModerateStrong)
-		{
-			if (style.equals(STYLE_WIREFRAME))
-				return "; color translucent 0.6";
-			else if (style.equals(STYLE_BALLS_AND_STICKS))
-				return "; color translucent 0.7";
-			throw new Error();
-		}
-		else if (t == Translucency.Strong)
-		{
-			if (style.equals(STYLE_WIREFRAME))
-				return "; color translucent 0.8";
-			else if (style.equals(STYLE_BALLS_AND_STICKS))
-				return "; color translucent 0.9";
-			throw new Error();
-		}
-		else
-			throw new Error();
+		double translucency[] = null;
+		if (style.equals(STYLE_WIREFRAME))
+			translucency = new double[] { -1, 0.4, 0.6, 0.8 };
+		else if (style.equals(STYLE_BALLS_AND_STICKS))
+			translucency = new double[] { -1, 0.5, 0.7, 0.9 };
+		double trans = translucency[ArrayUtil.indexOf(Translucency.values(), t)];
+		//		if (Settings.SCREENSHOT_SETUP)
+		//			trans = 0.99;// Math.min(0.95, trans + 0.15);
+		//		System.err.println(trans);
+		return "; color translucent " + trans;
 	}
 
 	HashMap<String, Highlighter[]> highlighters;
@@ -113,8 +96,8 @@ public class MainPanel extends JPanel implements ViewControler
 	MoleculeProperty selectedHighlightMoleculeProperty = null;
 	boolean highlighterLabelsVisible = false;
 	HighlightSorting highlightSorting = HighlightSorting.Med;
-
 	HighlightAutomatic highlightAutomatic;
+	boolean backgroundBlack = true;
 
 	public Clustering getClustering()
 	{
@@ -341,8 +324,8 @@ public class MainPanel extends JPanel implements ViewControler
 				view.scriptWait("boundbox { selected }");
 				view.scriptWait("boundbox off");
 				view.scriptWait("draw ID bb" + clusterIndex + " BOUNDBOX color "
-						+ ColorUtil.toJMolString(Settings.LIST_WATCH_BACKGROUND) + " translucent " + boxTranslucency
-						+ " MESH NOFILL \"" + c + "\"");
+						+ ColorUtil.toJMolString(ComponentFactory.LIST_WATCH_BACKGROUND) + " translucent "
+						+ boxTranslucency + " MESH NOFILL \"" + c + "\"");
 
 				//				jmolPanel.repaint(); // HACK to avoid label display errors
 			}
@@ -569,8 +552,8 @@ public class MainPanel extends JPanel implements ViewControler
 				view.scriptWait("boundbox { selected }");
 				view.scriptWait("boundbox off");
 				view.scriptWait("draw ID bb" + m.getModelIndex() + "h BOUNDBOX color "
-						+ ColorUtil.toJMolString(Settings.LIST_WATCH_BACKGROUND) + " translucent " + boxTranslucency
-						+ " MESH NOFILL \"" + m.toString() + "\"");
+						+ ColorUtil.toJMolString(ComponentFactory.LIST_WATCH_BACKGROUND) + " translucent "
+						+ boxTranslucency + " MESH NOFILL \"" + m.toString() + "\"");
 				//				jmolPanel.repaint(); // HACK to avoid label display errors
 			}
 			else
@@ -587,8 +570,8 @@ public class MainPanel extends JPanel implements ViewControler
 				view.scriptWait("boundbox { selected }");
 				view.scriptWait("boundbox off");
 				view.scriptWait("draw ID bb" + m.getModelIndex() + "a BOUNDBOX color "
-						+ ColorUtil.toJMolString(Settings.LIST_ACTIVE_BACKGROUND) + " translucent " + boxTranslucency
-						+ " MESH NOFILL");
+						+ ColorUtil.toJMolString(ComponentFactory.LIST_ACTIVE_BACKGROUND) + " translucent "
+						+ boxTranslucency + " MESH NOFILL");
 				//				jmolPanel.repaint(); // HACK to avoid label display errors
 			}
 			else
@@ -717,8 +700,6 @@ public class MainPanel extends JPanel implements ViewControler
 					updateClusterModified();
 			}
 		});
-
-		view.setBackground(Settings.BACKGROUND);
 		updateClusteringNew();
 	}
 
@@ -1092,4 +1073,28 @@ public class MainPanel extends JPanel implements ViewControler
 		this.hideHydrogens = b;
 		view.hideHydrogens(b);
 	}
+
+	@Override
+	public boolean isBlackgroundBlack()
+	{
+		return backgroundBlack;
+	}
+
+	@Override
+	public void setBlackgroundBlack(boolean backgroundBlack)
+	{
+		setBlackgroundBlack(backgroundBlack, false);
+	}
+
+	public void setBlackgroundBlack(boolean backgroundBlack, boolean forceUpdate)
+	{
+		if (backgroundBlack != this.backgroundBlack || forceUpdate)
+		{
+			this.backgroundBlack = backgroundBlack;
+			ComponentFactory.setBackgroundBlack(backgroundBlack);
+			view.setBackground(ComponentFactory.BACKGROUND);
+			fireViewChange(PROPERTY_BACKGROUND_CHANGED);
+		}
+	}
+
 }

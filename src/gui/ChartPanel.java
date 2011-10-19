@@ -1,5 +1,13 @@
 package gui;
 
+import freechart.AbstractFreeChartPanel;
+import freechart.HistogramPanel;
+import freechart.StackedBarPlot;
+import gui.swing.ComponentFactory;
+import gui.swing.TransparentViewPanel;
+import gui.util.Highlighter;
+import gui.util.MoleculePropertyHighlighter;
+
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -14,7 +22,6 @@ import java.util.List;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
-import main.Settings;
 import util.ArrayUtil;
 import util.ColorUtil;
 import util.CountedSet;
@@ -30,13 +37,8 @@ import com.jgoodies.forms.layout.FormLayout;
 import dataInterface.MoleculeProperty;
 import dataInterface.MoleculeProperty.Type;
 import dataInterface.MoleculePropertyUtil;
-import freechart.AbstractFreeChartPanel;
-import freechart.HistogramPanel;
-import freechart.StackedBarPlot;
-import gui.util.Highlighter;
-import gui.util.MoleculePropertyHighlighter;
 
-public class ChartPanel extends JPanel
+public class ChartPanel extends TransparentViewPanel
 {
 	Clustering clustering;
 	ViewControler viewControler;
@@ -48,13 +50,13 @@ public class ChartPanel extends JPanel
 	HashMap<String, PlotData> cache = new HashMap<String, ChartPanel.PlotData>();
 
 	private JPanel featurePanel;
-	private JLabel featureNameLabel = ComponentFactory.createLabel("");
-	private JLabel featureSetLabel = ComponentFactory.createLabel("");
-	private JLabel featureDescriptionLabel = ComponentFactory.createLabel("");
-	private JLabel featureDescriptionLabelHeader = ComponentFactory.createLabel("Description:");
-	private JLabel featureSmartsLabelHeader = ComponentFactory.createLabel("Smarts:");
-	private JLabel featureSmartsLabel = ComponentFactory.createLabel("");
-	private JLabel featureMappingLabel = ComponentFactory.createLabel("");
+	private JLabel featureNameLabel = ComponentFactory.createViewLabel("");
+	private JLabel featureSetLabel = ComponentFactory.createViewLabel("");
+	private JLabel featureDescriptionLabel = ComponentFactory.createViewLabel("");
+	private JLabel featureDescriptionLabelHeader = ComponentFactory.createViewLabel("Description:");
+	private JLabel featureSmartsLabelHeader = ComponentFactory.createViewLabel("Smarts:");
+	private JLabel featureSmartsLabel = ComponentFactory.createViewLabel("");
+	private JLabel featureMappingLabel = ComponentFactory.createViewLabel("");
 
 	public ChartPanel(Clustering clustering, ViewControler viewControler)
 	{
@@ -69,7 +71,7 @@ public class ChartPanel extends JPanel
 	private void buildLayout()
 	{
 		DefaultFormBuilder b = new DefaultFormBuilder(new FormLayout("p,3dlu,p"));
-		b.append(ComponentFactory.createLabel("<html><b>Feature:</b><html>"));
+		b.append(ComponentFactory.createViewLabel("<html><b>Feature:</b><html>"));
 		b.append(featureNameLabel);
 		b.nextLine();
 		b.append("");
@@ -81,14 +83,16 @@ public class ChartPanel extends JPanel
 		b.append(featureSmartsLabelHeader);
 		b.append(featureSmartsLabel);
 		b.nextLine();
-		b.append(ComponentFactory.createLabel("<html>Usage:<html>"));
+		b.append(ComponentFactory.createViewLabel("<html>Usage:<html>"));
 		b.append(featureMappingLabel);
 
 		featurePanel = b.getPanel();
 		featurePanel.setOpaque(false);
 
 		setLayout(new BorderLayout(3, 3));
-		setOpaque(false);
+
+		setOpaque(true);
+		//		setBackground(Settings.TRANSPARENT_BACKGROUND);
 	}
 
 	private void addListeners()
@@ -381,41 +385,51 @@ public class ChartPanel extends JPanel
 								Color cols[] = MoleculePropertyUtil.getNominalColors(fProperty);
 								if (cIndex == -1)
 								{
-									p.setSeriesColor(dIndex,
-											ColorUtil.grayscale(MoleculePropertyUtil.AVAILABLE_COLORS[0]));
+									p.setSeriesColor(dIndex, ColorUtil.grayscale(MoleculePropertyUtil.getColor(0)));
 									((StackedBarPlot) p).setSeriesCategoryColors(dIndex, cols);
 								}
 								else
 								{
-									p.setSeriesColor(dIndex, ColorUtil
-											.grayscale(MoleculePropertyUtil.AVAILABLE_COLORS[0].darker().darker()));
-									p.setSeriesColor(cIndex,
-											ColorUtil.grayscale(MoleculePropertyUtil.AVAILABLE_COLORS[0]).brighter()
-													.brighter());
+									p.setSeriesColor(
+											dIndex,
+											ColorUtil.grayscale(MoleculePropertyUtil.getColor(0).darker().darker()
+													.darker()));
+									p.setSeriesColor(cIndex, ColorUtil.grayscale(MoleculePropertyUtil.getColor(0))
+											.brighter());
 
 									((StackedBarPlot) p).setSeriesCategoryColors(dIndex,
-											ColorUtil.darker(ColorUtil.darker(cols)));
-									((StackedBarPlot) p).setSeriesCategoryColors(cIndex,
-											ColorUtil.brighter(ColorUtil.brighter(cols)));
+											ColorUtil.darker(ColorUtil.darker(ColorUtil.darker(cols))));
+									((StackedBarPlot) p).setSeriesCategoryColors(cIndex, ColorUtil.brighter(cols));
 								}
 							}
 							else
 							{
 								if (cIndex == -1)
-									p.setSeriesColor(dIndex, MoleculePropertyUtil.AVAILABLE_COLORS[0]);
+									p.setSeriesColor(dIndex, MoleculePropertyUtil.getColor(0));
 								else
 								{
-									p.setSeriesColor(dIndex, MoleculePropertyUtil.AVAILABLE_COLORS[0].darker().darker());
-									p.setSeriesColor(cIndex, MoleculePropertyUtil.AVAILABLE_COLORS[0].brighter()
-											.brighter());
+									p.setSeriesColor(dIndex, MoleculePropertyUtil.getColor(0).darker().darker()
+											.darker());
+									p.setSeriesColor(cIndex, MoleculePropertyUtil.getColor(0).brighter());
 								}
 
 								if (mIndex != -1)
-									p.setSeriesColor(mIndex, MoleculePropertyUtil.AVAILABLE_COLORS[1]);
+									p.setSeriesColor(mIndex, MoleculePropertyUtil.getColor(1));
 							}
 
 							p.setOpaqueFalse();
-							p.setForegroundColor(Settings.FOREGROUND);
+							p.setForegroundColor(ComponentFactory.FOREGROUND);
+							final AbstractFreeChartPanel finalP = p;
+							viewControler.addViewListener(new PropertyChangeListener()
+							{
+
+								@Override
+								public void propertyChange(PropertyChangeEvent evt)
+								{
+									if (evt.getPropertyName().equals(ViewControler.PROPERTY_BACKGROUND_CHANGED))
+										finalP.setForegroundColor(ComponentFactory.FOREGROUND);
+								}
+							});
 							p.setShadowVisible(false);
 							p.setIntegerTickUnits();
 							p.setPreferredSize(new Dimension(400, 220));

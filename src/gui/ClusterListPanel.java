@@ -1,5 +1,8 @@
 package gui;
 
+import gui.swing.ComponentFactory;
+import gui.swing.TransparentViewPanel;
+
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -20,7 +23,6 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
-import main.Settings;
 import cluster.Cluster;
 import cluster.Clustering;
 
@@ -221,8 +223,8 @@ public class ClusterListPanel extends JPanel
 
 		//		clusterList.setVisibleRowCount(5);
 
-		clusterList.setBackground(Settings.TRANSPARENT_BACKGROUND);
-		// clusterList.setOpaque(false);
+		//clusterList.setBackground(Settings.TRANSPARENT_BACKGROUND);
+		clusterList.setOpaque(false);
 
 		clustering.getClusterActive().addListener(new PropertyChangeListener()
 		{
@@ -261,16 +263,16 @@ public class ClusterListPanel extends JPanel
 				super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
 				setOpaque(isSelected || i == clustering.getClusterActive().getSelected());
 
-				setForeground(Settings.FOREGROUND);
+				setForeground(ComponentFactory.FOREGROUND);
 				if (i == clustering.getClusterActive().getSelected())
 				{
-					setBackground(Settings.LIST_ACTIVE_BACKGROUND);
-					setForeground(Settings.LIST_SELECTION_FOREGROUND);
+					setBackground(ComponentFactory.LIST_ACTIVE_BACKGROUND);
+					setForeground(ComponentFactory.LIST_SELECTION_FOREGROUND);
 				}
 				else if (isSelected)
 				{
-					setBackground(Settings.LIST_WATCH_BACKGROUND);
-					setForeground(Settings.LIST_SELECTION_FOREGROUND);
+					setBackground(ComponentFactory.LIST_WATCH_BACKGROUND);
+					setForeground(ComponentFactory.LIST_SELECTION_FOREGROUND);
 				}
 				return this;
 			}
@@ -312,15 +314,13 @@ public class ClusterListPanel extends JPanel
 		CellConstraints cc = new CellConstraints();
 		//		int lineCount = 1;
 
-		scroll = new JScrollPane(clusterList);
-		scroll.setOpaque(false);
-		scroll.getViewport().setOpaque(false);
+		scroll = ComponentFactory.createViewScrollpane(clusterList);
 
 		//		datasetNameLabel.setBorder(new EmptyBorder(0, 5, 0, 0));
 		//		panel.add(datasetNameLabel, cc.xy(1, lineCount));
 		//		lineCount += 2;
 
-		clusterPanel = new JPanel(new BorderLayout(5, 5))
+		clusterPanel = new TransparentViewPanel(new BorderLayout(5, 5))
 		{
 			//			public Dimension getPreferredSize()
 			//			{
@@ -330,9 +330,10 @@ public class ClusterListPanel extends JPanel
 			//				return dim;
 			//			}
 		};
-		clusterPanel.setOpaque(false);
+		//		clusterPanel.setOpaque(false);
+		//		clusterPanel.setBackground(Settings.TRANSPARENT_BACKGROUND);
 		clusterPanel.add(scroll);
-		superimposeCheckBox = ComponentFactory.createCheckBox("Superimpose");
+		superimposeCheckBox = ComponentFactory.createViewCheckBox("Superimpose");
 		superimposeCheckBox.setSelected(viewControler.isSuperimpose());
 		superimposeCheckBox.setOpaque(false);
 		clusterPanel.add(superimposeCheckBox, BorderLayout.SOUTH);
@@ -361,7 +362,9 @@ public class ClusterListPanel extends JPanel
 		// add(panel.getPanel(), BorderLayout.WEST);
 
 		setBorder(new EmptyBorder(25, 25, 25, 25));
+
 		setOpaque(false);
+		//setBackground(Settings.TRANSPARENT_BACKGROUND);
 	}
 
 	private void updateCluster(int index)

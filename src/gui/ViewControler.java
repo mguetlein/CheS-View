@@ -51,6 +51,7 @@ public interface ViewControler
 	public static final String PROPERTY_SUPERIMPOSE_CHANGED = "propertySuperimposeChanged";
 	public static final String PROPERTY_HIDE_UNSELECT_CHANGED = "propertyHideUnselectChanged";
 	public static final String PROPERTY_SPIN_CHANGED = "propertySpinChanged";
+	public static final String PROPERTY_BACKGROUND_CHANGED = "propertyBackgroundChanged";
 
 	public boolean isHighlighterLabelsVisible();
 
@@ -66,4 +67,8 @@ public interface ViewControler
 	public HighlightSorting getHighlightSorting();
 
 	public void addViewListener(PropertyChangeListener l);
+
+	public boolean isBlackgroundBlack();
+
+	public void setBlackgroundBlack(boolean backgroudBlack);
 }
