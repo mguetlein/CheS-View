@@ -6,12 +6,16 @@ import gui.util.MoleculePropertyHighlighter;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.Rectangle;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
+import javax.swing.BorderFactory;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JTextArea;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.table.DefaultTableModel;
 
 import cluster.Cluster;
 import cluster.Clustering;
@@ -19,6 +23,7 @@ import cluster.Model;
 
 import com.jgoodies.forms.builder.DefaultFormBuilder;
 import com.jgoodies.forms.layout.FormLayout;
+import com.jgoodies.forms.layout.Sizes;
 
 import dataInterface.MoleculeProperty;
 import dataInterface.SubstructureSmartsType;
@@ -44,10 +49,11 @@ public class InfoPanel extends TransparentViewPanel
 	JLabel clusterFeatureLabel = ComponentFactory.createViewLabel();
 
 	JPanel compoundPanel;
+	int compoundPanelMinWidth = -1;
 	JLabel compoundNameLabel = ComponentFactory.createViewLabel();
-	JTextArea compoundSmilesLabel = ComponentFactory.createViewTextArea("", false, false);
-	JLabel compoundFeatureLabelHeader = ComponentFactory.createViewLabel();
-	JLabel compoundFeatureLabel = ComponentFactory.createViewLabel();
+
+	JTable compoundFeatureTable = ComponentFactory.createTable();
+	DefaultTableModel compoundFeatureTableModel;
 
 	public InfoPanel(ViewControler viewControler, Clustering clustering)
 	{
@@ -104,7 +110,10 @@ public class InfoPanel extends TransparentViewPanel
 			{
 				if (evt.getPropertyName().equals(ViewControler.PROPERTY_HIGHLIGHT_CHANGED)
 						|| evt.getPropertyName().equals(ViewControler.PROPERTY_NEW_HIGHLIGHTERS))
+				{
+					updateCluster();
 					updateCompound();
+				}
 			}
 		});
 	}
@@ -112,6 +121,7 @@ public class InfoPanel extends TransparentViewPanel
 	private void buildLayout()
 	{
 		DefaultFormBuilder b1 = new DefaultFormBuilder(new FormLayout("p,3dlu,p"));
+		b1.setLineGapSize(Sizes.pixel(2));
 		b1.append(ComponentFactory.createViewLabel("<html><b>Dataset:</b><html>"));
 		b1.append(datasetNameLabel);
 		b1.nextLine();
@@ -129,6 +139,7 @@ public class InfoPanel extends TransparentViewPanel
 		datasetPanel.setVisible(true);
 
 		DefaultFormBuilder b2 = new DefaultFormBuilder(new FormLayout("p,3dlu,p"));
+		b2.setLineGapSize(Sizes.pixel(2));
 		b2.append(ComponentFactory.createViewLabel("<html><b>Cluster:</b><html>"));
 		b2.append(clusterNameLabel);
 		b2.nextLine();
@@ -148,17 +159,28 @@ public class InfoPanel extends TransparentViewPanel
 		clusterPanel.setOpaque(false);
 		clusterPanel.setVisible(false);
 
-		DefaultFormBuilder b3 = new DefaultFormBuilder(new FormLayout("p,3dlu,p"));
-		b3.append(ComponentFactory.createViewLabel("<html><b>Compound:</b><html>"));
-		b3.append(compoundNameLabel);
-		b3.nextLine();
-		b3.append(ComponentFactory.createViewLabel("<html>Smiles:<html>"));
-		b3.append(compoundSmilesLabel);
-		b3.nextLine();
-		b3.append(compoundFeatureLabelHeader);
-		b3.append(compoundFeatureLabel);
+		compoundPanel = new JPanel(new BorderLayout(2, 2))
+		{
+			public Dimension getPreferredSize()
+			{
+				Dimension dim = super.getPreferredSize();
+				dim.width = Math.max(compoundPanelMinWidth, compoundNameLabel.getPreferredSize().width);
+				dim.height = Math.min(dim.width, 180);
+				System.err.println("> " + dim);
+				return dim;
+			}
+		};
+		compoundPanel.add(compoundNameLabel, BorderLayout.NORTH);
+		JScrollPane scroll = ComponentFactory.createViewScrollpane(compoundFeatureTable);
+		scroll.setBorder(BorderFactory.createEmptyBorder());
+		compoundPanel.add(scroll);
+		compoundFeatureTableModel = (DefaultTableModel) compoundFeatureTable.getModel();
+		compoundFeatureTableModel.addColumn("Feature");
+		compoundFeatureTableModel.addColumn("Value");
+		compoundFeatureTable.getColumn("Feature").setPreferredWidth(125);
+		compoundFeatureTable.getColumn("Value").setPreferredWidth(275);
+		compoundFeatureTable.setRowMargin(2);
 
-		compoundPanel = b3.getPanel();
 		compoundPanel.setOpaque(false);
 		compoundPanel.setVisible(false);
 
@@ -172,7 +194,6 @@ public class InfoPanel extends TransparentViewPanel
 		add(compoundPanel, BorderLayout.SOUTH);
 
 		setOpaque(true);
-		//		setBackground(Settings.TRANSPARENT_BACKGROUND);
 	}
 
 	private void updateCompound()
@@ -188,25 +209,45 @@ public class InfoPanel extends TransparentViewPanel
 			compoundPanel.setIgnoreRepaint(true);
 
 			Model m = clustering.getModelWithModelIndex(index);
-			compoundNameLabel.setText(m.toString());
-			compoundSmilesLabel.setText(m.getSmiles());
+			compoundNameLabel.setText("<html><b>Compound:</b> " + m.toString() + "<html>");
+			//			compoundSmilesLabel.setText(m.getSmiles());
 
-			compoundPanel.setIgnoreRepaint(false);
-			compoundPanel.setVisible(true);
+			while (compoundFeatureTableModel.getRowCount() > 0)
+				compoundFeatureTableModel.removeRow(0);
+			compoundFeatureTableModel.addRow(new String[] { "Smiles:", m.getSmiles() });
+			for (MoleculeProperty p : clustering.getFeatures())
+			{
+				Object o[] = new Object[2];
+				o[0] = p.getName() + ":";
+				o[1] = m.getTemperature(p);
+				compoundFeatureTableModel.addRow(o);
+			}
+			for (MoleculeProperty p : clustering.getProperties())
+			{
+				Object o[] = new Object[2];
+				o[0] = p.getName() + ":";
+				o[1] = m.getTemperature(p);
+				compoundFeatureTableModel.addRow(o);
+			}
+			compoundPanelMinWidth = ComponentFactory.packColumn(compoundFeatureTable, 0, 2, 175);
+			//			System.err.println(compoundPanelMinWidth);
+			compoundPanelMinWidth += ComponentFactory.packColumn(compoundFeatureTable, 1, 2);
+			//			System.err.println(compoundPanelMinWidth);
 
 			if (viewControler.getHighlighter() instanceof MoleculePropertyHighlighter)
 			{
 				MoleculeProperty p = ((MoleculePropertyHighlighter) viewControler.getHighlighter()).getProperty();
-				compoundFeatureLabelHeader.setText(p.getName() + ":");
-				compoundFeatureLabel.setText(m.getTemperature(p));
-				compoundFeatureLabel.setVisible(true);
-				compoundFeatureLabelHeader.setVisible(true);
+				int pIndex = 1 + clustering.getFeatures().indexOf(p);
+				if (pIndex == 0)
+					pIndex = 1 + clustering.getFeatures().size() + clustering.getProperties().indexOf(p);
+				compoundFeatureTable.setRowSelectionInterval(pIndex, pIndex);
+				compoundFeatureTable.scrollRectToVisible(new Rectangle(compoundFeatureTable
+						.getCellRect(pIndex, 0, true)));
 			}
-			else
-			{
-				compoundFeatureLabel.setVisible(false);
-				compoundFeatureLabelHeader.setVisible(false);
-			}
+
+			compoundPanel.setIgnoreRepaint(false);
+			compoundPanel.setVisible(true);
+
 		}
 	}
 

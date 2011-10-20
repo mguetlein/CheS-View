@@ -33,6 +33,7 @@ import cluster.Model;
 
 import com.jgoodies.forms.builder.DefaultFormBuilder;
 import com.jgoodies.forms.layout.FormLayout;
+import com.jgoodies.forms.layout.Sizes;
 
 import dataInterface.MoleculeProperty;
 import dataInterface.MoleculeProperty.Type;
@@ -71,6 +72,7 @@ public class ChartPanel extends TransparentViewPanel
 	private void buildLayout()
 	{
 		DefaultFormBuilder b = new DefaultFormBuilder(new FormLayout("p,3dlu,p"));
+		b.setLineGapSize(Sizes.pixel(2));
 		b.append(ComponentFactory.createViewLabel("<html><b>Feature:</b><html>"));
 		b.append(featureNameLabel);
 		b.nextLine();

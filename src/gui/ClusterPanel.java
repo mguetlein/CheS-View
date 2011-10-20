@@ -63,10 +63,11 @@ public class ClusterPanel extends JPanel
 		JPanel ppp = new JPanel(new BorderLayout());
 		ppp.setOpaque(false);
 		ppp.add(info, BorderLayout.NORTH);
+		ppp.setBorder(new EmptyBorder(0, 0, 10, 0));
 
 		JPanel infoContainer = new JPanel(new BorderLayout());
 		infoContainer.setOpaque(false);
-		infoContainer.add(ppp, BorderLayout.EAST);
+		infoContainer.add(ppp, BorderLayout.CENTER);
 		pp.add(infoContainer, BorderLayout.EAST);
 		pp.setBorder(new EmptyBorder(25, 25, 25, 25));
 
@@ -76,6 +77,7 @@ public class ClusterPanel extends JPanel
 
 		sideBarContainer.add(pp);
 
+		//		SwingUtil.setDebugBorder(cp, Color.LIGHT_GRAY);
 		//		SwingUtil.setDebugBorder(sideBarContainer, Color.RED);
 		//		SwingUtil.setDebugBorder(pp, Color.GREEN);
 		//		SwingUtil.setDebugBorder(sideBar, Color.ORANGE);
