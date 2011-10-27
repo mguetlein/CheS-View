@@ -8,7 +8,7 @@ public class SubstructureHighlighter extends Highlighter
 
 	public SubstructureHighlighter(SubstructureSmartsType type)
 	{
-		super(type.toString());
+		super(type.getName());
 		this.type = type;
 	}
 

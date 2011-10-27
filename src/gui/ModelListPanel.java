@@ -263,7 +263,7 @@ public class ModelListPanel extends TransparentViewPanel
 
 		list.setOpaque(false);
 		list.setFocusable(false);
-		list.setBorder(new EmptyBorder(5, 5, 5, 5));
+		//		list.setBorder(new EmptyBorder(5, 5, 5, 5));
 
 		JPanel p = new JPanel(new FormLayout("fill:pref:grow", "fill:p:grow,p"));//,5px,p,p"));
 		p.setOpaque(false);

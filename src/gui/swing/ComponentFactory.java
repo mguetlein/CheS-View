@@ -2,7 +2,6 @@ package gui.swing;
 
 import gui.DescriptionListCellRenderer;
 import gui.LinkButton;
-import gui.MyScrollBarUI;
 
 import java.awt.Color;
 import java.awt.Component;
@@ -21,11 +20,17 @@ import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
+import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
+import javax.swing.border.EtchedBorder;
 import javax.swing.border.LineBorder;
+import javax.swing.plaf.basic.BasicArrowButton;
+import javax.swing.plaf.basic.BasicComboBoxUI;
+import javax.swing.plaf.basic.BasicComboPopup;
+import javax.swing.plaf.basic.BasicScrollBarUI;
+import javax.swing.plaf.basic.ComboPopup;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableColumnModel;
 import javax.swing.table.DefaultTableModel;
@@ -38,7 +43,7 @@ public class ComponentFactory
 {
 	public static Color BACKGROUND;
 	public static Color FOREGROUND;
-	public static Color SCROLL_FOREGROUND;
+	public static Color BORDER_FOREGROUND;
 	public static Color LIST_SELECTION_FOREGROUND;
 	public static Color LIST_ACTIVE_BACKGROUND;
 	public static Color LIST_WATCH_BACKGROUND;
@@ -54,8 +59,7 @@ public class ComponentFactory
 		{
 			BACKGROUND = Color.BLACK;
 			FOREGROUND = new Color(250, 250, 250);
-			SCROLL_FOREGROUND = FOREGROUND;
-			//				FOREGROUND = new Color(170, 170, 170);
+			BORDER_FOREGROUND = FOREGROUND;
 			LIST_SELECTION_FOREGROUND = Color.WHITE;
 			LIST_ACTIVE_BACKGROUND = new Color(51, 102, 255);
 			LIST_WATCH_BACKGROUND = LIST_ACTIVE_BACKGROUND.darker().darker();
@@ -64,35 +68,50 @@ public class ComponentFactory
 		{
 			BACKGROUND = Color.WHITE;
 			FOREGROUND = new Color(5, 5, 5);
-			SCROLL_FOREGROUND = Color.LIGHT_GRAY;
-			//				FOREGROUND = new Color(50, 50, 50);
+			BORDER_FOREGROUND = Color.LIGHT_GRAY;
 			LIST_SELECTION_FOREGROUND = Color.BLACK;
 			LIST_ACTIVE_BACKGROUND = new Color(101, 152, 255);
 			LIST_WATCH_BACKGROUND = LIST_ACTIVE_BACKGROUND.brighter().brighter();
-
 		}
-		MyScrollBarUI.BUTTON = BACKGROUND;
-		MyScrollBarUI.TRACK = BACKGROUND;
-		MyScrollBarUI.BACKGROUND = BACKGROUND;
-		MyScrollBarUI.BORDER = SCROLL_FOREGROUND;
-
-		//		setCustomScrollBarUI();
 		if (Settings.TOP_LEVEL_COMPONENT != null)
 			SwingUtilities.updateComponentTreeUI(Settings.TOP_LEVEL_COMPONENT);
-		//		resetOrigScrollBarUI();
 	}
 
-	private static String ORIG_SCROLL_BAR_UI = (String) UIManager.get("ScrollBarUI");
-
-	private static void setCustomScrollBarUI()
-	{
-		UIManager.put("ScrollBarUI", MyScrollBarUI.class.getName());
-	}
-
-	private static void resetOrigScrollBarUI()
-	{
-		UIManager.put("ScrollBarUI", ORIG_SCROLL_BAR_UI);
-	}
+	//	static class UIUtil
+	//	{
+	//		static HashMap<String, Color> orig = new HashMap<String, Color>();
+	//
+	//		public static void set(String v, Color c)
+	//		{
+	//			if (!orig.containsKey(v))
+	//				orig.put(v, UIManager.getColor(v));
+	//			UIManager.put(v, new ColorUIResource(c));
+	//		}
+	//		public static void unset()
+	//		{
+	//			for (String v : orig.keySet())
+	//				UIManager.put(v, new ColorUIResource(orig.get(v)));
+	//		}
+	//	}
+	//	private static void setViewUIColors()
+	//	{
+	//		UIUtil.set("ScrollBar.background", BACKGROUND);
+	//		UIUtil.set("ScrollBar.foreground", BORDER_FOREGROUND);
+	//		UIUtil.set("ScrollBar.thumbHighlight", BORDER_FOREGROUND);
+	//		UIUtil.set("ScrollBar.thumbShadow", BORDER_FOREGROUND.darker());
+	//		UIUtil.set("ScrollBar.thumbDarkShadow", BORDER_FOREGROUND.darker().darker());
+	//		UIUtil.set("ScrollBar.thumb", BACKGROUND);
+	//		UIUtil.set("ScrollBar.track", BACKGROUND);
+	//		UIUtil.set("ScrollBar.trackHighlight", BACKGROUND);
+	//		UIUtil.set("ComboBox.buttonBackground", BACKGROUND);
+	//		UIUtil.set("ComboBox.buttonShadow", BORDER_FOREGROUND.darker());
+	//		UIUtil.set("ComboBox.buttonDarkShadow", BORDER_FOREGROUND.darker().darker());
+	//		UIUtil.set("ComboBox.buttonHighlight", BORDER_FOREGROUND);
+	//	}
+	//	private static void unsetViewUIColors()
+	//	{
+	//		UIUtil.unset();
+	//	}
 
 	public static JLabel createTransparentViewLabel()
 	{
@@ -206,12 +225,47 @@ public class ComponentFactory
 		{
 			public void updateUI()
 			{
-				setCustomScrollBarUI();
-				super.updateUI();
-				resetOrigScrollBarUI();
+				setUI(new BasicComboBoxUI()
+				{
+					protected JButton createArrowButton()
+					{
+						JButton button = new BasicArrowButton(BasicArrowButton.SOUTH, BACKGROUND,
+								BORDER_FOREGROUND.darker(), BORDER_FOREGROUND.darker().darker(), BORDER_FOREGROUND);
+						button.setName("ComboBox.arrowButton");
+						return button;
+					}
+
+					protected ComboPopup createPopup()
+					{
+						return new BasicComboPopup(comboBox)
+						{
+							protected JScrollPane createScroller()
+							{
+								JScrollPane sp = new JScrollPane(list,
+										ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+										ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+								sp.setHorizontalScrollBar(null);
+								sp.setVerticalScrollBar(new JScrollBar(JScrollBar.VERTICAL)
+								{
+									public void updateUI()
+									{
+										setUI(new MyScrollBarUI());
+									}
+								});
+								return sp;
+							}
+
+							protected void configurePopup()
+							{
+								super.configurePopup();
+								setBorder(new EtchedBorder(BORDER_FOREGROUND, BORDER_FOREGROUND.darker()));
+							}
+						};
+					}
+				});
 				setForeground(FOREGROUND);
 				setBackground(BACKGROUND);
-
+				setBorder(new EtchedBorder(BORDER_FOREGROUND, BORDER_FOREGROUND.darker()));
 				if (getRenderer() instanceof DescriptionListCellRenderer)
 					((DescriptionListCellRenderer) getRenderer())
 							.setDescriptionForeground(FOREGROUND.darker().darker());
@@ -220,6 +274,8 @@ public class ComponentFactory
 		for (Object object : items)
 			c.addItem(object);
 		c.setOpaque(false);
+		c.setForeground(FOREGROUND);
+		c.setBackground(BACKGROUND);
 		c.setFont(f);
 		r.setDescriptionForeground(FOREGROUND.darker().darker());
 		c.setRenderer(r);
@@ -242,6 +298,7 @@ public class ComponentFactory
 		t.setGridColor(new Color(0, 0, 0, 0));
 		t.setOpaque(false);
 		t.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+		t.setRowHeight(t.getRowHeight() + 1);
 		t.setDefaultRenderer(Object.class, new DefaultTableCellRenderer()
 		{
 
@@ -249,9 +306,9 @@ public class ComponentFactory
 			public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
 					boolean hasFocus, int row, int column)
 			{
-				super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+				super.getTableCellRendererComponent(table, value, isSelected, false, row, column);
 				setBackground(LIST_ACTIVE_BACKGROUND);
-				if (isSelected && column > 0)
+				if (isSelected)
 				{
 					setOpaque(true);
 					setForeground(LIST_SELECTION_FOREGROUND);
@@ -309,16 +366,41 @@ public class ComponentFactory
 		return width;
 	}
 
+	static class MyScrollBarUI extends BasicScrollBarUI
+	{
+		protected JButton createDecreaseButton(int orientation)
+		{
+			return new BasicArrowButton(orientation, BACKGROUND, BORDER_FOREGROUND.darker(), BORDER_FOREGROUND.darker()
+					.darker(), BORDER_FOREGROUND);
+		}
+
+		protected JButton createIncreaseButton(int orientation)
+		{
+			return new BasicArrowButton(orientation, BACKGROUND, BORDER_FOREGROUND.darker(), BORDER_FOREGROUND.darker()
+					.darker(), BORDER_FOREGROUND);
+		}
+
+		protected void configureScrollBarColors()
+		{
+			scrollbar.setForeground(BORDER_FOREGROUND);
+			scrollbar.setBackground(BACKGROUND);
+			thumbHighlightColor = BORDER_FOREGROUND;
+			thumbLightShadowColor = BORDER_FOREGROUND.darker();
+			thumbDarkShadowColor = BORDER_FOREGROUND.darker().darker();
+			thumbColor = BACKGROUND;
+			trackColor = BACKGROUND;
+			trackHighlightColor = BACKGROUND;
+		}
+	}
+
 	public static JScrollPane createViewScrollpane(JComponent table)
 	{
-		setCustomScrollBarUI();
 		JScrollPane p = new JScrollPane(table)
 		{
 			public void updateUI()
 			{
-				//				setCustomScrollBarUI();
 				super.updateUI();
-				//				resetOrigScrollBarUI();
+				setBorder(new EtchedBorder(BORDER_FOREGROUND, BORDER_FOREGROUND.darker()));
 			}
 		};
 		p.setVerticalScrollBar(new JScrollBar(JScrollBar.VERTICAL)
@@ -335,10 +417,10 @@ public class ComponentFactory
 				setUI(new MyScrollBarUI());
 			}
 		});
-
-		setCustomScrollBarUI();
 		p.setOpaque(false);
 		p.getViewport().setOpaque(false);
+		p.setViewportBorder(new EmptyBorder(5, 5, 5, 5));
+
 		return p;
 	}
 

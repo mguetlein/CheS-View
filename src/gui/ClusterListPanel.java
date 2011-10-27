@@ -138,7 +138,8 @@ public class ClusterListPanel extends JPanel
 					if (suspendAnim)
 						View.instance.suspendAnimation("change cluster selection");
 					clustering.getModelActive().clearSelection();
-					View.instance.proceedAnimation("change cluster selection");
+					if (suspendAnim)
+						View.instance.proceedAnimation("change cluster selection");
 					clustering.getClusterActive().setSelected(cIndex);
 				}
 				clustering.getClusterWatched().clearSelection();
@@ -283,7 +284,7 @@ public class ClusterListPanel extends JPanel
 		// clusterList.setBorder(new
 		// CompoundBorder(ComponentFactory.createThinBorder(), new
 		// EmptyBorder(5, 5, 5, 5)));
-		clusterList.setBorder(new EmptyBorder(5, 5, 5, 5));
+		//		clusterList.setBorder(new EmptyBorder(5, 5, 5, 5));
 
 		modelListPanel = new ModelListPanel(clustering, viewControler)
 		{

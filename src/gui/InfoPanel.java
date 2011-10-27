@@ -10,7 +10,6 @@ import java.awt.Rectangle;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
-import javax.swing.BorderFactory;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -43,7 +42,7 @@ public class InfoPanel extends TransparentViewPanel
 	JLabel clusterNameLabel = ComponentFactory.createViewLabel();
 	JLabel clusterSizeLabel = ComponentFactory.createViewLabel();
 	JLabel clusterAlignLabel = ComponentFactory.createViewLabel();
-	JLabel clusterMCSLabelHeader = ComponentFactory.createViewLabel("MCS:");
+	JLabel clusterMCSLabelHeader = ComponentFactory.createViewLabel();
 	JLabel clusterMCSLabel = ComponentFactory.createViewLabel();
 	JLabel clusterFeatureLabelHeader = ComponentFactory.createViewLabel();
 	JLabel clusterFeatureLabel = ComponentFactory.createViewLabel();
@@ -54,6 +53,7 @@ public class InfoPanel extends TransparentViewPanel
 
 	JTable compoundFeatureTable = ComponentFactory.createTable();
 	DefaultTableModel compoundFeatureTableModel;
+	JScrollPane compoundFeatureTableScroll;
 
 	public InfoPanel(ViewControler viewControler, Clustering clustering)
 	{
@@ -104,7 +104,6 @@ public class InfoPanel extends TransparentViewPanel
 		});
 		viewControler.addViewListener(new PropertyChangeListener()
 		{
-
 			@Override
 			public void propertyChange(PropertyChangeEvent evt)
 			{
@@ -166,20 +165,15 @@ public class InfoPanel extends TransparentViewPanel
 				Dimension dim = super.getPreferredSize();
 				dim.width = Math.max(compoundPanelMinWidth, compoundNameLabel.getPreferredSize().width);
 				dim.height = Math.min(dim.width, 180);
-				System.err.println("> " + dim);
 				return dim;
 			}
 		};
 		compoundPanel.add(compoundNameLabel, BorderLayout.NORTH);
-		JScrollPane scroll = ComponentFactory.createViewScrollpane(compoundFeatureTable);
-		scroll.setBorder(BorderFactory.createEmptyBorder());
-		compoundPanel.add(scroll);
+		compoundFeatureTableScroll = ComponentFactory.createViewScrollpane(compoundFeatureTable);
+		compoundPanel.add(compoundFeatureTableScroll);
 		compoundFeatureTableModel = (DefaultTableModel) compoundFeatureTable.getModel();
 		compoundFeatureTableModel.addColumn("Feature");
 		compoundFeatureTableModel.addColumn("Value");
-		compoundFeatureTable.getColumn("Feature").setPreferredWidth(125);
-		compoundFeatureTable.getColumn("Value").setPreferredWidth(275);
-		compoundFeatureTable.setRowMargin(2);
 
 		compoundPanel.setOpaque(false);
 		compoundPanel.setVisible(false);
@@ -229,7 +223,7 @@ public class InfoPanel extends TransparentViewPanel
 				o[1] = m.getTemperature(p);
 				compoundFeatureTableModel.addRow(o);
 			}
-			compoundPanelMinWidth = ComponentFactory.packColumn(compoundFeatureTable, 0, 2, 175);
+			compoundPanelMinWidth = ComponentFactory.packColumn(compoundFeatureTable, 0, 2, 250);
 			//			System.err.println(compoundPanelMinWidth);
 			compoundPanelMinWidth += ComponentFactory.packColumn(compoundFeatureTable, 1, 2);
 			//			System.err.println(compoundPanelMinWidth);
@@ -279,15 +273,24 @@ public class InfoPanel extends TransparentViewPanel
 		else
 		{
 			clusterPanel.setIgnoreRepaint(true);
-
 			Cluster c = clustering.getCluster(index);
 			clusterNameLabel.setText(c.getName());
 			clusterSizeLabel.setText(c.size() + "");
 			clusterAlignLabel.setText(c.getAlignAlgorithm());
-			String mcs = c.getSubstructureSmarts(SubstructureSmartsType.MCS);
-			clusterMCSLabelHeader.setVisible(mcs != null);
-			clusterMCSLabel.setVisible(mcs != null);
-			clusterMCSLabel.setText(mcs);
+
+			boolean smartsFound = true;
+			for (SubstructureSmartsType t : SubstructureSmartsType.values())
+			{
+				if (c.getSubstructureSmarts(t) != null)
+				{
+					smartsFound = true;
+					clusterMCSLabelHeader.setText(t.getName() + ":");
+					clusterMCSLabel.setText(c.getSubstructureSmarts(t));
+					break;
+				}
+			}
+			clusterMCSLabelHeader.setVisible(smartsFound);
+			clusterMCSLabel.setVisible(smartsFound);
 
 			if (viewControler.getHighlighter() instanceof MoleculePropertyHighlighter)
 			{
@@ -302,7 +305,6 @@ public class InfoPanel extends TransparentViewPanel
 				clusterFeatureLabel.setVisible(false);
 				clusterFeatureLabelHeader.setVisible(false);
 			}
-
 			clusterPanel.setIgnoreRepaint(false);
 			clusterPanel.setVisible(true);
 		}
