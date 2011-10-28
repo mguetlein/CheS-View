@@ -442,6 +442,7 @@ public class MenuBar extends JMenuBar
 		p.addHeading(Settings.TITLE);
 		p.addTable(new String[][] { { "Version:", Settings.VERSION_STRING }, { "Homepage:", Settings.HOMEPAGE },
 				{ "Contact:", "Martin Gütlein (martin.guetlein@gmail.com)" } });
+		p.setPreferredWith(600);
 		JOptionPane.showMessageDialog(Settings.TOP_LEVEL_COMPONENT, p, "About " + Settings.TITLE,
 				JOptionPane.INFORMATION_MESSAGE, Settings.CHES_MAPPER_IMAGE);
 	}
