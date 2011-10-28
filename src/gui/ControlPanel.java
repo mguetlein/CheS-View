@@ -25,9 +25,11 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
+import cluster.Clustering;
+
 public class ControlPanel extends TransparentViewPanel
 {
-	boolean updateByViewControler = false;
+	boolean selfUpdate = false;
 
 	//	JCheckBox spinCheckbox;
 
@@ -42,10 +44,12 @@ public class ControlPanel extends TransparentViewPanel
 	JComboBox highlightMinMaxCombobox;
 
 	ViewControler viewControler;
+	Clustering clustering;
 
-	public ControlPanel(ViewControler viewControler)
+	public ControlPanel(ViewControler viewControler, Clustering clustering)
 	{
 		this.viewControler = viewControler;
+		this.clustering = clustering;
 
 		buildLayout();
 		addListeners();
@@ -142,7 +146,7 @@ public class ControlPanel extends TransparentViewPanel
 		{
 			public void actionPerformed(ActionEvent e)
 			{
-				if (updateByViewControler)
+				if (selfUpdate)
 					return;
 				viewControler.setStyle(((StyleButton) e.getSource()).style);
 			}
@@ -165,19 +169,14 @@ public class ControlPanel extends TransparentViewPanel
 			@Override
 			public void actionPerformed(ActionEvent e)
 			{
-				if (updateByViewControler)
+				if (selfUpdate)
 					return;
-
 				SwingUtilities.invokeLater(new Runnable()
 				{
-
 					@Override
 					public void run()
 					{
 						viewControler.setHighlighter((Highlighter) highlightCombobox.getSelectedItem());
-						boolean featHighSel = ((Highlighter) highlightCombobox.getSelectedItem()) instanceof MoleculePropertyHighlighter;
-						labelCheckbox.setVisible(featHighSel);
-						highlightMinMaxCombobox.setVisible(featHighSel);
 					}
 				});
 			}
@@ -188,11 +187,10 @@ public class ControlPanel extends TransparentViewPanel
 			@Override
 			public void actionPerformed(ActionEvent e)
 			{
-				if (updateByViewControler)
+				if (selfUpdate)
 					return;
 				SwingUtilities.invokeLater(new Runnable()
 				{
-
 					@Override
 					public void run()
 					{
@@ -206,11 +204,10 @@ public class ControlPanel extends TransparentViewPanel
 			@Override
 			public void actionPerformed(ActionEvent e)
 			{
-				if (updateByViewControler)
+				if (selfUpdate)
 					return;
 				SwingUtilities.invokeLater(new Runnable()
 				{
-
 					@Override
 					public void run()
 					{
@@ -220,41 +217,55 @@ public class ControlPanel extends TransparentViewPanel
 			}
 		});
 
+		clustering.getClusterActive().addListener(new PropertyChangeListener()
+		{
+
+			@Override
+			public void propertyChange(PropertyChangeEvent evt)
+			{
+				updateComboStuff();
+			}
+		});
+
 		viewControler.addViewListener(new PropertyChangeListener()
 		{
 			@Override
 			public void propertyChange(PropertyChangeEvent evt)
 			{
 				//					System.out.println("fire updated " + evt.getPropertyName());
-
-				updateByViewControler = true;
 				if (evt.getPropertyName().equals(ViewControler.PROPERTY_HIGHLIGHT_CHANGED))
 				{
-					highlightCombobox.setSelectedItem(viewControler.getHighlighter());
-					labelCheckbox.setSelected(viewControler.isHighlighterLabelsVisible());
-					highlightMinMaxCombobox.setSelectedItem(viewControler.getHighlightSorting());
-					boolean featHighSel = ((Highlighter) highlightCombobox.getSelectedItem()) instanceof MoleculePropertyHighlighter;
-					labelCheckbox.setVisible(featHighSel);
-					highlightMinMaxCombobox.setVisible(featHighSel);
+					updateComboStuff();
+				}
+				else if (evt.getPropertyName().equals(ViewControler.PROPERTY_SUPERIMPOSE_CHANGED))
+				{
+					updateComboStuff();
 				}
 				else if (evt.getPropertyName().equals(ViewControler.PROPERTY_NEW_HIGHLIGHTERS))
 				{
 					loadHighlighters();
-					highlightCombobox.setSelectedItem(viewControler.getHighlighter());
-					labelCheckbox.setSelected(viewControler.isHighlighterLabelsVisible());
-					highlightMinMaxCombobox.setSelectedItem(viewControler.getHighlightSorting());
-					boolean featHighSel = ((Highlighter) highlightCombobox.getSelectedItem()) instanceof MoleculePropertyHighlighter;
-					labelCheckbox.setVisible(featHighSel);
-					highlightMinMaxCombobox.setVisible(featHighSel);
+					updateComboStuff();
 				}
 				else if (evt.getPropertyName().equals(ViewControler.PROPERTY_DENSITY_CHANGED))
 				{
 					buttonPlus.setEnabled(viewControler.canChangeDensitiy(true));
 					buttonMinus.setEnabled(viewControler.canChangeDensitiy(false));
 				}
-				updateByViewControler = false;
 			}
 		});
+	}
+
+	private void updateComboStuff()
+	{
+		selfUpdate = true;
+		highlightCombobox.setSelectedItem(viewControler.getHighlighter());
+		labelCheckbox.setSelected(viewControler.isHighlighterLabelsVisible());
+		highlightMinMaxCombobox.setSelectedItem(viewControler.getHighlightSorting());
+		boolean featHighSel = ((Highlighter) highlightCombobox.getSelectedItem()) instanceof MoleculePropertyHighlighter;
+		labelCheckbox.setVisible(featHighSel);
+		highlightMinMaxCombobox.setVisible(featHighSel && viewControler.isSuperimpose()
+				&& !clustering.isClusterActive());
+		selfUpdate = false;
 	}
 
 	private void loadHighlighters()

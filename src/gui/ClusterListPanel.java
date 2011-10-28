@@ -347,7 +347,7 @@ public class ClusterListPanel extends JPanel
 
 		//		add(datasetNameLabel, BorderLayout.NORTH);
 		add(panel, BorderLayout.WEST);
-		add(new ControlPanel(viewControler), BorderLayout.SOUTH);
+		add(new ControlPanel(viewControler, clustering), BorderLayout.SOUTH);
 
 		//		lineCount += 2;
 		//		JLabel la = ComponentFactory.createLabel(" " + Settings.VERSION_STRING);
