@@ -461,6 +461,7 @@ public class ChartPanel extends TransparentViewPanel
 						revalidate();
 						setVisible(true);
 						setIgnoreRepaint(false);
+						repaint();
 					}
 				});
 				th.start();

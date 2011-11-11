@@ -234,6 +234,7 @@ public class ModelListPanel extends TransparentViewPanel
 
 		list = new MouseOverList(listModel);
 		list.setClearOnExit(false);
+		list.setVisibleRowCount(16);
 
 		list.setOpaque(false);
 		list.setCellRenderer(new DefaultListCellRenderer()

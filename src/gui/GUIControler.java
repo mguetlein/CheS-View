@@ -5,14 +5,8 @@ import java.beans.PropertyChangeListener;
 
 import javax.swing.JPopupMenu;
 
-public interface GUIControler
+public interface GUIControler extends Blockable
 {
-	public void block(String blocker);
-
-	public boolean isBlocked();
-
-	public void unblock(String blocker);
-
 	public void setFullScreen(boolean b);
 
 	public boolean isFullScreen();

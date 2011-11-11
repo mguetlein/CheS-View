@@ -38,7 +38,7 @@ public class View
 		this.guiControler = guiControler;
 
 		viewer.script("set disablePopupMenu on");
-		viewer.script("set minPixelSelRadius 40");
+		viewer.script("set minPixelSelRadius 30");
 
 		if (Settings.SCREENSHOT_SETUP)
 			viewer.script("set antialiasDisplay ON");

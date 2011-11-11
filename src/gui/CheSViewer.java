@@ -1,12 +1,9 @@
 package gui;
 
-import java.awt.Cursor;
 import java.awt.Dimension;
-import java.awt.LayoutManager;
 import java.awt.Point;
 import java.awt.Toolkit;
 import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
@@ -14,9 +11,7 @@ import java.util.List;
 import java.util.Locale;
 
 import javax.swing.JFrame;
-import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
-import javax.swing.OverlayLayout;
 import javax.swing.SwingUtilities;
 
 import main.CheSMapping;
@@ -33,20 +28,13 @@ public class CheSViewer implements GUIControler
 	//		System.err.println(JmolConstants.version);
 	//	}
 
-	JFrame frame;
-	JPanel glass;
-	JPanel coverPanel;
-
+	BlockableFrame frame;
 	ClusterPanel clusterPanel;
 	Clustering clustering;
 	MenuBar menuBar;
-
 	boolean undecorated = false;
 	Dimension oldSize;
 	Point oldLocation;
-
-	private static boolean DEBUG = false;
-	List<String> block = new ArrayList<String>();
 
 	List<PropertyChangeListener> listeners = new ArrayList<PropertyChangeListener>();
 
@@ -57,21 +45,6 @@ public class CheSViewer implements GUIControler
 
 	public CheSViewer(ClusteringData clusteredDataset, boolean startNextToScreen)
 	{
-		glass = new JPanel();
-		LayoutManager layout = new OverlayLayout(glass);
-		glass.setLayout(layout);
-
-		coverPanel = new JPanel();
-		coverPanel.setOpaque(false);
-		MouseAdapter listener = new MouseAdapter()
-		{
-		};
-		coverPanel.addMouseListener(listener);
-		coverPanel.addMouseMotionListener(listener);
-		coverPanel.setVisible(false);
-		coverPanel.setCursor(new Cursor(Cursor.WAIT_CURSOR));
-		glass.add(coverPanel);
-
 		clusterPanel = new ClusterPanel(this);
 
 		Dimension full = Toolkit.getDefaultToolkit().getScreenSize();
@@ -142,7 +115,7 @@ public class CheSViewer implements GUIControler
 		if (clustering == null)
 			throw new Error("clustering is null");
 
-		frame = new JFrame(Settings.TITLE + " (" + Settings.VERSION_STRING + ")");
+		frame = new BlockableFrame(Settings.TITLE + " (" + Settings.VERSION_STRING + ")");
 		Settings.TOP_LEVEL_COMPONENT = frame;
 
 		frame.setUndecorated(undecorated);
@@ -160,9 +133,6 @@ public class CheSViewer implements GUIControler
 
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setIconImage(Settings.CHES_MAPPER_IMAGE.getImage());
-		frame.setGlassPane(glass);
-		glass.setVisible(true);
-		glass.setOpaque(false);
 		frame.setVisible(true);
 		SwingUtilities.invokeLater(new Runnable()
 		{
@@ -179,46 +149,6 @@ public class CheSViewer implements GUIControler
 		else
 			msg = "Press 'ALT+ENTER' for fullscreen mode";
 		clusterPanel.showMessage(msg);
-	}
-
-	public void block(String blocker)
-	{
-		if (clusterPanel == null)
-			throw new Error("cluster panel not yet set");
-		if (block.contains(blocker))
-			throw new Error("already blocking for: " + blocker);
-		block.add(blocker);
-		if (DEBUG)
-			System.out.println("BLOCK (" + block.size() + ") '" + blocker + "' ------------------");
-		coverPanel.setVisible(true);
-		coverPanel.requestFocus();
-	}
-
-	@Override
-	public boolean isBlocked()
-	{
-		return coverPanel.isVisible();
-	}
-
-	public void unblock(String blocker)
-	{
-		if (!block.contains(blocker))
-			throw new Error("use block first for " + blocker);
-
-		block.remove(blocker);
-
-		if (block.size() == 0)
-			SwingUtilities.invokeLater(new Runnable()
-			{
-				@Override
-				public void run()
-				{
-					coverPanel.setVisible(false);
-					clusterPanel.requestFocus();
-					if (DEBUG)
-						System.out.println("---------------- UNBLOCK");
-				}
-			});
 	}
 
 	public static void main(String args[])
@@ -295,6 +225,37 @@ public class CheSViewer implements GUIControler
 	{
 		for (PropertyChangeListener ll : listeners)
 			ll.propertyChange(new PropertyChangeEvent(this, prop, false, true));
+	}
+
+	@Override
+	public void block(String blocker)
+	{
+		if (frame != null)
+			frame.block(blocker);
+	}
+
+	@Override
+	public boolean isBlocked()
+	{
+		return frame.isBlocked();
+	}
+
+	@Override
+	public void unblock(String blocker)
+	{
+		if (frame != null)
+		{
+			frame.unblock(blocker);
+			SwingUtilities.invokeLater(new Runnable()
+			{
+				@Override
+				public void run()
+				{
+					if (!isBlocked())
+						clusterPanel.requestFocus();
+				}
+			});
+		}
 	}
 
 }

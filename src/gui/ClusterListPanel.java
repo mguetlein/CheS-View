@@ -58,6 +58,23 @@ public class ClusterListPanel extends JPanel
 
 	private void installListeners()
 	{
+		clustering.getClusterActive().addListener(new PropertyChangeListener()
+		{
+			@Override
+			public void propertyChange(PropertyChangeEvent evt)
+			{
+				updateCluster(clustering.getClusterActive().getSelected());
+			}
+		});
+		clustering.getClusterWatched().addListener(new PropertyChangeListener()
+		{
+			@Override
+			public void propertyChange(PropertyChangeEvent evt)
+			{
+				updateCluster(clustering.getClusterWatched().getSelected());
+			}
+		});
+
 		superimposeCheckBox.addActionListener(new ActionListener()
 		{
 			@Override
@@ -215,43 +232,14 @@ public class ClusterListPanel extends JPanel
 
 	private void buildLayout()
 	{
-		//		datasetNameLabel = ComponentFactory.createLabel();
-
 		listModel = new DefaultListModel();
 		clusterList = new MouseOverList(listModel);
 		clusterList.setClearOnExit(false);
 		clusterList.setFocusable(false);
-
-		//		clusterList.setVisibleRowCount(5);
-
-		//clusterList.setBackground(Settings.TRANSPARENT_BACKGROUND);
 		clusterList.setOpaque(false);
-
-		clustering.getClusterActive().addListener(new PropertyChangeListener()
-		{
-			@Override
-			public void propertyChange(PropertyChangeEvent evt)
-			{
-				updateCluster(clustering.getClusterActive().getSelected());
-			}
-		});
-		clustering.getClusterWatched().addListener(new PropertyChangeListener()
-		{
-			@Override
-			public void propertyChange(PropertyChangeEvent evt)
-			{
-				updateCluster(clustering.getClusterWatched().getSelected());
-			}
-		});
 
 		clusterList.setCellRenderer(new DefaultListCellRenderer()
 		{
-			// Color selectionColor =
-			// UIManager.getColor("List.selectionBackground");
-			// Color watchColor = new Color(selectionColor.getRed(),
-			// selectionColor.getGreen(), selectionColor.getBlue(),
-			// 100);
-
 			public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected,
 					boolean cellHasFocus)
 			{
@@ -279,13 +267,6 @@ public class ClusterListPanel extends JPanel
 			}
 		});
 
-		// add(clusterList, BorderLayout.WEST);
-
-		// clusterList.setBorder(new
-		// CompoundBorder(ComponentFactory.createThinBorder(), new
-		// EmptyBorder(5, 5, 5, 5)));
-		//		clusterList.setBorder(new EmptyBorder(5, 5, 5, 5));
-
 		modelListPanel = new ModelListPanel(clustering, viewControler)
 		{
 			public Dimension getPreferredSize()
@@ -296,76 +277,27 @@ public class ClusterListPanel extends JPanel
 				return dim;
 			}
 		};
-		//		SwingUtil.setDebugBorder(infoPanel);
-
-		// setLayout(new GridLayout(2, 1));
-		// add(clusterList);
-		// add(infoPanel);
 
 		setLayout(new BorderLayout(10, 10));
-
-		FormLayout layout = new FormLayout("pref,10,pref",
-		//"pref, 5, "
-				"fill:pref");//, 15, fill:pref:grow, 10, pref, 0, pref");
+		FormLayout layout = new FormLayout("pref,10,pref", "fill:pref");
 		JPanel panel = new JPanel();
 		panel.setOpaque(false);
 		panel.setLayout(layout);
-		// PanelBuilder panel = new PanelBuilder(layout, new FormDebugPanel());
-
 		CellConstraints cc = new CellConstraints();
-		//		int lineCount = 1;
-
 		scroll = ComponentFactory.createViewScrollpane(clusterList);
-
-		//		datasetNameLabel.setBorder(new EmptyBorder(0, 5, 0, 0));
-		//		panel.add(datasetNameLabel, cc.xy(1, lineCount));
-		//		lineCount += 2;
-
-		clusterPanel = new TransparentViewPanel(new BorderLayout(5, 5))
-		{
-			//			public Dimension getPreferredSize()
-			//			{
-			//				Dimension dim = super.getPreferredSize();
-			//				if (dim.width > 0)
-			//					dim.width = Math.max(dim.width, modelListPanel.getPreferredSize().width);
-			//				return dim;
-			//			}
-		};
-		//		clusterPanel.setOpaque(false);
-		//		clusterPanel.setBackground(Settings.TRANSPARENT_BACKGROUND);
+		clusterPanel = new TransparentViewPanel(new BorderLayout(5, 5));
 		clusterPanel.add(scroll);
 		superimposeCheckBox = ComponentFactory.createViewCheckBox("Superimpose");
 		superimposeCheckBox.setSelected(viewControler.isSuperimpose());
 		superimposeCheckBox.setOpaque(false);
 		clusterPanel.add(superimposeCheckBox, BorderLayout.SOUTH);
 		panel.add(clusterPanel, cc.xy(1, 1));
-
-		//		lineCount += 2;
 		panel.add(modelListPanel, cc.xy(3, 1));
-		//		lineCount += 2;
-		//		panel.add(new ControlPanel(viewControler), cc.xyw(1, lineCount, 2));
-
-		//		add(datasetNameLabel, BorderLayout.NORTH);
 		add(panel, BorderLayout.WEST);
 		add(new ControlPanel(viewControler, clustering), BorderLayout.SOUTH);
 
-		//		lineCount += 2;
-		//		JLabel la = ComponentFactory.createLabel(" " + Settings.VERSION_STRING);
-		//		la.setFont(la.getFont().deriveFont(Font.ITALIC));
-		//		JPanel p = new JPanel();
-		//		p.add(la);
-		//		p.setOpaque(false);
-		//		panel.add(p, cc.xy(1, lineCount));
-
-		// infoPanel.setBorder(new MatteBorder(1, 1, 1, 1, Color.RED));
-
-		// setLayout(new BorderLayout());
-		// add(panel.getPanel(), BorderLayout.WEST);
-
 		setBorder(new EmptyBorder(25, 25, 25, 25));
-
 		setOpaque(false);
-		//setBackground(Settings.TRANSPARENT_BACKGROUND);
 	}
 
 	private void updateCluster(int index)

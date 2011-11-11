@@ -270,6 +270,7 @@ public class ControlPanel extends TransparentViewPanel
 
 	private void loadHighlighters()
 	{
+		selfUpdate = true;
 		((DefaultComboBoxModel) highlightCombobox.getModel()).removeAllElements();
 		(((DescriptionListCellRenderer) highlightCombobox.getRenderer())).clearDescriptions();
 
@@ -288,6 +289,7 @@ public class ControlPanel extends TransparentViewPanel
 			Dimension dim = highlightCombobox.getPreferredSize();
 			highlightCombobox.setPreferredSize(new Dimension(250, dim.height));
 		}
+		selfUpdate = false;
 	}
 
 	//	public static void main(String args[])
