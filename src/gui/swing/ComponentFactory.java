@@ -20,6 +20,7 @@ import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
+import javax.swing.JTextField;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.border.CompoundBorder;
@@ -112,6 +113,22 @@ public class ComponentFactory
 	//	{
 	//		UIUtil.unset();
 	//	}
+
+	public static JTextField createUneditableViewTextField()
+	{
+		JTextField l = new JTextField()
+		{
+			public void updateUI()
+			{
+				super.updateUI();
+				setForeground(FOREGROUND);
+			}
+		};
+		l.setEditable(false);
+		l.setBorder(null);
+		l.setOpaque(false);
+		return l;
+	}
 
 	public static JLabel createTransparentViewLabel()
 	{

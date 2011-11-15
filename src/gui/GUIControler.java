@@ -5,8 +5,12 @@ import java.beans.PropertyChangeListener;
 
 import javax.swing.JPopupMenu;
 
+import cluster.Clustering;
+
 public interface GUIControler extends Blockable
 {
+	public void updateTitle(Clustering c);
+
 	public void setFullScreen(boolean b);
 
 	public boolean isFullScreen();

@@ -133,6 +133,16 @@ public class MainPanel extends JPanel implements ViewControler
 		add(jmolPanel);
 
 		clustering = new Clustering();
+		clustering.addListener(new PropertyChangeListener()
+		{
+			@Override
+			public void propertyChange(PropertyChangeEvent evt)
+			{
+				if (evt.getPropertyName().equals(Clustering.CLUSTER_NEW)
+						|| evt.getPropertyName().equals(Clustering.CLUSTER_CLEAR))
+					MainPanel.this.guiControler.updateTitle(clustering);
+			}
+		});
 		View.init(jmolPanel, guiControler, hideHydrogens);
 		view = View.instance;
 		highlightAutomatic = new HighlightAutomatic(this, clustering);

@@ -49,6 +49,8 @@ public class Clustering implements Zoomable
 	public static String CLUSTER_ADDED = "cluster_added";
 	public static String CLUSTER_REMOVED = "cluster_removed";
 	public static String CLUSTER_MODIFIED = "cluster_modified";
+	public static String CLUSTER_NEW = "cluster_new";
+	public static String CLUSTER_CLEAR = "cluster_clear";
 
 	boolean dirty = true;
 	int numModels = -1;
@@ -232,10 +234,12 @@ public class Clustering implements Zoomable
 		Vector<Cluster> old = (Vector<Cluster>) VectorUtil.clone(Clustering.this.clusters);
 		clearSelection();
 		clusters.removeAllElements();
+		clusteringData = null;
 		View.instance.zap(true, true, true);
 		dirty = true;
 
 		fire(CLUSTER_REMOVED, old, clusters);
+		fire(CLUSTER_CLEAR, old, clusters);
 	}
 
 	private void removeCluster(final Cluster... clusters)
@@ -292,6 +296,7 @@ public class Clustering implements Zoomable
 		suppresAddEvent = false;
 
 		fire(CLUSTER_ADDED, old, clusters);
+		fire(CLUSTER_NEW, old, clusters);
 
 		View.instance.scriptWait("hover off");
 	}
@@ -496,7 +501,18 @@ public class Clustering implements Zoomable
 
 	public String getName()
 	{
-		return clusteringData.getName();
+		if (clusteringData != null)
+			return clusteringData.getName();
+		else
+			return null;
+	}
+
+	public String getFullName()
+	{
+		if (clusteringData != null)
+			return clusteringData.getFullName();
+		else
+			return null;
 	}
 
 	public String getOrigSdfFile()
@@ -634,4 +650,5 @@ public class Clustering implements Zoomable
 	{
 		this.superimposed = superimposed;
 	}
+
 }

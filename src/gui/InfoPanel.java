@@ -14,6 +14,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.JTextField;
 import javax.swing.table.DefaultTableModel;
 
 import cluster.Cluster;
@@ -33,7 +34,7 @@ public class InfoPanel extends TransparentViewPanel
 	ViewControler viewControler;
 
 	JPanel datasetPanel;
-	JLabel datasetNameLabel = ComponentFactory.createViewLabel();
+	JTextField datasetNameLabel = ComponentFactory.createUneditableViewTextField();
 	JLabel datasetSizeLabel = ComponentFactory.createViewLabel();
 	JLabel datasetAlgLabel = ComponentFactory.createViewLabel();
 	JLabel datasetEmbedLabel = ComponentFactory.createViewLabel();
@@ -253,6 +254,7 @@ public class InfoPanel extends TransparentViewPanel
 		{
 			datasetPanel.setVisible(true);
 			datasetNameLabel.setText(clustering.getName());
+			//			datasetNameLabel.setCaretPosition(datasetNameLabel.getText().length());
 			datasetSizeLabel.setText(clustering.getNumCompounds() + "");
 			datasetAlgLabel.setText(clustering.getClusterAlgorithm());
 			datasetEmbedLabel.setText(clustering.getEmbedAlgorithm());

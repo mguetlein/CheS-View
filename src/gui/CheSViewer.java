@@ -110,12 +110,20 @@ public class CheSViewer implements GUIControler
 			return frame.isUndecorated();
 	}
 
+	public void updateTitle(Clustering c)
+	{
+		if (frame != null)
+			frame.setTitle((c.getName() == null ? "" : (c.getName() + " - ")) + Settings.TITLE + " ("
+					+ Settings.VERSION_STRING + ")");
+	}
+
 	public void show(boolean undecorated, Dimension size, Point location)
 	{
 		if (clustering == null)
 			throw new Error("clustering is null");
 
-		frame = new BlockableFrame(Settings.TITLE + " (" + Settings.VERSION_STRING + ")");
+		frame = new BlockableFrame();
+		updateTitle(clustering);
 		Settings.TOP_LEVEL_COMPONENT = frame;
 
 		frame.setUndecorated(undecorated);
