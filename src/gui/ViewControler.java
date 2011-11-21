@@ -59,7 +59,7 @@ public interface ViewControler
 
 	public static enum HighlightSorting
 	{
-		Max, Med, Min;
+		Max, Median, Min;
 	}
 
 	public void setHighlightSorting(HighlightSorting sorting);

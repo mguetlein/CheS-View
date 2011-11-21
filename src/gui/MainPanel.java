@@ -95,7 +95,7 @@ public class MainPanel extends JPanel implements ViewControler
 	Highlighter selectedHighlighter = Highlighter.CLUSTER_HIGHLIGHTER;
 	MoleculeProperty selectedHighlightMoleculeProperty = null;
 	boolean highlighterLabelsVisible = false;
-	HighlightSorting highlightSorting = HighlightSorting.Med;
+	HighlightSorting highlightSorting = HighlightSorting.Median;
 	HighlightAutomatic highlightAutomatic;
 	boolean backgroundBlack = true;
 

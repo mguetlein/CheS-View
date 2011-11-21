@@ -23,4 +23,6 @@ public interface GUIControler extends Blockable
 
 	public void addPropertyChangeListener(PropertyChangeListener l);
 
+	public void setVisible(boolean b);
+
 }

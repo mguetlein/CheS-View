@@ -549,6 +549,7 @@ public class MenuBar extends JMenuBar
 	private void newClustering(final int startPanel)
 	{
 		guiControler.block("new clustering");
+		guiControler.setVisible(false);
 		Thread noAWTThread = new Thread(new Runnable()
 		{
 			public void run()
@@ -574,6 +575,7 @@ public class MenuBar extends JMenuBar
 				}
 				finally
 				{
+					guiControler.setVisible(true);
 					guiControler.unblock("new clustering");
 				}
 			}

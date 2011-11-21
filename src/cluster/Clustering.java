@@ -23,14 +23,18 @@ import javax.vecmath.Vector3f;
 import main.Settings;
 import main.TaskProvider;
 import util.ArrayUtil;
+import util.DoubleKeyHashMap;
 import util.FileUtil;
+import util.ListUtil;
 import util.SelectionModel;
 import util.Vector3fUtil;
 import util.VectorUtil;
 import data.ClusteringData;
 import data.DatasetFile;
+import data.IntegratedProperty;
 import dataInterface.ClusterData;
 import dataInterface.MoleculeProperty;
+import dataInterface.MoleculeProperty.Type;
 import dataInterface.SubstructureSmartsType;
 
 public class Clustering implements Zoomable
@@ -495,7 +499,32 @@ public class Clustering implements Zoomable
 			}
 			// file may be overwritten, and then reloaded -> clear
 			DatasetFile.clearFilesWith3DSDF(dest);
-			SDFUtil.filter(clusteringData.getSDFFilename(), dest, modelOrigIndices);
+
+			DoubleKeyHashMap<Integer, Object, Object> featureValues = new DoubleKeyHashMap<Integer, Object, Object>();
+			for (Integer j : modelOrigIndices)
+			{
+				if (clusters.size() > 1)
+				{
+					Model m = null;
+					for (Cluster c : clusters)
+						for (Model mm : c.getModels())
+							if (mm.getModelOrigIndex() == j)
+							{
+								m = mm;
+								break;
+							}
+					featureValues.put(j, this.getClusterAlgorithm() + " assignement", getClusterIndexForModel(m));
+				}
+				for (MoleculeProperty p : clusteringData.getFeatures())
+					if (!(p instanceof IntegratedProperty))
+						if (p.getType() == Type.NUMERIC)
+							featureValues.put(j, p, clusteringData.getCompounds().get(j).getDoubleValue(p));
+						else
+							featureValues.put(j, p, clusteringData.getCompounds().get(j).getStringValue(p));
+			}
+
+			SDFUtil.filter(clusteringData.getSDFFilename(), dest, modelOrigIndices,
+					ListUtil.cast(Object.class, clusteringData.getFeatures()), featureValues);
 		}
 	}
 

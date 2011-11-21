@@ -266,4 +266,10 @@ public class CheSViewer implements GUIControler
 		}
 	}
 
+	@Override
+	public void setVisible(boolean b)
+	{
+		frame.setVisible(b);
+	}
+
 }

@@ -204,7 +204,7 @@ public class Cluster implements Zoomable
 			for (Model model : models)
 				m.add(model);
 			final HighlightSorting finalSorting;
-			if (sorting == HighlightSorting.Med)
+			if (sorting == HighlightSorting.Median)
 				finalSorting = HighlightSorting.Max;
 			else
 				finalSorting = sorting;
@@ -244,7 +244,7 @@ public class Cluster implements Zoomable
 					return (finalSorting == HighlightSorting.Max ? -1 : 1) * res;
 				}
 			});
-			if (sorting == HighlightSorting.Med)
+			if (sorting == HighlightSorting.Median)
 			{
 				//				System.err.println("max order: ");
 				//				for (Model mm : m)
