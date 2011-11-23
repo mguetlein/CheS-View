@@ -382,7 +382,7 @@ public class Cluster implements Zoomable
 		for (int i = 0; i < models.size(); i++)
 		{
 			Model m = models.get(i);
-			if (m != excludeModel)
+			if (m != excludeModel && m.getStringValue(property) != null)
 				l.add(m.getStringValue(property));
 		}
 		String v[] = new String[l.size()];
@@ -438,5 +438,10 @@ public class Cluster implements Zoomable
 	public void setSuperimposed(boolean superimposed)
 	{
 		this.superimposed = superimposed;
+	}
+
+	public int numMissingValues(MoleculeProperty p)
+	{
+		return clusterData.numMissingValues(p);
 	}
 }

@@ -549,7 +549,6 @@ public class MenuBar extends JMenuBar
 	private void newClustering(final int startPanel)
 	{
 		guiControler.block("new clustering");
-		guiControler.setVisible(false);
 		Thread noAWTThread = new Thread(new Runnable()
 		{
 			public void run()
@@ -558,6 +557,7 @@ public class MenuBar extends JMenuBar
 				{
 					final CheSMapperWizard wwd = new CheSMapperWizard((JFrame) SwingUtilities.getRoot(MenuBar.this),
 							startPanel);
+					wwd.setCloseButtonText("Cancel");
 					Settings.TOP_LEVEL_COMPONENT = MenuBar.this.getTopLevelAncestor();
 					SwingUtil.waitWhileVisible(wwd);
 					if (wwd.isWorkflowSelected())
@@ -575,7 +575,6 @@ public class MenuBar extends JMenuBar
 				}
 				finally
 				{
-					guiControler.setVisible(true);
 					guiControler.unblock("new clustering");
 				}
 			}

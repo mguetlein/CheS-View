@@ -8,6 +8,7 @@ import gui.util.MoleculePropertyHighlighter;
 import gui.util.SubstructureHighlighter;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Rectangle;
@@ -62,6 +63,8 @@ public class MainPanel extends JPanel implements ViewControler
 					+ ColorUtil.toJMolString(MoleculePropertyUtil.getColor(clustering.getClusterIndexForModel(m)));
 		else if (selectedHighlightMoleculeProperty == null)
 			return "color cpk";
+		else if (m.getTemperature(selectedHighlightMoleculeProperty).equals("null"))
+			return "color " + ColorUtil.toJMolString(Color.DARK_GRAY);
 		else if (selectedHighlightMoleculeProperty.getType() == Type.NOMINAL)
 			return "color "
 					+ ColorUtil.toJMolString(MoleculePropertyUtil.getNominalColor(selectedHighlightMoleculeProperty,

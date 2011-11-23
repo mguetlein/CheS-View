@@ -58,6 +58,7 @@ public class ChartPanel extends TransparentViewPanel
 	private JLabel featureSmartsLabelHeader = ComponentFactory.createViewLabel("Smarts:");
 	private JLabel featureSmartsLabel = ComponentFactory.createViewLabel("");
 	private JLabel featureMappingLabel = ComponentFactory.createViewLabel("");
+	private JLabel featureMissingLabel = ComponentFactory.createViewLabel("");
 
 	public ChartPanel(Clustering clustering, ViewControler viewControler)
 	{
@@ -87,6 +88,9 @@ public class ChartPanel extends TransparentViewPanel
 		b.nextLine();
 		b.append(ComponentFactory.createViewLabel("<html>Usage:<html>"));
 		b.append(featureMappingLabel);
+		b.nextLine();
+		b.append(ComponentFactory.createViewLabel("<html>Missing values:<html>"));
+		b.append(featureMissingLabel);
 
 		featurePanel = b.getPanel();
 		featurePanel.setOpaque(false);
@@ -194,7 +198,7 @@ public class ChartPanel extends TransparentViewPanel
 				captions.add(c.getName());
 				vals.add(ArrayUtil.toPrimitiveDoubleArray(ArrayUtil.removeNullValues(c.getDoubleValues(p))));
 			}
-			if (m != null)
+			if (m != null && m.getDoubleValue(p) != null)
 			{
 				captions.add(m.toString());
 				vals.add(new double[] { m.getDoubleValue(p) });
@@ -240,7 +244,7 @@ public class ChartPanel extends TransparentViewPanel
 					Collections.sort(datasetValues, new ToStringComparator());
 			}
 			String compoundVal = null;
-			if (m != null)
+			if (m != null && m.getStringValue(p) != null)
 			{
 				compoundVal = m.getStringValue(p);
 
@@ -454,6 +458,7 @@ public class ChartPanel extends TransparentViewPanel
 						featureMappingLabel
 								.setText((fProperty.getMoleculePropertySet().isUsedForMapping() ? "Used for clustering and/or embedding."
 										: "NOT used for clustering and/or embedding."));
+						featureMissingLabel.setText(clustering.numMissingValues(fProperty) + "");
 
 						add(featurePanel, BorderLayout.NORTH);
 						if (p != null)
@@ -467,5 +472,12 @@ public class ChartPanel extends TransparentViewPanel
 				th.start();
 			}
 		}
+	}
+
+	public Dimension getPreferredSize()
+	{
+		Dimension dim = super.getPreferredSize();
+		dim.width = Math.min(400, dim.width);
+		return dim;
 	}
 }

@@ -65,6 +65,7 @@ public class Clustering implements Zoomable
 	BitSet bitSetAll;
 	HashMap<Integer, Model> modelIndexToModel;
 	HashMap<Integer, Cluster> modelIndexToCluster;
+	HashMap<MoleculeProperty, Integer> numMissingValues;
 
 	Vector3f superimposedCenter;
 	Vector3f nonSuperimposedCenter;
@@ -82,6 +83,7 @@ public class Clustering implements Zoomable
 		modelActive = new SelectionModel(true);
 		modelWatched = new SelectionModel();
 		clusters = new Vector<Cluster>();
+		numMissingValues = new HashMap<MoleculeProperty, Integer>();
 	}
 
 	public void addListener(PropertyChangeListener l)
@@ -130,6 +132,8 @@ public class Clustering implements Zoomable
 				modelIndexToCluster.put(m.getModelIndex(), c);
 			}
 		}
+
+		numMissingValues.clear();
 
 		dirty = false;
 	}
@@ -205,6 +209,19 @@ public class Clustering implements Zoomable
 	{
 		update();
 		return modelIndexToModel.get(modelIndex);
+	}
+
+	public int numMissingValues(MoleculeProperty p)
+	{
+		update();
+		if (!numMissingValues.containsKey(p))
+		{
+			int num = 0;
+			for (Cluster c : clusters)
+				num += c.numMissingValues(p);
+			numMissingValues.put(p, num);
+		}
+		return numMissingValues.get(p);
 	}
 
 	public int numModels()

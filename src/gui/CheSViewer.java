@@ -14,7 +14,6 @@ import javax.swing.JFrame;
 import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
 
-import main.CheSMapping;
 import main.Settings;
 import main.TaskProvider;
 import util.SwingUtil;
@@ -40,11 +39,6 @@ public class CheSViewer implements GUIControler
 
 	public CheSViewer(ClusteringData clusteredDataset)
 	{
-		this(clusteredDataset, false);
-	}
-
-	public CheSViewer(ClusteringData clusteredDataset, boolean startNextToScreen)
-	{
 		clusterPanel = new ClusterPanel(this);
 
 		Dimension full = Toolkit.getDefaultToolkit().getScreenSize();
@@ -56,11 +50,6 @@ public class CheSViewer implements GUIControler
 
 		//		oldSize = new Dimension(1024, 768);
 		//oldLocation = new Point(0, 0);
-		if (startNextToScreen)
-		{
-			oldSize = new Dimension(1280, 1024);
-			oldLocation = new Point(Toolkit.getDefaultToolkit().getScreenSize().width, 0);
-		}
 
 		clusterPanel.init(clusteredDataset);
 		clustering = clusterPanel.getClustering();
@@ -162,28 +151,23 @@ public class CheSViewer implements GUIControler
 	public static void main(String args[])
 	{
 		Locale.setDefault(Locale.US);
-		boolean startNextToScreen = args.length > 1 && args[1].equals("true");
+		Settings.SCREENSHOT_SETUP = args.length > 0 && args[0].equals("true");
 
-		if (args.length > 0 && args[0].equals("true"))
-			start(CheSMapping.testWorkflow().doMapping(), startNextToScreen);
-		else
+		ClusteringData clusteringData = null;
+		while (clusteringData == null)
 		{
-			ClusteringData clusteringData = null;
-			while (clusteringData == null)
-			{
-				CheSMapperWizard wwd = new CheSMapperWizard(null);
-				SwingUtil.waitWhileVisible(wwd);
+			CheSMapperWizard wwd = new CheSMapperWizard(null);
+			SwingUtil.waitWhileVisible(wwd);
 
-				if (wwd.isWorkflowSelected())
-					clusteringData = doMapping(wwd);
-				else
-					break;
-			}
-			if (clusteringData != null)
-				start(clusteringData, startNextToScreen);
+			if (wwd.isWorkflowSelected())
+				clusteringData = doMapping(wwd);
 			else
-				System.exit(1);
+				break;
 		}
+		if (clusteringData != null)
+			start(clusteringData);
+		else
+			System.exit(1);
 	}
 
 	public static ClusteringData doMapping(CheSMapperWizard wwd)
@@ -205,9 +189,9 @@ public class CheSViewer implements GUIControler
 		TaskProvider.clear();
 	}
 
-	public static void start(ClusteringData clusteredDataset, boolean startNextToScreen)
+	public static void start(ClusteringData clusteredDataset)
 	{
-		new CheSViewer(clusteredDataset, startNextToScreen);
+		new CheSViewer(clusteredDataset);
 		finalizeTask();
 	}
 
@@ -265,11 +249,4 @@ public class CheSViewer implements GUIControler
 			});
 		}
 	}
-
-	@Override
-	public void setVisible(boolean b)
-	{
-		frame.setVisible(b);
-	}
-
 }

@@ -51,7 +51,7 @@ public class Model implements Zoomable
 		if (property.getType() == Type.NUMERIC)
 			return getDoubleValue(property) + "";
 		else
-			return getStringValue(property);
+			return getStringValue(property) + "";
 	}
 
 	public String getStringValue(MoleculeProperty property)
@@ -201,13 +201,17 @@ public class Model implements Zoomable
 	public void setHighlightMoleculeProperty(MoleculeProperty highlightMoleculeProperty)
 	{
 		this.highlightMoleculeProperty = highlightMoleculeProperty;
-		if (highlightMoleculeProperty != null)
+		if (highlightMoleculeProperty != null && this.highlightMoleculeProperty.getType() == Type.NUMERIC)
 		{
 			// string properties do have a normalized double value as well
 			// values are normalize between 0-1, fixed temp scheme from jmol expects values between 0-100 => multiply with 100
-			double v = compoundData.getNormalizedValue(highlightMoleculeProperty) * 100.0;
-			//			System.err.println(getModelOrigIndex() + " " + highlightMoleculeProperty + " " + v);
-			View.instance.setAtomProperty(bitSet, Token.temperature, (int) v, (float) v, v + "", null, null);
+			Double d = compoundData.getNormalizedValue(highlightMoleculeProperty);
+			if (d != null)
+			{
+				double v = compoundData.getNormalizedValue(highlightMoleculeProperty) * 100.0;
+				//			System.err.println(getModelOrigIndex() + " " + highlightMoleculeProperty + " " + v);
+				View.instance.setAtomProperty(bitSet, Token.temperature, (int) v, (float) v, v + "", null, null);
+			}
 		}
 	}
 
