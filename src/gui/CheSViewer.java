@@ -2,7 +2,6 @@ package gui;
 
 import java.awt.Dimension;
 import java.awt.Point;
-import java.awt.Toolkit;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -41,12 +40,8 @@ public class CheSViewer implements GUIControler
 	{
 		clusterPanel = new ClusterPanel(this);
 
-		Dimension full = Toolkit.getDefaultToolkit().getScreenSize();
-		oldSize = new Dimension(full.width - 100, full.height - 100);
+		oldSize = Settings.SCREEN_SETUP.getDefaultScreenSize();
 		oldLocation = null;
-
-		if (Settings.SCREENSHOT_SETUP)
-			oldSize = new Dimension(1200, 750);
 
 		//		oldSize = new Dimension(1024, 768);
 		//oldLocation = new Point(0, 0);
@@ -77,10 +72,7 @@ public class CheSViewer implements GUIControler
 			{
 				oldSize = frame.getSize();
 				oldLocation = frame.getLocation();
-				if (Settings.SCREENSHOT_SETUP)
-					show(b, new Dimension(1200, 750), new Point(0, 0));
-				else
-					show(b, Toolkit.getDefaultToolkit().getScreenSize(), new Point(0, 0));
+				show(b, Settings.SCREEN_SETUP.getFullScreenSize(), new Point(0, 0));
 			}
 			else
 			{
@@ -108,12 +100,14 @@ public class CheSViewer implements GUIControler
 
 	public void show(boolean undecorated, Dimension size, Point location)
 	{
+		System.err.println("showing - size: " + size);
+
 		if (clustering == null)
 			throw new Error("clustering is null");
 
 		frame = new BlockableFrame();
 		updateTitle(clustering);
-		Settings.TOP_LEVEL_COMPONENT = frame;
+		Settings.TOP_LEVEL_FRAME = frame;
 
 		frame.setUndecorated(undecorated);
 
@@ -122,7 +116,7 @@ public class CheSViewer implements GUIControler
 
 		frame.setSize(size);
 		if (location == null)
-			frame.setLocationRelativeTo(null);
+			Settings.SCREEN_SETUP.centerOnScreen(frame);
 		else
 			frame.setLocation(location);
 
@@ -146,13 +140,34 @@ public class CheSViewer implements GUIControler
 		else
 			msg = "Press 'ALT+ENTER' for fullscreen mode";
 		clusterPanel.showMessage(msg);
+
+		SwingUtilities.invokeLater(new Runnable()
+		{
+			@Override
+			public void run()
+			{
+				frame.toFront();
+			}
+		});
 	}
 
 	public static void main(String args[])
 	{
 		Locale.setDefault(Locale.US);
-		Settings.SCREENSHOT_SETUP = args.length > 0 && args[0].equals("true");
+		if (args.length > 0)
+		{
+			if (args[0].equals("screenshot"))
+				Settings.SCREEN_SETUP = Settings.SCREEN_SETUP_SCREENSHOT;
+			else if (args[0].equals("video"))
+				Settings.SCREEN_SETUP = Settings.SCREEN_SETUP_VIDEO;
+			else
+				throw new Error("illegal arg: " + args[0]);
+		}
+		startWizard();
+	}
 
+	public static void startWizard()
+	{
 		ClusteringData clusteringData = null;
 		while (clusteringData == null)
 		{
@@ -165,7 +180,7 @@ public class CheSViewer implements GUIControler
 				break;
 		}
 		if (clusteringData != null)
-			start(clusteringData);
+			startViewer(clusteringData);
 		else
 			System.exit(1);
 	}
@@ -175,24 +190,36 @@ public class CheSViewer implements GUIControler
 		if (TaskProvider.exists())
 			TaskProvider.clear();
 		TaskProvider.registerThread("Ches-Mapper-Task");
-		TaskProvider.task().showDialog(null, "Chemical space mapping");
+		TaskProvider.task().showDialog(null, "Chemical space mapping", Settings.SCREEN_SETUP.getDefaultScreen());
 		ClusteringData d = wwd.loadDataset();
 		return d;
+	}
+
+	public static void startViewer(ClusteringData clusteredDataset)
+	{
+		try
+		{
+			new CheSViewer(clusteredDataset);
+			finalizeTask();
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+			TaskProvider.task().error(e.getMessage(), e);
+			SwingUtil.waitWhileVisible(TaskProvider.task().getDialog());
+			finalizeTask();
+			System.gc();
+			startWizard();
+		}
 	}
 
 	public static void finalizeTask()
 	{
 		TaskProvider.task().getDialog().setVisible(false);
 		if (TaskProvider.task().containsWarnings())
-			TaskProvider.task().showWarningDialog(Settings.TOP_LEVEL_COMPONENT, "Warning",
+			TaskProvider.task().showWarningDialog(Settings.TOP_LEVEL_FRAME, "Warning",
 					"The following non-critical errors occured during the mapping:");
 		TaskProvider.clear();
-	}
-
-	public static void start(ClusteringData clusteredDataset)
-	{
-		new CheSViewer(clusteredDataset);
-		finalizeTask();
 	}
 
 	@Override

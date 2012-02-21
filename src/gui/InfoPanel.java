@@ -38,6 +38,7 @@ public class InfoPanel extends TransparentViewPanel
 	JLabel datasetSizeLabel = ComponentFactory.createViewLabel();
 	JLabel datasetAlgLabel = ComponentFactory.createViewLabel();
 	JLabel datasetEmbedLabel = ComponentFactory.createViewLabel();
+	JLabel datasetEmbedQualityLabel = ComponentFactory.createViewLabel();
 
 	JPanel clusterPanel;
 	JLabel clusterNameLabel = ComponentFactory.createViewLabel();
@@ -133,6 +134,8 @@ public class InfoPanel extends TransparentViewPanel
 		b1.nextLine();
 		b1.append(ComponentFactory.createViewLabel("<html>3D Embedding:<html>"));
 		b1.append(datasetEmbedLabel);
+		b1.append(ComponentFactory.createViewLabel("<html>3D Embedding Quality:<html>"));
+		b1.append(datasetEmbedQualityLabel);
 
 		datasetPanel = b1.getPanel();
 		datasetPanel.setOpaque(false);
@@ -258,6 +261,7 @@ public class InfoPanel extends TransparentViewPanel
 			datasetSizeLabel.setText(clustering.getNumCompounds() + "");
 			datasetAlgLabel.setText(clustering.getClusterAlgorithm());
 			datasetEmbedLabel.setText(clustering.getEmbedAlgorithm());
+			datasetEmbedQualityLabel.setText(clustering.getEmbedQuality());
 		}
 	}
 

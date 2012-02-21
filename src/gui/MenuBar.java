@@ -1,9 +1,11 @@
 package gui;
 
+import java.awt.Desktop;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
@@ -423,6 +425,21 @@ public class MenuBar extends JMenuBar
 		MyMenu viewMenu = new MyMenu("View", vActionFullScreen, vActionDrawHydrogens, vActionHideUnselectedCompounds,
 				vActionSpin, vActionBlackWhite);
 
+		Action hActionDocu = new AbstractAction("Online Documentation")
+		{
+			@Override
+			public void actionPerformed(ActionEvent e)
+			{
+				try
+				{
+					Desktop.getDesktop().browse(new URI(Settings.HOMEPAGE_DOCUMENTATION));
+				}
+				catch (Exception ex)
+				{
+					ex.printStackTrace();
+				}
+			}
+		};
 		Action hActionAbout = new AbstractAction("About " + Settings.TITLE)
 		{
 			@Override
@@ -431,7 +448,7 @@ public class MenuBar extends JMenuBar
 				showAboutDialog();
 			}
 		};
-		MyMenu helpMenu = new MyMenu("Help", hActionAbout);
+		MyMenu helpMenu = new MyMenu("Help", hActionDocu, hActionAbout);
 
 		menuBar = new MyMenuBar(fileMenu, editMenu, viewMenu, helpMenu);
 	}
@@ -441,9 +458,9 @@ public class MenuBar extends JMenuBar
 		TextPanel p = new TextPanel();
 		p.addHeading(Settings.TITLE);
 		p.addTable(new String[][] { { "Version:", Settings.VERSION_STRING }, { "Homepage:", Settings.HOMEPAGE },
-				{ "Contact:", "Martin Gütlein (martin.guetlein@gmail.com)" } });
+				{ "Contact:", Settings.CONTACT } });
 		p.setPreferredWith(600);
-		JOptionPane.showMessageDialog(Settings.TOP_LEVEL_COMPONENT, p, "About " + Settings.TITLE,
+		JOptionPane.showMessageDialog(Settings.TOP_LEVEL_FRAME, p, "About " + Settings.TITLE,
 				JOptionPane.INFORMATION_MESSAGE, Settings.CHES_MAPPER_IMAGE);
 	}
 
@@ -558,7 +575,7 @@ public class MenuBar extends JMenuBar
 					final CheSMapperWizard wwd = new CheSMapperWizard((JFrame) SwingUtilities.getRoot(MenuBar.this),
 							startPanel);
 					wwd.setCloseButtonText("Cancel");
-					Settings.TOP_LEVEL_COMPONENT = MenuBar.this.getTopLevelAncestor();
+					Settings.TOP_LEVEL_FRAME = (JFrame) MenuBar.this.getTopLevelAncestor();
 					SwingUtil.waitWhileVisible(wwd);
 					if (wwd.isWorkflowSelected())
 					{

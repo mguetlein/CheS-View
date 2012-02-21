@@ -74,8 +74,8 @@ public class ComponentFactory
 			LIST_ACTIVE_BACKGROUND = new Color(101, 152, 255);
 			LIST_WATCH_BACKGROUND = LIST_ACTIVE_BACKGROUND.brighter().brighter();
 		}
-		if (Settings.TOP_LEVEL_COMPONENT != null)
-			SwingUtilities.updateComponentTreeUI(Settings.TOP_LEVEL_COMPONENT);
+		if (Settings.TOP_LEVEL_FRAME != null)
+			SwingUtilities.updateComponentTreeUI(Settings.TOP_LEVEL_FRAME);
 	}
 
 	//	static class UIUtil

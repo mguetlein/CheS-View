@@ -7,6 +7,6 @@
 	<classpathentry kind="lib" path="lib/commons-math-1.2/commons-math-1.2.jar"/>
 	<classpathentry kind="lib" path="lib/forms-1.2.1/forms-1.2.1.jar"/>
 	<classpathentry kind="lib" path="lib/jmol-12.2RC/Jmol.jar" sourcepath="/home/martin/workspace/external/jmol-12.2.RC7-full/src"/>
-	<classpathentry kind="lib" path="lib/cdk-jar-1.4.4/cdk-1.4.4_mod_arom_smiles.jar"/>
+	<classpathentry kind="lib" path="lib/cdk-jar-1.4.4/cdk-1.4.4_mod.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

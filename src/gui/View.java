@@ -40,7 +40,7 @@ public class View
 		viewer.script("set disablePopupMenu on");
 		viewer.script("set minPixelSelRadius 30");
 
-		if (Settings.SCREENSHOT_SETUP)
+		if (Settings.SCREEN_SETUP.isAntialiasOn())
 			viewer.script("set antialiasDisplay ON");
 
 		hideHydrogens(hideHydrogens);

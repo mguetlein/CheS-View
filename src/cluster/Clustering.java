@@ -16,7 +16,6 @@ import java.util.List;
 import java.util.Vector;
 
 import javax.swing.JFileChooser;
-import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.vecmath.Vector3f;
 
@@ -412,7 +411,7 @@ public class Clustering implements Zoomable
 		if (clusterIndex != -1)
 			b[clusterIndex] = true;
 
-		return CheckBoxSelectDialog.select((JFrame) Settings.TOP_LEVEL_COMPONENT, title, description, c, b);
+		return CheckBoxSelectDialog.select(Settings.TOP_LEVEL_FRAME, title, description, c, b);
 	}
 
 	/**
@@ -437,8 +436,8 @@ public class Clustering implements Zoomable
 			}
 		}
 		Model m[] = new Model[l.size()];
-		int selectedIndices[] = CheckBoxSelectDialog.select((JFrame) Settings.TOP_LEVEL_COMPONENT, title, description,
-				l.toArray(m), ArrayUtil.toPrimitiveBooleanArray(lb));
+		int selectedIndices[] = CheckBoxSelectDialog.select(Settings.TOP_LEVEL_FRAME, title, description, l.toArray(m),
+				ArrayUtil.toPrimitiveBooleanArray(lb));
 		return selectedIndices;
 	}
 
@@ -501,7 +500,7 @@ public class Clustering implements Zoomable
 	public void exportModels(int modelOrigIndices[])
 	{
 		JFileChooser f = new JFileChooser(clusteringData.getSDFFilename());//origSDFFile);
-		int i = f.showSaveDialog(Settings.TOP_LEVEL_COMPONENT);
+		int i = f.showSaveDialog(Settings.TOP_LEVEL_FRAME);
 		if (i == JFileChooser.APPROVE_OPTION)
 		{
 			String dest = f.getSelectedFile().getAbsolutePath();
@@ -509,7 +508,7 @@ public class Clustering implements Zoomable
 				dest += ".sdf";
 			if (new File(dest).exists())
 			{
-				if (JOptionPane.showConfirmDialog(Settings.TOP_LEVEL_COMPONENT, "File '" + dest
+				if (JOptionPane.showConfirmDialog(Settings.TOP_LEVEL_FRAME, "File '" + dest
 						+ "' already exists, overwrite?", "Warning", JOptionPane.YES_NO_OPTION,
 						JOptionPane.WARNING_MESSAGE) != JOptionPane.YES_OPTION)
 					return;
@@ -666,6 +665,11 @@ public class Clustering implements Zoomable
 	public String getEmbedAlgorithm()
 	{
 		return clusteringData.getEmbedAlgorithm();
+	}
+
+	public String getEmbedQuality()
+	{
+		return clusteringData.getEmbedQuality();
 	}
 
 	@Override

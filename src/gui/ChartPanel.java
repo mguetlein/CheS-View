@@ -440,6 +440,8 @@ public class ChartPanel extends TransparentViewPanel
 							p.setIntegerTickUnits();
 							p.setPreferredSize(new Dimension(400, 220));
 
+							p.setBarWidthLimited();
+
 						}
 
 						setIgnoreRepaint(true);
