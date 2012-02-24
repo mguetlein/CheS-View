@@ -13,6 +13,7 @@ import javax.swing.JFrame;
 import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
 
+import main.ScreenSetup;
 import main.Settings;
 import main.TaskProvider;
 import util.SwingUtil;
@@ -40,7 +41,7 @@ public class CheSViewer implements GUIControler
 	{
 		clusterPanel = new ClusterPanel(this);
 
-		oldSize = Settings.SCREEN_SETUP.getDefaultScreenSize();
+		oldSize = ScreenSetup.SETUP.getSize();
 		oldLocation = null;
 
 		//		oldSize = new Dimension(1024, 768);
@@ -72,7 +73,7 @@ public class CheSViewer implements GUIControler
 			{
 				oldSize = frame.getSize();
 				oldLocation = frame.getLocation();
-				show(b, Settings.SCREEN_SETUP.getFullScreenSize(), new Point(0, 0));
+				show(b, ScreenSetup.SETUP.getFullScreenSize(), new Point(0, 0));
 			}
 			else
 			{
@@ -116,7 +117,7 @@ public class CheSViewer implements GUIControler
 
 		frame.setSize(size);
 		if (location == null)
-			Settings.SCREEN_SETUP.centerOnScreen(frame);
+			ScreenSetup.SETUP.centerOnScreen(frame);
 		else
 			frame.setLocation(location);
 
@@ -157,9 +158,9 @@ public class CheSViewer implements GUIControler
 		if (args.length > 0)
 		{
 			if (args[0].equals("screenshot"))
-				Settings.SCREEN_SETUP = Settings.SCREEN_SETUP_SCREENSHOT;
+				ScreenSetup.SETUP = ScreenSetup.SCREENSHOT;
 			else if (args[0].equals("video"))
-				Settings.SCREEN_SETUP = Settings.SCREEN_SETUP_VIDEO;
+				ScreenSetup.SETUP = ScreenSetup.VIDEO;
 			else
 				throw new Error("illegal arg: " + args[0]);
 		}
@@ -190,7 +191,7 @@ public class CheSViewer implements GUIControler
 		if (TaskProvider.exists())
 			TaskProvider.clear();
 		TaskProvider.registerThread("Ches-Mapper-Task");
-		TaskProvider.task().showDialog(null, "Chemical space mapping", Settings.SCREEN_SETUP.getDefaultScreen());
+		TaskProvider.task().showDialog(null, "Chemical space mapping", ScreenSetup.SETUP.getScreen());
 		ClusteringData d = wwd.loadDataset();
 		return d;
 	}

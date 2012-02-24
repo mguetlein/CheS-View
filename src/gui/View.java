@@ -12,7 +12,7 @@ import java.util.List;
 import javax.vecmath.Point3f;
 import javax.vecmath.Vector3f;
 
-import main.Settings;
+import main.ScreenSetup;
 
 import org.jmol.viewer.Viewer;
 
@@ -40,7 +40,7 @@ public class View
 		viewer.script("set disablePopupMenu on");
 		viewer.script("set minPixelSelRadius 30");
 
-		if (Settings.SCREEN_SETUP.isAntialiasOn())
+		if (ScreenSetup.SETUP.isAntialiasOn())
 			viewer.script("set antialiasDisplay ON");
 
 		hideHydrogens(hideHydrogens);
