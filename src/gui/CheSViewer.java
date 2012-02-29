@@ -2,6 +2,8 @@ package gui;
 
 import java.awt.Dimension;
 import java.awt.Point;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -16,6 +18,7 @@ import javax.swing.SwingUtilities;
 import main.ScreenSetup;
 import main.Settings;
 import main.TaskProvider;
+import util.ScreenUtil;
 import util.SwingUtil;
 import cluster.Clustering;
 import data.ClusteringData;
@@ -41,7 +44,7 @@ public class CheSViewer implements GUIControler
 	{
 		clusterPanel = new ClusterPanel(this);
 
-		oldSize = ScreenSetup.SETUP.getSize();
+		oldSize = ScreenSetup.SETUP.getViewerSize();
 		oldLocation = null;
 
 		//		oldSize = new Dimension(1024, 768);
@@ -109,6 +112,14 @@ public class CheSViewer implements GUIControler
 		frame = new BlockableFrame();
 		updateTitle(clustering);
 		Settings.TOP_LEVEL_FRAME = frame;
+
+		frame.addComponentListener(new ComponentAdapter()
+		{
+			public void componentMoved(ComponentEvent e)
+			{
+				ScreenSetup.SETUP.setScreen(ScreenUtil.getScreen(frame));
+			}
+		});
 
 		frame.setUndecorated(undecorated);
 

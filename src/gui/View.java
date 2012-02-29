@@ -26,6 +26,7 @@ public class View
 	public static View instance;
 
 	public static int FONT_SIZE = 10;
+	public boolean antialias = false;
 
 	public static enum AnimationSpeed
 	{
@@ -40,8 +41,7 @@ public class View
 		viewer.script("set disablePopupMenu on");
 		viewer.script("set minPixelSelRadius 30");
 
-		if (ScreenSetup.SETUP.isAntialiasOn())
-			viewer.script("set antialiasDisplay ON");
+		setAntialiasOn(ScreenSetup.SETUP.isAntialiasOn());
 
 		hideHydrogens(hideHydrogens);
 	}
@@ -49,6 +49,20 @@ public class View
 	public static void init(JmolPanel jmolPanel, GUIControler guiControler, boolean hideHydrogens)
 	{
 		instance = new View((Viewer) jmolPanel.getViewer(), guiControler, hideHydrogens);
+	}
+
+	public synchronized void setAntialiasOn(boolean antialias)
+	{
+		this.antialias = antialias;
+		if (antialias)
+			viewer.script("set antialiasDisplay ON");
+		else
+			viewer.script("set antialiasDisplay OFF");
+	}
+
+	public boolean isAntialiasOn()
+	{
+		return antialias;
 	}
 
 	public synchronized void setSpinEnabled(boolean spinEnabled)
@@ -96,9 +110,17 @@ public class View
 				@Override
 				public void run()
 				{
+					boolean setAntialiasBackOn = false;
+					if (ScreenSetup.SETUP.isAntialiasOn() && isAntialiasOn())
+					{
+						setAntialiasBackOn = true;
+						setAntialiasOn(false);
+					}
 					String cmd = "zoomto " + (speed == AnimationSpeed.SLOW ? 0.66 : 0.33) + " "
 							+ Vector3fUtil.toString(center) + " " + finalZoom;
 					viewer.scriptWait(cmd);
+					if (setAntialiasBackOn)
+						setAntialiasOn(true);
 					guiControler.unblock("zoom to " + Vector3fUtil.toString(center));
 				}
 			}, "zoom to " + zoomable);

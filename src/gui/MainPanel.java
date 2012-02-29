@@ -26,6 +26,8 @@ import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
 
+import main.ScreenSetup;
+
 import org.jmol.adapter.smarter.SmarterJmolAdapter;
 import org.jmol.api.JmolAdapter;
 import org.jmol.api.JmolSimpleViewer;
@@ -35,6 +37,7 @@ import util.ColorUtil;
 import util.DoubleUtil;
 import util.ObjectUtil;
 import util.StringUtil;
+import util.ThreadUtil;
 import cluster.Cluster;
 import cluster.Clustering;
 import cluster.ClusteringUtil;
@@ -916,6 +919,15 @@ public class MainPanel extends JPanel implements ViewControler
 		final Cluster activeCluster;
 		boolean superimpose = clustering.isSuperimposed();
 
+		final boolean setAntialiasBackOn;
+		if (ScreenSetup.SETUP.isAntialiasOn() && view.isAntialiasOn())
+		{
+			setAntialiasBackOn = true;
+			view.setAntialiasOn(false);
+		}
+		else
+			setAntialiasBackOn = false;
+
 		if (clustering.isClusterActive())
 		{
 			activeCluster = clustering.getCluster(clustering.getClusterActive().getSelected());
@@ -980,6 +992,11 @@ public class MainPanel extends JPanel implements ViewControler
 					updateCluster(clustering.indexOf(cluster), false);
 					for (Model m : cluster.getModels())
 						updateModel(m.getModelIndex(), false);
+				}
+				if (setAntialiasBackOn && !view.isAntialiasOn())
+				{
+					ThreadUtil.sleep(200);
+					view.setAntialiasOn(true);
 				}
 			}
 		}, "set models translucent in clusters");
