@@ -22,6 +22,7 @@ import java.util.List;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
+import main.ScreenSetup;
 import util.ArrayUtil;
 import util.ColorUtil;
 import util.CountedSet;
@@ -439,9 +440,8 @@ public class ChartPanel extends TransparentViewPanel
 							p.setShadowVisible(false);
 							p.setIntegerTickUnits();
 							p.setPreferredSize(new Dimension(400, 220));
-
 							p.setBarWidthLimited();
-
+							p.setFontSize(ScreenSetup.SETUP.getFontSize());
 						}
 
 						setIgnoreRepaint(true);
