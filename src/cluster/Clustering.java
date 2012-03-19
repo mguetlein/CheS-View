@@ -24,7 +24,6 @@ import main.TaskProvider;
 import util.ArrayUtil;
 import util.DoubleKeyHashMap;
 import util.FileUtil;
-import util.ListUtil;
 import util.SelectionModel;
 import util.Vector3fUtil;
 import util.VectorUtil;
@@ -539,8 +538,64 @@ public class Clustering implements Zoomable
 							featureValues.put(j, p, clusteringData.getCompounds().get(j).getStringValue(p));
 			}
 
-			SDFUtil.filter(clusteringData.getSDFFilename(), dest, modelOrigIndices,
-					ListUtil.cast(Object.class, clusteringData.getFeatures()), featureValues);
+			List<MoleculeProperty> skipUniform = new ArrayList<MoleculeProperty>();
+			List<MoleculeProperty> skipNull = new ArrayList<MoleculeProperty>();
+			List<MoleculeProperty> skip = new ArrayList<MoleculeProperty>();
+			for (Object prop : featureValues.keySet2(modelOrigIndices[0]))
+			{
+				boolean uniform = true;
+				boolean nullValues = false;
+				boolean first = true;
+				Object val = null;
+				for (Integer j : modelOrigIndices)
+				{
+					Object newVal = featureValues.get(j, prop);
+					nullValues |= newVal == null;
+					if (first)
+					{
+						first = false;
+						val = newVal;
+					}
+					else
+					{
+						if (val != newVal)
+							uniform = false;
+					}
+				}
+				if (uniform && modelOrigIndices.length > 1)
+					skipUniform.add((MoleculeProperty) prop);
+				if (nullValues)
+					skipNull.add((MoleculeProperty) prop);
+			}
+			if (skipUniform.size() > 0)
+			{
+				String msg = skipUniform.size() + " feature/s have equal values for each compound.\nSkip from export?";
+				int sel = JOptionPane.showConfirmDialog(Settings.TOP_LEVEL_FRAME, msg, "Skip feature",
+						JOptionPane.YES_NO_OPTION);
+				if (sel == JOptionPane.YES_OPTION)
+					for (MoleculeProperty p : skipUniform)
+					{
+						if (skipNull.contains(p))
+							skipNull.remove(p);
+						skip.add(p);
+					}
+			}
+			if (skipNull.size() > 0)
+			{
+				String msg = skipNull.size() + " feature/s have null values.\nSkip from export?";
+				int sel = JOptionPane.showConfirmDialog(Settings.TOP_LEVEL_FRAME, msg, "Skip feature",
+						JOptionPane.YES_NO_OPTION);
+				if (sel == JOptionPane.YES_OPTION)
+					for (MoleculeProperty p : skipNull)
+						skip.add(p);
+			}
+			for (MoleculeProperty p : skip)
+			{
+				System.out.println("Skipping from export: " + p);
+				for (Integer j : modelOrigIndices)
+					featureValues.remove(j, p);
+			}
+			SDFUtil.filter(clusteringData.getSDFFilename(), dest, modelOrigIndices, featureValues);
 		}
 	}
 

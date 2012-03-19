@@ -15,6 +15,8 @@ import javax.swing.JFrame;
 import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
 
+import main.BinHandler;
+import main.PropHandler;
 import main.ScreenSetup;
 import main.Settings;
 import main.TaskProvider;
@@ -172,9 +174,19 @@ public class CheSViewer implements GUIControler
 				ScreenSetup.SETUP = ScreenSetup.SCREENSHOT;
 			else if (args[0].equals("video"))
 				ScreenSetup.SETUP = ScreenSetup.VIDEO;
-			else
-				throw new Error("illegal arg: " + args[0]);
+			else if (!args[0].equals("default"))
+				throw new Error("illegal screen setup arg: " + args[0]);
 		}
+		boolean loadProperties = true;
+		if (args.length > 1)
+		{
+			if (args[1].equals("no-properties"))
+				loadProperties = false;
+			else
+				throw new Error("illegal properties arg: " + args[1]);
+		}
+		PropHandler.init(loadProperties);
+		BinHandler.init();
 		startWizard();
 	}
 
