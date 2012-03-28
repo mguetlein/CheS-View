@@ -538,42 +538,43 @@ public class Clustering implements Zoomable
 							featureValues.put(j, p, clusteringData.getCompounds().get(j).getStringValue(p));
 			}
 
-			List<MoleculeProperty> skipUniform = new ArrayList<MoleculeProperty>();
-			List<MoleculeProperty> skipNull = new ArrayList<MoleculeProperty>();
-			List<MoleculeProperty> skip = new ArrayList<MoleculeProperty>();
-			for (Object prop : featureValues.keySet2(modelOrigIndices[0]))
-			{
-				boolean uniform = true;
-				boolean nullValues = false;
-				boolean first = true;
-				Object val = null;
-				for (Integer j : modelOrigIndices)
+			List<Object> skipUniform = new ArrayList<Object>();
+			List<Object> skipNull = new ArrayList<Object>();
+			List<Object> skip = new ArrayList<Object>();
+			if (featureValues.keySet1().size() > 0 && featureValues.keySet2(modelOrigIndices[0]).size() > 0)
+				for (Object prop : featureValues.keySet2(modelOrigIndices[0]))
 				{
-					Object newVal = featureValues.get(j, prop);
-					nullValues |= newVal == null;
-					if (first)
+					boolean uniform = true;
+					boolean nullValues = false;
+					boolean first = true;
+					Object val = null;
+					for (Integer j : modelOrigIndices)
 					{
-						first = false;
-						val = newVal;
+						Object newVal = featureValues.get(j, prop);
+						nullValues |= newVal == null;
+						if (first)
+						{
+							first = false;
+							val = newVal;
+						}
+						else
+						{
+							if (val != newVal)
+								uniform = false;
+						}
 					}
-					else
-					{
-						if (val != newVal)
-							uniform = false;
-					}
+					if (uniform && modelOrigIndices.length > 1)
+						skipUniform.add(prop);
+					if (nullValues)
+						skipNull.add(prop);
 				}
-				if (uniform && modelOrigIndices.length > 1)
-					skipUniform.add((MoleculeProperty) prop);
-				if (nullValues)
-					skipNull.add((MoleculeProperty) prop);
-			}
 			if (skipUniform.size() > 0)
 			{
 				String msg = skipUniform.size() + " feature/s have equal values for each compound.\nSkip from export?";
 				int sel = JOptionPane.showConfirmDialog(Settings.TOP_LEVEL_FRAME, msg, "Skip feature",
 						JOptionPane.YES_NO_OPTION);
 				if (sel == JOptionPane.YES_OPTION)
-					for (MoleculeProperty p : skipUniform)
+					for (Object p : skipUniform)
 					{
 						if (skipNull.contains(p))
 							skipNull.remove(p);
@@ -586,10 +587,10 @@ public class Clustering implements Zoomable
 				int sel = JOptionPane.showConfirmDialog(Settings.TOP_LEVEL_FRAME, msg, "Skip feature",
 						JOptionPane.YES_NO_OPTION);
 				if (sel == JOptionPane.YES_OPTION)
-					for (MoleculeProperty p : skipNull)
+					for (Object p : skipNull)
 						skip.add(p);
 			}
-			for (MoleculeProperty p : skip)
+			for (Object p : skip)
 			{
 				System.out.println("Skipping from export: " + p);
 				for (Integer j : modelOrigIndices)

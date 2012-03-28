@@ -284,7 +284,7 @@ public class InfoPanel extends TransparentViewPanel
 			clusterSizeLabel.setText(c.size() + "");
 			clusterAlignLabel.setText(c.getAlignAlgorithm());
 
-			boolean smartsFound = true;
+			boolean smartsFound = false;
 			for (SubstructureSmartsType t : SubstructureSmartsType.values())
 			{
 				if (c.getSubstructureSmarts(t) != null)
