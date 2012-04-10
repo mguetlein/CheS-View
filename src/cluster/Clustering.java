@@ -306,9 +306,9 @@ public class Clustering implements Zoomable
 			//				substructure = d.getClusterSubstructureSmarts()[i];
 
 			addSingleCluster(d.getCluster(i));
-			TaskProvider.task().update("Loading cluster dataset " + (i + 1) + "/" + d.getSize());
+			TaskProvider.update("Loading cluster dataset " + (i + 1) + "/" + d.getSize());
 		}
-		TaskProvider.task().update(90, "Loading graphics");
+		TaskProvider.update(90, "Loading graphics");
 
 		updatePositions();
 

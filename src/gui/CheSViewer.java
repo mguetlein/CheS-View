@@ -9,19 +9,14 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 import javax.swing.JFrame;
 import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
 
-import main.BinHandler;
-import main.PropHandler;
 import main.ScreenSetup;
 import main.Settings;
-import main.TaskProvider;
 import util.ScreenUtil;
-import util.SwingUtil;
 import cluster.Clustering;
 import data.ClusteringData;
 
@@ -163,87 +158,6 @@ public class CheSViewer implements GUIControler
 				frame.toFront();
 			}
 		});
-	}
-
-	public static void main(String args[])
-	{
-		Locale.setDefault(Locale.US);
-		if (args.length > 0)
-		{
-			if (args[0].equals("screenshot"))
-				ScreenSetup.SETUP = ScreenSetup.SCREENSHOT;
-			else if (args[0].equals("video"))
-				ScreenSetup.SETUP = ScreenSetup.VIDEO;
-			else if (!args[0].equals("default"))
-				throw new Error("illegal screen setup arg: " + args[0]);
-		}
-		boolean loadProperties = true;
-		if (args.length > 1)
-		{
-			if (args[1].equals("no-properties"))
-				loadProperties = false;
-			else
-				throw new Error("illegal properties arg: " + args[1]);
-		}
-		PropHandler.init(loadProperties);
-		BinHandler.init();
-		startWizard();
-	}
-
-	public static void startWizard()
-	{
-		ClusteringData clusteringData = null;
-		while (clusteringData == null)
-		{
-			CheSMapperWizard wwd = new CheSMapperWizard(null);
-			SwingUtil.waitWhileVisible(wwd);
-
-			if (wwd.isWorkflowSelected())
-				clusteringData = doMapping(wwd);
-			else
-				break;
-		}
-		if (clusteringData != null)
-			startViewer(clusteringData);
-		else
-			System.exit(1);
-	}
-
-	public static ClusteringData doMapping(CheSMapperWizard wwd)
-	{
-		if (TaskProvider.exists())
-			TaskProvider.clear();
-		TaskProvider.registerThread("Ches-Mapper-Task");
-		TaskProvider.task().showDialog(null, "Chemical space mapping", ScreenSetup.SETUP.getScreen());
-		ClusteringData d = wwd.loadDataset();
-		return d;
-	}
-
-	public static void startViewer(ClusteringData clusteredDataset)
-	{
-		try
-		{
-			new CheSViewer(clusteredDataset);
-			finalizeTask();
-		}
-		catch (Exception e)
-		{
-			e.printStackTrace();
-			TaskProvider.task().error(e.getMessage(), e);
-			SwingUtil.waitWhileVisible(TaskProvider.task().getDialog());
-			finalizeTask();
-			System.gc();
-			startWizard();
-		}
-	}
-
-	public static void finalizeTask()
-	{
-		TaskProvider.task().getDialog().setVisible(false);
-		if (TaskProvider.task().containsWarnings())
-			TaskProvider.task().showWarningDialog(Settings.TOP_LEVEL_FRAME, "Warning",
-					"The following non-critical errors occured during the mapping:");
-		TaskProvider.clear();
 	}
 
 	@Override

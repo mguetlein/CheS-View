@@ -22,6 +22,9 @@ import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 
 import main.Settings;
+import main.TaskProvider;
+import task.Task;
+import task.TaskDialog;
 import util.ArrayUtil;
 import util.SwingUtil;
 import cluster.Clustering;
@@ -581,12 +584,15 @@ public class MenuBar extends JMenuBar
 					{
 						View.instance.suspendAnimation("remap");
 						clustering.clear();
-						ClusteringData d = CheSViewer.doMapping(wwd);
+						Task task = TaskProvider.initTask("Chemical space mapping");
+						new TaskDialog(task, Settings.TOP_LEVEL_FRAME);
+						ClusteringData d = wwd.doMapping();
 						if (d != null)
 						{
 							clustering.newClustering(d);
-							CheSViewer.finalizeTask();
+							task.finish();
 						}
+						TaskProvider.removeTask();
 						View.instance.proceedAnimation("remap");
 					}
 				}
