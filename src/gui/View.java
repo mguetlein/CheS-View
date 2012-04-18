@@ -14,6 +14,7 @@ import javax.vecmath.Vector3f;
 
 import main.ScreenSetup;
 
+import org.jmol.export.dialog.Dialog;
 import org.jmol.viewer.Viewer;
 
 import util.SequentialWorkerThread;
@@ -353,5 +354,35 @@ public class View
 				points.add(new Vector3f(viewer.getAtomPoint3f(i)));
 		Vector3f[] a = new Vector3f[points.size()];
 		return Vector3fUtil.maxDist(points.toArray(a));
+	}
+
+	/**
+	 * Copied from org.openscience.jmol.app.jmolpanel.JmolPanel
+	 */
+	public void exportImage()
+	{
+		int qualityJPG = -1;
+		int qualityPNG = -1;
+		String imageType = null;
+		String[] imageChoices = { "JPEG", "PNG", "GIF", "PPM", "PDF" };
+		String[] imageExtensions = { "jpg", "png", "gif", "ppm", "pdf" };
+		Dialog sd = new Dialog();
+		String fileName = sd.getImageFileNameFromDialog(viewer, null, imageType, imageChoices, imageExtensions,
+				qualityJPG, qualityPNG);
+		if (fileName == null)
+			return;
+		qualityJPG = sd.getQuality("JPG");
+		qualityPNG = sd.getQuality("PNG");
+		String sType = imageType = sd.getType();
+		if (sType == null)
+		{
+			// file type changer was not touched
+			sType = fileName;
+			int i = sType.lastIndexOf(".");
+			if (i < 0)
+				return; // make no assumptions - require a type by extension
+			sType = sType.substring(i + 1).toUpperCase();
+		}
+		System.out.println((String) viewer.createImage(fileName, sType, null, sd.getQuality(sType), 0, 0));
 	}
 }

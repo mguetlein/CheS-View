@@ -138,6 +138,7 @@ public class MenuBar extends JMenuBar
 	Action eActionExportCurrent;
 	Action eActionExportClusters;
 	Action eActionExportModels;
+	Action eActionExportImage;
 	//view
 	Action vActionFullScreen;
 	Action vActionDrawHydrogens;
@@ -314,7 +315,18 @@ public class MenuBar extends JMenuBar
 				clustering.chooseModelsToExport();
 			}
 		};
-		MyMenu exportMenu = new MyMenu("Export", eActionExportCurrent, eActionExportClusters, eActionExportModels);
+		eActionExportImage = new AbstractAction("Export Image")
+		{
+			@Override
+			public void actionPerformed(ActionEvent e)
+			{
+				View.instance.exportImage();
+			}
+		};
+		((AbstractAction) eActionExportImage).putValue(Action.ACCELERATOR_KEY,
+				KeyStroke.getKeyStroke(KeyEvent.VK_I, ActionEvent.ALT_MASK));
+		MyMenu exportMenu = new MyMenu("Export", eActionExportCurrent, eActionExportClusters, eActionExportModels,
+				eActionExportImage);
 		MyMenu editMenu = new MyMenu("Edit", removeMenu, exportMenu);
 
 		vActionFullScreen = new AbstractAction("Fullscreen mode enabled")
