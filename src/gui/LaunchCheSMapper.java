@@ -1,10 +1,12 @@
 package gui;
 
+import java.util.Date;
 import java.util.Locale;
 
 import main.BinHandler;
 import main.PropHandler;
 import main.ScreenSetup;
+import main.Settings;
 import main.TaskProvider;
 import task.Task;
 import task.TaskDialog;
@@ -17,6 +19,7 @@ public class LaunchCheSMapper
 
 	public static void main(String args[])
 	{
+		Settings.LOGGER.info("starting Ches-Mapper at " + new Date());
 		Locale.setDefault(Locale.US);
 		if (args.length > 0)
 		{
@@ -74,7 +77,7 @@ public class LaunchCheSMapper
 		}
 		catch (Throwable e)
 		{
-			e.printStackTrace();
+			Settings.LOGGER.error(e);
 			TaskProvider.failed("Could not load viewer", e);
 			System.gc();
 			startWizard();

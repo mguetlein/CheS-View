@@ -28,6 +28,7 @@ import task.TaskDialog;
 import util.ArrayUtil;
 import util.SwingUtil;
 import cluster.Clustering;
+import cluster.ExportData;
 import data.ClusteringData;
 
 public class MenuBar extends JMenuBar
@@ -294,9 +295,9 @@ public class MenuBar extends JMenuBar
 				int[] m = (int[]) ((AbstractAction) eActionRemoveCurrent).getValue("Model");
 				Integer c = (Integer) ((AbstractAction) eActionRemoveCurrent).getValue("Cluster");
 				if (m.length > 0)
-					clustering.exportModels(m);
+					ExportData.exportModels(clustering, m);
 				else if (c != null)
-					clustering.exportClusters(new int[] { c });
+					ExportData.exportClusters(clustering, new int[] { c });
 			}
 		};
 		eActionExportClusters = new AbstractAction("Export Cluster/s")
@@ -451,7 +452,7 @@ public class MenuBar extends JMenuBar
 				}
 				catch (Exception ex)
 				{
-					ex.printStackTrace();
+					Settings.LOGGER.error(ex);
 				}
 			}
 		};
@@ -624,7 +625,7 @@ public class MenuBar extends JMenuBar
 	 */
 	public void handleKeyEvent(KeyEvent e)
 	{
-		//		System.err.println("handle key event " + KeyEvent.getKeyText(e.getKeyCode()) + " "
+		//		Settings.LOGGER.warn("handle key event " + KeyEvent.getKeyText(e.getKeyCode()) + " "
 		//				+ KeyEvent.getKeyModifiersText(e.getModifiers()) + " " + e.getKeyCode() + " " + e.getModifiers());
 		for (Action action : menuBar.actions)
 		{
@@ -635,12 +636,12 @@ public class MenuBar extends JMenuBar
 				{
 					if (e.getKeyCode() == k.getKeyCode() && ((k.getModifiers() & e.getModifiers()) != 0))
 					{
-						//							System.err.println("perform " + action.toString());
+						//							Settings.LOGGER.warn("perform " + action.toString());
 						action.actionPerformed(new ActionEvent(this, -1, ""));
 					}
 					else
 					{
-						//							System.err.println("no match: " + KeyEvent.getKeyText(k.getKeyCode()) + " "
+						//							Settings.LOGGER.warn("no match: " + KeyEvent.getKeyText(k.getKeyCode()) + " "
 						//									+ KeyEvent.getKeyModifiersText(k.getModifiers()) + " " + k.getKeyCode() + " "
 						//									+ k.getModifiers());
 					}

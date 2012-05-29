@@ -9,6 +9,8 @@ import java.util.HashMap;
 
 import javax.vecmath.Vector3f;
 
+import main.Settings;
+
 import org.jmol.script.Token;
 
 import dataInterface.CompoundData;
@@ -176,13 +178,13 @@ public class Model implements Zoomable
 		//compute match dynamically
 		if (!smartsMatches.containsKey(smarts))
 		{
-			System.out.println("smarts-matching smarts: " + smarts + " smiles: " + getSmiles());
+			Settings.LOGGER.info("smarts-matching smarts: " + smarts + " smiles: " + getSmiles());
 			smartsMatches.put(smarts, View.instance.getSmartsMatch(smarts, bitSet));
 			//			if (smartsMatches.get(smarts).cardinality() == 0)
 			//			{
-			////				System.out.flush();
-			////				System.err.println("could not match smarts!");
-			////				System.err.flush();
+			////				Settings.LOGGER.flush();
+			////				Settings.LOGGER.warn("could not match smarts!");
+			////				Settings.LOGGER.flush();
 			//			}
 		}
 		return smartsMatches.get(smarts);
@@ -209,7 +211,7 @@ public class Model implements Zoomable
 			if (d != null)
 			{
 				double v = compoundData.getNormalizedValue(highlightMoleculeProperty) * 100.0;
-				//			System.err.println(getModelOrigIndex() + " " + highlightMoleculeProperty + " " + v);
+				//			Settings.LOGGER.warn(getModelOrigIndex() + " " + highlightMoleculeProperty + " " + v);
 				View.instance.setAtomProperty(bitSet, Token.temperature, (int) v, (float) v, v + "", null, null);
 			}
 		}

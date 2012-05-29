@@ -246,10 +246,10 @@ public class Cluster implements Zoomable
 			});
 			if (sorting == HighlightSorting.Median)
 			{
-				//				System.err.println("max order: ");
+				//				Settings.LOGGER.warn("max order: ");
 				//				for (Model mm : m)
-				//					System.err.print(mm.getStringValue(property) + " ");
-				//				System.err.println();
+				//					Settings.LOGGER.warn(mm.getStringValue(property) + " ");
+				//				Settings.LOGGER.warn();
 
 				/**
 				 * median sorting:
@@ -257,7 +257,7 @@ public class Cluster implements Zoomable
 				 * - create a dist-to-median array, sort models according to that array
 				 */
 				Model medianModel = m.get(m.size() / 2);
-				//				System.err.println(medianModel.getStringValue(property));
+				//				Settings.LOGGER.warn(medianModel.getStringValue(property));
 				double distToMedian[] = new double[m.size()];
 				if (property.getType() == Type.NUMERIC)
 				{
@@ -289,17 +289,17 @@ public class Cluster implements Zoomable
 				Model s[] = ArrayUtil.sortAccordingToOrdering(order, m.toArray(a));
 				m = ArrayUtil.toList(s);
 
-				//				System.err.println("med order: ");
+				//				Settings.LOGGER.warn("med order: ");
 				//				for (Model mm : m)
-				//					System.err.print(mm.getStringValue(property) + " ");
-				//				System.err.println();
+				//					Settings.LOGGER.warn(mm.getStringValue(property) + " ");
+				//				Settings.LOGGER.warn();
 			}
 			modelsOrderedByPropterty.put(key, m);
 		}
-		//		System.err.println("in order: ");
+		//		Settings.LOGGER.warn("in order: ");
 		//		for (Model m : order.get(key))
-		//			System.err.print(m.getModelOrigIndex() + " ");
-		//		System.err.println("");
+		//			Settings.LOGGER.warn(m.getModelOrigIndex() + " ");
+		//		Settings.LOGGER.warn("");
 		return modelsOrderedByPropterty.get(key);
 	}
 

@@ -232,7 +232,7 @@ public class ControlPanel extends TransparentViewPanel
 			@Override
 			public void propertyChange(PropertyChangeEvent evt)
 			{
-				//					System.out.println("fire updated " + evt.getPropertyName());
+				//					Settings.LOGGER.println("fire updated " + evt.getPropertyName());
 				if (evt.getPropertyName().equals(ViewControler.PROPERTY_HIGHLIGHT_CHANGED))
 				{
 					updateComboStuff();

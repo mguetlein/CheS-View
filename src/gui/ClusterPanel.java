@@ -14,6 +14,7 @@ import javax.swing.OverlayLayout;
 import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
 
+import main.Settings;
 import cluster.Clustering;
 
 import com.jgoodies.forms.layout.CellConstraints;
@@ -148,8 +149,7 @@ public class ClusterPanel extends JPanel
 				}
 				catch (InterruptedException e)
 				{
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					Settings.LOGGER.error(e);
 				}
 				messagePanel.setVisible(false);
 			}

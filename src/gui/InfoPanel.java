@@ -228,9 +228,9 @@ public class InfoPanel extends TransparentViewPanel
 				compoundFeatureTableModel.addRow(o);
 			}
 			compoundPanelMinWidth = ComponentFactory.packColumn(compoundFeatureTable, 0, 2, 250);
-			//			System.err.println(compoundPanelMinWidth);
+			//			Settings.LOGGER.warn(compoundPanelMinWidth);
 			compoundPanelMinWidth += ComponentFactory.packColumn(compoundFeatureTable, 1, 2);
-			//			System.err.println(compoundPanelMinWidth);
+			//			Settings.LOGGER.warn(compoundPanelMinWidth);
 
 			if (viewControler.getHighlighter() instanceof MoleculePropertyHighlighter)
 			{

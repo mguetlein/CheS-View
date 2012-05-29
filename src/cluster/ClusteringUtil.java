@@ -56,11 +56,11 @@ public class ClusteringUtil
 		// the smaller the distance, the higher the scale factor
 		// the neigbhor should be on average 30units away
 		float s = 1 / d * 30;
-		//System.out.println("d: " + d + ", s: " + (1 / d * 30));
+		//Settings.LOGGER.println("d: " + d + ", s: " + (1 / d * 30));
 
 		// we want to set a max dist of 350units
 		float max_scale = 100 / Vector3fUtil.maxDist(v);
-		//System.out.println("max_s: " + max_scale);
+		//Settings.LOGGER.println("max_s: " + max_scale);
 		s = Math.min(s, max_scale);
 
 		// scale is multiplied with the DENSITY, which is configurable by the user

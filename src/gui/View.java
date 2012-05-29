@@ -13,6 +13,7 @@ import javax.vecmath.Point3f;
 import javax.vecmath.Vector3f;
 
 import main.ScreenSetup;
+import main.Settings;
 
 import org.jmol.export.dialog.Dialog;
 import org.jmol.viewer.Viewer;
@@ -93,13 +94,13 @@ public class View
 		final float diameter = zoomable.getDiameter(superimposed);
 		final Vector3f center = zoomable.getCenter(superimposed);
 
-		System.err.println("Superimposed " + superimposed);
-		System.err.println("Center       " + center);
-		System.err.println("Diameter     " + diameter);
-		//		System.err.println("Rot radius   " + viewer.getRotationRadius());
+		Settings.LOGGER.debug("Superimposed " + superimposed);
+		Settings.LOGGER.debug("Center       " + center);
+		Settings.LOGGER.debug("Diameter     " + diameter);
+		//		Settings.LOGGER.debug("Rot radius   " + viewer.getRotationRadius());
 
 		int zoom = (int) ((1200 / (15 / viewer.getRotationRadius())) / diameter);
-		//		System.err.println("zoom " + zoom);
+		//		Settings.LOGGER.warn("zoom " + zoom);
 		zoom = (int) Math.max(5, zoom);
 
 		if (isAnimated())
@@ -161,7 +162,7 @@ public class View
 
 	public synchronized void select(BitSet bitSet)
 	{
-		//		System.err.println("XX> selecting bitset: " + bitSet);
+		//		Settings.LOGGER.warn("XX> selecting bitset: " + bitSet);
 		viewer.select(bitSet, false, null, false);
 	}
 
@@ -174,13 +175,13 @@ public class View
 	public synchronized void scriptWait(String script)
 	{
 		evalScript(script);
-		//		System.err.println("XX> " + script);
+		//		Settings.LOGGER.warn("XX> " + script);
 		viewer.scriptWait(script);
 	}
 
 	public synchronized void evalString(String script)
 	{
-		//		System.err.println("XX> " + script);
+		//		Settings.LOGGER.warn("XX> " + script);
 		evalScript(script);
 		viewer.evalString(script);
 	}
@@ -192,20 +193,20 @@ public class View
 
 	public synchronized void hide(BitSet bs)
 	{
-		//		System.err.println("XX> hide " + bs);
+		//		Settings.LOGGER.warn("XX> hide " + bs);
 		viewer.select(bs, false, null, false);
 		hideSelected();
 	}
 
 	public synchronized void hideSelected()
 	{
-		//		System.err.println("XX> select selected OR hidden; hide selected");
+		//		Settings.LOGGER.warn("XX> select selected OR hidden; hide selected");
 		viewer.scriptWait("select selected OR hidden; hide selected");
 	}
 
 	public synchronized void display(BitSet bs)
 	{
-		//		System.err.println("XX> display " + bs);
+		//		Settings.LOGGER.warn("XX> display " + bs);
 		viewer.select(bs, false, null, false);
 		viewer.scriptWait("select (not hidden) OR selected; select not selected; hide selected");
 	}
@@ -295,7 +296,7 @@ public class View
 		BitSet b = viewer.getSmartsMatch(smarts, bitSet);
 		if (b == null)
 		{
-			System.err.println("jmol did not like: " + smarts + " " + bitSet);
+			Settings.LOGGER.warn("jmol did not like: " + smarts + " " + bitSet);
 			return new BitSet();
 		}
 		else
@@ -383,6 +384,6 @@ public class View
 				return; // make no assumptions - require a type by extension
 			sType = sType.substring(i + 1).toUpperCase();
 		}
-		System.out.println((String) viewer.createImage(fileName, sType, null, sd.getQuality(sType), 0, 0));
+		Settings.LOGGER.info((String) viewer.createImage(fileName, sType, null, sd.getQuality(sType), 0, 0));
 	}
 }

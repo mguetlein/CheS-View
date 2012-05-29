@@ -24,7 +24,7 @@ public class CheSViewer implements GUIControler
 {
 	//	static
 	//	{
-	//		System.err.println(JmolConstants.version);
+	//		Settings.LOGGER.warn(JmolConstants.version);
 	//	}
 
 	BlockableFrame frame;
@@ -101,7 +101,7 @@ public class CheSViewer implements GUIControler
 
 	public void show(boolean undecorated, Dimension size, Point location)
 	{
-		System.err.println("showing - size: " + size);
+		Settings.LOGGER.info("showing - size: " + size);
 
 		if (clustering == null)
 			throw new Error("clustering is null");

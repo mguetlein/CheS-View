@@ -27,6 +27,7 @@ import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
 
 import main.ScreenSetup;
+import main.Settings;
 
 import org.jmol.adapter.smarter.SmarterJmolAdapter;
 import org.jmol.api.JmolAdapter;
@@ -93,7 +94,7 @@ public class MainPanel extends JPanel implements ViewControler
 		double trans = translucency[ArrayUtil.indexOf(Translucency.values(), t)];
 		//		if (Settings.SCREENSHOT_SETUP)
 		//			trans = 0.99;// Math.min(0.95, trans + 0.15);
-		//		System.err.println(trans);
+		//		Settings.LOGGER.warn(trans);
 		return "; color translucent " + trans;
 	}
 
@@ -386,7 +387,7 @@ public class MainPanel extends JPanel implements ViewControler
 				else
 					max = (numModels - 10) / 3 + 10;
 				max = Math.min(25, max);
-				//			System.err.println("hiding: ''" + hide + "'', num '" + numModels + "', max '" + max + "'");
+				//			Settings.LOGGER.warn("hiding: ''" + hide + "'', num '" + numModels + "', max '" + max + "'");
 
 				if (numModels < max)
 					toDisplay.or(c.getBitSet());
@@ -444,7 +445,7 @@ public class MainPanel extends JPanel implements ViewControler
 		Model m = clustering.getModelWithModelIndex(i);
 		if (m == null)
 		{
-			System.err.println("model is null!");
+			Settings.LOGGER.warn("model is null!");
 			return;
 		}
 		int activeCluster = clustering.getClusterActive().getSelected();
@@ -633,7 +634,7 @@ public class MainPanel extends JPanel implements ViewControler
 				Double d = DoubleUtil.parseDouble(val + "");
 				if (d != null)
 					val = StringUtil.formatDouble(d);
-				//				System.err.println("label : " + i + " : " + c + " : " + val);
+				//				Settings.LOGGER.warn("label : " + i + " : " + c + " : " + val);
 				label = ((MoleculePropertyHighlighter) selectedHighlighter).getProperty() + ": " + val;
 			}
 		}
@@ -654,7 +655,7 @@ public class MainPanel extends JPanel implements ViewControler
 			}
 			else
 			{
-				//				System.err.println("label : " + i + " : " + c + " : off");
+				//				Settings.LOGGER.warn("label : " + i + " : " + c + " : off");
 				view.scriptWait("label OFF");
 			}
 		}
@@ -787,7 +788,7 @@ public class MainPanel extends JPanel implements ViewControler
 
 	private void updateModelWatchedSelection(int mIndex, int mIndexOld)
 	{
-		//		System.out.println("update model active: " + active + " " + ArrayUtil.toString(mIndex));
+		//		Settings.LOGGER.println("update model active: " + active + " " + ArrayUtil.toString(mIndex));
 		int activeCluster = clustering.getClusterActive().getSelected();
 		for (Model m : clustering.getCluster(activeCluster).getModels())
 			updateModel(m.getModelIndex(), false);
@@ -795,7 +796,7 @@ public class MainPanel extends JPanel implements ViewControler
 
 	private void updateModelActiveSelection(int mIndex[], int mIndexOld[], boolean zoomIntoModel)
 	{
-		//		System.out.println("update model active: " + active + " " + ArrayUtil.toString(mIndex));
+		//		Settings.LOGGER.println("update model active: " + active + " " + ArrayUtil.toString(mIndex));
 		int activeCluster = clustering.getClusterActive().getSelected();
 		for (Model m : clustering.getCluster(activeCluster).getModels())
 			updateModel(m.getModelIndex(), false);
@@ -832,7 +833,7 @@ public class MainPanel extends JPanel implements ViewControler
 		if (!activeClusterChanged && clustering.isClusterActive())
 			return;
 
-		System.out.println("updating cluster selection: " + cIndex + " " + cIndexOld + " " + activeClusterChanged);
+		Settings.LOGGER.info("updating cluster selection: " + cIndex + " " + cIndexOld + " " + activeClusterChanged);
 
 		highlightAutomatic.resetClusterHighlighter(activeClusterChanged);
 
@@ -1068,12 +1069,12 @@ public class MainPanel extends JPanel implements ViewControler
 		clustering.updatePositions();
 		if (activeCluster != null)
 		{
-			System.out.println("zooming out - cluster");
+			Settings.LOGGER.info("zooming out - cluster");
 			view.zoomTo(activeCluster, null);
 		}
 		else
 		{
-			System.out.println("zooming out - home");
+			Settings.LOGGER.info("zooming out - home");
 			view.zoomTo(clustering, null);
 		}
 		view.proceedAnimation("change density");

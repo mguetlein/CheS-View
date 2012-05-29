@@ -3,11 +3,9 @@ package cluster;
 import gui.CheckBoxSelectDialog;
 import gui.View;
 import gui.Zoomable;
-import io.SDFUtil;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.HashMap;
@@ -15,24 +13,18 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Vector;
 
-import javax.swing.JFileChooser;
-import javax.swing.JOptionPane;
 import javax.vecmath.Vector3f;
 
 import main.Settings;
 import main.TaskProvider;
 import util.ArrayUtil;
-import util.DoubleKeyHashMap;
-import util.FileUtil;
 import util.SelectionModel;
 import util.Vector3fUtil;
 import util.VectorUtil;
 import data.ClusteringData;
-import data.DatasetFile;
-import data.IntegratedProperty;
 import dataInterface.ClusterData;
+import dataInterface.CompoundData;
 import dataInterface.MoleculeProperty;
-import dataInterface.MoleculeProperty.Type;
 import dataInterface.SubstructureSmartsType;
 
 public class Clustering implements Zoomable
@@ -458,7 +450,7 @@ public class Clustering implements Zoomable
 		int[] indices = clusterChooser("Export Cluster/s",
 				"Select the clusters you want to export. The compounds will be stored in a single SDF file.");
 		if (indices != null)
-			exportClusters(indices);
+			ExportData.exportClusters(this, indices);
 	}
 
 	public void chooseModelsToRemove()
@@ -479,125 +471,7 @@ public class Clustering implements Zoomable
 		List<Integer> l = new ArrayList<Integer>();
 		for (int i = 0; i < indices.length; i++)
 			l.add(getModelWithModelIndex(indices[i]).getModelOrigIndex());
-		exportModels(l);
-	}
-
-	public void exportClusters(int clusterIndices[])
-	{
-		List<Integer> l = new ArrayList<Integer>();
-		for (int i = 0; i < clusterIndices.length; i++)
-			for (Model m : getCluster(clusterIndices[i]).getModels())
-				l.add(m.getModelOrigIndex());
-		exportModels(l);
-	}
-
-	public void exportModels(List<Integer> modelIndices)
-	{
-		exportModels(ArrayUtil.toPrimitiveIntArray(modelIndices));
-	}
-
-	public void exportModels(int modelOrigIndices[])
-	{
-		JFileChooser f = new JFileChooser(clusteringData.getSDFFilename());//origSDFFile);
-		int i = f.showSaveDialog(Settings.TOP_LEVEL_FRAME);
-		if (i == JFileChooser.APPROVE_OPTION)
-		{
-			String dest = f.getSelectedFile().getAbsolutePath();
-			if (!f.getSelectedFile().exists() && !FileUtil.getFilenamExtension(dest).matches("(?i)sdf"))
-				dest += ".sdf";
-			if (new File(dest).exists())
-			{
-				if (JOptionPane.showConfirmDialog(Settings.TOP_LEVEL_FRAME, "File '" + dest
-						+ "' already exists, overwrite?", "Warning", JOptionPane.YES_NO_OPTION,
-						JOptionPane.WARNING_MESSAGE) != JOptionPane.YES_OPTION)
-					return;
-			}
-			// file may be overwritten, and then reloaded -> clear
-			DatasetFile.clearFilesWith3DSDF(dest);
-
-			DoubleKeyHashMap<Integer, Object, Object> featureValues = new DoubleKeyHashMap<Integer, Object, Object>();
-			for (Integer j : modelOrigIndices)
-			{
-				if (clusters.size() > 1)
-				{
-					Model m = null;
-					for (Cluster c : clusters)
-						for (Model mm : c.getModels())
-							if (mm.getModelOrigIndex() == j)
-							{
-								m = mm;
-								break;
-							}
-					featureValues.put(j, this.getClusterAlgorithm() + " assignement", getClusterIndexForModel(m));
-				}
-				for (MoleculeProperty p : clusteringData.getFeatures())
-					if (!(p instanceof IntegratedProperty))
-						if (p.getType() == Type.NUMERIC)
-							featureValues.put(j, p, clusteringData.getCompounds().get(j).getDoubleValue(p));
-						else
-							featureValues.put(j, p, clusteringData.getCompounds().get(j).getStringValue(p));
-			}
-
-			List<Object> skipUniform = new ArrayList<Object>();
-			List<Object> skipNull = new ArrayList<Object>();
-			List<Object> skip = new ArrayList<Object>();
-			if (featureValues.keySet1().size() > 0 && featureValues.keySet2(modelOrigIndices[0]).size() > 0)
-				for (Object prop : featureValues.keySet2(modelOrigIndices[0]))
-				{
-					boolean uniform = true;
-					boolean nullValues = false;
-					boolean first = true;
-					Object val = null;
-					for (Integer j : modelOrigIndices)
-					{
-						Object newVal = featureValues.get(j, prop);
-						nullValues |= newVal == null;
-						if (first)
-						{
-							first = false;
-							val = newVal;
-						}
-						else
-						{
-							if (val != newVal)
-								uniform = false;
-						}
-					}
-					if (uniform && modelOrigIndices.length > 1)
-						skipUniform.add(prop);
-					if (nullValues)
-						skipNull.add(prop);
-				}
-			if (skipUniform.size() > 0)
-			{
-				String msg = skipUniform.size() + " feature/s have equal values for each compound.\nSkip from export?";
-				int sel = JOptionPane.showConfirmDialog(Settings.TOP_LEVEL_FRAME, msg, "Skip feature",
-						JOptionPane.YES_NO_OPTION);
-				if (sel == JOptionPane.YES_OPTION)
-					for (Object p : skipUniform)
-					{
-						if (skipNull.contains(p))
-							skipNull.remove(p);
-						skip.add(p);
-					}
-			}
-			if (skipNull.size() > 0)
-			{
-				String msg = skipNull.size() + " feature/s have null values.\nSkip from export?";
-				int sel = JOptionPane.showConfirmDialog(Settings.TOP_LEVEL_FRAME, msg, "Skip feature",
-						JOptionPane.YES_NO_OPTION);
-				if (sel == JOptionPane.YES_OPTION)
-					for (Object p : skipNull)
-						skip.add(p);
-			}
-			for (Object p : skip)
-			{
-				System.out.println("Skipping from export: " + p);
-				for (Integer j : modelOrigIndices)
-					featureValues.remove(j, p);
-			}
-			SDFUtil.filter(clusteringData.getSDFFilename(), dest, modelOrigIndices, featureValues);
-		}
+		ExportData.exportModels(this, l);
 	}
 
 	public String getName()
@@ -689,6 +563,11 @@ public class Clustering implements Zoomable
 	public List<MoleculeProperty> getProperties()
 	{
 		return clusteringData.getProperties();
+	}
+
+	public List<CompoundData> getCompounds()
+	{
+		return clusteringData.getCompounds();
 	}
 
 	public int getNumClusters()
