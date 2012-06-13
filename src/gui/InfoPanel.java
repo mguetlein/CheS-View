@@ -15,6 +15,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableModel;
 
 import cluster.Cluster;
@@ -56,6 +57,8 @@ public class InfoPanel extends TransparentViewPanel
 	JTable compoundFeatureTable = ComponentFactory.createTable();
 	DefaultTableModel compoundFeatureTableModel;
 	JScrollPane compoundFeatureTableScroll;
+
+	JLabel compoundIconLabel = new JLabel("");
 
 	public InfoPanel(ViewControler viewControler, Clustering clustering)
 	{
@@ -178,6 +181,10 @@ public class InfoPanel extends TransparentViewPanel
 		compoundFeatureTableModel = (DefaultTableModel) compoundFeatureTable.getModel();
 		compoundFeatureTableModel.addColumn("Feature");
 		compoundFeatureTableModel.addColumn("Value");
+		JPanel iconPanel = new JPanel(new BorderLayout());
+		iconPanel.setOpaque(false);
+		iconPanel.add(compoundIconLabel, BorderLayout.NORTH);
+		compoundPanel.add(iconPanel, BorderLayout.EAST);
 
 		compoundPanel.setOpaque(false);
 		compoundPanel.setVisible(false);
@@ -206,7 +213,7 @@ public class InfoPanel extends TransparentViewPanel
 		{
 			compoundPanel.setIgnoreRepaint(true);
 
-			Model m = clustering.getModelWithModelIndex(index);
+			final Model m = clustering.getModelWithModelIndex(index);
 			compoundNameLabel.setText("<html><b>Compound:</b> " + m.toString() + "<html>");
 			//			compoundSmilesLabel.setText(m.getSmiles());
 
@@ -243,9 +250,25 @@ public class InfoPanel extends TransparentViewPanel
 						.getCellRect(pIndex, 0, true)));
 			}
 
+			Thread th = new Thread(new Runnable()
+			{
+				public void run()
+				{
+
+					SwingUtilities.invokeLater(new Runnable()
+					{
+						public void run()
+						{
+							compoundPanel.setIgnoreRepaint(false);
+							compoundIconLabel.setIcon(m.getIcon(viewControler.isBlackgroundBlack()));
+							compoundPanel.setIgnoreRepaint(true);
+						}
+					});
+				}
+			});
+			th.start();
 			compoundPanel.setIgnoreRepaint(false);
 			compoundPanel.setVisible(true);
-
 		}
 	}
 

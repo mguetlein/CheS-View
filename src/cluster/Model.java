@@ -7,6 +7,7 @@ import gui.Zoomable;
 import java.util.BitSet;
 import java.util.HashMap;
 
+import javax.swing.ImageIcon;
 import javax.vecmath.Vector3f;
 
 import main.Settings;
@@ -255,6 +256,11 @@ public class Model implements Zoomable
 	public boolean isSuperimposed()
 	{
 		return false;
+	}
+
+	public ImageIcon getIcon(boolean backgroundBlack)
+	{
+		return compoundData.getIcon(backgroundBlack);
 	}
 
 }

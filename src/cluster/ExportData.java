@@ -163,24 +163,25 @@ public class ExportData
 			try
 			{
 				BufferedWriter b = new BufferedWriter(new FileWriter(file));
-				String s = "SMILES,";
+				b.write("SMILES");
 				for (Object feat : feats)
-					s += feat + ",";
-				s = s.substring(0, s.length() - 1);
-				s += "\n";
+				{
+					b.write(",");
+					b.write(feat.toString());
+				}
+				b.write("\n");
 				for (Integer modelIndex : modelOrigIndices)
 				{
 					CompoundData c = clustering.getCompounds().get(modelIndex);
-					s += c.getSmiles() + ",";
+					b.write(c.getSmiles());
 					for (Object feat : feats)
 					{
+						b.write(",");
 						Object val = featureValues.get(modelIndex, feat);
-						s += (val == null ? "" : val.toString()) + ",";
+						b.write(val == null ? "" : val.toString());
 					}
-					s = s.substring(0, s.length() - 1);
-					s += "\n";
+					b.write("\n");
 				}
-				b.write(s + "\n");
 				b.close();
 			}
 			catch (IOException e)
