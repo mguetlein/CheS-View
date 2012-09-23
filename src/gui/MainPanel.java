@@ -59,6 +59,7 @@ public class MainPanel extends JPanel implements ViewControler
 	private boolean hideHydrogens = true;
 	private String style = STYLE_WIREFRAME;
 	boolean hideUnselected = true;
+	Color matchColor = Color.ORANGE;
 
 	private String getColor(Model m)
 	{
@@ -609,7 +610,7 @@ public class MainPanel extends JPanel implements ViewControler
 					match = true;
 					m.setHighlightedSmarts(smarts);
 					view.select(matchBitSet);
-					view.scriptWait("color orange" + getColorSuffixTranslucent(translucency));
+					view.scriptWait("color " + View.color(matchColor) + getColorSuffixTranslucent(translucency));
 				}
 			}
 			if (!match)// || forceUpdate || translucentUpdate)
@@ -1133,6 +1134,23 @@ public class MainPanel extends JPanel implements ViewControler
 			view.setBackground(ComponentFactory.BACKGROUND);
 			fireViewChange(PROPERTY_BACKGROUND_CHANGED);
 		}
+	}
+
+	@Override
+	public void setMatchColor(Color color)
+	{
+		if (!matchColor.equals(color))
+		{
+			this.matchColor = color;
+			updateAllClustersAndModels(true);
+			fireViewChange(PROPERTY_MATCH_COLOR_CHANGED);
+		}
+	}
+
+	@Override
+	public Color getMatchColor()
+	{
+		return matchColor;
 	}
 
 }

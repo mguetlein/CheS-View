@@ -1,5 +1,6 @@
 package gui;
 
+import java.awt.Color;
 import java.awt.Desktop;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
@@ -13,9 +14,11 @@ import java.util.Vector;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JColorChooser;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.KeyStroke;
@@ -26,6 +29,7 @@ import main.TaskProvider;
 import task.Task;
 import task.TaskDialog;
 import util.ArrayUtil;
+import util.ImageLoader;
 import util.SwingUtil;
 import cluster.Clustering;
 import cluster.ExportData;
@@ -146,6 +150,7 @@ public class MenuBar extends JMenuBar
 	Action vActionHideUnselectedCompounds;
 	Action vActionSpin;
 	Action vActionBlackWhite;
+	Action vActionColorMatch;
 
 	//help
 
@@ -438,8 +443,34 @@ public class MenuBar extends JMenuBar
 			}
 		});
 
+		vActionColorMatch = new AbstractAction("Choose substructure match color")
+		{
+			@Override
+			public void actionPerformed(ActionEvent e)
+			{
+				vActionColorMatch.putValue(
+						"matchcolor",
+						JColorChooser.showDialog(Settings.TOP_LEVEL_FRAME, "Select Color",
+								(Color) vActionColorMatch.getValue("matchcolor")));
+				viewControler.setMatchColor((Color) vActionColorMatch.getValue("matchcolor"));
+			}
+		};
+		((AbstractAction) vActionColorMatch).putValue(Action.ACCELERATOR_KEY,
+				KeyStroke.getKeyStroke(KeyEvent.VK_C, ActionEvent.ALT_MASK));
+		vActionColorMatch.putValue("matchcolor", viewControler.getMatchColor());
+		viewControler.addViewListener(new PropertyChangeListener()
+		{
+
+			@Override
+			public void propertyChange(PropertyChangeEvent evt)
+			{
+				if (evt.getPropertyName().equals(ViewControler.PROPERTY_MATCH_COLOR_CHANGED))
+					vActionColorMatch.putValue("matchcolor", viewControler.getMatchColor());
+			}
+		});
+
 		MyMenu viewMenu = new MyMenu("View", vActionFullScreen, vActionDrawHydrogens, vActionHideUnselectedCompounds,
-				vActionSpin, vActionBlackWhite);
+				vActionSpin, vActionBlackWhite, vActionColorMatch);
 
 		Action hActionDocu = new AbstractAction("Online Documentation")
 		{

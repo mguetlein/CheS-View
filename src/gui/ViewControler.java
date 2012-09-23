@@ -2,6 +2,7 @@ package gui;
 
 import gui.util.Highlighter;
 
+import java.awt.Color;
 import java.beans.PropertyChangeListener;
 import java.util.HashMap;
 
@@ -52,6 +53,7 @@ public interface ViewControler
 	public static final String PROPERTY_HIDE_UNSELECT_CHANGED = "propertyHideUnselectChanged";
 	public static final String PROPERTY_SPIN_CHANGED = "propertySpinChanged";
 	public static final String PROPERTY_BACKGROUND_CHANGED = "propertyBackgroundChanged";
+	public static final String PROPERTY_MATCH_COLOR_CHANGED = "propertyMatchColorChanged";
 
 	public boolean isHighlighterLabelsVisible();
 
@@ -71,4 +73,8 @@ public interface ViewControler
 	public boolean isBlackgroundBlack();
 
 	public void setBlackgroundBlack(boolean backgroudBlack);
+
+	public void setMatchColor(Color color);
+
+	public Color getMatchColor();
 }

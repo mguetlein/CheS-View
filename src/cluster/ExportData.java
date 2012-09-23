@@ -163,22 +163,26 @@ public class ExportData
 			try
 			{
 				BufferedWriter b = new BufferedWriter(new FileWriter(file));
-				b.write("SMILES");
+				b.write("\"SMILES\"");
 				for (Object feat : feats)
 				{
-					b.write(",");
+					b.write(",\"");
 					b.write(feat.toString());
+					b.write("\"");
 				}
 				b.write("\n");
 				for (Integer modelIndex : modelOrigIndices)
 				{
 					CompoundData c = clustering.getCompounds().get(modelIndex);
+					b.write("\"");
 					b.write(c.getSmiles());
+					b.write("\"");
 					for (Object feat : feats)
 					{
-						b.write(",");
+						b.write(",\"");
 						Object val = featureValues.get(modelIndex, feat);
 						b.write(val == null ? "" : val.toString());
+						b.write("\"");
 					}
 					b.write("\n");
 				}
