@@ -18,7 +18,6 @@ import javax.swing.JColorChooser;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
-import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.KeyStroke;
@@ -29,7 +28,6 @@ import main.TaskProvider;
 import task.Task;
 import task.TaskDialog;
 import util.ArrayUtil;
-import util.ImageLoader;
 import util.SwingUtil;
 import cluster.Clustering;
 import cluster.ExportData;
@@ -448,11 +446,13 @@ public class MenuBar extends JMenuBar
 			@Override
 			public void actionPerformed(ActionEvent e)
 			{
-				vActionColorMatch.putValue(
-						"matchcolor",
-						JColorChooser.showDialog(Settings.TOP_LEVEL_FRAME, "Select Color",
-								(Color) vActionColorMatch.getValue("matchcolor")));
-				viewControler.setMatchColor((Color) vActionColorMatch.getValue("matchcolor"));
+				Color col = JColorChooser.showDialog(Settings.TOP_LEVEL_FRAME, "Select Color",
+						(Color) vActionColorMatch.getValue("matchcolor"));
+				if (col != null)
+				{
+					vActionColorMatch.putValue("matchcolor", col);
+					viewControler.setMatchColor((Color) vActionColorMatch.getValue("matchcolor"));
+				}
 			}
 		};
 		((AbstractAction) vActionColorMatch).putValue(Action.ACCELERATOR_KEY,
