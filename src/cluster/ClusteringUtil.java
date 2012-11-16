@@ -38,7 +38,8 @@ public class ClusteringUtil
 		return list;
 	}
 
-	public static float DENSITY = 1f;
+	// 0 - 20
+	public static int COMPOUND_SIZE = 10;
 	public static float SCALE = 0;
 
 	/**
@@ -63,8 +64,14 @@ public class ClusteringUtil
 		//Settings.LOGGER.println("max_s: " + max_scale);
 		s = Math.min(s, max_scale);
 
+		if (COMPOUND_SIZE < 0 || COMPOUND_SIZE > 20)
+			throw new Error("illegal compound size");
+		// convert "int range 0 - 20" to "float range 2.0 - 0.1"  
+		float density = (float) (((1 - COMPOUND_SIZE / 20.0) * 1.9f) + 0.1f);
+		// System.err.println(ClusteringUtil.COMPOUND_SIZE + " -> " + density);
+
 		// scale is multiplied with the DENSITY, which is configurable by the user
-		SCALE = s * DENSITY;
+		SCALE = s * density;
 	}
 
 }

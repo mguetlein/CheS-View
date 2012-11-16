@@ -112,13 +112,13 @@ public class ClusterPanel extends JPanel
 				{
 					if (e.getKeyCode() == KeyEvent.VK_MINUS)
 					{
-						if (mainPanel.canChangeDensitiy(false))
-							mainPanel.setDensitiyHigher(false);
+						if (mainPanel.canChangeCompoundSize(false))
+							mainPanel.changeCompoundSize(false);
 					}
 					if (e.getKeyCode() == KeyEvent.VK_PLUS)
 					{
-						if (mainPanel.canChangeDensitiy(true))
-							mainPanel.setDensitiyHigher(true);
+						if (mainPanel.canChangeCompoundSize(true))
+							mainPanel.changeCompoundSize(true);
 					}
 				}
 				if (e.getKeyCode() == KeyEvent.VK_R && e.isAltDown())

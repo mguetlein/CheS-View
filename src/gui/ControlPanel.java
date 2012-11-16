@@ -9,6 +9,7 @@ import gui.util.MoleculePropertyHighlighter;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -23,7 +24,10 @@ import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JSlider;
 import javax.swing.SwingUtilities;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 import cluster.Clustering;
 
@@ -38,6 +42,8 @@ public class ControlPanel extends TransparentViewPanel
 
 	JButton buttonPlus;
 	JButton buttonMinus;
+
+	JSlider slider;
 
 	JComboBox highlightCombobox;
 	JCheckBox labelCheckbox;
@@ -81,6 +87,9 @@ public class ControlPanel extends TransparentViewPanel
 		buttonMinus = ComponentFactory.createViewButton("-", new Insets(1, 3, 1, 3));
 		buttonMinus.setPreferredSize(buttonPlus.getPreferredSize());
 
+		slider = ComponentFactory.createViewSlider(0, 20, viewControler.getCompoundSize());
+		slider.setPreferredSize(new Dimension(100, slider.getPreferredSize().height));
+
 		highlightCombobox = ComponentFactory.createViewComboBox();
 		loadHighlighters();
 
@@ -101,13 +110,15 @@ public class ControlPanel extends TransparentViewPanel
 
 		// add(new JLabel("Graphic Settings:"));
 
-		JPanel p = new JPanel();
+		JPanel p = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
 		p.setOpaque(false);
 		p.add(buttonMinus);
+		p.add(slider);
 		p.add(buttonPlus);
-		p.add(new JLabel(" "));
+		p.add(new JLabel("   "));
 		//		p.add(spinCheckbox);
 		p.add(buttonWire);
+		p.add(new JLabel(" "));
 		p.add(buttonBalls);
 
 		JPanel p2 = new JPanel();
@@ -158,11 +169,26 @@ public class ControlPanel extends TransparentViewPanel
 		{
 			public void actionPerformed(ActionEvent e)
 			{
-				viewControler.setDensitiyHigher(e.getSource() == buttonPlus);
+				viewControler.changeCompoundSize(e.getSource() == buttonPlus);
 			}
 		};
 		buttonPlus.addActionListener(l2);
 		buttonMinus.addActionListener(l2);
+
+		slider.addChangeListener(new ChangeListener()
+		{
+			@Override
+			public void stateChanged(ChangeEvent e)
+			{
+				if (selfUpdate)
+					return;
+				JSlider source = (JSlider) e.getSource();
+				if (!source.getValueIsAdjusting())
+				{
+					viewControler.setCompoundSize((int) source.getValue());
+				}
+			}
+		});
 
 		highlightCombobox.addActionListener(new ActionListener()
 		{
@@ -248,8 +274,11 @@ public class ControlPanel extends TransparentViewPanel
 				}
 				else if (evt.getPropertyName().equals(ViewControler.PROPERTY_DENSITY_CHANGED))
 				{
-					buttonPlus.setEnabled(viewControler.canChangeDensitiy(true));
-					buttonMinus.setEnabled(viewControler.canChangeDensitiy(false));
+					selfUpdate = true;
+					buttonPlus.setEnabled(viewControler.canChangeCompoundSize(true));
+					buttonMinus.setEnabled(viewControler.canChangeCompoundSize(false));
+					slider.setValue(viewControler.getCompoundSize());
+					selfUpdate = false;
 				}
 			}
 		});

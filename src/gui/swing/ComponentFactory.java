@@ -15,9 +15,11 @@ import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JList;
+import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
+import javax.swing.JSlider;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
@@ -31,6 +33,7 @@ import javax.swing.plaf.basic.BasicArrowButton;
 import javax.swing.plaf.basic.BasicComboBoxUI;
 import javax.swing.plaf.basic.BasicComboPopup;
 import javax.swing.plaf.basic.BasicScrollBarUI;
+import javax.swing.plaf.basic.BasicSliderUI;
 import javax.swing.plaf.basic.ComboPopup;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableColumnModel;
@@ -39,6 +42,7 @@ import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 
 import main.Settings;
+import util.SwingUtil;
 
 public class ComponentFactory
 {
@@ -486,4 +490,50 @@ public class ComponentFactory
 		return infoTextArea;
 	}
 
+	static class MySliderUI extends BasicSliderUI
+	{
+		public MySliderUI(JSlider b)
+		{
+			super(b);
+			b.setBackground(BACKGROUND);
+		}
+
+		protected Color getShadowColor()
+		{
+			return BORDER_FOREGROUND.darker().darker();
+		}
+
+		protected Color getHighlightColor()
+		{
+			return BORDER_FOREGROUND;
+		}
+	}
+
+	public static JSlider createViewSlider(int min, int max, int value)
+	{
+		JSlider s = new JSlider(min, max, value)
+		{
+			public void updateUI()
+			{
+				super.updateUI();
+				setForeground(FOREGROUND);
+				setUI(new MySliderUI(this));
+			}
+		};
+		s.setOpaque(false);
+		s.setFocusable(false);
+		return s;
+	}
+
+	public static void main(String args[])
+	{
+		ComponentFactory.setBackgroundBlack(false);
+
+		JPanel p = new JPanel();
+		p.setBackground(BACKGROUND);
+		p.setPreferredSize(new Dimension(500, 100));
+		p.add(ComponentFactory.createViewButton("testing"));
+		p.add(ComponentFactory.createViewSlider(0, 100, 33));
+		SwingUtil.showInDialog(p);
+	}
 }

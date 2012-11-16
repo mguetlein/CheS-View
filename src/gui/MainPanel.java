@@ -1037,9 +1037,11 @@ public class MainPanel extends JPanel implements ViewControler
 	}
 
 	@Override
-	public boolean canChangeDensitiy(boolean higher)
+	public boolean canChangeCompoundSize(boolean larger)
 	{
-		if (higher && ClusteringUtil.DENSITY <= 0.1f)
+		if (larger && ClusteringUtil.COMPOUND_SIZE == 20)
+			return false;
+		if (!larger && ClusteringUtil.COMPOUND_SIZE == 0)
 			return false;
 		Cluster activeCluster = clustering.getCluster(clustering.getClusterActive().getSelected());
 		if (activeCluster == null)
@@ -1049,7 +1051,37 @@ public class MainPanel extends JPanel implements ViewControler
 	}
 
 	@Override
-	public void setDensitiyHigher(boolean higher)
+	public void changeCompoundSize(boolean larger)
+	{
+		if (larger && ClusteringUtil.COMPOUND_SIZE < 20)
+		{
+			ClusteringUtil.COMPOUND_SIZE++;
+			updateDensitiy();
+		}
+		else if (!larger && ClusteringUtil.COMPOUND_SIZE > 0)
+		{
+			ClusteringUtil.COMPOUND_SIZE--;
+			updateDensitiy();
+		}
+	}
+
+	@Override
+	public void setCompoundSize(int compoundSize)
+	{
+		if (ClusteringUtil.COMPOUND_SIZE != compoundSize)
+		{
+			ClusteringUtil.COMPOUND_SIZE = compoundSize;
+			updateDensitiy();
+		}
+	}
+
+	@Override
+	public int getCompoundSize()
+	{
+		return ClusteringUtil.COMPOUND_SIZE;
+	}
+
+	private void updateDensitiy()
 	{
 		Cluster activeCluster = clustering.getCluster(clustering.getClusterActive().getSelected());
 		if (activeCluster != null && clustering.isSuperimposed())
@@ -1061,10 +1093,10 @@ public class MainPanel extends JPanel implements ViewControler
 				clustering.getModelActive().clearSelection();
 		}
 
-		if (higher)
-			ClusteringUtil.DENSITY = ClusteringUtil.DENSITY - 0.1f;
-		else
-			ClusteringUtil.DENSITY = ClusteringUtil.DENSITY + 0.1f;
+		//		if (higher)
+		//			ClusteringUtil.DENSITY = ClusteringUtil.DENSITY - 0.1f;
+		//		else
+		//			ClusteringUtil.DENSITY = ClusteringUtil.DENSITY + 0.1f;
 
 		view.suspendAnimation("change density");
 		clustering.updatePositions();

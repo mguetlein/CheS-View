@@ -19,9 +19,13 @@ public interface ViewControler
 
 	public void setSpinEnabled(boolean spinEnabled);
 
-	public boolean canChangeDensitiy(boolean higher);
+	public boolean canChangeCompoundSize(boolean larger);
 
-	public void setDensitiyHigher(boolean higher);
+	public void changeCompoundSize(boolean larger);
+
+	public int getCompoundSize();
+
+	public void setCompoundSize(int compoundSize);
 
 	public String getStyle();
 
