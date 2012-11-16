@@ -60,6 +60,7 @@ public class MainPanel extends JPanel implements ViewControler
 	private String style = STYLE_WIREFRAME;
 	boolean hideUnselected = true;
 	Color matchColor = Color.ORANGE;
+	MoleculeProperty modelDescriptorProperty = null;
 
 	private String getColor(Model m)
 	{
@@ -753,6 +754,7 @@ public class MainPanel extends JPanel implements ViewControler
 		setSpinEnabled(isSpinEnabled(), true);
 
 		initHighlighter();
+		initMoleculeDescriptor();
 
 		view.suspendAnimation("new clustering");
 		if (!isAllClustersSpreadable())
@@ -1039,7 +1041,7 @@ public class MainPanel extends JPanel implements ViewControler
 	@Override
 	public boolean canChangeCompoundSize(boolean larger)
 	{
-		if (larger && ClusteringUtil.COMPOUND_SIZE == 20)
+		if (larger && ClusteringUtil.COMPOUND_SIZE == ClusteringUtil.COMPOUND_SIZE_MAX)
 			return false;
 		if (!larger && ClusteringUtil.COMPOUND_SIZE == 0)
 			return false;
@@ -1053,7 +1055,7 @@ public class MainPanel extends JPanel implements ViewControler
 	@Override
 	public void changeCompoundSize(boolean larger)
 	{
-		if (larger && ClusteringUtil.COMPOUND_SIZE < 20)
+		if (larger && ClusteringUtil.COMPOUND_SIZE < ClusteringUtil.COMPOUND_SIZE_MAX)
 		{
 			ClusteringUtil.COMPOUND_SIZE++;
 			updateDensitiy();
@@ -1073,6 +1075,12 @@ public class MainPanel extends JPanel implements ViewControler
 			ClusteringUtil.COMPOUND_SIZE = compoundSize;
 			updateDensitiy();
 		}
+	}
+
+	@Override
+	public int getCompoundSizeMax()
+	{
+		return ClusteringUtil.COMPOUND_SIZE_MAX;
 	}
 
 	@Override
@@ -1183,6 +1191,36 @@ public class MainPanel extends JPanel implements ViewControler
 	public Color getMatchColor()
 	{
 		return matchColor;
+	}
+
+	private void initMoleculeDescriptor()
+	{
+		if (modelDescriptorProperty != COMPOUND_INDEX_PROPERTY && modelDescriptorProperty != COMPOUND_SMILES_PROPERTY
+				&& !clustering.getFeatures().contains(modelDescriptorProperty)
+				&& !clustering.getProperties().contains(modelDescriptorProperty))
+			modelDescriptorProperty = null;
+		if (modelDescriptorProperty == null)
+			modelDescriptorProperty = COMPOUND_INDEX_PROPERTY;
+		for (Model m : clustering.getModels())
+			m.setDescriptor(modelDescriptorProperty);
+	}
+
+	@Override
+	public void setMoleculeDescriptor(MoleculeProperty prop)
+	{
+		if (modelDescriptorProperty != prop)
+		{
+			modelDescriptorProperty = prop;
+			for (Model m : clustering.getModels())
+				m.setDescriptor(modelDescriptorProperty);
+			fireViewChange(PROPERTY_MOLECULE_DESCRIPTOR_CHANGED);
+		}
+	}
+
+	@Override
+	public MoleculeProperty getMoleculeDescriptor()
+	{
+		return modelDescriptorProperty;
 	}
 
 }

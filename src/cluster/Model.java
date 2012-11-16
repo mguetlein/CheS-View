@@ -2,6 +2,7 @@ package cluster;
 
 import gui.MainPanel.Translucency;
 import gui.View;
+import gui.ViewControler;
 import gui.Zoomable;
 
 import java.util.BitSet;
@@ -35,6 +36,7 @@ public class Model implements Zoomable
 	private String color;
 	private MoleculeProperty highlightMoleculeProperty;
 	private String style;
+	private MoleculeProperty descriptorProperty = ViewControler.COMPOUND_INDEX_PROPERTY;
 
 	private float diameter = -1;
 
@@ -90,7 +92,12 @@ public class Model implements Zoomable
 
 	public String toString()
 	{
-		return "Compound " + (getModelOrigIndex() + 1);
+		if (descriptorProperty == ViewControler.COMPOUND_INDEX_PROPERTY)
+			return "Compound " + (getModelOrigIndex() + 1);
+		else if (descriptorProperty == ViewControler.COMPOUND_SMILES_PROPERTY)
+			return getSmiles();
+		else
+			return getTemperature(descriptorProperty);
 	}
 
 	public String getSmiles()
@@ -261,6 +268,11 @@ public class Model implements Zoomable
 	public ImageIcon getIcon(boolean backgroundBlack)
 	{
 		return compoundData.getIcon(backgroundBlack);
+	}
+
+	public void setDescriptor(MoleculeProperty descriptorProperty)
+	{
+		this.descriptorProperty = descriptorProperty;
 	}
 
 }

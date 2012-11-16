@@ -5,6 +5,7 @@ import gui.swing.TransparentViewPanel;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.event.ContainerEvent;
 import java.awt.event.ContainerListener;
 import java.awt.event.MouseAdapter;
@@ -200,6 +201,18 @@ public class ModelListPanel extends TransparentViewPanel
 			}
 		});
 
+		controler.addViewListener(new PropertyChangeListener()
+		{
+			@Override
+			public void propertyChange(PropertyChangeEvent evt)
+			{
+				if (evt.getPropertyName().equals(ViewControler.PROPERTY_MOLECULE_DESCRIPTOR_CHANGED))
+				{
+					update(clusterActive.getSelected(), false);
+				}
+			}
+		});
+
 	}
 
 	private void updateCluster(int index, boolean active)
@@ -346,12 +359,15 @@ public class ModelListPanel extends TransparentViewPanel
 
 				//				hideUnselectedCheckBox.setVisible(true);
 
+				listScrollPane.setPreferredSize(null);
 				for (Model m : c.getModels())
 				{
 					listModel.addElement(m);
 				}
 				updateActiveModelSelection();
 				listScrollPane.setVisible(true);
+				if (listScrollPane.getPreferredSize().getWidth() > 400)
+					listScrollPane.setPreferredSize(new Dimension(400, listScrollPane.getPreferredSize().height));
 			}
 		}
 		setIgnoreRepaint(false);

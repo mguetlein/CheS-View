@@ -32,6 +32,7 @@ import util.SwingUtil;
 import cluster.Clustering;
 import cluster.ExportData;
 import data.ClusteringData;
+import dataInterface.MoleculeProperty;
 
 public class MenuBar extends JMenuBar
 {
@@ -149,6 +150,7 @@ public class MenuBar extends JMenuBar
 	Action vActionSpin;
 	Action vActionBlackWhite;
 	Action vActionColorMatch;
+	Action vActionMoleculeDescriptor;
 
 	//help
 
@@ -441,7 +443,7 @@ public class MenuBar extends JMenuBar
 			}
 		});
 
-		vActionColorMatch = new AbstractAction("Choose substructure match color")
+		vActionColorMatch = new AbstractAction("Substructure match color")
 		{
 			@Override
 			public void actionPerformed(ActionEvent e)
@@ -469,8 +471,31 @@ public class MenuBar extends JMenuBar
 			}
 		});
 
+		vActionMoleculeDescriptor = new AbstractAction("Compound identifier")
+		{
+			@Override
+			public void actionPerformed(ActionEvent e)
+			{
+				List<MoleculeProperty> props = new ArrayList<MoleculeProperty>();
+				props.add(ViewControler.COMPOUND_INDEX_PROPERTY);
+				props.add(ViewControler.COMPOUND_SMILES_PROPERTY);
+				for (MoleculeProperty moleculeProperty : clustering.getProperties())
+					props.add(moleculeProperty);
+				for (MoleculeProperty moleculeProperty : clustering.getFeatures())
+					if (!props.contains(moleculeProperty))
+						props.add(moleculeProperty);
+				MoleculeProperty selected = viewControler.getMoleculeDescriptor();
+				MoleculeProperty p = SwingUtil.selectFromListWithDialog(props, selected, "Set compound identifier",
+						Settings.TOP_LEVEL_FRAME);
+				if (p != null)
+					viewControler.setMoleculeDescriptor(p);
+			}
+		};
+		((AbstractAction) vActionMoleculeDescriptor).putValue(Action.ACCELERATOR_KEY,
+				KeyStroke.getKeyStroke(KeyEvent.VK_D, ActionEvent.ALT_MASK));
+
 		MyMenu viewMenu = new MyMenu("View", vActionFullScreen, vActionDrawHydrogens, vActionHideUnselectedCompounds,
-				vActionSpin, vActionBlackWhite, vActionColorMatch);
+				vActionSpin, vActionBlackWhite, vActionColorMatch, vActionMoleculeDescriptor);
 
 		Action hActionDocu = new AbstractAction("Online Documentation")
 		{

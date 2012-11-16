@@ -87,7 +87,8 @@ public class ControlPanel extends TransparentViewPanel
 		buttonMinus = ComponentFactory.createViewButton("-", new Insets(1, 3, 1, 3));
 		buttonMinus.setPreferredSize(buttonPlus.getPreferredSize());
 
-		slider = ComponentFactory.createViewSlider(0, 20, viewControler.getCompoundSize());
+		slider = ComponentFactory.createViewSlider(0, viewControler.getCompoundSizeMax(),
+				viewControler.getCompoundSize());
 		slider.setPreferredSize(new Dimension(100, slider.getPreferredSize().height));
 
 		highlightCombobox = ComponentFactory.createViewComboBox();

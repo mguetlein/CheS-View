@@ -6,6 +6,10 @@ import java.awt.Color;
 import java.beans.PropertyChangeListener;
 import java.util.HashMap;
 
+import dataInterface.AbstractMoleculeProperty;
+import dataInterface.MoleculeProperty;
+import dataInterface.MoleculePropertySet;
+
 public interface ViewControler
 {
 	public static final String STYLE_WIREFRAME = "spacefill 0; wireframe 0.02";
@@ -24,6 +28,8 @@ public interface ViewControler
 	public void changeCompoundSize(boolean larger);
 
 	public int getCompoundSize();
+
+	public int getCompoundSizeMax();
 
 	public void setCompoundSize(int compoundSize);
 
@@ -58,6 +64,7 @@ public interface ViewControler
 	public static final String PROPERTY_SPIN_CHANGED = "propertySpinChanged";
 	public static final String PROPERTY_BACKGROUND_CHANGED = "propertyBackgroundChanged";
 	public static final String PROPERTY_MATCH_COLOR_CHANGED = "propertyMatchColorChanged";
+	public static final String PROPERTY_MOLECULE_DESCRIPTOR_CHANGED = "propertyMoleculeDescriptorChanged";
 
 	public boolean isHighlighterLabelsVisible();
 
@@ -81,4 +88,26 @@ public interface ViewControler
 	public void setMatchColor(Color color);
 
 	public Color getMatchColor();
+
+	static final MoleculeProperty COMPOUND_INDEX_PROPERTY = new AbstractMoleculeProperty("Compound Index", "no-desc")
+	{
+		@Override
+		public MoleculePropertySet getMoleculePropertySet()
+		{
+			return null;
+		}
+	};
+	static final MoleculeProperty COMPOUND_SMILES_PROPERTY = new AbstractMoleculeProperty("Compound SMILES", "no-desc")
+	{
+		@Override
+		public MoleculePropertySet getMoleculePropertySet()
+		{
+			return null;
+		}
+	};
+
+	public void setMoleculeDescriptor(MoleculeProperty prop);
+
+	public MoleculeProperty getMoleculeDescriptor();
+
 }
