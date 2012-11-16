@@ -3,6 +3,7 @@ package gui;
 import gui.MainPanel.JmolPanel;
 
 import java.awt.Color;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.HashSet;
@@ -12,12 +13,14 @@ import java.util.List;
 import javax.vecmath.Point3f;
 import javax.vecmath.Vector3f;
 
+import main.PropHandler;
 import main.ScreenSetup;
 import main.Settings;
 
 import org.jmol.export.dialog.Dialog;
 import org.jmol.viewer.Viewer;
 
+import util.FileUtil;
 import util.SequentialWorkerThread;
 import util.Vector3fUtil;
 
@@ -368,10 +371,16 @@ public class View
 		String[] imageChoices = { "JPEG", "PNG", "GIF", "PPM", "PDF" };
 		String[] imageExtensions = { "jpg", "png", "gif", "ppm", "pdf" };
 		Dialog sd = new Dialog();
-		String fileName = sd.getImageFileNameFromDialog(viewer, null, imageType, imageChoices, imageExtensions,
+		String dir = PropHandler.get("image-export-dir");
+		if (dir == null)
+			dir = System.getProperty("user.home");
+		String name = dir + File.separator + "ches-mapper-image.jpg";
+		String fileName = sd.getImageFileNameFromDialog(viewer, name, imageType, imageChoices, imageExtensions,
 				qualityJPG, qualityPNG);
 		if (fileName == null)
 			return;
+		PropHandler.put("image-export-dir", FileUtil.getParent(fileName));
+		PropHandler.storeProperties();
 		qualityJPG = sd.getQuality("JPG");
 		qualityPNG = sd.getQuality("PNG");
 		String sType = imageType = sd.getType();
