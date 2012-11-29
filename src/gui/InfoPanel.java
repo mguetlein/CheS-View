@@ -165,7 +165,7 @@ public class InfoPanel extends TransparentViewPanel
 		clusterPanel.setOpaque(false);
 		clusterPanel.setVisible(false);
 
-		compoundPanel = new JPanel(new BorderLayout(2, 2))
+		compoundPanel = new JPanel(new BorderLayout(5, 2))
 		{
 			public Dimension getPreferredSize()
 			{
