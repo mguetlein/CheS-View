@@ -873,19 +873,20 @@ public class MainPanel extends JPanel implements ViewControler
 		final Dimension currentSize = new Dimension();
 		final Rectangle rectClip = new Rectangle();
 
-		//		final Dimension dimSize = new Dimension();
+		final Dimension dimSize = new Dimension();
 
 		public void paint(Graphics g)
 		{
-			getSize(currentSize);
-			g.getClipBounds(rectClip);
-			if (g != null && currentSize != null && rectClip != null)
-				viewer.renderScreenImage(g, currentSize, rectClip);
+			////code for old version
+			//			getSize(currentSize);
+			//			g.getClipBounds(rectClip);
+			//			if (g != null && currentSize != null && rectClip != null)
+			//				viewer.renderScreenImage(g, currentSize, rectClip);
 
-			//			getSize(dimSize);
-			//			if (dimSize.width == 0)
-			//				return;
-			//			viewer.renderScreenImage(g, dimSize.width, dimSize.height);
+			getSize(dimSize);
+			if (dimSize.width == 0)
+				return;
+			viewer.renderScreenImage(g, dimSize.width, dimSize.height);
 		}
 	}
 

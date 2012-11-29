@@ -113,7 +113,8 @@ public class InfoPanel extends TransparentViewPanel
 			public void propertyChange(PropertyChangeEvent evt)
 			{
 				if (evt.getPropertyName().equals(ViewControler.PROPERTY_HIGHLIGHT_CHANGED)
-						|| evt.getPropertyName().equals(ViewControler.PROPERTY_NEW_HIGHLIGHTERS))
+						|| evt.getPropertyName().equals(ViewControler.PROPERTY_NEW_HIGHLIGHTERS)
+						|| evt.getPropertyName().equals(ViewControler.PROPERTY_BACKGROUND_CHANGED))
 				{
 					updateCluster();
 					updateCompound();

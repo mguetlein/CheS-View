@@ -150,7 +150,7 @@ public class View
 
 	public synchronized int findNearestAtomIndex(int x, int y)
 	{
-		return viewer.findNearestAtomIndex(x, y);
+		return viewer.findNearestAtomIndexFixed(x, y);
 	}
 
 	public synchronized int getAtomModelIndex(int atomIndex)
