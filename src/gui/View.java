@@ -3,9 +3,11 @@ package gui;
 import gui.MainPanel.JmolPanel;
 
 import java.awt.Color;
+import java.awt.Dimension;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.BitSet;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.List;
@@ -32,6 +34,8 @@ public class View
 
 	public static int FONT_SIZE = 10;
 	public boolean antialias = false;
+
+	private static Zoomable zoomedTo;
 
 	public static enum AnimationSpeed
 	{
@@ -90,7 +94,7 @@ public class View
 		zoomTo(zoomable, speed, null);
 	}
 
-	public synchronized void zoomTo(Zoomable zoomable, final AnimationSpeed speed, Boolean superimposed)
+	public synchronized void zoomTo(final Zoomable zoomable, final AnimationSpeed speed, Boolean superimposed)
 	{
 		if (superimposed == null)
 			superimposed = zoomable.isSuperimposed();
@@ -126,6 +130,7 @@ public class View
 					viewer.scriptWait(cmd);
 					if (setAntialiasBackOn)
 						setAntialiasOn(true);
+					zoomedTo = zoomable;
 					guiControler.unblock("zoom to " + Vector3fUtil.toString(center));
 				}
 			}, "zoom to " + zoomable);
@@ -133,9 +138,15 @@ public class View
 		else
 		{
 			String cmd = "zoomto 0 " + Vector3fUtil.toString(center) + " " + zoom;
+			zoomedTo = zoomable;
 			viewer.scriptWait(cmd);
 		}
 
+	}
+
+	public Zoomable getZoomTarget()
+	{
+		return zoomedTo;
 	}
 
 	public synchronized static String color(Color col)
@@ -360,6 +371,8 @@ public class View
 		return Vector3fUtil.maxDist(points.toArray(a));
 	}
 
+	HashMap<Dimension, Dimension> cachedResolutions = new HashMap<Dimension, Dimension>();
+
 	/**
 	 * Copied from org.openscience.jmol.app.jmolpanel.JmolPanel
 	 */
@@ -393,6 +406,16 @@ public class View
 				return; // make no assumptions - require a type by extension
 			sType = sType.substring(i + 1).toUpperCase();
 		}
-		Settings.LOGGER.info((String) viewer.createImage(fileName, sType, null, sd.getQuality(sType), 0, 0));
+		Dimension resScreen = new Dimension(viewer.getScreenWidth(), viewer.getScreenHeight());
+		Dimension resCached = cachedResolutions.get(resScreen);
+		if (resCached == null)
+			resCached = resScreen;
+		Dimension resSelected = ResolutionPanel.getResuloution(Settings.TOP_LEVEL_FRAME, "Select Image Resolution",
+				(int) resCached.getWidth(), (int) resCached.getHeight());
+		if (resSelected == null)
+			return;
+		cachedResolutions.put(resScreen, resSelected);
+		Settings.LOGGER.info((String) viewer.createImage(fileName, sType, null, sd.getQuality(sType),
+				resSelected.width, resSelected.height));
 	}
 }
