@@ -11,6 +11,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
+import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -22,6 +23,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 
+import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
@@ -61,27 +63,32 @@ public class MainPanel extends JPanel implements ViewControler
 	boolean hideUnselected = true;
 	Color matchColor = Color.ORANGE;
 	MoleculeProperty modelDescriptorProperty = null;
+	List<JComponent> ignoreMouseMovementPanels = new ArrayList<JComponent>();
 
-	private String getColor(Model m)
+	private Color getModelHighlightColor(Model m)
 	{
 		if (selectedHighlighter == Highlighter.CLUSTER_HIGHLIGHTER)
-			return "color "
-					+ ColorUtil.toJMolString(MoleculePropertyUtil.getColor(clustering.getClusterIndexForModel(m)));
+			return MoleculePropertyUtil.getColor(clustering.getClusterIndexForModel(m));
 		else if (selectedHighlightMoleculeProperty == null)
-			return "color cpk";
+			return null;
 		else if (m.getTemperature(selectedHighlightMoleculeProperty).equals("null"))
-			return "color " + ColorUtil.toJMolString(Color.DARK_GRAY);
+			return Color.DARK_GRAY;
 		else if (selectedHighlightMoleculeProperty.getType() == Type.NOMINAL)
-			return "color "
-					+ ColorUtil.toJMolString(MoleculePropertyUtil.getNominalColor(selectedHighlightMoleculeProperty,
-							m.getStringValue(selectedHighlightMoleculeProperty)));
+			return MoleculePropertyUtil.getNominalColor(selectedHighlightMoleculeProperty,
+					m.getStringValue(selectedHighlightMoleculeProperty));
 		else
-			return "color FIXEDTEMPERATURE";
+			return ColorUtil.getThreeColorGradient(m.getNormalizedDoubleValue(selectedHighlightMoleculeProperty),
+					Color.RED, Color.WHITE, Color.BLUE);
 	}
 
 	public static enum Translucency
 	{
 		None, ModerateWeak, ModerateStrong, Strong;
+	}
+
+	public static enum HighlightMode
+	{
+		ColorCompounds, Spheres;
 	}
 
 	private String getColorSuffixTranslucent(Translucency t)
@@ -107,6 +114,7 @@ public class MainPanel extends JPanel implements ViewControler
 	HighlightSorting highlightSorting = HighlightSorting.Median;
 	HighlightAutomatic highlightAutomatic;
 	boolean backgroundBlack = true;
+	HighlightMode highlightMode = HighlightMode.ColorCompounds;
 
 	public Clustering getClustering()
 	{
@@ -168,14 +176,17 @@ public class MainPanel extends JPanel implements ViewControler
 					int atomIndex = view.findNearestAtomIndex(e.getX(), e.getY());
 					if (atomIndex != -1)
 					{
-						if (!clustering.isClusterActive())
+						boolean selectCluster = !clustering.isClusterActive() && !e.isControlDown();
+						boolean selectModel = clustering.isClusterActive() || e.isShiftDown();
+
+						if (selectCluster)
 						{
 							// set a cluster to active (zooming will be done in listener)
 							clustering.getClusterActive().setSelected(
 									clustering.getClusterIndexForModelIndex(view.getAtomModelIndex(atomIndex)));
 							clustering.getClusterWatched().clearSelection();
 						}
-						else
+						if (selectModel)
 						{
 							// already a cluster active, zooming into model
 							// final Model m = clustering.getModelWithModelIndex(view.getAtomModelIndex(atomIndex));
@@ -211,31 +222,73 @@ public class MainPanel extends JPanel implements ViewControler
 
 			public void mouseMoved(MouseEvent e)
 			{
-				int atomIndex = view.findNearestAtomIndex(e.getX(), e.getY());
-
-				if (!clustering.isClusterActive())
-				{
-					if (atomIndex == -1)
-					{
-						// // do not clear cluster selection
-						clustering.getClusterWatched().clearSelection();
-					}
-					else
-						clustering.getClusterWatched().setSelected(
-								(clustering.getClusterIndexForModelIndex(view.getAtomModelIndex(atomIndex))));
-				}
-				else
-				{
-					if (atomIndex == -1)
-					{
-						// // do not clear model selection
-						clustering.getModelWatched().clearSelection();
-					}
-					else
-						clustering.getModelWatched().setSelected(view.getAtomModelIndex(atomIndex));
-				}
+				updateMouse(e.getPoint(), e.isShiftDown());
 			}
 		});
+	}
+
+	Point mousePos;
+	boolean shiftDown;
+
+	@Override
+	public void updateMouseSelection(boolean shiftDown)
+	{
+		updateMouse(mousePos, shiftDown);
+	}
+
+	private void updateMouse(Point mousePos, boolean shiftDown)
+	{
+		this.mousePos = mousePos;
+		this.shiftDown = shiftDown;
+
+		//		System.err.println("mouse udpate " + mousePos + " " + shiftDown);
+
+		for (JComponent c : ignoreMouseMovementPanels)
+		{
+			if (c.isVisible())
+			{
+				Point p = SwingUtilities.convertPoint(MainPanel.this, mousePos, c);
+				if (p.x >= 0 && p.y >= 0 && p.x <= c.getWidth() && p.y <= c.getHeight())
+					return;
+			}
+		}
+
+		int atomIndex = view.findNearestAtomIndex(mousePos.x, mousePos.y);
+
+		if (!clustering.isClusterActive() && !shiftDown)
+		{
+			if (atomIndex == -1)
+			{
+				// // do not clear cluster selection
+				clustering.getClusterWatched().clearSelection();
+			}
+			else
+			{
+				clustering.getModelWatched().clearSelection();
+				//clustering.getModelActive().clearSelection();
+				clustering.getClusterWatched().setSelected(
+						(clustering.getClusterIndexForModelIndex(view.getAtomModelIndex(atomIndex))));
+			}
+		}
+		else
+		{
+			if (atomIndex == -1)
+			{
+				// // do not clear model selection
+				clustering.getModelWatched().clearSelection();
+			}
+			else
+			{
+				clustering.getClusterWatched().clearSelection();
+				clustering.getModelWatched().setSelected(view.getAtomModelIndex(atomIndex));
+			}
+		}
+	}
+
+	@Override
+	public void addIgnoreMouseMovementComponents(JComponent c)
+	{
+		this.ignoreMouseMovementPanels.add(c);
 	}
 
 	public String getStyle()
@@ -373,13 +426,23 @@ public class MainPanel extends JPanel implements ViewControler
 	{
 		BitSet toDisplay = new BitSet();
 		BitSet toHide = new BitSet();
+		List<Model> toDisplayM = new ArrayList<Model>();
+		List<Model> toHideM = new ArrayList<Model>();
 
 		if (!clusterVisible)
+		{
 			toHide.or(c.getBitSet());
+			for (Model model : c.getModels())
+				toHideM.add(model);
+		}
 		else
 		{
 			if (!hideSomeModels)
+			{
 				toDisplay.or(c.getBitSet());
+				for (Model model : c.getModels())
+					toDisplayM.add(model);
+			}
 			else
 			{
 				int numModels = c.getModels().size();
@@ -412,7 +475,23 @@ public class MainPanel extends JPanel implements ViewControler
 				}
 			}
 		}
+
+		for (Model model : toHideM)
+		{
+			if (model.isShowActiveBox())
+				view.scriptWait("draw bb" + model.getModelIndex() + "a OFF");
+			if (model.isSphereVisible())
+				view.hideSphere(model);
+		}
 		view.hide(toHide);
+
+		for (Model model : toDisplayM)
+		{
+			if (model.isShowActiveBox())
+				view.scriptWait("draw bb" + model.getModelIndex() + "a ON");
+			if (model.isSphereVisible())
+				view.showSphere(model, false);
+		}
 		view.display(toDisplay);
 	}
 
@@ -433,18 +512,18 @@ public class MainPanel extends JPanel implements ViewControler
 
 	/**
 	 * udpates single model
-	 * forceUpdate = true -> everything is reset (independent of model is part of active cluster or if single props habve changed)
+	 * forceUpdate = true -> everything is reset (independent of model is part of active cluster or if single props have changed)
 	 * 
 	 * shows/hides box around model
 	 * show/hides model label
 	 * set model translucent/opaque
 	 * highlight substructure in model 
 	 */
-	private void updateModel(int i, boolean forceUpdate)
+	private void updateModel(int modelIndex, boolean forceUpdate)
 	{
-		int clus = clustering.getClusterIndexForModelIndex(i);
+		int clus = clustering.getClusterIndexForModelIndex(modelIndex);
 		Cluster c = clustering.getCluster(clus);
-		Model m = clustering.getModelWithModelIndex(i);
+		Model m = clustering.getModelWithModelIndex(modelIndex);
 		if (m == null)
 		{
 			Settings.LOGGER.warn("model is null!");
@@ -461,11 +540,12 @@ public class MainPanel extends JPanel implements ViewControler
 		// inside the active cluster
 		if (clus == activeCluster)
 		{
-			if (!clustering.isModelWatched() && !clustering.isModelActive())
+			if (!clustering.isModelWatchedFromCluster(clus) && !clustering.isModelActiveFromCluster(clus))
 				translucent = false;
 			else
 			{
-				if (clustering.getModelWatched().isSelected(i) || clustering.getModelActive().isSelected(i))
+				if (clustering.getModelWatched().isSelected(modelIndex)
+						|| clustering.getModelActive().isSelected(modelIndex))
 					translucent = false;
 				else
 					translucent = true;
@@ -474,9 +554,9 @@ public class MainPanel extends JPanel implements ViewControler
 			if (selectedHighlighter instanceof MoleculePropertyHighlighter)
 				showLabel = true;
 
-			if (clustering.getModelWatched().isSelected(i) && !c.isSuperimposed())
+			if (clustering.getModelWatched().isSelected(modelIndex) && !c.isSuperimposed())
 				showHoverBox = true;
-			if (clustering.getModelActive().isSelected(i) && !c.isSuperimposed())
+			if (clustering.getModelActive().isSelected(modelIndex) && !c.isSuperimposed())
 				showActiveBox = true;
 		}
 		else
@@ -496,11 +576,21 @@ public class MainPanel extends JPanel implements ViewControler
 				translucent = (models.indexOf(m) > 0);
 			else
 			{
-				if (watchedCluster == -1 || selectedHighlighter == Highlighter.CLUSTER_HIGHLIGHTER)
+				if (clustering.isModelWatched() || clustering.isModelActive())
+				{
+					translucent = !(clustering.getModelWatched().isSelected(modelIndex) || clustering.getModelActive()
+							.isSelected(modelIndex));
+				}
+				else if (watchedCluster == -1 || selectedHighlighter == Highlighter.CLUSTER_HIGHLIGHTER)
 					translucent = false;
 				else
 					translucent = (clus != watchedCluster);
 			}
+
+			if (clustering.getModelWatched().isSelected(modelIndex) && !c.isSuperimposed())
+				showHoverBox = true;
+			if (clustering.getModelActive().isSelected(modelIndex) && !c.isSuperimposed())
+				showActiveBox = true;
 		}
 
 		String smarts = null;
@@ -513,19 +603,27 @@ public class MainPanel extends JPanel implements ViewControler
 		if (!highlighterLabelsVisible)
 			showLabel = false;
 
-		BitSet bs = view.getModelUndeletedAtomsBitSet(i);
+		BitSet bs = view.getModelUndeletedAtomsBitSet(modelIndex);
 		view.select(bs);
-		String color = getColor(m);
+		Color col = getModelHighlightColor(m);
+		String highlightColor = col == null ? null : "color " + ColorUtil.toJMolString(col);
+		String modelColor;
+		if (highlightMode == HighlightMode.Spheres)
+			modelColor = "color cpk";
+		else
+			modelColor = col == null ? "color cpk" : "color " + ColorUtil.toJMolString(col);
 
-		boolean labelUpdate = showLabel
-				&& (!color.equals(m.getColor()) || selectedHighlightMoleculeProperty != m
-						.getHighlightMoleculeProperty());
+		boolean sphereVisible = (highlightMode == HighlightMode.Spheres && highlightColor != null);
 
 		Translucency translucency;
 		if (translucent)
 		{
 			if (clustering.isSuperimposed())
+			{
 				translucency = Translucency.Strong;
+				if (highlightMode == HighlightMode.Spheres)
+					sphereVisible = false;
+			}
 			else if (hideUnselected)
 			{
 				if (clus == activeCluster)
@@ -546,26 +644,46 @@ public class MainPanel extends JPanel implements ViewControler
 		else
 			translucency = Translucency.None;
 
-		boolean colorUpdated = false;
-		if (forceUpdate || translucency != m.getTranslucency() || !color.equals(m.getColor())
-				|| selectedHighlightMoleculeProperty != m.getHighlightMoleculeProperty() || !style.equals(m.getStyle()))
-		{
-			colorUpdated = true;
-			if (forceUpdate || !style.equals(m.getStyle()))
-			{
-				m.setStyle(style);
-				view.scriptWait(style);
-			}
-			m.setTranslucency(translucency);
-			m.setColor(color);
-			m.setHighlightMoleculeProperty(selectedHighlightMoleculeProperty);
+		boolean styleUpdate = !style.equals(m.getStyle());
+		boolean modelUpdate = styleUpdate || translucency != m.getTranslucency()
+				|| !ObjectUtil.equals(modelColor, m.getModelColor());
+		//showLabel is enough because superimpose<->not-superimpose is not tracked in model
+		boolean checkLabelUpdate = showLabel || (!showLabel && m.getLabel() != null)
+				|| !ObjectUtil.equals(modelColor, m.getModelColor())
+				|| selectedHighlightMoleculeProperty != m.getHighlightMoleculeProperty();
+		boolean sphereUpdate = sphereVisible != m.isSphereVisible()
+				|| (sphereVisible && (translucency != m.getTranslucency() || !ObjectUtil.equals(highlightColor,
+						m.getHighlightColor())));
+		boolean spherePositionUpdate = sphereVisible && !ObjectUtil.equals(m.getPosition(), m.getSpherePosition());
+		boolean hoverBoxUpdate = showHoverBox != m.isShowHoverBox();
+		boolean activeBoxUpdate = showActiveBox != m.isShowActiveBox();
+		boolean smartsUpdate = modelUpdate || smarts != m.getHighlightedSmarts();
 
-			view.scriptWait(color + getColorSuffixTranslucent(translucency));
+		m.setModelColor(modelColor);
+		m.setStyle(style);
+		m.setTranslucency(translucency);
+		m.setHighlightMoleculeProperty(selectedHighlightMoleculeProperty);
+		m.setHighlightColor(highlightColor);
+		m.setSpherePosition(m.getPosition());
+		m.setSphereVisible(sphereVisible);
+		m.setShowHoverBox(showHoverBox);
+		m.setShowActiveBox(showActiveBox);
+
+		if (forceUpdate || styleUpdate)
+			view.scriptWait(style);
+		if (forceUpdate || modelUpdate)
+			view.scriptWait(modelColor + getColorSuffixTranslucent(translucency));
+
+		if (forceUpdate || sphereUpdate || spherePositionUpdate)
+		{
+			if (sphereVisible)
+				view.showSphere(m, forceUpdate || spherePositionUpdate);
+			else
+				view.hideSphere(m);
 		}
 
-		if (forceUpdate || showHoverBox != m.isShowHoverBox())
+		if (forceUpdate || hoverBoxUpdate)
 		{
-			m.setShowHoverBox(showHoverBox);
 			if (showHoverBox)
 			{
 				view.scriptWait("boundbox { selected }");
@@ -576,14 +694,11 @@ public class MainPanel extends JPanel implements ViewControler
 				//				jmolPanel.repaint(); // HACK to avoid label display errors
 			}
 			else
-			{
 				view.scriptWait("draw bb" + m.getModelIndex() + "h OFF");
-			}
 		}
 
-		if (forceUpdate || showActiveBox != m.isShowActiveBox())
+		if (forceUpdate || activeBoxUpdate)
 		{
-			m.setShowActiveBox(showActiveBox);
 			if (showActiveBox)
 			{
 				view.scriptWait("boundbox { selected }");
@@ -600,7 +715,7 @@ public class MainPanel extends JPanel implements ViewControler
 		}
 
 		// CHANGES JMOL SELECTION !!!
-		if (forceUpdate || colorUpdated || smarts != m.getHighlightedSmarts())
+		if (forceUpdate || smartsUpdate)
 		{
 			boolean match = false;
 			if (smarts != null && smarts.length() > 0)
@@ -611,54 +726,63 @@ public class MainPanel extends JPanel implements ViewControler
 					match = true;
 					m.setHighlightedSmarts(smarts);
 					view.select(matchBitSet);
-					view.scriptWait("color " + View.color(matchColor) + getColorSuffixTranslucent(translucency));
+					view.scriptWait("color " + View.convertColor(matchColor) + getColorSuffixTranslucent(translucency));
 				}
 			}
 			if (!match)// || forceUpdate || translucentUpdate)
 			{
 				m.setHighlightedSmarts(null);
-				view.scriptWait(color + getColorSuffixTranslucent(translucency));
+				if (highlightMode == HighlightMode.Spheres)
+					view.scriptWait("color cpk" + getColorSuffixTranslucent(translucency));
+				else
+					view.scriptWait(modelColor + getColorSuffixTranslucent(translucency));
 			}
 		}
 
-		String label = null;
-		if (showLabel || labelUpdate)
+		// MAY CHANGE JMOL SELECTION !!!
+		if (forceUpdate || checkLabelUpdate)
 		{
-			if (activeCluster == -1 && clustering.isSuperimposed())
-			{
-				label = c.getName() + " - " + ((MoleculePropertyHighlighter) selectedHighlighter).getProperty() + ": "
-						+ c.getSummaryStringValue(selectedHighlightMoleculeProperty);
-			}
-			else
-			{
-				Object val = clustering.getModelWithModelIndex(i).getTemperature(
-						((MoleculePropertyHighlighter) selectedHighlighter).getProperty());
-				Double d = DoubleUtil.parseDouble(val + "");
-				if (d != null)
-					val = StringUtil.formatDouble(d);
-				//				Settings.LOGGER.warn("label : " + i + " : " + c + " : " + val);
-				label = ((MoleculePropertyHighlighter) selectedHighlighter).getProperty() + ": " + val;
-			}
-		}
-
-		// CHANGES JMOL SELECTION !!!
-		if (forceUpdate || labelUpdate || !ObjectUtil.equals(label, m.getLabel()))
-		{
-			m.setLabel(label);
-			BitSet empty = new BitSet(bs.length());
-			empty.set(bs.nextSetBit(0));
-
-			view.select(empty);
+			String labelString = null;
 			if (showLabel)
 			{
-
-				view.scriptWait("set fontSize " + View.FONT_SIZE);
-				view.scriptWait("label \"" + label + "\"");
+				if (activeCluster == -1 && clustering.isSuperimposed())
+				{
+					labelString = c.getName() + " - "
+							+ ((MoleculePropertyHighlighter) selectedHighlighter).getProperty() + ": "
+							+ c.getSummaryStringValue(selectedHighlightMoleculeProperty);
+				}
+				else
+				{
+					Object val = clustering.getModelWithModelIndex(modelIndex).getTemperature(
+							((MoleculePropertyHighlighter) selectedHighlighter).getProperty());
+					Double d = DoubleUtil.parseDouble(val + "");
+					if (d != null)
+						val = StringUtil.formatDouble(d);
+					//				Settings.LOGGER.warn("label : " + i + " : " + c + " : " + val);
+					labelString = ((MoleculePropertyHighlighter) selectedHighlighter).getProperty() + ": " + val;
+				}
 			}
-			else
+
+			// CHANGES JMOL SELECTION!!
+			if (forceUpdate || !ObjectUtil.equals(labelString, m.getLabel()))
 			{
-				//				Settings.LOGGER.warn("label : " + i + " : " + c + " : off");
-				view.scriptWait("label OFF");
+				m.setLabel(labelString);
+
+				view.selectFirstCarbonAtom(m.getBitSet());
+				//				BitSet empty = new BitSet(bs.length());
+				//				empty.set(bs.nextSetBit(0));
+				//				view.select(empty);
+
+				if (showLabel)
+				{
+					view.scriptWait("set fontSize " + View.FONT_SIZE);
+					view.scriptWait("label \"" + labelString + "\"");
+				}
+				else
+				{
+					//				Settings.LOGGER.warn("label : " + i + " : " + c + " : off");
+					view.scriptWait("label OFF");
+				}
 			}
 		}
 	}
@@ -701,9 +825,9 @@ public class MainPanel extends JPanel implements ViewControler
 			@Override
 			public void propertyChange(PropertyChangeEvent e)
 			{
-				int mIndexOldArray[] = ((int[]) e.getOldValue());
-				int mIndexOld = mIndexOldArray.length == 0 ? -1 : mIndexOldArray[0];
-				updateModelWatchedSelection(clustering.getModelWatched().getSelected(), mIndexOld);
+				//				int mIndexOldArray[] = ((int[]) e.getOldValue());
+				//				int mIndexOld = mIndexOldArray.length == 0 ? -1 : mIndexOldArray[0];
+				updateModelWatchedSelection();//clustering.getModelWatched().getSelected(), mIndexOld);
 			}
 		});
 		clustering.addListener(new PropertyChangeListener()
@@ -789,11 +913,16 @@ public class MainPanel extends JPanel implements ViewControler
 		updateAllClustersAndModels(true);
 	}
 
-	private void updateModelWatchedSelection(int mIndex, int mIndexOld)
+	private void updateModelWatchedSelection()//int mIndex, int mIndexOld)
 	{
 		//		Settings.LOGGER.println("update model active: " + active + " " + ArrayUtil.toString(mIndex));
 		int activeCluster = clustering.getClusterActive().getSelected();
-		for (Model m : clustering.getCluster(activeCluster).getModels())
+		Iterable<Model> models;
+		if (activeCluster != -1)
+			models = clustering.getCluster(activeCluster).getModels();
+		else
+			models = clustering.getModels(true);
+		for (Model m : models)
 			updateModel(m.getModelIndex(), false);
 	}
 
@@ -801,19 +930,27 @@ public class MainPanel extends JPanel implements ViewControler
 	{
 		//		Settings.LOGGER.println("update model active: " + active + " " + ArrayUtil.toString(mIndex));
 		int activeCluster = clustering.getClusterActive().getSelected();
-		for (Model m : clustering.getCluster(activeCluster).getModels())
+		Iterable<Model> models;
+		if (activeCluster != -1)
+			models = clustering.getCluster(activeCluster).getModels();
+		else
+			models = clustering.getModels(true);
+		for (Model m : models)
 			updateModel(m.getModelIndex(), false);
 
-		if (activeCluster != -1 && !clustering.isSuperimposed())
+		if (/*activeCluster != -1 &&*/!clustering.isSuperimposed())
 		{
+			// zoom because model selection has changed
 			if (mIndex.length != 0 && zoomIntoModel)
 			{
-				if (mIndex.length != 1)
-					throw new IllegalStateException();
-				final Model m = clustering.getModelWithModelIndex(mIndex[0]);
-				view.zoomTo(m, AnimationSpeed.SLOW);
+				// a model selected
+				if (mIndex.length == 1)
+				{
+					final Model m = clustering.getModelWithModelIndex(mIndex[0]);
+					view.zoomTo(m, AnimationSpeed.SLOW);
+				}
 			}
-			else if (mIndex.length == 0 && mIndexOld.length > 0)
+			else if (mIndex.length == 0 && mIndexOld.length > 0 && activeCluster != -1)
 			{
 				final Cluster c = getClustering().getClusterForModelIndex(mIndexOld[0]);
 				view.zoomTo(c, AnimationSpeed.SLOW);
@@ -972,6 +1109,13 @@ public class MainPanel extends JPanel implements ViewControler
 				view.zoomTo(activeCluster, AnimationSpeed.SLOW, false);
 		}
 
+		for (Model model : clustering.getModels(true))
+			if (model.isSphereVisible())
+			{
+				model.setSphereVisible(false);
+				view.hideSphere(model);
+			}
+
 		if (c.size() > 0)
 		{
 			if (!animateSuperimpose)
@@ -1002,6 +1146,7 @@ public class MainPanel extends JPanel implements ViewControler
 				for (final Cluster cluster : c)
 				{
 					updateCluster(clustering.indexOf(cluster), false);
+
 					for (Model m : cluster.getModels())
 						updateModel(m.getModelIndex(), false);
 				}
@@ -1075,6 +1220,46 @@ public class MainPanel extends JPanel implements ViewControler
 		{
 			ClusteringUtil.COMPOUND_SIZE = compoundSize;
 			updateDensitiy();
+		}
+	}
+
+	@Override
+	public HighlightMode getHighlightMode()
+	{
+		return highlightMode;
+	}
+
+	@Override
+	public void setHighlightMode(HighlightMode mode)
+	{
+		if (highlightMode != mode)
+		{
+			highlightMode = mode;
+			if (selectedHighlighter != Highlighter.DEFAULT_HIGHLIGHTER)
+				updateAllClustersAndModels(true);
+			fireViewChange(PROPERTY_HIGHLIGHT_MODE_CHANGED);
+		}
+	}
+
+	@Override
+	public void setSphereSize(double size)
+	{
+		if (view.sphereSize != size)
+		{
+			view.sphereSize = size;
+			if (highlightMode == HighlightMode.Spheres && selectedHighlighter != Highlighter.DEFAULT_HIGHLIGHTER)
+				updateAllClustersAndModels(true);
+		}
+	}
+
+	@Override
+	public void setSphereTranslucency(double translucency)
+	{
+		if (view.sphereTranslucency != translucency)
+		{
+			view.sphereTranslucency = translucency;
+			if (highlightMode == HighlightMode.Spheres && selectedHighlighter != Highlighter.DEFAULT_HIGHLIGHTER)
+				updateAllClustersAndModels(true);
 		}
 	}
 
@@ -1202,7 +1387,7 @@ public class MainPanel extends JPanel implements ViewControler
 			modelDescriptorProperty = null;
 		if (modelDescriptorProperty == null)
 			modelDescriptorProperty = COMPOUND_INDEX_PROPERTY;
-		for (Model m : clustering.getModels())
+		for (Model m : clustering.getModels(true))
 			m.setDescriptor(modelDescriptorProperty);
 	}
 
@@ -1212,7 +1397,7 @@ public class MainPanel extends JPanel implements ViewControler
 		if (modelDescriptorProperty != prop)
 		{
 			modelDescriptorProperty = prop;
-			for (Model m : clustering.getModels())
+			for (Model m : clustering.getModels(true))
 				m.setDescriptor(modelDescriptorProperty);
 			fireViewChange(PROPERTY_MOLECULE_DESCRIPTOR_CHANGED);
 		}

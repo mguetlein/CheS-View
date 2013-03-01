@@ -31,9 +31,9 @@ public class ClusteringUtil
 
 	private static Vector3f[] getModelPositions(Clustering c, boolean scale)
 	{
-		Vector3f list[] = new Vector3f[c.getNumCompounds()];
+		Vector3f list[] = new Vector3f[c.getNumCompounds(true)];
 		int i = 0;
-		for (Model m : c.getModels())
+		for (Model m : c.getModels(true))
 			list[i++] = m.getPosition(scale);
 		return list;
 	}

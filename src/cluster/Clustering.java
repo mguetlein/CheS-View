@@ -9,6 +9,7 @@ import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Vector;
@@ -57,6 +58,9 @@ public class Clustering implements Zoomable
 	HashMap<Integer, Cluster> modelIndexToCluster;
 	HashMap<MoleculeProperty, Integer> numMissingValues;
 
+	List<Model> modelList;
+	List<Model> modelListIncludingMultiClusteredModels;
+
 	Vector3f superimposedCenter;
 	Vector3f nonSuperimposedCenter;
 
@@ -71,7 +75,7 @@ public class Clustering implements Zoomable
 		clusterActive = new SelectionModel();
 		clusterWatched = new SelectionModel();
 		modelActive = new SelectionModel(true);
-		modelWatched = new SelectionModel();
+		modelWatched = new SelectionModel(true);
 		clusters = new Vector<Cluster>();
 		numMissingValues = new HashMap<MoleculeProperty, Integer>();
 	}
@@ -118,10 +122,29 @@ public class Clustering implements Zoomable
 		{
 			for (Model m : c.getModels())
 			{
+				if (modelIndexToModel.get(m.getModelIndex()) != null)
+					throw new Error("WTF");
 				modelIndexToModel.put(m.getModelIndex(), m);
 				modelIndexToCluster.put(m.getModelIndex(), c);
 			}
 		}
+
+		modelListIncludingMultiClusteredModels = new ArrayList<Model>();
+		for (Cluster c : clusters)
+			for (Model mm : c.getModels())
+				modelListIncludingMultiClusteredModels.add(mm);
+
+		modelList = new ArrayList<Model>();
+		HashSet<Integer> modelIndex = new HashSet<Integer>();
+		for (Cluster c : clusters)
+			for (Model mm : c.getModels())
+			{
+				if (!modelIndex.contains(mm.getModelOrigIndex()))
+				{
+					modelList.add(mm);
+					modelIndex.add(mm.getModelOrigIndex());
+				}
+			}
 
 		numMissingValues.clear();
 
@@ -146,6 +169,28 @@ public class Clustering implements Zoomable
 	public boolean isModelWatched()
 	{
 		return modelWatched.getSelected() != -1;
+	}
+
+	public boolean isModelActiveFromCluster(int cluster)
+	{
+		int sel[] = modelActive.getSelectedIndices();
+		if (sel.length == 0)
+			return false;
+		for (int model : sel)
+			if (getClusterIndexForModelIndex(model) == cluster)
+				return true;
+		return false;
+	}
+
+	public boolean isModelWatchedFromCluster(int cluster)
+	{
+		int sel[] = modelWatched.getSelectedIndices();
+		if (sel.length == 0)
+			return false;
+		for (int model : sel)
+			if (getClusterIndexForModelIndex(model) == cluster)
+				return true;
+		return false;
 	}
 
 	public SelectionModel getClusterActive()
@@ -247,6 +292,8 @@ public class Clustering implements Zoomable
 		clusters.removeAllElements();
 		clusteringData = null;
 		View.instance.zap(true, true, true);
+		modelList.clear();
+		modelListIncludingMultiClusteredModels.clear();
 		dirty = true;
 
 		fire(CLUSTER_REMOVED, old, clusters);
@@ -291,14 +338,14 @@ public class Clustering implements Zoomable
 
 		clusteringData = d;
 
-		for (int i = 0; i < d.getSize(); i++)
+		for (int i = 0; i < d.getNumClusters(); i++)
 		{
 			//String substructure = null;
 			//			if (d.getClusterSubstructureSmarts() != null)
 			//				substructure = d.getClusterSubstructureSmarts()[i];
 
 			addSingleCluster(d.getCluster(i));
-			TaskProvider.update("Loading cluster dataset " + (i + 1) + "/" + d.getSize());
+			TaskProvider.update("Loading cluster dataset " + (i + 1) + "/" + d.getNumClusters());
 		}
 		TaskProvider.update(90, "Loading graphics");
 
@@ -314,6 +361,9 @@ public class Clustering implements Zoomable
 
 	public void updatePositions()
 	{
+		if (dirty)
+			update();
+
 		ClusteringUtil.updateScaleFactor(this);
 
 		getClusterWatched().clearSelection();
@@ -575,26 +625,49 @@ public class Clustering implements Zoomable
 		return clusters.size();
 	}
 
-	public int getNumCompounds()
+	public int getNumCompounds(boolean includingMultiClusteredCompounds)
 	{
-		int sum = 0;
-		for (Cluster c : clusters)
-			sum += c.size();
-		return sum;
+		//		if (modelList == null)//not yet computed, hence no clusters removed yet, can use complete clustering data
+		//			return clusteringData.getNumCompounds(includingMultiClusteredCompounds);
+		//		else
+		return getModels(includingMultiClusteredCompounds).size();
 	}
 
-	public Iterable<Model> getModels()
+	public List<Model> getModels(boolean includingMultiClusteredCompounds)
 	{
-		List<Model> m = new ArrayList<Model>();
-		for (Cluster c : clusters)
-			for (Model mm : c.getModels())
-				m.add(mm);
-		return m;
+		if (includingMultiClusteredCompounds)
+			return modelListIncludingMultiClusteredModels;
+		else
+			return modelList;
+	}
+
+	public String[] getStringValues(MoleculeProperty property, Model excludeModel)
+	{
+		List<String> l = new ArrayList<String>();
+		for (Model m : getModels(false))
+			if (m != excludeModel && m.getStringValue(property) != null)
+				l.add(m.getStringValue(property));
+		String v[] = new String[l.size()];
+		return l.toArray(v);
+	}
+
+	public Double[] getDoubleValues(MoleculeProperty property)
+	{
+		Double v[] = new Double[getNumCompounds(false)];
+		int i = 0;
+		for (Model m : getModels(false))
+			v[i++] = m.getDoubleValue(property);
+		return v;
 	}
 
 	public String getClusterAlgorithm()
 	{
 		return clusteringData.getClusterAlgorithm();
+	}
+
+	public boolean isClusterAlgorithmDisjoint()
+	{
+		return clusteringData.isClusterAlgorithmDisjoint();
 	}
 
 	public String getEmbedAlgorithm()

@@ -25,6 +25,7 @@ import javax.swing.event.ListSelectionListener;
 
 import cluster.Cluster;
 import cluster.Clustering;
+import cluster.Model;
 
 import com.jgoodies.forms.layout.CellConstraints;
 import com.jgoodies.forms.layout.FormLayout;
@@ -44,6 +45,8 @@ public class ClusterListPanel extends JPanel
 
 	Clustering clustering;
 	ViewControler viewControler;
+
+	ControlPanel controlPanel;
 
 	JCheckBox superimposeCheckBox;
 
@@ -143,7 +146,8 @@ public class ClusterListPanel extends JPanel
 				{
 					View.instance.suspendAnimation("clear cluster selection");
 					clustering.getModelWatched().clearSelection();
-					clustering.getModelActive().clearSelection();
+					if (View.instance.getZoomTarget() instanceof Model)
+						clustering.getModelActive().clearSelection();
 					View.instance.proceedAnimation("clear cluster selection");
 					clustering.getClusterActive().clearSelection();
 				}
@@ -154,7 +158,8 @@ public class ClusterListPanel extends JPanel
 					boolean suspendAnim = clustering.getClusterActive().getSelected() != cIndex;
 					if (suspendAnim)
 						View.instance.suspendAnimation("change cluster selection");
-					clustering.getModelActive().clearSelection();
+					if (View.instance.getZoomTarget() instanceof Model)
+						clustering.getModelActive().clearSelection();
 					if (suspendAnim)
 						View.instance.proceedAnimation("change cluster selection");
 					clustering.getClusterActive().setSelected(cIndex);
@@ -294,7 +299,8 @@ public class ClusterListPanel extends JPanel
 		panel.add(clusterPanel, cc.xy(1, 1));
 		panel.add(modelListPanel, cc.xy(3, 1));
 		add(panel, BorderLayout.WEST);
-		add(new ControlPanel(viewControler, clustering), BorderLayout.SOUTH);
+		controlPanel = new ControlPanel(viewControler, clustering);
+		add(controlPanel, BorderLayout.SOUTH);
 
 		setBorder(new EmptyBorder(25, 25, 25, 25));
 		setOpaque(false);

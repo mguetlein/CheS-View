@@ -379,12 +379,9 @@ public class Cluster implements Zoomable
 	public String[] getStringValues(MoleculeProperty property, Model excludeModel)
 	{
 		List<String> l = new ArrayList<String>();
-		for (int i = 0; i < models.size(); i++)
-		{
-			Model m = models.get(i);
+		for (Model m : models)
 			if (m != excludeModel && m.getStringValue(property) != null)
 				l.add(m.getStringValue(property));
-		}
 		String v[] = new String[l.size()];
 		return l.toArray(v);
 	}
@@ -443,5 +440,10 @@ public class Cluster implements Zoomable
 	public int numMissingValues(MoleculeProperty p)
 	{
 		return clusterData.numMissingValues(p);
+	}
+
+	public boolean containsNotClusteredCompounds()
+	{
+		return clusterData.containsNotClusteredCompounds();
 	}
 }

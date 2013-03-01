@@ -4,7 +4,6 @@ import java.awt.Dimension;
 import java.awt.Point;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
@@ -166,11 +165,11 @@ public class CheSViewer implements GUIControler
 		return menuBar.getPopup();
 	}
 
-	@Override
-	public void handleKeyEvent(KeyEvent e)
-	{
-		menuBar.handleKeyEvent(e);
-	}
+	//	@Override
+	//	public void handleKeyEvent(KeyEvent e)
+	//	{
+	//		menuBar.handleKeyEvent(e);
+	//	}
 
 	@Override
 	public void addPropertyChangeListener(PropertyChangeListener l)

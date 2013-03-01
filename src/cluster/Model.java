@@ -12,9 +12,6 @@ import javax.swing.ImageIcon;
 import javax.vecmath.Vector3f;
 
 import main.Settings;
-
-import org.jmol.script.Token;
-
 import dataInterface.CompoundData;
 import dataInterface.MoleculeProperty;
 import dataInterface.MoleculeProperty.Type;
@@ -33,10 +30,13 @@ public class Model implements Zoomable
 	private String smarts = null;
 
 	private HashMap<String, BitSet> smartsMatches;
-	private String color;
+	private String modelColor;
+	private String highlightColor;
+	private Vector3f spherePosition;
 	private MoleculeProperty highlightMoleculeProperty;
 	private String style;
 	private MoleculeProperty descriptorProperty = ViewControler.COMPOUND_INDEX_PROPERTY;
+	private boolean sphereVisible;
 
 	private float diameter = -1;
 
@@ -67,6 +67,11 @@ public class Model implements Zoomable
 	public Double getDoubleValue(MoleculeProperty property)
 	{
 		return compoundData.getDoubleValue(property);
+	}
+
+	public Double getNormalizedDoubleValue(MoleculeProperty property)
+	{
+		return compoundData.getNormalizedValue(property);
 	}
 
 	public BitSet getBitSet()
@@ -198,31 +203,51 @@ public class Model implements Zoomable
 		return smartsMatches.get(smarts);
 	}
 
-	public void setColor(String color)
+	public void setModelColor(String colorString)
 	{
-		this.color = color;
+		this.modelColor = colorString;
 	}
 
-	public String getColor()
+	public String getModelColor()
 	{
-		return color;
+		return modelColor;
+	}
+
+	public void setHighlightColor(String color)
+	{
+		this.highlightColor = color;
+	}
+
+	public String getHighlightColor()
+	{
+		return highlightColor;
+	}
+
+	public Vector3f getSpherePosition()
+	{
+		return spherePosition;
+	}
+
+	public void setSpherePosition(Vector3f spherePosition)
+	{
+		this.spherePosition = spherePosition;
 	}
 
 	public void setHighlightMoleculeProperty(MoleculeProperty highlightMoleculeProperty)
 	{
 		this.highlightMoleculeProperty = highlightMoleculeProperty;
-		if (highlightMoleculeProperty != null && this.highlightMoleculeProperty.getType() == Type.NUMERIC)
-		{
-			// string properties do have a normalized double value as well
-			// values are normalize between 0-1, fixed temp scheme from jmol expects values between 0-100 => multiply with 100
-			Double d = compoundData.getNormalizedValue(highlightMoleculeProperty);
-			if (d != null)
-			{
-				double v = compoundData.getNormalizedValue(highlightMoleculeProperty) * 100.0;
-				//			Settings.LOGGER.warn(getModelOrigIndex() + " " + highlightMoleculeProperty + " " + v);
-				View.instance.setAtomProperty(bitSet, Token.temperature, (int) v, (float) v, v + "", null, null);
-			}
-		}
+		//		if (highlightMoleculeProperty != null && this.highlightMoleculeProperty.getType() == Type.NUMERIC)
+		//		{
+		//			// string properties do have a normalized double value as well
+		//			// values are normalize between 0-1, fixed temp scheme from jmol expects values between 0-100 => multiply with 100
+		//			Double d = compoundData.getNormalizedValue(highlightMoleculeProperty);
+		//			if (d != null)
+		//			{
+		//				double v = compoundData.getNormalizedValue(highlightMoleculeProperty) * 100.0;
+		//				//			Settings.LOGGER.warn(getModelOrigIndex() + " " + highlightMoleculeProperty + " " + v);
+		//				View.instance.setAtomProperty(bitSet, Token.temperature, (int) v, (float) v, v + "", null, null);
+		//			}
+		//		}
 	}
 
 	public Object getHighlightMoleculeProperty()
@@ -273,6 +298,16 @@ public class Model implements Zoomable
 	public void setDescriptor(MoleculeProperty descriptorProperty)
 	{
 		this.descriptorProperty = descriptorProperty;
+	}
+
+	public boolean isSphereVisible()
+	{
+		return sphereVisible;
+	}
+
+	public void setSphereVisible(boolean sphereVisible)
+	{
+		this.sphereVisible = sphereVisible;
 	}
 
 }

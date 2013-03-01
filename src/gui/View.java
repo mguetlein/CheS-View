@@ -20,11 +20,14 @@ import main.ScreenSetup;
 import main.Settings;
 
 import org.jmol.export.dialog.Dialog;
+import org.jmol.util.BoxInfo;
 import org.jmol.viewer.Viewer;
 
+import util.ArrayUtil;
 import util.FileUtil;
 import util.SequentialWorkerThread;
 import util.Vector3fUtil;
+import cluster.Model;
 
 public class View
 {
@@ -149,14 +152,19 @@ public class View
 		return zoomedTo;
 	}
 
-	public synchronized static String color(Color col)
+	public synchronized static String convertColor(Color col)
 	{
 		return "[" + col.getRed() + ", " + col.getGreen() + ", " + col.getBlue() + "]";
 	}
 
+	public synchronized static String convertPos(Point3f p)
+	{
+		return "{" + p.x + " " + p.y + ", " + p.z + "}";
+	}
+
 	public synchronized void setBackground(Color col)
 	{
-		viewer.script("background " + color(col));
+		viewer.script("background " + convertColor(col));
 	}
 
 	public synchronized int findNearestAtomIndex(int x, int y)
@@ -195,8 +203,8 @@ public class View
 
 	public synchronized void evalString(String script)
 	{
-		//		Settings.LOGGER.warn("XX> " + script);
 		evalScript(script);
+		//		Settings.LOGGER.warn("XX> " + script);
 		viewer.evalString(script);
 	}
 
@@ -238,6 +246,63 @@ public class View
 	public synchronized Point3f getAtomSetCenter(BitSet bitSet)
 	{
 		return viewer.getAtomSetCenter(bitSet);
+	}
+
+	HashSet<Model> spheresForModel = new HashSet<Model>();
+	public double sphereSize = 0.5;
+	public double sphereTranslucency = 0.5;
+
+	public synchronized void hideSphere(Model m)
+	{
+		if (spheresForModel.contains(m))
+		{
+			String id = "sphere" + m.getModelIndex();
+			scriptWait("ellipsoid ID " + id + " color translucent 1.0");
+		}
+	}
+
+	private synchronized void updateSpherePosition(Model m)
+	{
+		if (spheresForModel.contains(m))
+		{
+			String id = "sphere" + m.getModelIndex();
+
+			//			BoxInfo info = viewer.getBoxInfo(m.getBitSet(), 1.0F);
+			//				Point3f center = info.getBoundBoxCenter();
+			//				Vector3f corner = info.getBoundBoxCornerVector();
+			//				scriptWait("ellipsoid ID " + id + " AXES {" + Math.max(corner.x * sphereSize, 1.0) + " 0 0} {0 "
+			//						+ Math.max(corner.y * sphereSize, 1.0) + " 0} {0 0 " + Math.max(corner.z * sphereSize, 1.0)
+			//						+ "}");
+			//				scriptWait("ellipsoid ID " + id + " center " + convertPos(center));
+
+			double size = Math.max(1.0, getDiameter(m.getBitSet()) * 0.5 * (0.1 + 0.9 * sphereSize));
+			scriptWait("ellipsoid ID " + id + " AXES {" + size + " 0 0} {0 " + size + " 0} {0 0 " + size + "}");
+			scriptWait("ellipsoid ID " + id + " center " + convertPos(getAtomSetCenter(m.getBitSet())));
+		}
+	}
+
+	public synchronized void showSphere(Model m, boolean updateSizeAndPos)
+	{
+		String id = "sphere" + m.getModelIndex();
+		if (!spheresForModel.contains(m) || updateSizeAndPos)
+		{
+			spheresForModel.add(m);
+			updateSpherePosition(m);
+		}
+
+		double trans = 0.0 + 0.8 * sphereTranslucency;
+		switch (m.getTranslucency())
+		{
+			case ModerateWeak:
+				trans = 0.2 + 0.65 * sphereTranslucency;
+				break;
+			case ModerateStrong:
+				trans = 0.4 + 0.5 * sphereTranslucency;
+				break;
+			case Strong:
+				trans = 0.6 + 0.35 * sphereTranslucency;
+		}
+		scriptWait("ellipsoid ID " + id + " " + m.getHighlightColor() + " color translucent " + trans);
 	}
 
 	public synchronized void zap(boolean b, boolean c, boolean d)
@@ -371,6 +436,19 @@ public class View
 		return Vector3fUtil.maxDist(points.toArray(a));
 	}
 
+	public List<Vector3f> getCenterAndAxes(BitSet bitSet)
+	{
+		BoxInfo info = viewer.getBoxInfo(bitSet, 1.0F);
+		Point3f center = info.getBoundBoxCenter();
+		Vector3f corner = info.getBoundBoxCornerVector();
+
+		System.out.println(info);
+		System.out.println(corner);
+		System.out.println(ArrayUtil.toString(info.getBboxVertices()));
+
+		return null;
+	}
+
 	HashMap<Dimension, Dimension> cachedResolutions = new HashMap<Dimension, Dimension>();
 
 	/**
@@ -417,5 +495,30 @@ public class View
 		cachedResolutions.put(resScreen, resSelected);
 		Settings.LOGGER.info((String) viewer.createImage(fileName, sType, null, sd.getQuality(sType),
 				resSelected.width, resSelected.height));
+	}
+
+	public synchronized void selectFirstCarbonAtom(BitSet bs)
+	{
+		//System.out.println(empty.cardinality());
+		int firstAtom = -1;
+		int firstCarbon = -1;
+		for (int i = bs.nextSetBit(0); i >= 0; i = bs.nextSetBit(i + 1))
+		{
+			//System.out.println(i + " " + viewer.getAtomInfo(i));
+			if (firstAtom == -1)
+				firstAtom = i;
+			if (viewer.getAtomInfo(i).matches("^C[0-9].*"))
+			{
+				firstCarbon = i;
+				break;
+			}
+		}
+		if (firstCarbon == -1)
+			firstCarbon = firstAtom;
+		//		System.out.println("atom to select: " + viewer.getAtomInfo(firstCarbon));
+
+		BitSet sel = new BitSet(bs.length());
+		sel.set(firstCarbon);
+		select(sel);
 	}
 }

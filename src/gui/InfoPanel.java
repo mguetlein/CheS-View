@@ -282,7 +282,7 @@ public class InfoPanel extends TransparentViewPanel
 			datasetPanel.setVisible(true);
 			datasetNameLabel.setText(clustering.getName());
 			//			datasetNameLabel.setCaretPosition(datasetNameLabel.getText().length());
-			datasetSizeLabel.setText(clustering.getNumCompounds() + "");
+			datasetSizeLabel.setText(clustering.getNumCompounds(false) + "");
 			datasetAlgLabel.setText(clustering.getClusterAlgorithm());
 			datasetEmbedLabel.setText(clustering.getEmbedAlgorithm());
 			datasetEmbedQualityLabel.setText(clustering.getEmbedQuality());

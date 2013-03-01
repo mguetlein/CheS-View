@@ -1,6 +1,7 @@
 package gui;
 
 import freechart.AbstractFreeChartPanel;
+import freechart.FreeChartPanel.ChartMouseSelectionListener;
 import freechart.HistogramPanel;
 import freechart.StackedBarPlot;
 import gui.swing.ComponentFactory;
@@ -9,15 +10,17 @@ import gui.util.Highlighter;
 import gui.util.MoleculePropertyHighlighter;
 
 import java.awt.BorderLayout;
+import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Set;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -27,6 +30,8 @@ import util.ArrayUtil;
 import util.ColorUtil;
 import util.CountedSet;
 import util.DefaultComparator;
+import util.ObjectUtil;
+import util.SequentialWorkerThread;
 import util.ToStringComparator;
 import cluster.Cluster;
 import cluster.Clustering;
@@ -46,10 +51,8 @@ public class ChartPanel extends TransparentViewPanel
 	ViewControler viewControler;
 
 	Cluster cluster;
-	Model model;
+	List<Model> models;
 	MoleculeProperty property;
-
-	HashMap<String, PlotData> cache = new HashMap<String, ChartPanel.PlotData>();
 
 	private JPanel featurePanel;
 	private JLabel featureNameLabel = ComponentFactory.createViewLabel("");
@@ -60,6 +63,11 @@ public class ChartPanel extends TransparentViewPanel
 	private JLabel featureSmartsLabel = ComponentFactory.createViewLabel("");
 	private JLabel featureMappingLabel = ComponentFactory.createViewLabel("");
 	private JLabel featureMissingLabel = ComponentFactory.createViewLabel("");
+
+	Set<String> cardContents = new HashSet<String>();
+	JPanel cardPanel;
+
+	SequentialWorkerThread workerThread = new SequentialWorkerThread();
 
 	public ChartPanel(Clustering clustering, ViewControler viewControler)
 	{
@@ -98,6 +106,12 @@ public class ChartPanel extends TransparentViewPanel
 
 		setLayout(new BorderLayout(3, 3));
 
+		add(featurePanel, BorderLayout.NORTH);
+
+		cardPanel = new JPanel(new CardLayout());
+		cardPanel.setOpaque(false);
+		add(cardPanel, BorderLayout.CENTER);
+
 		setOpaque(true);
 		//		setBackground(Settings.TRANSPARENT_BACKGROUND);
 	}
@@ -126,12 +140,14 @@ public class ChartPanel extends TransparentViewPanel
 				}
 				else if (evt.getPropertyName().equals(Clustering.CLUSTER_REMOVED))
 				{
-					cache.clear();
+					cardPanel.removeAll();
+					cardContents.clear();
 					update(true);
 				}
 				else if (evt.getPropertyName().equals(Clustering.CLUSTER_ADDED))
 				{
-					cache.clear();
+					cardPanel.removeAll();
+					cardContents.clear();
 					update(true);
 				}
 			}
@@ -168,16 +184,145 @@ public class ChartPanel extends TransparentViewPanel
 				update(false);
 			}
 		});
+
 	}
 
-	private static String getKey(Cluster c, MoleculeProperty p, Model m)
+	private static String getKey(Cluster c, MoleculeProperty p, List<Model> m)
 	{
-		return (c == null ? "null" : c.getName()) + "_" + p.toString() + "_" + (m == null ? "null" : m.toString());
+		String mString = "";
+		for (Model model : m)
+			mString = mString.concat(model.toString());
+		return (c == null ? "null" : c.getName()) + "_" + p.toString() + "_" + mString;
+	}
+
+	boolean selfUpdate = false;
+	List<Integer> selfUpdateModels = null;
+
+	private abstract class ModelSelector implements ChartMouseSelectionListener
+	{
+		protected abstract boolean hasSelectionCriterionChanged();
+
+		protected abstract void updateSelectionCriterion();
+
+		protected abstract boolean isSelected(Model m, MoleculeProperty p);
+
+		@Override
+		public void hoverEvent()
+		{
+			handleEvent(true, false);
+		}
+
+		@Override
+		public void clickEvent(boolean ctrlDown)
+		{
+			handleEvent(false, ctrlDown);
+		}
+
+		private void handleEvent(boolean hover, boolean ctrlDown)
+		{
+			System.err.println();
+			if (selfUpdate)
+			{
+				System.err.println("self update");
+				return;
+
+			}
+			selfUpdate = true;
+			try
+			{
+				if (!hasSelectionCriterionChanged() && hover)
+				{
+					System.err.println("selection criterion has not changed");
+					return;
+				}
+				updateSelectionCriterion();
+				System.err.println("interval : " + ((NumericModelSelector) this).hist.getSelectedMin() + " "
+						+ ((NumericModelSelector) this).hist.getSelectedMax());
+
+				//				if (clustering.isClusterActive())
+				//				{
+				Highlighter h = viewControler.getHighlighter();
+				MoleculeProperty prop = null;
+				if (h instanceof MoleculePropertyHighlighter)
+					prop = ((MoleculePropertyHighlighter) h).getProperty();
+
+				final List<Integer> m = new ArrayList<Integer>();
+				Iterable<Model> models;
+				if (clustering.isClusterActive())
+					models = clustering.getCluster(clustering.getClusterActive().getSelected()).getModels();
+				else
+					models = clustering.getModels(false);
+				for (Model model : models)
+					if (isSelected(model, prop))
+						m.add(model.getModelIndex());
+
+				if (hover)
+				{
+					if (ObjectUtil.equals(selfUpdateModels, m))
+						return;
+					selfUpdateModels = m;
+					System.err.println("updating via chart panel " + m);
+					clustering.getModelWatched().setSelectedIndices(ArrayUtil.toPrimitiveIntArray(m));
+				}
+				else
+				{
+					System.err.println("before: "
+							+ ArrayUtil.toString(clustering.getModelActive().getSelectedIndices()));
+					System.err.println("select " + (!ctrlDown) + " " + m);
+					clustering.getModelActive().setSelectedIndices(ArrayUtil.toPrimitiveIntArray(m), !ctrlDown);
+					System.err
+							.println("after: " + ArrayUtil.toString(clustering.getModelActive().getSelectedIndices()));
+					System.err.println();
+				}
+			}
+			finally
+			{
+				selfUpdate = false;
+			}
+		}
+	}
+
+	double selectedMin = 1.0;
+	double selectedMax = 0.0;
+
+	private class NumericModelSelector extends ModelSelector
+	{
+		HistogramPanel hist;
+
+		public NumericModelSelector(HistogramPanel hist)
+		{
+			this.hist = hist;
+		}
+
+		@Override
+		protected boolean hasSelectionCriterionChanged()
+		{
+			return selectedMin != hist.getSelectedMin() || selectedMax != hist.getSelectedMax();
+		}
+
+		@Override
+		protected void updateSelectionCriterion()
+		{
+			selectedMin = hist.getSelectedMin();
+			selectedMax = hist.getSelectedMax();
+		}
+
+		@Override
+		protected boolean isSelected(Model m, MoleculeProperty p)
+		{
+			Double d = m.getDoubleValue(p);
+			return d != null && d >= selectedMin && d <= selectedMax;
+		}
 	}
 
 	private abstract class PlotData
 	{
-		public abstract AbstractFreeChartPanel getPlot();
+		AbstractFreeChartPanel plot;
+
+		public AbstractFreeChartPanel getPlot()
+		{
+			return plot;
+		}
 	}
 
 	private class NumericPlotData extends PlotData
@@ -185,11 +330,9 @@ public class ChartPanel extends TransparentViewPanel
 		List<String> captions;
 		List<double[]> vals;
 
-		public NumericPlotData(Cluster c, MoleculeProperty p, Model m)
+		public NumericPlotData(Cluster c, MoleculeProperty p, List<Model> m)
 		{
-			Double v[] = new Double[0];
-			for (Cluster cc : clustering.getClusters())
-				v = ArrayUtil.concat(Double.class, v, cc.getDoubleValues(p));
+			Double v[] = clustering.getDoubleValues(p);
 			captions = new ArrayList<String>();
 			vals = new ArrayList<double[]>();
 			captions.add("Dataset");
@@ -199,17 +342,56 @@ public class ChartPanel extends TransparentViewPanel
 				captions.add(c.getName());
 				vals.add(ArrayUtil.toPrimitiveDoubleArray(ArrayUtil.removeNullValues(c.getDoubleValues(p))));
 			}
-			if (m != null && m.getDoubleValue(p) != null)
+
+			Double mVals[] = new Double[m.size()];
+			boolean notNull = false;
+			for (int i = 0; i < mVals.length; i++)
 			{
-				captions.add(m.toString());
-				vals.add(new double[] { m.getDoubleValue(p) });
+				mVals[i] = m.get(i).getDoubleValue(p);
+				notNull |= mVals[i] != null;
 			}
+			if (m.size() > 0 && notNull)
+			{
+				if (m.size() == 1)
+					captions.add(m.get(0).toString());
+				else
+					captions.add("Selected compounds");
+				vals.add(ArrayUtil.toPrimitiveDoubleArray(ArrayUtil.removeNullValues(mVals)));
+			}
+
+			plot = new HistogramPanel(null, null, null, "#compounds", captions, vals, 20);
+			plot.addSelectionListener(new NumericModelSelector((HistogramPanel) plot));
+			configurePlotColors(plot, c, m, p);
+		}
+	}
+
+	String selectedCategory;
+
+	private class NominalModelSelector extends ModelSelector
+	{
+		StackedBarPlot bar;
+
+		public NominalModelSelector(StackedBarPlot bar)
+		{
+			this.bar = bar;
 		}
 
 		@Override
-		public AbstractFreeChartPanel getPlot()
+		protected boolean hasSelectionCriterionChanged()
 		{
-			return new HistogramPanel(null, null, null, "#compounds", captions, vals, 20);
+			return !ObjectUtil.equals(selectedCategory, bar.getSelectedCategory());
+		}
+
+		@Override
+		protected void updateSelectionCriterion()
+		{
+			selectedCategory = bar.getSelectedCategory();
+		}
+
+		@Override
+		protected boolean isSelected(Model m, MoleculeProperty p)
+		{
+			return ObjectUtil.equals(m.getStringValue(p), selectedCategory);
 		}
 	}
 
@@ -218,12 +400,11 @@ public class ChartPanel extends TransparentViewPanel
 		LinkedHashMap<String, List<Double>> data;
 		String vals[];
 
-		public NominalPlotData(Cluster c, MoleculeProperty p, Model m)
+		public NominalPlotData(Cluster c, MoleculeProperty p, List<Model> ms)
 		{
-			String v[] = new String[0];
-			for (Cluster cc : clustering.getClusters())
-				if (cc != c)
-					v = ArrayUtil.concat(String.class, v, cc.getStringValues(p, m));
+			Model m = ms.size() > 0 ? ms.get(0) : null;
+
+			String v[] = clustering.getStringValues(p, m);
 			CountedSet<String> datasetSet = CountedSet.fromArray(v);
 			List<String> datasetValues = datasetSet.values(new DefaultComparator<String>());
 
@@ -281,12 +462,100 @@ public class ChartPanel extends TransparentViewPanel
 			for (int i = 0; i < vals.length; i++)
 				if (vals[i] == null)
 					vals[i] = "null";
+
+			plot = new StackedBarPlot(null, null, "#compounds", data, vals);
+			plot.addSelectionListener(new NominalModelSelector((StackedBarPlot) plot));
+			configurePlotColors(plot, c, ms, p);
+		}
+	}
+
+	private void configurePlotColors(AbstractFreeChartPanel chartPanel, Cluster cluster, List<Model> models,
+			MoleculeProperty property)
+	{
+		int dIndex = -1;
+		int cIndex = -1;
+		int mIndex = -1;
+
+		if (cluster == null)
+		{
+			if (models.size() == 0)
+				dIndex = 0;
+			else
+			{
+				mIndex = 0;
+				dIndex = 1;
+			}
+		}
+		else
+		{
+			if (models.size() == 0)
+			{
+				cIndex = 0;
+				dIndex = 1;
+			}
+			else
+			{
+				mIndex = 0;
+				cIndex = 1;
+				dIndex = 2;
+			}
 		}
 
-		public AbstractFreeChartPanel getPlot()
+		if (chartPanel instanceof StackedBarPlot)
 		{
-			return new StackedBarPlot(null, null, "#compounds", data, vals);
+			if (mIndex != -1)
+				throw new IllegalArgumentException(
+						"does NOT help much in terms of visualisation (color code should be enough), difficult to realize in terms of color brightness");
+
+			Color cols[] = MoleculePropertyUtil.getNominalColors(property);
+			if (cIndex == -1)
+			{
+				chartPanel.setSeriesColor(dIndex, ColorUtil.grayscale(MoleculePropertyUtil.getColor(0)));
+				((StackedBarPlot) chartPanel).setSeriesCategoryColors(dIndex, cols);
+			}
+			else
+			{
+				chartPanel.setSeriesColor(dIndex,
+						ColorUtil.grayscale(MoleculePropertyUtil.getColor(0).darker().darker().darker()));
+				chartPanel.setSeriesColor(cIndex, ColorUtil.grayscale(MoleculePropertyUtil.getColor(0)).brighter());
+
+				((StackedBarPlot) chartPanel).setSeriesCategoryColors(dIndex,
+						ColorUtil.darker(ColorUtil.darker(ColorUtil.darker(cols))));
+				((StackedBarPlot) chartPanel).setSeriesCategoryColors(cIndex, ColorUtil.brighter(cols));
+			}
 		}
+		else
+		{
+			if (cIndex == -1)
+				chartPanel.setSeriesColor(dIndex, MoleculePropertyUtil.getColor(0));
+			else
+			{
+				chartPanel.setSeriesColor(dIndex, MoleculePropertyUtil.getColor(0).darker().darker().darker());
+				chartPanel.setSeriesColor(cIndex, MoleculePropertyUtil.getColor(0).brighter());
+			}
+
+			if (mIndex != -1)
+				chartPanel.setSeriesColor(mIndex, MoleculePropertyUtil.getColor(1));
+		}
+
+		chartPanel.setOpaqueFalse();
+		chartPanel.setForegroundColor(ComponentFactory.FOREGROUND);
+		final AbstractFreeChartPanel finalP = chartPanel;
+		viewControler.addViewListener(new PropertyChangeListener()
+		{
+
+			@Override
+			public void propertyChange(PropertyChangeEvent evt)
+			{
+				if (evt.getPropertyName().equals(ViewControler.PROPERTY_BACKGROUND_CHANGED))
+					finalP.setForegroundColor(ComponentFactory.FOREGROUND);
+			}
+		});
+		chartPanel.setShadowVisible(false);
+		chartPanel.setIntegerTickUnits();
+		chartPanel.setPreferredSize(new Dimension(400, 220));
+		chartPanel.setBarWidthLimited();
+		chartPanel.setFontSize(ScreenSetup.SETUP.getFontSize());
 	}
 
 	private void update(final boolean force)
@@ -309,20 +578,25 @@ public class ChartPanel extends TransparentViewPanel
 		if (clustering.getNumClusters() == 1)
 			c = null;
 
-		int mIndex = clustering.getModelWatched().getSelected();
-		if (mIndex == -1)
-			mIndex = clustering.getModelActive().getSelected();
-		Model m = null;
-		if (mIndex != -1)
-			m = clustering.getModelWithModelIndex(mIndex);
+		int mIndex[] = clustering.getModelWatched().getSelectedIndices();
+		if (mIndex.length == 0)
+			mIndex = clustering.getModelActive().getSelectedIndices();
+		List<Model> ms = new ArrayList<Model>();
+		for (int i : mIndex)
+			ms.add(clustering.getModelWithModelIndex(i));
 		if (prop != null && prop.getType() == Type.NOMINAL)
-			m = null;
+		{
+			//does NOT help much in terms of visualisation (color code should be enough), difficult to realize in terms of color brightness
+			ms.clear();
+		}
 
-		if (force || cluster != c || property != prop || model != m)
+		System.err.println("update " + ms);
+
+		if (force || cluster != c || property != prop || !models.equals(ms))
 		{
 			cluster = c;
 			property = prop;
-			model = m;
+			models = ms;
 
 			if (property == null)
 				setVisible(false);
@@ -330,122 +604,41 @@ public class ChartPanel extends TransparentViewPanel
 			{
 				final Cluster fCluster = this.cluster;
 				final MoleculeProperty fProperty = this.property;
-				final Model fModel = this.model;
+				final List<Model> fModels = this.models;
 
-				Thread th = new Thread(new Runnable()
+				workerThread.addJob(new Runnable()
 				{
 					public void run()
 					{
-						String key = getKey(fCluster, fProperty, fModel);
-						if (force && cache.containsKey(key))
-							cache.remove(key);
-						PlotData d = null;
-						if (!cache.containsKey(key))
+						if (fCluster != cluster || fProperty != property || fModels != models)
+							return;
+
+						System.out.println("updating chart");
+
+						String plotKey = getKey(fCluster, fProperty, fModels);
+						if (force && cardContents.contains(plotKey))
+							cardContents.remove(plotKey);
+						if (!cardContents.contains(plotKey))
 						{
+							System.out.println("create new plot");
 							MoleculeProperty.Type type = fProperty.getType();
+							PlotData d = null;
 							if (type == Type.NOMINAL)
-								d = new NominalPlotData(fCluster, fProperty, fModel);
+								d = new NominalPlotData(fCluster, fProperty, fModels);
 							else if (type == Type.NUMERIC)
-								d = new NumericPlotData(fCluster, fProperty, fModel);
-							cache.put(key, d);
+								d = new NumericPlotData(fCluster, fProperty, fModels);
+							if (d != null)
+							{
+								cardContents.add(plotKey);
+								cardPanel.add(d.getPlot(), plotKey);
+							}
 						}
-						d = cache.get(key);
-						AbstractFreeChartPanel p = null;
-						if (d != null)
-						{
-							p = d.getPlot();
-							int dIndex = -1;
-							int cIndex = -1;
-							int mIndex = -1;
+						else
+							System.out.println("plot was cached");
 
-							if (fCluster == null)
-							{
-								if (fModel == null)
-									dIndex = 0;
-								else
-								{
-									mIndex = 0;
-									dIndex = 1;
-								}
-							}
-							else
-							{
-								if (fModel == null)
-								{
-									cIndex = 0;
-									dIndex = 1;
-								}
-								else
-								{
-									mIndex = 0;
-									cIndex = 1;
-									dIndex = 2;
-								}
-							}
-
-							if (p instanceof StackedBarPlot)
-							{
-								if (mIndex != -1)
-									throw new IllegalArgumentException(
-											"does help much in terms of visualisation (color code should be enough), difficult to realize in terms of color brightness");
-
-								Color cols[] = MoleculePropertyUtil.getNominalColors(fProperty);
-								if (cIndex == -1)
-								{
-									p.setSeriesColor(dIndex, ColorUtil.grayscale(MoleculePropertyUtil.getColor(0)));
-									((StackedBarPlot) p).setSeriesCategoryColors(dIndex, cols);
-								}
-								else
-								{
-									p.setSeriesColor(
-											dIndex,
-											ColorUtil.grayscale(MoleculePropertyUtil.getColor(0).darker().darker()
-													.darker()));
-									p.setSeriesColor(cIndex, ColorUtil.grayscale(MoleculePropertyUtil.getColor(0))
-											.brighter());
-
-									((StackedBarPlot) p).setSeriesCategoryColors(dIndex,
-											ColorUtil.darker(ColorUtil.darker(ColorUtil.darker(cols))));
-									((StackedBarPlot) p).setSeriesCategoryColors(cIndex, ColorUtil.brighter(cols));
-								}
-							}
-							else
-							{
-								if (cIndex == -1)
-									p.setSeriesColor(dIndex, MoleculePropertyUtil.getColor(0));
-								else
-								{
-									p.setSeriesColor(dIndex, MoleculePropertyUtil.getColor(0).darker().darker()
-											.darker());
-									p.setSeriesColor(cIndex, MoleculePropertyUtil.getColor(0).brighter());
-								}
-
-								if (mIndex != -1)
-									p.setSeriesColor(mIndex, MoleculePropertyUtil.getColor(1));
-							}
-
-							p.setOpaqueFalse();
-							p.setForegroundColor(ComponentFactory.FOREGROUND);
-							final AbstractFreeChartPanel finalP = p;
-							viewControler.addViewListener(new PropertyChangeListener()
-							{
-
-								@Override
-								public void propertyChange(PropertyChangeEvent evt)
-								{
-									if (evt.getPropertyName().equals(ViewControler.PROPERTY_BACKGROUND_CHANGED))
-										finalP.setForegroundColor(ComponentFactory.FOREGROUND);
-								}
-							});
-							p.setShadowVisible(false);
-							p.setIntegerTickUnits();
-							p.setPreferredSize(new Dimension(400, 220));
-							p.setBarWidthLimited();
-							p.setFontSize(ScreenSetup.SETUP.getFontSize());
-						}
-
+						if (fCluster != cluster || fProperty != property || fModels != models)
+							return;
 						setIgnoreRepaint(true);
-						removeAll();
 
 						featureNameLabel.setText(fProperty.toString());
 						featureSetLabel.setText(fProperty.getMoleculePropertySet().toString());
@@ -462,16 +655,19 @@ public class ChartPanel extends TransparentViewPanel
 										: "NOT used for clustering and/or embedding."));
 						featureMissingLabel.setText(clustering.numMissingValues(fProperty) + "");
 
-						add(featurePanel, BorderLayout.NORTH);
-						if (p != null)
-							add(p, BorderLayout.CENTER);
+						if (cardContents.contains(plotKey))
+						{
+							cardPanel.setVisible(true);
+							((CardLayout) cardPanel.getLayout()).show(cardPanel, plotKey);
+						}
+						else
+							cardPanel.setVisible(false);
 						revalidate();
 						setVisible(true);
 						setIgnoreRepaint(false);
 						repaint();
 					}
-				});
-				th.start();
+				}, "update chart");
 			}
 		}
 	}

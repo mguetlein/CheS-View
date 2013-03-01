@@ -10,6 +10,7 @@ import java.awt.event.KeyListener;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.KeyStroke;
 import javax.swing.OverlayLayout;
 import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
@@ -28,6 +29,7 @@ public class ClusterPanel extends JPanel
 	JPanel messagePanel;
 	JLabel messageLabel;
 	private MainPanel mainPanel;
+	private ClusterListPanel clusterListPanel;
 
 	public ClusterPanel(GUIControler guiControler)
 	{
@@ -53,17 +55,17 @@ public class ClusterPanel extends JPanel
 
 		JPanel sideBarContainer = new JPanel(new BorderLayout());
 		sideBarContainer.setOpaque(false);
-		ClusterListPanel sideBar = new ClusterListPanel(mainPanel.getClustering(), mainPanel);
-		sideBarContainer.add(sideBar, BorderLayout.WEST);
+		clusterListPanel = new ClusterListPanel(mainPanel.getClustering(), mainPanel);
+		sideBarContainer.add(clusterListPanel, BorderLayout.WEST);
 		add(sideBarContainer, BorderLayout.WEST);
 
 		JPanel pp = new JPanel(new BorderLayout());
 		pp.setOpaque(false);
 
-		InfoPanel info = new InfoPanel(mainPanel, mainPanel.getClustering());
+		InfoPanel infoPanel = new InfoPanel(mainPanel, mainPanel.getClustering());
 		JPanel ppp = new JPanel(new BorderLayout());
 		ppp.setOpaque(false);
-		ppp.add(info, BorderLayout.NORTH);
+		ppp.add(infoPanel, BorderLayout.NORTH);
 		ppp.setBorder(new EmptyBorder(0, 0, 10, 0));
 
 		JPanel infoContainer = new JPanel(new BorderLayout());
@@ -75,6 +77,8 @@ public class ClusterPanel extends JPanel
 		ChartPanel cp = new ChartPanel(mainPanel.getClustering(), mainPanel);
 		cp.setBorder(new EmptyBorder(0, 0, 0, 0));
 		infoContainer.add(cp, BorderLayout.SOUTH);
+
+		mainPanel.addIgnoreMouseMovementComponents(cp);
 
 		sideBarContainer.add(pp);
 
@@ -106,32 +110,26 @@ public class ClusterPanel extends JPanel
 		KeyListener listener = new KeyAdapter()
 		{
 			@Override
+			public void keyPressed(KeyEvent e)
+			{
+				Actions.getInstance(guiControler, mainPanel, mainPanel.getClustering()).performActions(e.getSource(),
+						KeyStroke.getKeyStrokeForEvent(e));
+				//				guiControler.handleKeyEvent(e);
+			}
+
+			@Override
 			public void keyReleased(KeyEvent e)
 			{
-				if (e.isControlDown() && (e.getKeyCode() == KeyEvent.VK_PLUS || e.getKeyCode() == KeyEvent.VK_MINUS))
-				{
-					if (e.getKeyCode() == KeyEvent.VK_MINUS)
-					{
-						if (mainPanel.canChangeCompoundSize(false))
-							mainPanel.changeCompoundSize(false);
-					}
-					if (e.getKeyCode() == KeyEvent.VK_PLUS)
-					{
-						if (mainPanel.canChangeCompoundSize(true))
-							mainPanel.changeCompoundSize(true);
-					}
-				}
-				if (e.getKeyCode() == KeyEvent.VK_R && e.isAltDown())
-				{
-					View.instance.scriptWait("set disablePopupMenu off");
-				}
-
-				guiControler.handleKeyEvent(e);
+				Actions.getInstance(guiControler, mainPanel, mainPanel.getClustering()).performActions(e.getSource(),
+						KeyStroke.getKeyStrokeForEvent(e));
 			}
 		};
 		addKeyListener(listener);
 		mainPanel.addKeyListener(listener);
 		mainPanel.jmolPanel.addKeyListener(listener);
+		clusterListPanel.controlPanel.highlightCombobox.addKeyListener(listener);
+		clusterListPanel.controlPanel.labelCheckbox.addKeyListener(listener);
+		clusterListPanel.controlPanel.highlightMinMaxCombobox.addKeyListener(listener);
 	}
 
 	public void showMessage(final String msg)

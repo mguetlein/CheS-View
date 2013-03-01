@@ -1,10 +1,13 @@
 package gui;
 
+import gui.MainPanel.HighlightMode;
 import gui.util.Highlighter;
 
 import java.awt.Color;
 import java.beans.PropertyChangeListener;
 import java.util.HashMap;
+
+import javax.swing.JComponent;
 
 import dataInterface.AbstractMoleculeProperty;
 import dataInterface.MoleculeProperty;
@@ -32,6 +35,14 @@ public interface ViewControler
 	public int getCompoundSizeMax();
 
 	public void setCompoundSize(int compoundSize);
+
+	public HighlightMode getHighlightMode();
+
+	public void setHighlightMode(HighlightMode mode);
+
+	public void setSphereSize(double size);
+
+	public void setSphereTranslucency(double translucency);
 
 	public String getStyle();
 
@@ -65,6 +76,7 @@ public interface ViewControler
 	public static final String PROPERTY_BACKGROUND_CHANGED = "propertyBackgroundChanged";
 	public static final String PROPERTY_MATCH_COLOR_CHANGED = "propertyMatchColorChanged";
 	public static final String PROPERTY_MOLECULE_DESCRIPTOR_CHANGED = "propertyMoleculeDescriptorChanged";
+	public static final String PROPERTY_HIGHLIGHT_MODE_CHANGED = "propertyHighlightModeChanged";
 
 	public boolean isHighlighterLabelsVisible();
 
@@ -109,5 +121,9 @@ public interface ViewControler
 	public void setMoleculeDescriptor(MoleculeProperty prop);
 
 	public MoleculeProperty getMoleculeDescriptor();
+
+	public void addIgnoreMouseMovementComponents(JComponent ignore);
+
+	public void updateMouseSelection(boolean buttonDown);
 
 }

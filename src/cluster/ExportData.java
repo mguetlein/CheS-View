@@ -65,16 +65,38 @@ public class ExportData
 		{
 			if (clustering.numClusters() > 1)
 			{
-				Model m = null;
-				for (Cluster c : clustering.getClusters())
-					for (Model mm : c.getModels())
-						if (mm.getModelOrigIndex() == j)
+				if (clustering.isClusterAlgorithmDisjoint())
+				{
+					Model m = null;
+					for (Cluster c : clustering.getClusters())
+						for (Model mm : c.getModels())
+							if (mm.getModelOrigIndex() == j)
+							{
+								m = mm;
+								break;
+							}
+					featureValues.put(j, (clustering.getClusterAlgorithm() + " cluster assignement").replace(' ', '_'),
+							clustering.getClusterIndexForModel(m));
+				}
+				else
+				{
+					for (Cluster c : clustering.getClusters())
+					{
+						if (!c.containsNotClusteredCompounds())
 						{
-							m = mm;
-							break;
+							Model m = null;
+							for (Model mm : c.getModels())
+								if (mm.getModelOrigIndex() == j)
+								{
+									m = mm;
+									break;
+								}
+							featureValues.put(j, (clustering.getClusterAlgorithm() + " " + c.getName()).replace(' ',
+									'_'), m == null ? 0 : 1);
+
 						}
-				featureValues.put(j, clustering.getClusterAlgorithm() + " assignement",
-						clustering.getClusterIndexForModel(m));
+					}
+				}
 			}
 			if (csvExport)
 			{
