@@ -44,21 +44,26 @@ public class Cluster implements Zoomable
 	private boolean someModelsHidden;
 	private boolean showLabel = false;
 
-	public Cluster(dataInterface.ClusterData clusterData, boolean firstCluster)
+	public Cluster(dataInterface.ClusterData clusterData, int begin, int endExcl) //boolean firstCluster, 
 	{
 		this.clusterData = clusterData;
 
-		int before = firstCluster ? 0 : View.instance.getModelCount();
-		View.instance.loadModelFromFile(null, clusterData.getFilename(), null, null, !firstCluster, null, null, 0);
-		int after = View.instance.getModelCount();
+		//		int before = firstCluster ? 0 : View.instance.getModelCount();
+		//		View.instance.loadModelFromFile(null, clusterData.getFilename(), null, null, !firstCluster, null, null, 0);
+		//		int after = View.instance.getModelCount();
 
-		if ((after - before) != clusterData.getSize())
-			throw new IllegalStateException("models in file: " + (after - before) + " != model props passed: "
+		//		if ((after - before) != clusterData.getSize())
+		//			throw new IllegalStateException("models in file: " + (after - before) + " != model props passed: "
+		//					+ clusterData.getSize());
+
+		if ((endExcl - begin) != clusterData.getSize())
+			throw new IllegalStateException("should be: " + (endExcl - begin) + " != model props passed: "
 					+ clusterData.getSize());
 
 		models = new Vector<Model>();
 		int mCount = 0;
-		for (int i = before; i < after; i++)
+		//for (int i = before; i < after; i++)
+		for (int i = begin; i < endExcl; i++)
 			models.add(new Model(i, clusterData.getCompounds().get(mCount++)));
 
 		update();

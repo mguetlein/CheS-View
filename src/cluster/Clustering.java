@@ -6,6 +6,7 @@ import gui.Zoomable;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.HashMap;
@@ -19,6 +20,7 @@ import javax.vecmath.Vector3f;
 import main.Settings;
 import main.TaskProvider;
 import util.ArrayUtil;
+import util.FileUtil;
 import util.SelectionModel;
 import util.Vector3fUtil;
 import util.VectorUtil;
@@ -92,9 +94,9 @@ public class Clustering implements Zoomable
 				l.propertyChange(new PropertyChangeEvent(this, event, oldValue, newValue));
 	}
 
-	private Cluster addSingleCluster(ClusterData clusterData)
+	private Cluster addSingleCluster(ClusterData clusterData, int begin, int endExcl)
 	{
-		Cluster c = new Cluster(clusterData, clusters.size() == 0);
+		Cluster c = new Cluster(clusterData, begin, endExcl);
 		@SuppressWarnings("unchecked")
 		Vector<Cluster> old = (Vector<Cluster>) VectorUtil.clone(Clustering.this.clusters);
 		clusters.add(c);
@@ -338,14 +340,36 @@ public class Clustering implements Zoomable
 
 		clusteringData = d;
 
+		{
+			String filename;
+			if (d.getNumClusters() > 1)
+			{
+				List<File> clusterFiles = new ArrayList<File>();
+				for (int i = 0; i < d.getNumClusters(); i++)
+					clusterFiles.add(new File(d.getCluster(i).getFilename()));
+				filename = Settings.destinationFile("jmol_input.sdf");
+				FileUtil.concat(new File(filename), clusterFiles);
+			}
+			else
+				filename = d.getCluster(0).getFilename();
+			TaskProvider.update("Loading dataset into Jmol");
+			View.instance.loadModelFromFile(null, filename, null, null, false, null, null, 0);
+
+			if (d.getNumCompounds(true) != View.instance.getModelCount())
+				throw new Error("illegal num compounds, loaded by Jmol: " + View.instance.getModelCount()
+						+ " != from wizard: " + d.getNumCompounds(true));
+		}
+
+		int num = 0;
 		for (int i = 0; i < d.getNumClusters(); i++)
 		{
 			//String substructure = null;
 			//			if (d.getClusterSubstructureSmarts() != null)
 			//				substructure = d.getClusterSubstructureSmarts()[i];
 
-			addSingleCluster(d.getCluster(i));
-			TaskProvider.update("Loading cluster dataset " + (i + 1) + "/" + d.getNumClusters());
+			addSingleCluster(d.getCluster(i), num, num + d.getCluster(i).getSize());
+			num += d.getCluster(i).getSize();
+			//			TaskProvider.update("Loading cluster dataset " + (i + 1) + "/" + d.getNumClusters());
 		}
 		TaskProvider.update(90, "Loading graphics");
 

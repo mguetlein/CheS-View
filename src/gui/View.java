@@ -186,6 +186,7 @@ public class View
 	{
 		//		Settings.LOGGER.warn("XX> selecting bitset: " + bitSet);
 		viewer.select(bitSet, false, null, false);
+		//Settings.LOGGER.warn("XX> " + viewer.getAtomSetCenter(bitSet));
 	}
 
 	private void evalScript(String script)
@@ -310,10 +311,10 @@ public class View
 		viewer.zap(b, c, d);
 	}
 
-	public synchronized void loadModelFromFile(String s, String filename, String s2[], Object o, boolean b,
+	public synchronized void loadModelFromFile(String s, String filename, String s2[], Object reader, boolean b,
 			Hashtable<String, Object> t, StringBuffer sb, int i)
 	{
-		viewer.loadModelFromFile(s, filename, s2, o, b, t, sb, i);
+		viewer.loadModelFromFile(s, filename, s2, reader, b, t, sb, i);
 	}
 
 	public synchronized int getModelCount()
