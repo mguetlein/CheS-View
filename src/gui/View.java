@@ -109,7 +109,8 @@ public class View
 		Settings.LOGGER.debug("Diameter     " + diameter);
 		//		Settings.LOGGER.debug("Rot radius   " + viewer.getRotationRadius());
 
-		int zoom = (int) ((1200 / (15 / viewer.getRotationRadius())) / diameter);
+		int zoom = (int) ((1200 / (10 / viewer.getRotationRadius())) / diameter);
+
 		//		Settings.LOGGER.warn("zoom " + zoom);
 		zoom = (int) Math.max(5, zoom);
 
