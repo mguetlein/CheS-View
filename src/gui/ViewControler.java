@@ -77,6 +77,7 @@ public interface ViewControler
 	public static final String PROPERTY_MATCH_COLOR_CHANGED = "propertyMatchColorChanged";
 	public static final String PROPERTY_MOLECULE_DESCRIPTOR_CHANGED = "propertyMoleculeDescriptorChanged";
 	public static final String PROPERTY_HIGHLIGHT_MODE_CHANGED = "propertyHighlightModeChanged";
+	public static final String PROPERTY_HIGHLIGHT_LOG_CHANGED = "propertyHighlightLogChanged";
 
 	public boolean isHighlighterLabelsVisible();
 
@@ -125,5 +126,9 @@ public interface ViewControler
 	public void addIgnoreMouseMovementComponents(JComponent ignore);
 
 	public void updateMouseSelection(boolean buttonDown);
+
+	public boolean getHighlightLogEnabled();
+
+	public void setHighlightLogEnabled(boolean b);
 
 }

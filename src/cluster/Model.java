@@ -69,11 +69,6 @@ public class Model implements Zoomable
 		return compoundData.getDoubleValue(property);
 	}
 
-	public Double getNormalizedDoubleValue(MoleculeProperty property)
-	{
-		return compoundData.getNormalizedValue(property);
-	}
-
 	public BitSet getBitSet()
 	{
 		return bitSet;

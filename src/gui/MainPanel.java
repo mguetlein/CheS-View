@@ -76,9 +76,14 @@ public class MainPanel extends JPanel implements ViewControler
 		else if (selectedHighlightMoleculeProperty.getType() == Type.NOMINAL)
 			return MoleculePropertyUtil.getNominalColor(selectedHighlightMoleculeProperty,
 					m.getStringValue(selectedHighlightMoleculeProperty));
+		else if (highlightLogEnabled)
+			return ColorUtil.getThreeColorGradient(
+					clustering.getNormalizedLogDoubleValue(m, selectedHighlightMoleculeProperty), Color.RED,
+					Color.WHITE, Color.BLUE);
 		else
-			return ColorUtil.getThreeColorGradient(m.getNormalizedDoubleValue(selectedHighlightMoleculeProperty),
-					Color.RED, Color.WHITE, Color.BLUE);
+			return ColorUtil.getThreeColorGradient(
+					clustering.getNormalizedDoubleValue(m, selectedHighlightMoleculeProperty), Color.RED, Color.WHITE,
+					Color.BLUE);
 	}
 
 	public static enum Translucency
@@ -115,6 +120,7 @@ public class MainPanel extends JPanel implements ViewControler
 	HighlightAutomatic highlightAutomatic;
 	boolean backgroundBlack = true;
 	HighlightMode highlightMode = HighlightMode.ColorCompounds;
+	boolean highlightLogEnabled = false;
 
 	public Clustering getClustering()
 	{
@@ -1409,4 +1415,20 @@ public class MainPanel extends JPanel implements ViewControler
 		return modelDescriptorProperty;
 	}
 
+	@Override
+	public boolean getHighlightLogEnabled()
+	{
+		return highlightLogEnabled;
+	}
+
+	@Override
+	public void setHighlightLogEnabled(boolean b)
+	{
+		if (b != highlightLogEnabled)
+		{
+			highlightLogEnabled = b;
+			updateAllClustersAndModels(true);
+			fireViewChange(PROPERTY_HIGHLIGHT_LOG_CHANGED);
+		}
+	}
 }

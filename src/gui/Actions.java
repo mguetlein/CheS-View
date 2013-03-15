@@ -68,6 +68,7 @@ public class Actions
 	private Action vActionBlackWhite;
 	private Action vActionMoleculeDescriptor;
 	///highlight
+	private Action tActionHighlightLog;
 	private Action tActionColorMatch;
 	private Action tActionToggleHighlightMode;
 	private Action tActionDecreaseSphereSize;
@@ -255,6 +256,8 @@ public class Actions
 			return KeyStroke.getKeyStroke(KeyEvent.VK_SHIFT, ActionEvent.SHIFT_MASK);
 		if (a == xActionUpdateMouseSelectionReleased)
 			return KeyStroke.getKeyStroke(KeyEvent.VK_SHIFT, 0, true);
+		if (a == tActionHighlightLog)
+			return KeyStroke.getKeyStroke(KeyEvent.VK_L, ActionEvent.ALT_MASK);
 		if (a == tActionToggleHighlightMode)
 			return KeyStroke.getKeyStroke(KeyEvent.VK_T, ActionEvent.ALT_MASK);
 		if (a == xActionDecreaseCompoundSize)
@@ -600,6 +603,15 @@ public class Actions
 				}
 			}
 		});
+
+		tActionHighlightLog = new AbstractAction("Toggle highlight log on/off")
+		{
+			@Override
+			public void actionPerformed(ActionEvent e)
+			{
+				viewControler.setHighlightLogEnabled(!viewControler.getHighlightLogEnabled());
+			}
+		};
 		tActionToggleHighlightMode = new AbstractAction("Toggle feature highlight mode (Spheres/Colored compounds)")
 		{
 			@Override
@@ -734,8 +746,9 @@ public class Actions
 
 	public Action[] getHighlightActions()
 	{
-		return new Action[] { tActionColorMatch, tActionToggleHighlightMode, tActionDecreaseSphereSize,
-				tActionIncreaseSphereSize, tActionDecreaseSphereTranslucency, tActionIncreaseSphereTranslucency };
+		return new Action[] { tActionColorMatch, tActionHighlightLog, tActionToggleHighlightMode,
+				tActionDecreaseSphereSize, tActionIncreaseSphereSize, tActionDecreaseSphereTranslucency,
+				tActionIncreaseSphereTranslucency };
 	}
 
 	public Action[] getHelpActions()

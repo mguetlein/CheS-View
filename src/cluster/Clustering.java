@@ -20,6 +20,7 @@ import javax.vecmath.Vector3f;
 import main.Settings;
 import main.TaskProvider;
 import util.ArrayUtil;
+import util.DoubleKeyHashMap;
 import util.FileUtil;
 import util.SelectionModel;
 import util.Vector3fUtil;
@@ -149,6 +150,8 @@ public class Clustering implements Zoomable
 			}
 
 		numMissingValues.clear();
+		normalizedLogValues.clear();
+		normalizedValues.clear();
 
 		dirty = false;
 	}
@@ -296,6 +299,8 @@ public class Clustering implements Zoomable
 		View.instance.zap(true, true, true);
 		modelList.clear();
 		modelListIncludingMultiClusteredModels.clear();
+		normalizedValues.clear();
+		normalizedLogValues.clear();
 		dirty = true;
 
 		fire(CLUSTER_REMOVED, old, clusters);
@@ -731,6 +736,39 @@ public class Clustering implements Zoomable
 	public void setSuperimposed(boolean superimposed)
 	{
 		this.superimposed = superimposed;
+	}
+
+	DoubleKeyHashMap<Model, MoleculeProperty, Double> normalizedValues = new DoubleKeyHashMap<Model, MoleculeProperty, Double>();
+	DoubleKeyHashMap<Model, MoleculeProperty, Double> normalizedLogValues = new DoubleKeyHashMap<Model, MoleculeProperty, Double>();
+
+	private void updateNormalizedValues(MoleculeProperty p)
+	{
+		Double d[] = new Double[modelList.size()];
+		int i = 0;
+		for (Model m : modelList)
+			d[i++] = m.getDoubleValue(p);
+		Double valNorm[] = ArrayUtil.normalize(d, false);
+		Double valNormLog[] = ArrayUtil.normalizeLog(d, false);
+		i = 0;
+		for (Model m : modelList)
+		{
+			normalizedValues.put(m, p, valNorm[i]);
+			normalizedValues.put(m, p, valNormLog[i++]);
+		}
+	}
+
+	public double getNormalizedDoubleValue(Model m, MoleculeProperty p)
+	{
+		if (!normalizedValues.containsKeyPair(m, p))
+			updateNormalizedValues(p);
+		return normalizedValues.get(m, p);
+	}
+
+	public double getNormalizedLogDoubleValue(Model m, MoleculeProperty p)
+	{
+		if (!normalizedLogValues.containsKeyPair(m, p))
+			updateNormalizedValues(p);
+		return normalizedLogValues.get(m, p);
 	}
 
 }
