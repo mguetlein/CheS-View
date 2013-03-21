@@ -76,7 +76,7 @@ public class MainPanel extends JPanel implements ViewControler
 		else if (selectedHighlightMoleculeProperty.getType() == Type.NOMINAL)
 			return MoleculePropertyUtil.getNominalColor(selectedHighlightMoleculeProperty,
 					m.getStringValue(selectedHighlightMoleculeProperty));
-		else if (highlightLogEnabled)
+		else if (highlightLogEnabled && selectedHighlightMoleculeProperty.getType() == Type.NUMERIC)
 			return ColorUtil.getThreeColorGradient(
 					clustering.getNormalizedLogDoubleValue(m, selectedHighlightMoleculeProperty), Color.RED,
 					Color.WHITE, Color.BLUE);
@@ -114,6 +114,7 @@ public class MainPanel extends JPanel implements ViewControler
 
 	HashMap<String, Highlighter[]> highlighters;
 	Highlighter selectedHighlighter = Highlighter.CLUSTER_HIGHLIGHTER;
+	Highlighter lastSelectedHighlighter = Highlighter.DEFAULT_HIGHLIGHTER;
 	MoleculeProperty selectedHighlightMoleculeProperty = null;
 	boolean highlighterLabelsVisible = false;
 	HighlightSorting highlightSorting = HighlightSorting.Median;
@@ -166,7 +167,7 @@ public class MainPanel extends JPanel implements ViewControler
 					MainPanel.this.guiControler.updateTitle(clustering);
 			}
 		});
-		View.init(jmolPanel, guiControler, hideHydrogens);
+		View.init(jmolPanel, guiControler, clustering, hideHydrogens);
 		view = View.instance;
 		highlightAutomatic = new HighlightAutomatic(this, clustering);
 
@@ -328,6 +329,7 @@ public class MainPanel extends JPanel implements ViewControler
 	{
 		if (this.selectedHighlighter != highlighter)
 		{
+			lastSelectedHighlighter = selectedHighlighter;
 			selectedHighlighter = highlighter;
 			if (selectedHighlighter instanceof MoleculePropertyHighlighter)
 				selectedHighlightMoleculeProperty = ((MoleculePropertyHighlighter) highlighter).getProperty();
@@ -337,6 +339,12 @@ public class MainPanel extends JPanel implements ViewControler
 			updateAllClustersAndModels(false);
 			fireViewChange(PROPERTY_HIGHLIGHT_CHANGED);
 		}
+	}
+
+	@Override
+	public void setSelectLastSelectedHighlighter()
+	{
+		setHighlighter(lastSelectedHighlighter);
 	}
 
 	@Override
@@ -1310,6 +1318,9 @@ public class MainPanel extends JPanel implements ViewControler
 			Settings.LOGGER.info("zooming out - home");
 			view.zoomTo(clustering, null);
 		}
+		for (Model model : clustering.getModels(true))
+			if (model.isSphereVisible())
+				view.showSphere(model, true);
 		view.proceedAnimation("change density");
 
 		fireViewChange(PROPERTY_DENSITY_CHANGED);

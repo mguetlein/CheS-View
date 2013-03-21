@@ -1,5 +1,6 @@
 package cluster;
 
+import gui.DoubleNameListCellRenderer.DoubleNameElement;
 import gui.MainPanel.Translucency;
 import gui.View;
 import gui.ViewControler;
@@ -12,11 +13,13 @@ import javax.swing.ImageIcon;
 import javax.vecmath.Vector3f;
 
 import main.Settings;
+import util.DoubleUtil;
+import util.StringUtil;
 import dataInterface.CompoundData;
 import dataInterface.MoleculeProperty;
 import dataInterface.MoleculeProperty.Type;
 
-public class Model implements Zoomable
+public class Model implements Zoomable, Comparable<Model>, DoubleNameElement
 {
 	private int modelIndex;
 	private BitSet bitSet;
@@ -35,7 +38,7 @@ public class Model implements Zoomable
 	private Vector3f spherePosition;
 	private MoleculeProperty highlightMoleculeProperty;
 	private String style;
-	private MoleculeProperty descriptorProperty = ViewControler.COMPOUND_INDEX_PROPERTY;
+	private MoleculeProperty descriptorProperty = null;
 	private boolean sphereVisible;
 
 	private float diameter = -1;
@@ -49,6 +52,7 @@ public class Model implements Zoomable
 		bitSet = View.instance.getModelUndeletedAtomsBitSet(modelIndex);
 		origCenter = new Vector3f(View.instance.getAtomSetCenter(bitSet));
 		smartsMatches = new HashMap<String, BitSet>();
+		setDescriptor(ViewControler.COMPOUND_INDEX_PROPERTY);
 	}
 
 	public String getTemperature(MoleculeProperty property)
@@ -90,14 +94,75 @@ public class Model implements Zoomable
 		return compoundData.getIndex();
 	}
 
+	class DisplayName implements Comparable<DisplayName>
+	{
+		String val;
+		Double valD;
+		Integer compareIndex;
+		String name;
+
+		public String toString()
+		{
+			StringBuffer b = new StringBuffer();
+			if (val != null)
+			{
+				b.append(val);
+				b.append(" ");
+			}
+			b.append(name);
+			return b.toString();
+		}
+
+		@Override
+		public int compareTo(DisplayName d)
+		{
+			if (valD != null || d.valD != null)
+			{
+				int i = DoubleUtil.compare(valD, d.valD);
+				if (i != 0)
+					return i;
+			}
+			else if (val != null || d.val != null)
+			{
+				int i = StringUtil.compare(val, d.val);
+				if (i != 0)
+					return i;
+			}
+			if (compareIndex != null)
+				return compareIndex.compareTo(d.compareIndex);
+			return name.compareTo(d.name);
+		}
+
+		public String[] toBiString()
+		{
+			return new String[] { val, name };
+		}
+	}
+
+	private DisplayName displayName = new DisplayName();
+
+	@Override
 	public String toString()
 	{
-		if (descriptorProperty == ViewControler.COMPOUND_INDEX_PROPERTY)
-			return "Compound " + (getModelOrigIndex() + 1);
-		else if (descriptorProperty == ViewControler.COMPOUND_SMILES_PROPERTY)
-			return getSmiles();
-		else
-			return getTemperature(descriptorProperty);
+		return displayName.toString();
+	}
+
+	@Override
+	public String getFirstName()
+	{
+		return displayName.val;
+	}
+
+	@Override
+	public String getSecondName()
+	{
+		return displayName.name;
+	}
+
+	@Override
+	public int compareTo(Model m)
+	{
+		return displayName.compareTo(m.displayName);
 	}
 
 	public String getSmiles()
@@ -230,7 +295,25 @@ public class Model implements Zoomable
 
 	public void setHighlightMoleculeProperty(MoleculeProperty highlightMoleculeProperty)
 	{
-		this.highlightMoleculeProperty = highlightMoleculeProperty;
+		if (this.highlightMoleculeProperty != highlightMoleculeProperty)
+		{
+			displayName.val = null;
+			displayName.valD = null;
+			if (highlightMoleculeProperty != null)
+			{
+				if (highlightMoleculeProperty.getType() == Type.NUMERIC)
+				{
+					Double d = getDoubleValue(highlightMoleculeProperty);
+					if (d != null)
+						displayName.val = StringUtil.formatDouble(d);
+					displayName.valD = d;
+				}
+				else
+					displayName.val = getStringValue(highlightMoleculeProperty);
+			}
+			this.highlightMoleculeProperty = highlightMoleculeProperty;
+		}
+
 		//		if (highlightMoleculeProperty != null && this.highlightMoleculeProperty.getType() == Type.NUMERIC)
 		//		{
 		//			// string properties do have a normalized double value as well
@@ -292,7 +375,20 @@ public class Model implements Zoomable
 
 	public void setDescriptor(MoleculeProperty descriptorProperty)
 	{
-		this.descriptorProperty = descriptorProperty;
+		if (this.descriptorProperty != descriptorProperty)
+		{
+			displayName.compareIndex = null;
+			if (descriptorProperty == ViewControler.COMPOUND_INDEX_PROPERTY)
+			{
+				displayName.compareIndex = getModelOrigIndex();
+				displayName.name = "Compound " + (getModelOrigIndex() + 1);
+			}
+			else if (descriptorProperty == ViewControler.COMPOUND_SMILES_PROPERTY)
+				displayName.name = getSmiles();
+			else
+				displayName.name = getTemperature(descriptorProperty);
+			this.descriptorProperty = descriptorProperty;
+		}
 	}
 
 	public boolean isSphereVisible()

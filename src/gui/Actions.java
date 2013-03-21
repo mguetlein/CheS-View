@@ -25,6 +25,7 @@ import task.Task;
 import task.TaskDialog;
 import util.ArrayUtil;
 import util.SwingUtil;
+import workflow.Workflow;
 import cluster.Clustering;
 import cluster.ExportData;
 import data.ClusteringData;
@@ -60,6 +61,7 @@ public class Actions
 	private Action eActionExportClusters;
 	private Action eActionExportModels;
 	private Action eActionExportImage;
+	private Action eActionExportWorkflow;
 	//view
 	private Action vActionFullScreen;
 	private Action vActionDrawHydrogens;
@@ -69,6 +71,7 @@ public class Actions
 	private Action vActionMoleculeDescriptor;
 	///highlight
 	private Action tActionHighlightLog;
+	private Action tActionHighlightLastSelectedFeature;
 	private Action tActionColorMatch;
 	private Action tActionToggleHighlightMode;
 	private Action tActionDecreaseSphereSize;
@@ -232,6 +235,8 @@ public class Actions
 			return null;
 		if (a == eActionExportImage)
 			return KeyStroke.getKeyStroke(KeyEvent.VK_I, ActionEvent.ALT_MASK);
+		if (a == eActionExportWorkflow)
+			return KeyStroke.getKeyStroke(KeyEvent.VK_W, ActionEvent.ALT_MASK);
 		if (a == vActionFullScreen)
 			return KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, ActionEvent.ALT_MASK);
 		if (a == vActionDrawHydrogens)
@@ -258,6 +263,8 @@ public class Actions
 			return KeyStroke.getKeyStroke(KeyEvent.VK_SHIFT, 0, true);
 		if (a == tActionHighlightLog)
 			return KeyStroke.getKeyStroke(KeyEvent.VK_L, ActionEvent.ALT_MASK);
+		if (a == tActionHighlightLastSelectedFeature)
+			return KeyStroke.getKeyStroke(KeyEvent.VK_A, ActionEvent.ALT_MASK);
 		if (a == tActionToggleHighlightMode)
 			return KeyStroke.getKeyStroke(KeyEvent.VK_T, ActionEvent.ALT_MASK);
 		if (a == xActionDecreaseCompoundSize)
@@ -375,6 +382,14 @@ public class Actions
 			public void actionPerformed(ActionEvent e)
 			{
 				View.instance.exportImage();
+			}
+		};
+		eActionExportWorkflow = new AbstractAction("Export Workflow")
+		{
+			@Override
+			public void actionPerformed(ActionEvent e)
+			{
+				Workflow.exportWorkflowToFile(Workflow.exportWorkflow());
 			}
 		};
 
@@ -612,6 +627,14 @@ public class Actions
 				viewControler.setHighlightLogEnabled(!viewControler.getHighlightLogEnabled());
 			}
 		};
+		tActionHighlightLastSelectedFeature = new AbstractAction("Highlight last selected feature")
+		{
+			@Override
+			public void actionPerformed(ActionEvent e)
+			{
+				viewControler.setSelectLastSelectedHighlighter();
+			}
+		};
 		tActionToggleHighlightMode = new AbstractAction("Toggle feature highlight mode (Spheres/Colored compounds)")
 		{
 			@Override
@@ -730,7 +753,8 @@ public class Actions
 
 	public Action[] getExportActions()
 	{
-		return new Action[] { eActionExportCurrent, eActionExportClusters, eActionExportModels, eActionExportImage };
+		return new Action[] { eActionExportCurrent, eActionExportClusters, eActionExportModels, eActionExportImage,
+				eActionExportWorkflow };
 	}
 
 	public Action[] getRemoveActions()
@@ -746,9 +770,9 @@ public class Actions
 
 	public Action[] getHighlightActions()
 	{
-		return new Action[] { tActionColorMatch, tActionHighlightLog, tActionToggleHighlightMode,
-				tActionDecreaseSphereSize, tActionIncreaseSphereSize, tActionDecreaseSphereTranslucency,
-				tActionIncreaseSphereTranslucency };
+		return new Action[] { tActionColorMatch, tActionHighlightLog, tActionHighlightLastSelectedFeature,
+				tActionToggleHighlightMode, tActionDecreaseSphereSize, tActionIncreaseSphereSize,
+				tActionDecreaseSphereTranslucency, tActionIncreaseSphereTranslucency };
 	}
 
 	public Action[] getHelpActions()

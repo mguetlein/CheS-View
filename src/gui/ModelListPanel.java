@@ -12,8 +12,8 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.Arrays;
 
-import javax.swing.DefaultListCellRenderer;
 import javax.swing.DefaultListModel;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
@@ -24,7 +24,9 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
+import util.DoubleUtil;
 import util.SelectionModel;
+import util.StringUtil;
 import cluster.Cluster;
 import cluster.Clustering;
 import cluster.Model;
@@ -33,6 +35,8 @@ import com.jgoodies.forms.builder.DefaultFormBuilder;
 import com.jgoodies.forms.layout.CellConstraints;
 import com.jgoodies.forms.layout.ConstantSize;
 import com.jgoodies.forms.layout.FormLayout;
+
+import dataInterface.MoleculeProperty;
 
 public class ModelListPanel extends TransparentViewPanel
 {
@@ -206,7 +210,8 @@ public class ModelListPanel extends TransparentViewPanel
 			@Override
 			public void propertyChange(PropertyChangeEvent evt)
 			{
-				if (evt.getPropertyName().equals(ViewControler.PROPERTY_MOLECULE_DESCRIPTOR_CHANGED))
+				if (evt.getPropertyName().equals(ViewControler.PROPERTY_MOLECULE_DESCRIPTOR_CHANGED)
+						|| evt.getPropertyName().equals(ViewControler.PROPERTY_HIGHLIGHT_CHANGED))
 				{
 					update(clusterActive.getSelected(), false);
 				}
@@ -250,7 +255,7 @@ public class ModelListPanel extends TransparentViewPanel
 		list.setVisibleRowCount(16);
 
 		list.setOpaque(false);
-		list.setCellRenderer(new DefaultListCellRenderer()
+		list.setCellRenderer(new DoubleNameListCellRenderer(listModel)
 		{
 			public Component getListCellRendererComponent(JList list, Object value, int i, boolean isSelected,
 					boolean cellHasFocus)
@@ -360,10 +365,14 @@ public class ModelListPanel extends TransparentViewPanel
 				//				hideUnselectedCheckBox.setVisible(true);
 
 				listScrollPane.setPreferredSize(null);
-				for (Model m : c.getModels())
-				{
-					listModel.addElement(m);
-				}
+
+				Model m[] = new Model[c.getModels().size()];
+				int i = 0;
+				for (Model mod : c.getModels())
+					m[i++] = mod;
+				Arrays.sort(m);
+				for (Model model : m)
+					listModel.addElement(model);
 				updateActiveModelSelection();
 				listScrollPane.setVisible(true);
 				if (listScrollPane.getPreferredSize().getWidth() > 400)
@@ -374,4 +383,11 @@ public class ModelListPanel extends TransparentViewPanel
 		repaint();
 	}
 
+	private static int compare(Model m1, Model m2, MoleculeProperty p)
+	{
+		if (p.getType() == MoleculeProperty.Type.NUMERIC)
+			return DoubleUtil.compare(m1.getDoubleValue(p), m2.getDoubleValue(p));
+		else
+			return StringUtil.compare(m1.getStringValue(p), m2.getStringValue(p));
+	}
 }

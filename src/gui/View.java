@@ -4,6 +4,8 @@ import gui.MainPanel.JmolPanel;
 
 import java.awt.Color;
 import java.awt.Dimension;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.BitSet;
@@ -27,6 +29,7 @@ import util.ArrayUtil;
 import util.FileUtil;
 import util.SequentialWorkerThread;
 import util.Vector3fUtil;
+import cluster.Clustering;
 import cluster.Model;
 
 public class View
@@ -45,10 +48,24 @@ public class View
 		SLOW, FAST
 	}
 
-	private View(Viewer viewer, GUIControler guiControler, boolean hideHydrogens)
+	private View(Viewer viewer, GUIControler guiControler, final Clustering clustering, boolean hideHydrogens)
 	{
 		this.viewer = viewer;
 		this.guiControler = guiControler;
+
+		clustering.addListener(new PropertyChangeListener()
+		{
+			@Override
+			public void propertyChange(PropertyChangeEvent evt)
+			{
+				if (evt.getPropertyName().equals(Clustering.CLUSTER_REMOVED)
+						|| evt.getPropertyName().equals(Clustering.CLUSTER_MODIFIED)
+						|| evt.getPropertyName().equals(Clustering.CLUSTER_CLEAR))
+					for (Model m : spheresForModel)
+						if (!clustering.getModels(true).contains(m))
+							hideSphere(m);
+			}
+		});
 
 		viewer.script("set disablePopupMenu on");
 		viewer.script("set minPixelSelRadius 30");
@@ -58,9 +75,9 @@ public class View
 		hideHydrogens(hideHydrogens);
 	}
 
-	public static void init(JmolPanel jmolPanel, GUIControler guiControler, boolean hideHydrogens)
+	public static void init(JmolPanel jmolPanel, GUIControler guiControler, Clustering clustering, boolean hideHydrogens)
 	{
-		instance = new View((Viewer) jmolPanel.getViewer(), guiControler, hideHydrogens);
+		instance = new View((Viewer) jmolPanel.getViewer(), guiControler, clustering, hideHydrogens);
 	}
 
 	public synchronized void setAntialiasOn(boolean antialias)

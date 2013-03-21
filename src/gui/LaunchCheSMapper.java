@@ -30,6 +30,8 @@ public class LaunchCheSMapper
 				ScreenSetup.SETUP = ScreenSetup.SCREENSHOT;
 			else if (args[0].equals("video"))
 				ScreenSetup.SETUP = ScreenSetup.VIDEO;
+			else if (args[0].equals("small_screen"))
+				ScreenSetup.SETUP = ScreenSetup.SMALL_SCREEN;
 			else if (!args[0].equals("default"))
 				throw new Error("illegal screen setup arg: " + args[0]);
 		}

@@ -131,4 +131,6 @@ public interface ViewControler
 
 	public void setHighlightLogEnabled(boolean b);
 
+	public void setSelectLastSelectedHighlighter();
+
 }

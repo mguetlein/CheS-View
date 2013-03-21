@@ -29,6 +29,7 @@ import data.ClusteringData;
 import dataInterface.ClusterData;
 import dataInterface.CompoundData;
 import dataInterface.MoleculeProperty;
+import dataInterface.MoleculeProperty.Type;
 import dataInterface.SubstructureSmartsType;
 
 public class Clustering implements Zoomable
@@ -624,6 +625,7 @@ public class Clustering implements Zoomable
 				modelWatched.clearSelection();
 				c.remove(indices);
 				dirty = true;
+				updatePositions();
 				fire(CLUSTER_MODIFIED, null, null);
 			}
 		}
@@ -743,17 +745,31 @@ public class Clustering implements Zoomable
 
 	private void updateNormalizedValues(MoleculeProperty p)
 	{
-		Double d[] = new Double[modelList.size()];
+		Double valNorm[] = null;
+		Double valNormLog[] = null;
+		if (p.getType() == Type.NUMERIC)
+		{
+			Double d[] = new Double[modelList.size()];
+			int i = 0;
+			for (Model m : modelList)
+				d[i++] = m.getDoubleValue(p);
+			valNorm = ArrayUtil.normalize(d, false);
+			valNormLog = ArrayUtil.normalizeLog(d, false);
+		}
+		else
+		{
+			String s[] = new String[modelList.size()];
+			int i = 0;
+			for (Model m : modelList)
+				s[i++] = m.getStringValue(p);
+			valNorm = ArrayUtil.normalizeObjectArray(s);
+		}
 		int i = 0;
-		for (Model m : modelList)
-			d[i++] = m.getDoubleValue(p);
-		Double valNorm[] = ArrayUtil.normalize(d, false);
-		Double valNormLog[] = ArrayUtil.normalizeLog(d, false);
-		i = 0;
 		for (Model m : modelList)
 		{
 			normalizedValues.put(m, p, valNorm[i]);
-			normalizedValues.put(m, p, valNormLog[i++]);
+			if (valNormLog != null)
+				normalizedLogValues.put(m, p, valNormLog[i++]);
 		}
 	}
 
@@ -766,6 +782,8 @@ public class Clustering implements Zoomable
 
 	public double getNormalizedLogDoubleValue(Model m, MoleculeProperty p)
 	{
+		if (p.getType() != Type.NUMERIC)
+			throw new IllegalStateException();
 		if (!normalizedLogValues.containsKeyPair(m, p))
 			updateNormalizedValues(p);
 		return normalizedLogValues.get(m, p);
