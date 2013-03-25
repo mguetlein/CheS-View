@@ -25,7 +25,7 @@ import task.Task;
 import task.TaskDialog;
 import util.ArrayUtil;
 import util.SwingUtil;
-import workflow.Workflow;
+import workflow.MappingWorkflow;
 import cluster.Clustering;
 import cluster.ExportData;
 import data.ClusteringData;
@@ -389,7 +389,7 @@ public class Actions
 			@Override
 			public void actionPerformed(ActionEvent e)
 			{
-				Workflow.exportWorkflowToFile(Workflow.exportWorkflow());
+				MappingWorkflow.exportMappingWorkflowToFile(MappingWorkflow.exportSettingsToMappingWorkflow());
 			}
 		};
 

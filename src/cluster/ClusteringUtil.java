@@ -39,7 +39,7 @@ public class ClusteringUtil
 	}
 
 	public static int COMPOUND_SIZE_MAX = 40;
-	public static int COMPOUND_SIZE = 30;
+	public static int COMPOUND_SIZE = 20;
 	public static float SCALE = 0;
 
 	/**

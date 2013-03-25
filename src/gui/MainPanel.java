@@ -869,19 +869,20 @@ public class MainPanel extends JPanel implements ViewControler
 		highlighters = new LinkedHashMap<String, Highlighter[]>();
 		highlighters.put("", h);
 
-		List<MoleculeProperty> props = clustering.getFeatures();
-		MoleculePropertyHighlighter featureHighlighters[] = new MoleculePropertyHighlighter[props.size()];
+		List<MoleculeProperty> props = clustering.getProperties();
+		MoleculePropertyHighlighter[] featureHighlighters = new MoleculePropertyHighlighter[props.size()];
 		int fCount = 0;
 		for (MoleculeProperty p : props)
 			featureHighlighters[fCount++] = new MoleculePropertyHighlighter(p);
-		highlighters.put("Features used for mapping", featureHighlighters);
+		highlighters.put("Features NOT used for mapping", featureHighlighters);
 
-		props = clustering.getProperties();
+		props = clustering.getFeatures();
 		featureHighlighters = new MoleculePropertyHighlighter[props.size()];
 		fCount = 0;
 		for (MoleculeProperty p : props)
 			featureHighlighters[fCount++] = new MoleculePropertyHighlighter(p);
-		highlighters.put("Features NOT used for mapping", featureHighlighters);
+		highlighters.put("Features used for mapping", featureHighlighters);
+
 		fireViewChange(PROPERTY_NEW_HIGHLIGHTERS);
 
 		updateAllClustersAndModels(true);
@@ -1396,12 +1397,36 @@ public class MainPanel extends JPanel implements ViewControler
 		return matchColor;
 	}
 
+	@SuppressWarnings("unchecked")
 	private void initMoleculeDescriptor()
 	{
 		if (modelDescriptorProperty != COMPOUND_INDEX_PROPERTY && modelDescriptorProperty != COMPOUND_SMILES_PROPERTY
 				&& !clustering.getFeatures().contains(modelDescriptorProperty)
 				&& !clustering.getProperties().contains(modelDescriptorProperty))
 			modelDescriptorProperty = null;
+		if (modelDescriptorProperty == null)
+		{
+			for (String names : new String[] { "(?i)^name$", "(?i).*name.*", "(?i)^id$", "(?i).*id.*", "(?i)^cas$",
+					"(?i).*cas.*" })
+			{
+				for (List<MoleculeProperty> props : new List[] { clustering.getFeatures(), clustering.getProperties() })
+				{
+					for (MoleculeProperty p : props)
+					{
+						if (p.toString().matches(names)
+								&& clustering.numDistinctValues(p) > (clustering.numModels() * 3 / 4.0))
+						{
+							modelDescriptorProperty = p;
+							break;
+						}
+					}
+					if (modelDescriptorProperty != null)
+						break;
+				}
+				if (modelDescriptorProperty != null)
+					break;
+			}
+		}
 		if (modelDescriptorProperty == null)
 			modelDescriptorProperty = COMPOUND_INDEX_PROPERTY;
 		for (Model m : clustering.getModels(true))

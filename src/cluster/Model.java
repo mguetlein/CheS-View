@@ -14,6 +14,7 @@ import javax.vecmath.Vector3f;
 
 import main.Settings;
 import util.DoubleUtil;
+import util.ObjectUtil;
 import util.StringUtil;
 import dataInterface.CompoundData;
 import dataInterface.MoleculeProperty;
@@ -104,7 +105,7 @@ public class Model implements Zoomable, Comparable<Model>, DoubleNameElement
 		public String toString()
 		{
 			StringBuffer b = new StringBuffer();
-			if (val != null)
+			if (val != null && !val.equals(name))
 			{
 				b.append(val);
 				b.append(" ");
@@ -132,11 +133,6 @@ public class Model implements Zoomable, Comparable<Model>, DoubleNameElement
 				return compareIndex.compareTo(d.compareIndex);
 			return name.compareTo(d.name);
 		}
-
-		public String[] toBiString()
-		{
-			return new String[] { val, name };
-		}
 	}
 
 	private DisplayName displayName = new DisplayName();
@@ -150,7 +146,10 @@ public class Model implements Zoomable, Comparable<Model>, DoubleNameElement
 	@Override
 	public String getFirstName()
 	{
-		return displayName.val;
+		if (ObjectUtil.equals(displayName.val, displayName.name))
+			return null;
+		else
+			return displayName.val;
 	}
 
 	@Override

@@ -789,4 +789,9 @@ public class Clustering implements Zoomable
 		return normalizedLogValues.get(m, p);
 	}
 
+	public int numDistinctValues(MoleculeProperty p)
+	{
+		return clusteringData.numDistinctValues(p);
+	}
+
 }
