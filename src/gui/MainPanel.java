@@ -65,24 +65,21 @@ public class MainPanel extends JPanel implements ViewControler
 	MoleculeProperty modelDescriptorProperty = null;
 	List<JComponent> ignoreMouseMovementPanels = new ArrayList<JComponent>();
 
-	private Color getModelHighlightColor(Model m)
+	private Color getModelHighlightColor(Model m, Highlighter h, MoleculeProperty p)
 	{
-		if (selectedHighlighter == Highlighter.CLUSTER_HIGHLIGHTER)
+		if (h == Highlighter.CLUSTER_HIGHLIGHTER)
 			return MoleculePropertyUtil.getColor(clustering.getClusterIndexForModel(m));
-		else if (selectedHighlightMoleculeProperty == null)
+		else if (p == null)
 			return null;
-		else if (m.getTemperature(selectedHighlightMoleculeProperty).equals("null"))
+		else if (m.getTemperature(p).equals("null"))
 			return Color.DARK_GRAY;
-		else if (selectedHighlightMoleculeProperty.getType() == Type.NOMINAL)
-			return MoleculePropertyUtil.getNominalColor(selectedHighlightMoleculeProperty,
-					m.getStringValue(selectedHighlightMoleculeProperty));
-		else if (highlightLogEnabled && selectedHighlightMoleculeProperty.getType() == Type.NUMERIC)
-			return ColorUtil.getThreeColorGradient(
-					clustering.getNormalizedLogDoubleValue(m, selectedHighlightMoleculeProperty), Color.RED,
+		else if (p.getType() == Type.NOMINAL)
+			return MoleculePropertyUtil.getNominalColor(p, m.getStringValue(p));
+		else if (highlightLogEnabled && p.getType() == Type.NUMERIC)
+			return ColorUtil.getThreeColorGradient(clustering.getNormalizedLogDoubleValue(m, p), Color.RED,
 					Color.WHITE, Color.BLUE);
 		else
-			return ColorUtil.getThreeColorGradient(
-					clustering.getNormalizedDoubleValue(m, selectedHighlightMoleculeProperty), Color.RED, Color.WHITE,
+			return ColorUtil.getThreeColorGradient(clustering.getNormalizedDoubleValue(m, p), Color.RED, Color.WHITE,
 					Color.BLUE);
 	}
 
@@ -122,6 +119,8 @@ public class MainPanel extends JPanel implements ViewControler
 	boolean backgroundBlack = true;
 	HighlightMode highlightMode = HighlightMode.ColorCompounds;
 	boolean highlightLogEnabled = false;
+	boolean antialiasEnabled = ScreenSetup.SETUP.isAntialiasOn();
+	boolean highlightLastFeatureEnabled = false;
 
 	public Clustering getClustering()
 	{
@@ -167,7 +166,7 @@ public class MainPanel extends JPanel implements ViewControler
 					MainPanel.this.guiControler.updateTitle(clustering);
 			}
 		});
-		View.init(jmolPanel, guiControler, clustering, hideHydrogens);
+		View.init(jmolPanel, guiControler, this, clustering);
 		view = View.instance;
 		highlightAutomatic = new HighlightAutomatic(this, clustering);
 
@@ -504,7 +503,7 @@ public class MainPanel extends JPanel implements ViewControler
 			if (model.isShowActiveBox())
 				view.scriptWait("draw bb" + model.getModelIndex() + "a ON");
 			if (model.isSphereVisible())
-				view.showSphere(model, false);
+				view.showSphere(model, model.isLastFeatureSphereVisible(), false);
 		}
 		view.display(toDisplay);
 	}
@@ -619,7 +618,7 @@ public class MainPanel extends JPanel implements ViewControler
 
 		BitSet bs = view.getModelUndeletedAtomsBitSet(modelIndex);
 		view.select(bs);
-		Color col = getModelHighlightColor(m);
+		Color col = getModelHighlightColor(m, selectedHighlighter, selectedHighlightMoleculeProperty);
 		String highlightColor = col == null ? null : "color " + ColorUtil.toJMolString(col);
 		String modelColor;
 		if (highlightMode == HighlightMode.Spheres)
@@ -628,6 +627,7 @@ public class MainPanel extends JPanel implements ViewControler
 			modelColor = col == null ? "color cpk" : "color " + ColorUtil.toJMolString(col);
 
 		boolean sphereVisible = (highlightMode == HighlightMode.Spheres && highlightColor != null);
+		boolean lastFeatureSphereVisible = sphereVisible && highlightLastFeatureEnabled;
 
 		Translucency translucency;
 		if (translucent)
@@ -666,6 +666,7 @@ public class MainPanel extends JPanel implements ViewControler
 				|| !ObjectUtil.equals(modelColor, m.getModelColor())
 				|| selectedHighlightMoleculeProperty != m.getHighlightMoleculeProperty();
 		boolean sphereUpdate = sphereVisible != m.isSphereVisible()
+				|| (lastFeatureSphereVisible != m.isLastFeatureSphereVisible())
 				|| (sphereVisible && (translucency != m.getTranslucency() || !ObjectUtil.equals(highlightColor,
 						m.getHighlightColor())));
 		boolean spherePositionUpdate = sphereVisible && !ObjectUtil.equals(m.getPosition(), m.getSpherePosition());
@@ -680,6 +681,7 @@ public class MainPanel extends JPanel implements ViewControler
 		m.setHighlightColor(highlightColor);
 		m.setSpherePosition(m.getPosition());
 		m.setSphereVisible(sphereVisible);
+		m.setLastFeatureSphereVisible(lastFeatureSphereVisible);
 		m.setShowHoverBox(showHoverBox);
 		m.setShowActiveBox(showActiveBox);
 
@@ -691,7 +693,7 @@ public class MainPanel extends JPanel implements ViewControler
 		if (forceUpdate || sphereUpdate || spherePositionUpdate)
 		{
 			if (sphereVisible)
-				view.showSphere(m, forceUpdate || spherePositionUpdate);
+				view.showSphere(m, lastFeatureSphereVisible, forceUpdate || spherePositionUpdate);
 			else
 				view.hideSphere(m);
 		}
@@ -1075,6 +1077,23 @@ public class MainPanel extends JPanel implements ViewControler
 		return clustering.getCluster(clustering.getClusterActive().getSelected()).isSpreadable();
 	}
 
+	@Override
+	public boolean isAntialiasEnabled()
+	{
+		return antialiasEnabled;
+	}
+
+	@Override
+	public void setAntialiasEnabled(boolean b)
+	{
+		if (this.antialiasEnabled != b)
+		{
+			this.antialiasEnabled = b;
+			View.instance.setAntialiasOn(antialiasEnabled);
+			fireViewChange(PROPERTY_ANTIALIAS_CHANGED);
+		}
+	}
+
 	private void updateSuperimpose(boolean animateSuperimpose)
 	{
 		guiControler.block("superimposing and zooming");
@@ -1084,7 +1103,7 @@ public class MainPanel extends JPanel implements ViewControler
 		boolean superimpose = clustering.isSuperimposed();
 
 		final boolean setAntialiasBackOn;
-		if (ScreenSetup.SETUP.isAntialiasOn() && view.isAntialiasOn())
+		if (antialiasEnabled && view.isAntialiasOn())
 		{
 			setAntialiasBackOn = true;
 			view.setAntialiasOn(false);
@@ -1257,6 +1276,24 @@ public class MainPanel extends JPanel implements ViewControler
 	}
 
 	@Override
+	public boolean isHighlightLastFeatureEnabled()
+	{
+		return highlightLastFeatureEnabled;
+	}
+
+	@Override
+	public void setHighlightLastFeatureEnabled(boolean b)
+	{
+		if (highlightLastFeatureEnabled != b)
+		{
+			highlightLastFeatureEnabled = b;
+			if (highlightMode == HighlightMode.Spheres && selectedHighlighter != Highlighter.DEFAULT_HIGHLIGHTER)
+				updateAllClustersAndModels(true);
+			fireViewChange(PROPERTY_HIGHLIGHT_LAST_FEATURE);
+		}
+	}
+
+	@Override
 	public void setSphereSize(double size)
 	{
 		if (view.sphereSize != size)
@@ -1321,7 +1358,7 @@ public class MainPanel extends JPanel implements ViewControler
 		}
 		for (Model model : clustering.getModels(true))
 			if (model.isSphereVisible())
-				view.showSphere(model, true);
+				view.showSphere(model, model.isLastFeatureSphereVisible(), true);
 		view.proceedAnimation("change density");
 
 		fireViewChange(PROPERTY_DENSITY_CHANGED);
@@ -1452,7 +1489,7 @@ public class MainPanel extends JPanel implements ViewControler
 	}
 
 	@Override
-	public boolean getHighlightLogEnabled()
+	public boolean isHighlightLogEnabled()
 	{
 		return highlightLogEnabled;
 	}

@@ -78,6 +78,8 @@ public interface ViewControler
 	public static final String PROPERTY_MOLECULE_DESCRIPTOR_CHANGED = "propertyMoleculeDescriptorChanged";
 	public static final String PROPERTY_HIGHLIGHT_MODE_CHANGED = "propertyHighlightModeChanged";
 	public static final String PROPERTY_HIGHLIGHT_LOG_CHANGED = "propertyHighlightLogChanged";
+	public static final String PROPERTY_ANTIALIAS_CHANGED = "propertyAntialiasChanged";
+	public static final String PROPERTY_HIGHLIGHT_LAST_FEATURE = "propertyHighlightLastFeature";
 
 	public boolean isHighlighterLabelsVisible();
 
@@ -127,10 +129,18 @@ public interface ViewControler
 
 	public void updateMouseSelection(boolean buttonDown);
 
-	public boolean getHighlightLogEnabled();
+	public boolean isHighlightLogEnabled();
 
 	public void setHighlightLogEnabled(boolean b);
 
 	public void setSelectLastSelectedHighlighter();
+
+	public boolean isAntialiasEnabled();
+
+	public void setAntialiasEnabled(boolean b);
+
+	public void setHighlightLastFeatureEnabled(boolean b);
+
+	public boolean isHighlightLastFeatureEnabled();
 
 }

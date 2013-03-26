@@ -7,7 +7,9 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
@@ -98,17 +100,19 @@ public class ExportData
 					}
 				}
 			}
-			if (csvExport)
-			{
-				for (MoleculeProperty p : clustering.getProperties())
-					if (!p.getName().matches("(?i)smiles"))
-					{
-						if (p.getType() == Type.NUMERIC)
-							featureValues.put(j, p, clustering.getCompounds().get(j).getDoubleValue(p));
-						else
-							featureValues.put(j, p, clustering.getCompounds().get(j).getStringValue(p));
-					}
-			}
+			//			if (csvExport)
+			//			{
+			for (MoleculeProperty p : clustering.getProperties())
+				if (!p.getName().matches("(?i)smiles"))
+				{
+					if (p.getType() == Type.NUMERIC)
+						featureValues.put(j, p, clustering.getCompounds().get(j).getDoubleValue(p) == null ? ""
+								: clustering.getCompounds().get(j).getDoubleValue(p));
+					else
+						featureValues.put(j, p, clustering.getCompounds().get(j).getStringValue(p) == null ? ""
+								: clustering.getCompounds().get(j).getStringValue(p));
+				}
+			//			}
 			for (MoleculeProperty p : clustering.getFeatures())
 				if (!(p instanceof IntegratedProperty))
 					if (p.getType() == Type.NUMERIC)
@@ -185,11 +189,17 @@ public class ExportData
 			try
 			{
 				BufferedWriter b = new BufferedWriter(new FileWriter(file));
+				Set<String> featNames = new HashSet<String>();
 				b.write("\"SMILES\"");
 				for (Object feat : feats)
 				{
 					b.write(",\"");
-					b.write(feat.toString());
+					String featName = feat.toString();
+					int mult = 2;
+					while (featNames.contains(featName))
+						featName = feat.toString() + "_" + (mult++);
+					featNames.add(featName);
+					b.write(featName);
 					b.write("\"");
 				}
 				b.write("\n");
@@ -203,7 +213,14 @@ public class ExportData
 					{
 						b.write(",\"");
 						Object val = featureValues.get(modelIndex, feat);
-						b.write(val == null ? "" : val.toString());
+						String s = val == null ? "" : val.toString();
+						if (s.contains("\""))
+						{
+							System.err.println("csv export: replacing \" with ' for feature " + feat + " and value "
+									+ s);
+							s = s.replace('"', '\'');
+						}
+						b.write(s);
 						b.write("\"");
 					}
 					b.write("\n");

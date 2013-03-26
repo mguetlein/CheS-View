@@ -69,11 +69,13 @@ public class Actions
 	private Action vActionSpin;
 	private Action vActionBlackWhite;
 	private Action vActionMoleculeDescriptor;
+	private Action vActionAntialias;
 	///highlight
 	private Action tActionHighlightLog;
-	private Action tActionHighlightLastSelectedFeature;
+	private Action tActionSelectLastFeature;
 	private Action tActionColorMatch;
-	private Action tActionToggleHighlightMode;
+	private Action tActionHighlightMode;
+	private Action tActionHighlightLastFeature;
 	private Action tActionDecreaseSphereSize;
 	private Action tActionIncreaseSphereSize;
 	private Action tActionDecreaseSphereTranslucency;
@@ -154,6 +156,7 @@ public class Actions
 			{
 				if (evt.getPropertyName().equals(ViewControler.PROPERTY_HIGHLIGHT_MODE_CHANGED))
 				{
+					tActionHighlightLastFeature.setEnabled(viewControler.getHighlightMode() == HighlightMode.Spheres);
 					tActionIncreaseSphereSize.setEnabled(viewControler.getHighlightMode() == HighlightMode.Spheres);
 					tActionDecreaseSphereSize.setEnabled(viewControler.getHighlightMode() == HighlightMode.Spheres);
 					tActionIncreaseSphereTranslucency.setEnabled(viewControler.getHighlightMode() == HighlightMode.Spheres);
@@ -261,11 +264,15 @@ public class Actions
 			return KeyStroke.getKeyStroke(KeyEvent.VK_SHIFT, ActionEvent.SHIFT_MASK);
 		if (a == xActionUpdateMouseSelectionReleased)
 			return KeyStroke.getKeyStroke(KeyEvent.VK_SHIFT, 0, true);
+		if (a == vActionAntialias)
+			return KeyStroke.getKeyStroke(KeyEvent.VK_G, ActionEvent.ALT_MASK);
 		if (a == tActionHighlightLog)
 			return KeyStroke.getKeyStroke(KeyEvent.VK_L, ActionEvent.ALT_MASK);
-		if (a == tActionHighlightLastSelectedFeature)
+		if (a == tActionHighlightLastFeature)
+			return KeyStroke.getKeyStroke(KeyEvent.VK_F, ActionEvent.ALT_MASK);
+		if (a == tActionSelectLastFeature)
 			return KeyStroke.getKeyStroke(KeyEvent.VK_A, ActionEvent.ALT_MASK);
-		if (a == tActionToggleHighlightMode)
+		if (a == tActionHighlightMode)
 			return KeyStroke.getKeyStroke(KeyEvent.VK_T, ActionEvent.ALT_MASK);
 		if (a == xActionDecreaseCompoundSize)
 			return KeyStroke.getKeyStroke(KeyEvent.VK_MINUS, ActionEvent.CTRL_MASK);
@@ -501,6 +508,28 @@ public class Actions
 			}
 		});
 
+		vActionAntialias = new AbstractAction("Antialias enabled")
+		{
+			@Override
+			public void actionPerformed(ActionEvent e)
+			{
+				viewControler.setAntialiasEnabled((Boolean) vActionAntialias.getValue(Action.SELECTED_KEY));
+			}
+		};
+		vActionAntialias.putValue(Action.SELECTED_KEY, viewControler.isAntialiasEnabled());
+		viewControler.addViewListener(new PropertyChangeListener()
+		{
+
+			@Override
+			public void propertyChange(PropertyChangeEvent evt)
+			{
+				if (evt.getPropertyName().equals(ViewControler.PROPERTY_ANTIALIAS_CHANGED))
+				{
+					vActionAntialias.putValue(Action.SELECTED_KEY, viewControler.isAntialiasEnabled());
+				}
+			}
+		});
+
 		vActionMoleculeDescriptor = new AbstractAction("Compound identifier")
 		{
 			@Override
@@ -619,15 +648,53 @@ public class Actions
 			}
 		});
 
-		tActionHighlightLog = new AbstractAction("Toggle highlight log on/off")
+		tActionHighlightLog = new AbstractAction("Enable log highlighting")
 		{
 			@Override
 			public void actionPerformed(ActionEvent e)
 			{
-				viewControler.setHighlightLogEnabled(!viewControler.getHighlightLogEnabled());
+				viewControler.setHighlightLogEnabled((Boolean) tActionHighlightLog.getValue(Action.SELECTED_KEY));
 			}
 		};
-		tActionHighlightLastSelectedFeature = new AbstractAction("Highlight last selected feature")
+		tActionHighlightLog.putValue(Action.SELECTED_KEY, viewControler.isHighlightLogEnabled());
+		viewControler.addViewListener(new PropertyChangeListener()
+		{
+
+			@Override
+			public void propertyChange(PropertyChangeEvent evt)
+			{
+				if (evt.getPropertyName().equals(ViewControler.PROPERTY_HIGHLIGHT_LOG_CHANGED))
+				{
+					tActionHighlightLog.putValue(Action.SELECTED_KEY, viewControler.isHighlightLogEnabled());
+				}
+			}
+		});
+
+		tActionHighlightLastFeature = new AbstractAction("Highlight last selected feature with second sphere")
+		{
+			@Override
+			public void actionPerformed(ActionEvent e)
+			{
+				viewControler.setHighlightLastFeatureEnabled((Boolean) tActionHighlightLastFeature
+						.getValue(Action.SELECTED_KEY));
+			}
+		};
+		tActionHighlightLastFeature.putValue(Action.SELECTED_KEY, viewControler.isHighlightLastFeatureEnabled());
+		viewControler.addViewListener(new PropertyChangeListener()
+		{
+
+			@Override
+			public void propertyChange(PropertyChangeEvent evt)
+			{
+				if (evt.getPropertyName().equals(ViewControler.PROPERTY_HIGHLIGHT_LAST_FEATURE))
+				{
+					tActionHighlightLastFeature.putValue(Action.SELECTED_KEY,
+							viewControler.isHighlightLastFeatureEnabled());
+				}
+			}
+		});
+
+		tActionSelectLastFeature = new AbstractAction("Selected last feature")
 		{
 			@Override
 			public void actionPerformed(ActionEvent e)
@@ -635,16 +702,32 @@ public class Actions
 				viewControler.setSelectLastSelectedHighlighter();
 			}
 		};
-		tActionToggleHighlightMode = new AbstractAction("Toggle feature highlight mode (Spheres/Colored compounds)")
+
+		tActionHighlightMode = new AbstractAction("Highlight features with spheres")
 		{
 			@Override
 			public void actionPerformed(ActionEvent e)
 			{
 				viewControler
-						.setHighlightMode(viewControler.getHighlightMode() == MainPanel.HighlightMode.ColorCompounds ? MainPanel.HighlightMode.Spheres
+						.setHighlightMode(((Boolean) tActionHighlightMode.getValue(Action.SELECTED_KEY)) ? MainPanel.HighlightMode.Spheres
 								: MainPanel.HighlightMode.ColorCompounds);
 			}
 		};
+		tActionHighlightMode.putValue(Action.SELECTED_KEY,
+				viewControler.getHighlightMode() == MainPanel.HighlightMode.Spheres);
+		viewControler.addViewListener(new PropertyChangeListener()
+		{
+
+			@Override
+			public void propertyChange(PropertyChangeEvent evt)
+			{
+				if (evt.getPropertyName().equals(ViewControler.PROPERTY_HIGHLIGHT_MODE_CHANGED))
+				{
+					tActionHighlightMode.putValue(Action.SELECTED_KEY,
+							viewControler.getHighlightMode() == MainPanel.HighlightMode.Spheres);
+				}
+			}
+		});
 
 		tActionDecreaseSphereSize = new AbstractAction("Decrease Highlight Sphere Size")
 		{
@@ -765,13 +848,13 @@ public class Actions
 	public Action[] getViewActions()
 	{
 		return new Action[] { vActionFullScreen, vActionDrawHydrogens, vActionHideUnselectedCompounds, vActionSpin,
-				vActionBlackWhite, vActionMoleculeDescriptor };
+				vActionBlackWhite, vActionAntialias, vActionMoleculeDescriptor };
 	}
 
 	public Action[] getHighlightActions()
 	{
-		return new Action[] { tActionColorMatch, tActionHighlightLog, tActionHighlightLastSelectedFeature,
-				tActionToggleHighlightMode, tActionDecreaseSphereSize, tActionIncreaseSphereSize,
+		return new Action[] { tActionColorMatch, tActionHighlightLog, tActionSelectLastFeature, tActionHighlightMode,
+				tActionHighlightLastFeature, tActionDecreaseSphereSize, tActionIncreaseSphereSize,
 				tActionDecreaseSphereTranslucency, tActionIncreaseSphereTranslucency };
 	}
 

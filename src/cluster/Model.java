@@ -36,11 +36,13 @@ public class Model implements Zoomable, Comparable<Model>, DoubleNameElement
 	private HashMap<String, BitSet> smartsMatches;
 	private String modelColor;
 	private String highlightColor;
+	private String lastHighlightColor;
 	private Vector3f spherePosition;
 	private MoleculeProperty highlightMoleculeProperty;
 	private String style;
 	private MoleculeProperty descriptorProperty = null;
 	private boolean sphereVisible;
+	private boolean lastFeatureSphereVisible;
 
 	private float diameter = -1;
 
@@ -274,12 +276,21 @@ public class Model implements Zoomable, Comparable<Model>, DoubleNameElement
 
 	public void setHighlightColor(String color)
 	{
-		this.highlightColor = color;
+		if (!ObjectUtil.equals(highlightColor, color))
+		{
+			this.lastHighlightColor = highlightColor;
+			this.highlightColor = color;
+		}
 	}
 
 	public String getHighlightColor()
 	{
 		return highlightColor;
+	}
+
+	public String getLastHighlightColor()
+	{
+		return lastHighlightColor;
 	}
 
 	public Vector3f getSpherePosition()
@@ -398,6 +409,16 @@ public class Model implements Zoomable, Comparable<Model>, DoubleNameElement
 	public void setSphereVisible(boolean sphereVisible)
 	{
 		this.sphereVisible = sphereVisible;
+	}
+
+	public boolean isLastFeatureSphereVisible()
+	{
+		return lastFeatureSphereVisible;
+	}
+
+	public void setLastFeatureSphereVisible(boolean s)
+	{
+		this.lastFeatureSphereVisible = s;
 	}
 
 }

@@ -161,7 +161,15 @@ public class MenuBar extends JMenuBar
 				{
 					JMenu mm = new JMenu(((MyMenu) i).name);
 					for (MyMenuItem ii : ((MyMenu) i).items)
-						mm.add(((DefaultMyMenuItem) ii).action);
+					{
+						if (ii.getAction().getValue(Action.SELECTED_KEY) != null)
+						{
+							JCheckBoxMenuItem c = new JCheckBoxMenuItem(ii.getAction());
+							mm.add(c);
+						}
+						else
+							mm.add(ii.getAction());
+					}
 					menu.add(mm);
 				}
 			}
@@ -195,7 +203,15 @@ public class MenuBar extends JMenuBar
 				{
 					JMenu mm = new JMenu(((MyMenu) i).name);
 					for (MyMenuItem ii : ((MyMenu) i).items)
-						mm.add(((DefaultMyMenuItem) ii).action);
+					{
+						if (ii.getAction().getValue(Action.SELECTED_KEY) != null)
+						{
+							JCheckBoxMenuItem c = new JCheckBoxMenuItem(ii.getAction());
+							mm.add(c);
+						}
+						else
+							mm.add(ii.getAction());
+					}
 					p.add(mm);
 				}
 			}

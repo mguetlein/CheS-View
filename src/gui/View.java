@@ -18,7 +18,6 @@ import javax.vecmath.Point3f;
 import javax.vecmath.Vector3f;
 
 import main.PropHandler;
-import main.ScreenSetup;
 import main.Settings;
 
 import org.jmol.export.dialog.Dialog;
@@ -26,6 +25,7 @@ import org.jmol.util.BoxInfo;
 import org.jmol.viewer.Viewer;
 
 import util.ArrayUtil;
+import util.DoubleArraySummary;
 import util.FileUtil;
 import util.SequentialWorkerThread;
 import util.Vector3fUtil;
@@ -37,9 +37,11 @@ public class View
 	private Viewer viewer;
 	GUIControler guiControler;
 	public static View instance;
+	ViewControler viewControler;
+	private Clustering clustering;
 
 	public static int FONT_SIZE = 10;
-	public boolean antialias = false;
+	public boolean antialiasOn = false;
 
 	private static Zoomable zoomedTo;
 
@@ -48,10 +50,12 @@ public class View
 		SLOW, FAST
 	}
 
-	private View(Viewer viewer, GUIControler guiControler, final Clustering clustering, boolean hideHydrogens)
+	private View(Viewer viewer, GUIControler guiControler, ViewControler viewControler, final Clustering clustering)
 	{
 		this.viewer = viewer;
 		this.guiControler = guiControler;
+		this.viewControler = viewControler;
+		this.clustering = clustering;
 
 		clustering.addListener(new PropertyChangeListener()
 		{
@@ -61,28 +65,31 @@ public class View
 				if (evt.getPropertyName().equals(Clustering.CLUSTER_REMOVED)
 						|| evt.getPropertyName().equals(Clustering.CLUSTER_MODIFIED)
 						|| evt.getPropertyName().equals(Clustering.CLUSTER_CLEAR))
+				{
+					medianDiameter = null;
 					for (Model m : spheresForModel)
 						if (!clustering.getModels(true).contains(m))
 							hideSphere(m);
+				}
 			}
 		});
 
 		viewer.script("set disablePopupMenu on");
 		viewer.script("set minPixelSelRadius 30");
 
-		setAntialiasOn(ScreenSetup.SETUP.isAntialiasOn());
-
-		hideHydrogens(hideHydrogens);
+		setAntialiasOn(viewControler.isAntialiasEnabled());
+		hideHydrogens(viewControler.isHideHydrogens());
 	}
 
-	public static void init(JmolPanel jmolPanel, GUIControler guiControler, Clustering clustering, boolean hideHydrogens)
+	public static void init(JmolPanel jmolPanel, GUIControler guiControler, ViewControler viewControler,
+			Clustering clustering)
 	{
-		instance = new View((Viewer) jmolPanel.getViewer(), guiControler, clustering, hideHydrogens);
+		instance = new View((Viewer) jmolPanel.getViewer(), guiControler, viewControler, clustering);
 	}
 
 	public synchronized void setAntialiasOn(boolean antialias)
 	{
-		this.antialias = antialias;
+		this.antialiasOn = antialias;
 		if (antialias)
 			viewer.script("set antialiasDisplay ON");
 		else
@@ -91,7 +98,7 @@ public class View
 
 	public boolean isAntialiasOn()
 	{
-		return antialias;
+		return antialiasOn;
 	}
 
 	public synchronized void setSpinEnabled(boolean spinEnabled)
@@ -141,7 +148,7 @@ public class View
 				public void run()
 				{
 					boolean setAntialiasBackOn = false;
-					if (ScreenSetup.SETUP.isAntialiasOn() && isAntialiasOn())
+					if (viewControler.isAntialiasEnabled() && antialiasOn)
 					{
 						setAntialiasBackOn = true;
 						setAntialiasOn(false);
@@ -277,7 +284,22 @@ public class View
 		{
 			String id = "sphere" + m.getModelIndex();
 			scriptWait("ellipsoid ID " + id + " color translucent 1.0");
+			scriptWait("ellipsoid ID " + id + "_2 color translucent 1.0");
 		}
+	}
+
+	public Float medianDiameter = null;
+
+	private synchronized double medianDiameter()
+	{
+		if (medianDiameter == null)
+		{
+			List<Float> d = new ArrayList<Float>();
+			for (Model m : clustering.getModels(true))
+				d.add(m.getDiameter());
+			medianDiameter = (float) DoubleArraySummary.create(d).getMedian();
+		}
+		return medianDiameter;
 	}
 
 	private synchronized void updateSpherePosition(Model m)
@@ -294,13 +316,25 @@ public class View
 			//						+ "}");
 			//				scriptWait("ellipsoid ID " + id + " center " + convertPos(center));
 
-			double size = Math.max(1.0, getDiameter(m.getBitSet()) * 0.5 * (0.1 + 0.9 * sphereSize));
+			double mSize = medianDiameter() + ((m.getDiameter() - medianDiameter()) * 0.25);
+			double size = Math.max(1.0, mSize * 0.5 * (0.1 + 0.9 * sphereSize));
+
 			scriptWait("ellipsoid ID " + id + " AXES {" + size + " 0 0} {0 " + size + " 0} {0 0 " + size + "}");
 			scriptWait("ellipsoid ID " + id + " center " + convertPos(getAtomSetCenter(m.getBitSet())));
+
+			scriptWait("ellipsoid ID " + id + "_2 AXES {" + size * 1.5 + " 0 0} {0 " + size * 1.5 + " 0} {0 0 " + size
+					* 0.33 + "}");
+			scriptWait("ellipsoid ID " + id + "_2 center " + convertPos(getAtomSetCenter(m.getBitSet())));
+
+			//			Point3f c = getAtomSetCenter(m.getBitSet());
+			//			Point3f p1 = new Point3f(c.x, c.y - (float) size * 1.5f, c.z + (float) size * 1.5f);
+			//			Point3f p2 = new Point3f(c.x, c.y + (float) size * 1.5f, c.z - (float) size * 1.5f);
+			//			Point3f p3 = new Point3f(c.x, c.y, c.z);
+			//			scriptWait("draw ID " + id + "P plane " + convertPos(p1) + " " + convertPos(p2) + " " + convertPos(p3));
 		}
 	}
 
-	public synchronized void showSphere(Model m, boolean updateSizeAndPos)
+	public synchronized void showSphere(Model m, boolean showLastHighlightColor, boolean updateSizeAndPos)
 	{
 		String id = "sphere" + m.getModelIndex();
 		if (!spheresForModel.contains(m) || updateSizeAndPos)
@@ -322,6 +356,11 @@ public class View
 				trans = 0.6 + 0.35 * sphereTranslucency;
 		}
 		scriptWait("ellipsoid ID " + id + " " + m.getHighlightColor() + " color translucent " + trans);
+		if (showLastHighlightColor && m.getLastHighlightColor() != null)
+			scriptWait("ellipsoid ID " + id + "_2 " + m.getLastHighlightColor() + " color translucent "
+					+ Math.max(0, (trans - 0.1)));
+		else
+			scriptWait("ellipsoid ID " + id + "_2 color translucent 1.0");
 	}
 
 	public synchronized void zap(boolean b, boolean c, boolean d)
