@@ -72,13 +72,13 @@ public class Actions
 	private final static String VIEW_HIDE_UNSELECTED = "view-hide-unselected";
 	private final static String VIEW_SPIN = "view-spin";
 	private final static String VIEW_BLACK_WHITE = "view-black-white";
-	private final static String VIEW_MOLECULE_DESCRIPTOR = "view-molecule-descriptor";
 	private final static String VIEW_ANTIALIAS = "view-antialias";
+	private final static String VIEW_MOLECULE_DESCRIPTOR = "view-molecule-descriptor";
+	private final static String VIEW_SELECT_LAST_FEATURE = "view-select-last-feature";
 	private final static String[] VIEW_ACTIONS = { VIEW_FULL_SCREEN, VIEW_DRAW_HYDROGENS, VIEW_HIDE_UNSELECTED,
-			VIEW_SPIN, VIEW_BLACK_WHITE, VIEW_MOLECULE_DESCRIPTOR, VIEW_ANTIALIAS };
+			VIEW_SPIN, VIEW_BLACK_WHITE, VIEW_ANTIALIAS, VIEW_MOLECULE_DESCRIPTOR, VIEW_SELECT_LAST_FEATURE };
 
 	private final static String HIGHLIGHT_LOG = "highlight-log";
-	private final static String HIGHLIGHT_SELECT_LAST_FEATURE = "highlight-select-last-feature";
 	private final static String HIGHLIGHT_COLOR_MATCH = "highlight-color-match";
 	private final static String HIGHLIGHT_MODE = "highlight-mode";
 	private final static String HIGHLIGHT_LAST_FEATURE = "highlight-last-feature";
@@ -86,9 +86,10 @@ public class Actions
 	private final static String HIGHLIGHT_INCR_SPHERE_SIZE = "highlight-incr-sphere-size";
 	private final static String HIGHLIGHT_DECR_SPHERE_TRANSLUCENCY = "highlight-decr-sphere-translucency";
 	private final static String HIGHLIGHT_INCR_SPHERE_TRANSLUCENCY = "highlight-incr-sphere-translucency";
-	private final static String[] HIGHLIGHT_ACTIONS = { HIGHLIGHT_LOG, HIGHLIGHT_SELECT_LAST_FEATURE,
-			HIGHLIGHT_COLOR_MATCH, HIGHLIGHT_MODE, HIGHLIGHT_LAST_FEATURE, HIGHLIGHT_DECR_SPHERE_SIZE,
-			HIGHLIGHT_INCR_SPHERE_SIZE, HIGHLIGHT_DECR_SPHERE_TRANSLUCENCY, HIGHLIGHT_INCR_SPHERE_TRANSLUCENCY };
+	private final static String[] HIGHLIGHT_ACTIONS = { HIGHLIGHT_LOG, HIGHLIGHT_COLOR_MATCH, HIGHLIGHT_MODE,
+			HIGHLIGHT_LAST_FEATURE };
+	private final static String[] HIGHLIGHT_SPHERE_ACTIONS = { HIGHLIGHT_DECR_SPHERE_SIZE, HIGHLIGHT_INCR_SPHERE_SIZE,
+			HIGHLIGHT_DECR_SPHERE_TRANSLUCENCY, HIGHLIGHT_INCR_SPHERE_TRANSLUCENCY };
 
 	private final static String HELP_DOCU = "help-docu";
 	private final static String HELP_ABOUT = "help-about";
@@ -128,7 +129,7 @@ public class Actions
 		keys.put(VIEW_ANTIALIAS, KeyStroke.getKeyStroke(KeyEvent.VK_G, ActionEvent.ALT_MASK));
 		keys.put(HIGHLIGHT_LOG, KeyStroke.getKeyStroke(KeyEvent.VK_L, ActionEvent.ALT_MASK));
 		keys.put(HIGHLIGHT_LAST_FEATURE, KeyStroke.getKeyStroke(KeyEvent.VK_F, ActionEvent.ALT_MASK));
-		keys.put(HIGHLIGHT_SELECT_LAST_FEATURE, KeyStroke.getKeyStroke(KeyEvent.VK_A, ActionEvent.ALT_MASK));
+		keys.put(VIEW_SELECT_LAST_FEATURE, KeyStroke.getKeyStroke(KeyEvent.VK_A, ActionEvent.ALT_MASK));
 		keys.put(HIGHLIGHT_MODE, KeyStroke.getKeyStroke(KeyEvent.VK_T, ActionEvent.ALT_MASK));
 		keys.put(HIDDEN_DECR_COMPOUND_SIZE, KeyStroke.getKeyStroke(KeyEvent.VK_MINUS, ActionEvent.CTRL_MASK));
 		keys.put(HIDDEN_INCR_COMPOUND_SIZE, KeyStroke.getKeyStroke(KeyEvent.VK_PLUS, ActionEvent.CTRL_MASK));
@@ -673,7 +674,7 @@ public class Actions
 				return viewControler.isHighlightLastFeatureEnabled();
 			}
 		};
-		new ActionCreator(HIGHLIGHT_SELECT_LAST_FEATURE)
+		new ActionCreator(VIEW_SELECT_LAST_FEATURE)
 		{
 			@Override
 			public void action()
@@ -827,6 +828,11 @@ public class Actions
 	public Action[] getHighlightActions()
 	{
 		return getActions(HIGHLIGHT_ACTIONS);
+	}
+
+	public Action[] getHighlightSphereActions()
+	{
+		return getActions(HIGHLIGHT_SPHERE_ACTIONS);
 	}
 
 	public Action[] getHelpActions()

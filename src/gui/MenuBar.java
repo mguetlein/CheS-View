@@ -1,5 +1,9 @@
 package gui;
 
+import gui.MainPanel.HighlightMode;
+
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
@@ -122,6 +126,8 @@ public class MenuBar extends JMenuBar
 
 	MyMenuBar menuBar;
 
+	private final static String SPHERE_SETTINGS_MENU = "Sphere settings";
+
 	public MenuBar(GUIControler guiControler, ViewControler viewControler, Clustering clustering)
 	{
 		this.guiControler = guiControler;
@@ -134,10 +140,11 @@ public class MenuBar extends JMenuBar
 		MyMenu removeMenu = new MyMenu("Remove", a.getRemoveActions());
 		MyMenu exportMenu = new MyMenu("Export", a.getExportActions());
 		MyMenu editMenu = new MyMenu("Edit", removeMenu, exportMenu);
-		MyMenu highlightMenu = new MyMenu("Highlight", a.getHighlightActions());
-		MyMenu viewMenu = new MyMenu("View", a.getViewActions(), highlightMenu);
+		MyMenu viewMenu = new MyMenu("View", a.getViewActions());
+		MyMenu highlightSphereMenu = new MyMenu(SPHERE_SETTINGS_MENU, a.getHighlightSphereActions());
+		MyMenu highlightMenu = new MyMenu("Highlighting", a.getHighlightActions(), highlightSphereMenu);
 		MyMenu helpMenu = new MyMenu("Help", a.getHelpActions());
-		menuBar = new MyMenuBar(fileMenu, editMenu, viewMenu, helpMenu);
+		menuBar = new MyMenuBar(fileMenu, editMenu, viewMenu, highlightMenu, helpMenu);
 
 		buildMenu();
 	}
@@ -155,6 +162,23 @@ public class MenuBar extends JMenuBar
 		return m;
 	}
 
+	private void createMenuListener(final JMenu m)
+	{
+		if (m.getText().equals(SPHERE_SETTINGS_MENU))
+		{
+			m.setEnabled(viewControler.getHighlightMode() == HighlightMode.Spheres);
+			viewControler.addViewListener(new PropertyChangeListener()
+			{
+				@Override
+				public void propertyChange(PropertyChangeEvent evt)
+				{
+					if (evt.getPropertyName().equals(ViewControler.PROPERTY_HIGHLIGHT_MODE_CHANGED))
+						m.setEnabled(viewControler.getHighlightMode() == HighlightMode.Spheres);
+				}
+			});
+		}
+	}
+
 	private void buildMenu()
 	{
 		for (MyMenu m : menuBar.menus)
@@ -169,6 +193,7 @@ public class MenuBar extends JMenuBar
 					JMenu mm = new JMenu(((MyMenu) i).name);
 					for (MyMenuItem ii : ((MyMenu) i).items)
 						mm.add(createItemFromAction(ii.getAction()));
+					createMenuListener(mm);
 					menu.add(mm);
 				}
 			}
@@ -195,6 +220,7 @@ public class MenuBar extends JMenuBar
 					JMenu mm = new JMenu(((MyMenu) i).name);
 					for (MyMenuItem ii : ((MyMenu) i).items)
 						mm.add(createItemFromAction(ii.getAction()));
+					createMenuListener(mm);
 					p.add(mm);
 				}
 			}
