@@ -56,10 +56,13 @@ public class LaunchCheSMapper
 
 		while (clusteringData == null)
 		{
-			CheSMapperWizard wwd = new CheSMapperWizard(null);
-			SwingUtil.waitWhileVisible(wwd);
-
-			if (wwd.isWorkflowSelected())
+			CheSMapperWizard wwd = null;
+			while (wwd == null || wwd.getReturnValue() == CheSMapperWizard.RETURN_VALUE_IMPORT)
+			{
+				wwd = new CheSMapperWizard(null);
+				SwingUtil.waitWhileVisible(wwd);
+			}
+			if (wwd.getReturnValue() == CheSMapperWizard.RETURN_VALUE_FINISH && wwd.isWorkflowSelected())
 			{
 				task = TaskProvider.initTask("Chemical space mapping");
 				waitingDialog = new TaskDialog(task, null);

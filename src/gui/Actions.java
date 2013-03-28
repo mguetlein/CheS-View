@@ -10,6 +10,8 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 import javax.swing.AbstractAction;
@@ -33,6 +35,8 @@ import dataInterface.MoleculeProperty;
 
 public class Actions
 {
+	public static final String TOOLTIP = "tooltip";
+
 	private static Actions instance;
 
 	public static Actions getInstance(GUIControler guiControler, ViewControler viewControler, Clustering clustering)
@@ -46,51 +50,97 @@ public class Actions
 	private ViewControler viewControler;
 	private Clustering clustering;
 
-	private Action[] allActions;
+	private final static String FILE_NEW = "file-new";
+	private final static String FILE_EXIT = "file-exit";
+	private final static String[] FILE_ACTIONS = { FILE_NEW, FILE_EXIT };
 
-	//file
-	private Action fActionNew;
-	private Action fActionExit;
-	//edit
-	///remove
-	private Action rActionRemoveCurrent;
-	private Action rActionRemoveClusters;
-	private Action rActionRemoveModels;
-	///export
-	private Action eActionExportCurrent;
-	private Action eActionExportClusters;
-	private Action eActionExportModels;
-	private Action eActionExportImage;
-	private Action eActionExportWorkflow;
-	//view
-	private Action vActionFullScreen;
-	private Action vActionDrawHydrogens;
-	private Action vActionHideUnselectedCompounds;
-	private Action vActionSpin;
-	private Action vActionBlackWhite;
-	private Action vActionMoleculeDescriptor;
-	private Action vActionAntialias;
-	///highlight
-	private Action tActionHighlightLog;
-	private Action tActionSelectLastFeature;
-	private Action tActionColorMatch;
-	private Action tActionHighlightMode;
-	private Action tActionHighlightLastFeature;
-	private Action tActionDecreaseSphereSize;
-	private Action tActionIncreaseSphereSize;
-	private Action tActionDecreaseSphereTranslucency;
-	private Action tActionIncreaseSphereTranslucency;
-	//help
-	private Action hActionDocu;
-	private Action hActionAbout;
+	private final static String REMOVE_CURRENT = "remove-current";
+	private final static String REMOVE_CLUSTERS = "remove-clusters";
+	private final static String REMOVE_MODELS = "remove-models";
+	private final static String[] REMOVE_ACTIONS = { REMOVE_CURRENT, REMOVE_CLUSTERS, REMOVE_MODELS };
 
-	//hidden
-	private Action xActionUpdateMouseSelectionPressed;
-	private Action xActionUpdateMouseSelectionReleased;
-	private Action xActionDecreaseCompoundSize;
-	private Action xActionIncreaseCompoundSize;
+	private final static String EXPORT_CURRENT = "export-current";
+	private final static String EXPORT_CLUSTERS = "export-clusters";
+	private final static String EXPORT_MODELS = "export-models";
+	private final static String EXPORT_IMAGE = "export-image";
+	private final static String EXPORT_WORKFLOW = "export-workflow";
+	private final static String[] EXPORT_ACTIONS = { EXPORT_CURRENT, EXPORT_CLUSTERS, EXPORT_MODELS, EXPORT_IMAGE,
+			EXPORT_WORKFLOW };
 
-	private Action xActionDisablePopup;
+	private final static String VIEW_FULL_SCREEN = "view-full-screen";
+	private final static String VIEW_DRAW_HYDROGENS = "view-draw-hydrogens";
+	private final static String VIEW_HIDE_UNSELECTED = "view-hide-unselected";
+	private final static String VIEW_SPIN = "view-spin";
+	private final static String VIEW_BLACK_WHITE = "view-black-white";
+	private final static String VIEW_MOLECULE_DESCRIPTOR = "view-molecule-descriptor";
+	private final static String VIEW_ANTIALIAS = "view-antialias";
+	private final static String[] VIEW_ACTIONS = { VIEW_FULL_SCREEN, VIEW_DRAW_HYDROGENS, VIEW_HIDE_UNSELECTED,
+			VIEW_SPIN, VIEW_BLACK_WHITE, VIEW_MOLECULE_DESCRIPTOR, VIEW_ANTIALIAS };
+
+	private final static String HIGHLIGHT_LOG = "highlight-log";
+	private final static String HIGHLIGHT_SELECT_LAST_FEATURE = "highlight-select-last-feature";
+	private final static String HIGHLIGHT_COLOR_MATCH = "highlight-color-match";
+	private final static String HIGHLIGHT_MODE = "highlight-mode";
+	private final static String HIGHLIGHT_LAST_FEATURE = "highlight-last-feature";
+	private final static String HIGHLIGHT_DECR_SPHERE_SIZE = "highlight-decr-sphere-size";
+	private final static String HIGHLIGHT_INCR_SPHERE_SIZE = "highlight-incr-sphere-size";
+	private final static String HIGHLIGHT_DECR_SPHERE_TRANSLUCENCY = "highlight-decr-sphere-translucency";
+	private final static String HIGHLIGHT_INCR_SPHERE_TRANSLUCENCY = "highlight-incr-sphere-translucency";
+	private final static String[] HIGHLIGHT_ACTIONS = { HIGHLIGHT_LOG, HIGHLIGHT_SELECT_LAST_FEATURE,
+			HIGHLIGHT_COLOR_MATCH, HIGHLIGHT_MODE, HIGHLIGHT_LAST_FEATURE, HIGHLIGHT_DECR_SPHERE_SIZE,
+			HIGHLIGHT_INCR_SPHERE_SIZE, HIGHLIGHT_DECR_SPHERE_TRANSLUCENCY, HIGHLIGHT_INCR_SPHERE_TRANSLUCENCY };
+
+	private final static String HELP_DOCU = "help-docu";
+	private final static String HELP_ABOUT = "help-about";
+	private final static String[] HELP_ACTIONS = { HELP_DOCU, HELP_ABOUT };
+
+	private final static String HIDDEN_UPDATE_MOUSE_SELECTION_PRESSED = "hidden-update-mouse-selection-pressed";
+	private final static String HIDDEN_UPDATE_MOUSE_SELECTION_RELEASED = "hidden-update-mouse-selection-released";
+	private final static String HIDDEN_DECR_COMPOUND_SIZE = "hidden-decr-compound-size";
+	private final static String HIDDEN_INCR_COMPOUND_SIZE = "hidden-incr-compound-size";
+	private final static String HIDDEN_ENABLE_JMOL_POPUP = "enable-jmol-popup";
+	private final static String[] HIDDEN_ACTIONS = { HIDDEN_UPDATE_MOUSE_SELECTION_PRESSED,
+			HIDDEN_UPDATE_MOUSE_SELECTION_RELEASED, HIDDEN_DECR_COMPOUND_SIZE, HIDDEN_INCR_COMPOUND_SIZE,
+			HIDDEN_ENABLE_JMOL_POPUP };
+
+	private HashMap<String, Action> actions = new LinkedHashMap<String, Action>();
+
+	private static HashMap<String, KeyStroke> keys = new HashMap<String, KeyStroke>();
+
+	static
+	{
+		keys.put(FILE_NEW, KeyStroke.getKeyStroke(KeyEvent.VK_N, ActionEvent.ALT_MASK));
+		keys.put(FILE_EXIT, KeyStroke.getKeyStroke(KeyEvent.VK_F4, ActionEvent.ALT_MASK));
+		keys.put(REMOVE_CURRENT, KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, ActionEvent.ALT_MASK));
+		keys.put(EXPORT_IMAGE, KeyStroke.getKeyStroke(KeyEvent.VK_I, ActionEvent.ALT_MASK));
+		keys.put(EXPORT_WORKFLOW, KeyStroke.getKeyStroke(KeyEvent.VK_W, ActionEvent.ALT_MASK));
+		keys.put(VIEW_FULL_SCREEN, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, ActionEvent.ALT_MASK));
+		keys.put(VIEW_DRAW_HYDROGENS, KeyStroke.getKeyStroke(KeyEvent.VK_H, ActionEvent.ALT_MASK));
+		keys.put(VIEW_HIDE_UNSELECTED, KeyStroke.getKeyStroke(KeyEvent.VK_V, ActionEvent.ALT_MASK));
+		keys.put(VIEW_SPIN, KeyStroke.getKeyStroke(KeyEvent.VK_S, ActionEvent.ALT_MASK));
+		keys.put(VIEW_BLACK_WHITE, KeyStroke.getKeyStroke(KeyEvent.VK_B, ActionEvent.ALT_MASK));
+		keys.put(HIGHLIGHT_COLOR_MATCH, KeyStroke.getKeyStroke(KeyEvent.VK_C, ActionEvent.ALT_MASK));
+		keys.put(VIEW_MOLECULE_DESCRIPTOR, KeyStroke.getKeyStroke(KeyEvent.VK_D, ActionEvent.ALT_MASK));
+		keys.put(HIDDEN_ENABLE_JMOL_POPUP, KeyStroke.getKeyStroke(KeyEvent.VK_R, ActionEvent.ALT_MASK));
+		keys.put(HIDDEN_UPDATE_MOUSE_SELECTION_PRESSED,
+				KeyStroke.getKeyStroke(KeyEvent.VK_SHIFT, ActionEvent.SHIFT_MASK));
+		keys.put(HIDDEN_UPDATE_MOUSE_SELECTION_RELEASED, KeyStroke.getKeyStroke(KeyEvent.VK_SHIFT, 0, true));
+		keys.put(VIEW_ANTIALIAS, KeyStroke.getKeyStroke(KeyEvent.VK_G, ActionEvent.ALT_MASK));
+		keys.put(HIGHLIGHT_LOG, KeyStroke.getKeyStroke(KeyEvent.VK_L, ActionEvent.ALT_MASK));
+		keys.put(HIGHLIGHT_LAST_FEATURE, KeyStroke.getKeyStroke(KeyEvent.VK_F, ActionEvent.ALT_MASK));
+		keys.put(HIGHLIGHT_SELECT_LAST_FEATURE, KeyStroke.getKeyStroke(KeyEvent.VK_A, ActionEvent.ALT_MASK));
+		keys.put(HIGHLIGHT_MODE, KeyStroke.getKeyStroke(KeyEvent.VK_T, ActionEvent.ALT_MASK));
+		keys.put(HIDDEN_DECR_COMPOUND_SIZE, KeyStroke.getKeyStroke(KeyEvent.VK_MINUS, ActionEvent.CTRL_MASK));
+		keys.put(HIDDEN_INCR_COMPOUND_SIZE, KeyStroke.getKeyStroke(KeyEvent.VK_PLUS, ActionEvent.CTRL_MASK));
+		keys.put(HIGHLIGHT_DECR_SPHERE_SIZE,
+				KeyStroke.getKeyStroke(KeyEvent.VK_MINUS, ActionEvent.CTRL_MASK | ActionEvent.SHIFT_MASK));
+		keys.put(HIGHLIGHT_INCR_SPHERE_SIZE,
+				KeyStroke.getKeyStroke(KeyEvent.VK_PLUS, ActionEvent.CTRL_MASK | ActionEvent.SHIFT_MASK));
+		keys.put(HIGHLIGHT_INCR_SPHERE_TRANSLUCENCY,
+				KeyStroke.getKeyStroke(KeyEvent.VK_MINUS, ActionEvent.CTRL_MASK | ActionEvent.ALT_MASK));
+		keys.put(HIGHLIGHT_DECR_SPHERE_TRANSLUCENCY,
+				KeyStroke.getKeyStroke(KeyEvent.VK_PLUS, ActionEvent.CTRL_MASK | ActionEvent.ALT_MASK));
+	}
 
 	private Actions(GUIControler guiControler, ViewControler viewControler, Clustering clustering)
 	{
@@ -99,8 +149,6 @@ public class Actions
 		this.clustering = clustering;
 
 		buildActions();
-		allActions = ArrayUtil.concat(Action.class, getFileActions(), getViewActions(), getRemoveActions(),
-				getExportActions(), getHelpActions(), getHiddenActions(), getHighlightActions());
 		setAccelerators();
 		update();
 		installListeners();
@@ -156,11 +204,16 @@ public class Actions
 			{
 				if (evt.getPropertyName().equals(ViewControler.PROPERTY_HIGHLIGHT_MODE_CHANGED))
 				{
-					tActionHighlightLastFeature.setEnabled(viewControler.getHighlightMode() == HighlightMode.Spheres);
-					tActionIncreaseSphereSize.setEnabled(viewControler.getHighlightMode() == HighlightMode.Spheres);
-					tActionDecreaseSphereSize.setEnabled(viewControler.getHighlightMode() == HighlightMode.Spheres);
-					tActionIncreaseSphereTranslucency.setEnabled(viewControler.getHighlightMode() == HighlightMode.Spheres);
-					tActionDecreaseSphereTranslucency.setEnabled(viewControler.getHighlightMode() == HighlightMode.Spheres);
+					actions.get(HIGHLIGHT_LAST_FEATURE).setEnabled(
+							viewControler.getHighlightMode() == HighlightMode.Spheres);
+					actions.get(HIGHLIGHT_INCR_SPHERE_SIZE).setEnabled(
+							viewControler.getHighlightMode() == HighlightMode.Spheres);
+					actions.get(HIGHLIGHT_DECR_SPHERE_SIZE).setEnabled(
+							viewControler.getHighlightMode() == HighlightMode.Spheres);
+					actions.get(HIGHLIGHT_INCR_SPHERE_TRANSLUCENCY).setEnabled(
+							viewControler.getHighlightMode() == HighlightMode.Spheres);
+					actions.get(HIGHLIGHT_DECR_SPHERE_TRANSLUCENCY).setEnabled(
+							viewControler.getHighlightMode() == HighlightMode.Spheres);
 				}
 			}
 		});
@@ -181,149 +234,154 @@ public class Actions
 		else if (clustering.isClusterWatched())
 			c = clustering.getClusterWatched().getSelected();
 
-		rActionRemoveCurrent.putValue("Cluster", c);
-		rActionRemoveCurrent.putValue("Model", m);
+		actions.get(REMOVE_CURRENT).putValue("Cluster", c);
+		actions.get(REMOVE_CURRENT).putValue("Model", m);
 
 		if (m.length > 0 || c != null)
 		{
 			if (m.length == 1)
 			{
-				((AbstractAction) rActionRemoveCurrent).putValue(Action.NAME,
+				((AbstractAction) actions.get(REMOVE_CURRENT)).putValue(Action.NAME,
 						"Remove " + clustering.getModelWithModelIndex(m[0]));
-				((AbstractAction) eActionExportCurrent).putValue(Action.NAME,
+				((AbstractAction) actions.get(EXPORT_CURRENT)).putValue(Action.NAME,
 						"Export " + clustering.getModelWithModelIndex(m[0]));
 			}
 			else if (m.length > 1)
 			{
-				((AbstractAction) rActionRemoveCurrent).putValue(Action.NAME, "Remove " + m.length + " Compounds");
-				((AbstractAction) eActionExportCurrent).putValue(Action.NAME, "Export " + m.length + " Compounds");
+				((AbstractAction) actions.get(REMOVE_CURRENT)).putValue(Action.NAME, "Remove " + m.length
+						+ " Compounds");
+				((AbstractAction) actions.get(EXPORT_CURRENT)).putValue(Action.NAME, "Export " + m.length
+						+ " Compounds");
 			}
 			else if (c != -1)
 			{
-				((AbstractAction) rActionRemoveCurrent).putValue(Action.NAME, "Remove "
-						+ clustering.getCluster(c).getName());
-				((AbstractAction) eActionExportCurrent).putValue(Action.NAME, "Export "
-						+ clustering.getCluster(c).getName());
+				((AbstractAction) actions.get(REMOVE_CURRENT)).putValue(Action.NAME,
+						"Remove " + clustering.getCluster(c).getName());
+				((AbstractAction) actions.get(EXPORT_CURRENT)).putValue(Action.NAME,
+						"Export " + clustering.getCluster(c).getName());
 			}
-			rActionRemoveCurrent.setEnabled(true);
-			eActionExportCurrent.setEnabled(true);
+			actions.get(REMOVE_CURRENT).setEnabled(true);
+			actions.get(EXPORT_CURRENT).setEnabled(true);
 		}
 		else
 		{
-			((AbstractAction) rActionRemoveCurrent).putValue(Action.NAME, "Remove Selected Cluster/Compound");
-			rActionRemoveCurrent.setEnabled(false);
+			((AbstractAction) actions.get(REMOVE_CURRENT)).putValue(Action.NAME, "Remove Selected Cluster/Compound");
+			actions.get(REMOVE_CURRENT).setEnabled(false);
 
-			((AbstractAction) eActionExportCurrent).putValue(Action.NAME, "Export Selected Cluster/Compound");
-			eActionExportCurrent.setEnabled(false);
+			((AbstractAction) actions.get(EXPORT_CURRENT)).putValue(Action.NAME, "Export Selected Cluster/Compound");
+			actions.get(EXPORT_CURRENT).setEnabled(false);
 		}
-	}
-
-	private KeyStroke getKeyStroke(Action a)
-	{
-		if (a == fActionNew)
-			return KeyStroke.getKeyStroke(KeyEvent.VK_N, ActionEvent.ALT_MASK);
-		if (a == fActionExit)
-			return KeyStroke.getKeyStroke(KeyEvent.VK_F4, ActionEvent.ALT_MASK);
-		if (a == rActionRemoveCurrent)
-			return KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, ActionEvent.ALT_MASK);
-		if (a == rActionRemoveClusters)
-			return null;
-		if (a == rActionRemoveModels)
-			return null;
-		if (a == eActionExportCurrent)
-			return null;
-		if (a == eActionExportClusters)
-			return null;
-		if (a == eActionExportModels)
-			return null;
-		if (a == eActionExportImage)
-			return KeyStroke.getKeyStroke(KeyEvent.VK_I, ActionEvent.ALT_MASK);
-		if (a == eActionExportWorkflow)
-			return KeyStroke.getKeyStroke(KeyEvent.VK_W, ActionEvent.ALT_MASK);
-		if (a == vActionFullScreen)
-			return KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, ActionEvent.ALT_MASK);
-		if (a == vActionDrawHydrogens)
-			return KeyStroke.getKeyStroke(KeyEvent.VK_H, ActionEvent.ALT_MASK);
-		if (a == vActionHideUnselectedCompounds)
-			return KeyStroke.getKeyStroke(KeyEvent.VK_V, ActionEvent.ALT_MASK);
-		if (a == vActionSpin)
-			return KeyStroke.getKeyStroke(KeyEvent.VK_S, ActionEvent.ALT_MASK);
-		if (a == vActionBlackWhite)
-			return KeyStroke.getKeyStroke(KeyEvent.VK_B, ActionEvent.ALT_MASK);
-		if (a == tActionColorMatch)
-			return KeyStroke.getKeyStroke(KeyEvent.VK_C, ActionEvent.ALT_MASK);
-		if (a == vActionMoleculeDescriptor)
-			return KeyStroke.getKeyStroke(KeyEvent.VK_D, ActionEvent.ALT_MASK);
-		if (a == hActionDocu)
-			return null;
-		if (a == hActionAbout)
-			return null;
-		if (a == xActionDisablePopup)
-			return KeyStroke.getKeyStroke(KeyEvent.VK_R, ActionEvent.ALT_MASK);
-		if (a == xActionUpdateMouseSelectionPressed)
-			return KeyStroke.getKeyStroke(KeyEvent.VK_SHIFT, ActionEvent.SHIFT_MASK);
-		if (a == xActionUpdateMouseSelectionReleased)
-			return KeyStroke.getKeyStroke(KeyEvent.VK_SHIFT, 0, true);
-		if (a == vActionAntialias)
-			return KeyStroke.getKeyStroke(KeyEvent.VK_G, ActionEvent.ALT_MASK);
-		if (a == tActionHighlightLog)
-			return KeyStroke.getKeyStroke(KeyEvent.VK_L, ActionEvent.ALT_MASK);
-		if (a == tActionHighlightLastFeature)
-			return KeyStroke.getKeyStroke(KeyEvent.VK_F, ActionEvent.ALT_MASK);
-		if (a == tActionSelectLastFeature)
-			return KeyStroke.getKeyStroke(KeyEvent.VK_A, ActionEvent.ALT_MASK);
-		if (a == tActionHighlightMode)
-			return KeyStroke.getKeyStroke(KeyEvent.VK_T, ActionEvent.ALT_MASK);
-		if (a == xActionDecreaseCompoundSize)
-			return KeyStroke.getKeyStroke(KeyEvent.VK_MINUS, ActionEvent.CTRL_MASK);
-		if (a == xActionIncreaseCompoundSize)
-			return KeyStroke.getKeyStroke(KeyEvent.VK_PLUS, ActionEvent.CTRL_MASK);
-		if (a == tActionDecreaseSphereSize)
-			return KeyStroke.getKeyStroke(KeyEvent.VK_MINUS, ActionEvent.CTRL_MASK | ActionEvent.SHIFT_MASK);
-		if (a == tActionIncreaseSphereSize)
-			return KeyStroke.getKeyStroke(KeyEvent.VK_PLUS, ActionEvent.CTRL_MASK | ActionEvent.SHIFT_MASK);
-		if (a == tActionIncreaseSphereTranslucency)
-			return KeyStroke.getKeyStroke(KeyEvent.VK_MINUS, ActionEvent.CTRL_MASK | ActionEvent.ALT_MASK);
-		if (a == tActionDecreaseSphereTranslucency)
-			return KeyStroke.getKeyStroke(KeyEvent.VK_PLUS, ActionEvent.CTRL_MASK | ActionEvent.ALT_MASK);
-		throw new Error("key stroke not yet defined");
 	}
 
 	private void setAccelerators()
 	{
-		for (Action a : allActions)
+		for (String action : actions.keySet())
 		{
-			KeyStroke k2 = getKeyStroke(a);
-			if (k2 != null)
-				((AbstractAction) a).putValue(Action.ACCELERATOR_KEY, k2);
+			KeyStroke keyStroke = keys.get(action);
+			if (keyStroke != null)
+				((AbstractAction) actions.get(action)).putValue(Action.ACCELERATOR_KEY, keyStroke);
+		}
+	}
+
+	private abstract class ActionCreator
+	{
+		AbstractAction action;
+
+		public ActionCreator(String s)
+		{
+			this(s, true, null);
+		}
+
+		public ActionCreator(String s, boolean enabled)
+		{
+			this(s, enabled, null);
+		}
+
+		public ActionCreator(String s, String guiProperty)
+		{
+			this(s, true, guiProperty);
+		}
+
+		public ActionCreator(String s, boolean enabled, final String changeProperty)
+		{
+			String name = null;
+			String tooltip = null;
+			if (ArrayUtil.indexOf(HIDDEN_ACTIONS, s) == -1)
+			{
+				name = Settings.text("action." + s);
+				tooltip = "<html>" + Settings.text("action." + s + ".tooltip").replace("\n", "<br>") + "</html>";
+			}
+
+			action = new AbstractAction(name)
+			{
+				@Override
+				public void actionPerformed(ActionEvent e)
+				{
+					action();
+				}
+			};
+			action.putValue(TOOLTIP, tooltip);
+			action.setEnabled(enabled);
+
+			if (changeProperty != null)
+			{
+				action.putValue(Action.SELECTED_KEY, getValueFromGUI());
+				PropertyChangeListener l = new PropertyChangeListener()
+				{
+					@Override
+					public void propertyChange(PropertyChangeEvent evt)
+					{
+						if (evt.getPropertyName().equals(changeProperty))
+						{
+							action.putValue(Action.SELECTED_KEY, getValueFromGUI());
+						}
+					}
+				};
+				guiControler.addPropertyChangeListener(l);
+				viewControler.addViewListener(l);
+			}
+
+			actions.put(s, action);
+		}
+
+		public abstract void action();
+
+		public Object getValueFromGUI()
+		{
+			return null;
+		}
+
+		public Object getActionValue()
+		{
+			return action.getValue(Action.SELECTED_KEY);
 		}
 	}
 
 	private void buildActions()
 	{
-		fActionNew = new AbstractAction("New dataset / mapping")
+		new ActionCreator(FILE_NEW)
 		{
 			@Override
-			public void actionPerformed(ActionEvent e)
+			public void action()
 			{
 				newClustering(0);
 			}
 		};
-		fActionExit = new AbstractAction("Exit")
+		new ActionCreator(FILE_EXIT)
 		{
 			@Override
-			public void actionPerformed(ActionEvent e)
+			public void action()
 			{
 				System.exit(0);
 			}
 		};
-		rActionRemoveCurrent = new AbstractAction("Remove Selected Cluster/Compound")
+		new ActionCreator(REMOVE_CURRENT, false)
 		{
 			@Override
-			public void actionPerformed(ActionEvent e)
+			public void action()
 			{
-				int[] m = (int[]) ((AbstractAction) rActionRemoveCurrent).getValue("Model");
-				Integer c = (Integer) ((AbstractAction) rActionRemoveCurrent).getValue("Cluster");
+				int[] m = (int[]) ((AbstractAction) actions.get(REMOVE_CURRENT)).getValue("Model");
+				Integer c = (Integer) ((AbstractAction) actions.get(REMOVE_CURRENT)).getValue("Cluster");
 				View.instance.suspendAnimation("remove selected");
 				if (m.length > 0)
 					clustering.removeModels(m);
@@ -332,208 +390,159 @@ public class Actions
 				View.instance.proceedAnimation("remove selected");
 			}
 		};
-		rActionRemoveCurrent.setEnabled(false);
-		rActionRemoveClusters = new AbstractAction("Remove Cluster/s")
+		new ActionCreator(REMOVE_CLUSTERS)
 		{
 			@Override
-			public void actionPerformed(ActionEvent e)
+			public void action()
 			{
 				View.instance.suspendAnimation("remove clusters");
 				clustering.chooseClustersToRemove();
 				View.instance.proceedAnimation("remove clusters");
 			}
 		};
-		rActionRemoveModels = new AbstractAction("Remove Compound/s")
+		new ActionCreator(REMOVE_MODELS)
 		{
 			@Override
-			public void actionPerformed(ActionEvent e)
+			public void action()
 			{
 				View.instance.suspendAnimation("remove compounds");
 				clustering.chooseModelsToRemove();
 				View.instance.proceedAnimation("remove compounds");
 			}
 		};
-
-		eActionExportCurrent = new AbstractAction("Export Selected Cluster/Compound")
+		new ActionCreator(EXPORT_CURRENT)
 		{
 			@Override
-			public void actionPerformed(ActionEvent e)
+			public void action()
 			{
-				int[] m = (int[]) ((AbstractAction) rActionRemoveCurrent).getValue("Model");
-				Integer c = (Integer) ((AbstractAction) rActionRemoveCurrent).getValue("Cluster");
+				int[] m = (int[]) ((AbstractAction) actions.get(REMOVE_CURRENT)).getValue("Model");
+				Integer c = (Integer) ((AbstractAction) actions.get(REMOVE_CURRENT)).getValue("Cluster");
 				if (m.length > 0)
 					ExportData.exportModels(clustering, m);
 				else if (c != null)
 					ExportData.exportClusters(clustering, new int[] { c });
 			}
 		};
-		eActionExportClusters = new AbstractAction("Export Cluster/s")
+		new ActionCreator(EXPORT_CLUSTERS)
 		{
 			@Override
-			public void actionPerformed(ActionEvent e)
+			public void action()
 			{
 				clustering.chooseClustersToExport();
 			}
 		};
-		eActionExportModels = new AbstractAction("Export Compound/s")
+		new ActionCreator(EXPORT_MODELS)
 		{
 			@Override
-			public void actionPerformed(ActionEvent e)
+			public void action()
 			{
 				clustering.chooseModelsToExport();
 			}
 		};
-		eActionExportImage = new AbstractAction("Export Image")
+		new ActionCreator(EXPORT_IMAGE)
 		{
 			@Override
-			public void actionPerformed(ActionEvent e)
+			public void action()
 			{
 				View.instance.exportImage();
 			}
 		};
-		eActionExportWorkflow = new AbstractAction("Export Workflow")
+		new ActionCreator(EXPORT_WORKFLOW)
 		{
 			@Override
-			public void actionPerformed(ActionEvent e)
+			public void action()
 			{
 				MappingWorkflow.exportMappingWorkflowToFile(MappingWorkflow.exportSettingsToMappingWorkflow());
 			}
 		};
-
-		vActionFullScreen = new AbstractAction("Fullscreen mode enabled")
+		new ActionCreator(VIEW_FULL_SCREEN, GUIControler.PROPERTY_FULLSCREEN_CHANGED)
 		{
 			@Override
-			public void actionPerformed(ActionEvent e)
+			public void action()
 			{
-				guiControler.setFullScreen((Boolean) vActionFullScreen.getValue(Action.SELECTED_KEY));
+				guiControler.setFullScreen((Boolean) getActionValue());
+			}
+
+			@Override
+			public Object getValueFromGUI()
+			{
+				return guiControler.isFullScreen();
 			}
 		};
-		vActionFullScreen.putValue(Action.SELECTED_KEY, guiControler.isFullScreen());
-		guiControler.addPropertyChangeListener(new PropertyChangeListener()
+		new ActionCreator(VIEW_DRAW_HYDROGENS, ViewControler.PROPERTY_SHOW_HYDROGENS)
 		{
 			@Override
-			public void propertyChange(PropertyChangeEvent evt)
+			public void action()
 			{
-				if (evt.getPropertyName().equals(GUIControler.PROPERTY_FULLSCREEN_CHANGED))
-				{
-					vActionFullScreen.putValue(Action.SELECTED_KEY, guiControler.isFullScreen());
-				}
+				viewControler.setHideHydrogens(!((Boolean) getActionValue()));
 			}
-		});
-		vActionDrawHydrogens = new AbstractAction("Draw hydrogens (if available)")
-		{
+
 			@Override
-			public void actionPerformed(ActionEvent e)
+			public Object getValueFromGUI()
 			{
-				viewControler.setHideHydrogens((Boolean) vActionDrawHydrogens.getValue(Action.SELECTED_KEY));
+				return !viewControler.isHideHydrogens();
 			}
 		};
-		vActionDrawHydrogens.putValue(Action.SELECTED_KEY, !viewControler.isHideHydrogens());
-		viewControler.addViewListener(new PropertyChangeListener()
+		new ActionCreator(VIEW_HIDE_UNSELECTED, ViewControler.PROPERTY_HIDE_UNSELECT_CHANGED)
 		{
-
 			@Override
-			public void propertyChange(PropertyChangeEvent evt)
+			public void action()
 			{
-				if (evt.getPropertyName().equals(ViewControler.PROPERTY_SHOW_HYDROGENS))
-				{
-					vActionDrawHydrogens.putValue(Action.SELECTED_KEY, !viewControler.isHideHydrogens());
-				}
+				viewControler.setHideUnselected((Boolean) getActionValue());
 			}
-		});
 
-		vActionHideUnselectedCompounds = new AbstractAction("Hide unselected compounds")
-		{
 			@Override
-			public void actionPerformed(ActionEvent e)
+			public Object getValueFromGUI()
 			{
-				viewControler.setHideUnselected((Boolean) vActionHideUnselectedCompounds.getValue(Action.SELECTED_KEY));
+				return viewControler.isHideUnselected();
 			}
 		};
-		vActionHideUnselectedCompounds.putValue(Action.SELECTED_KEY, viewControler.isHideUnselected());
-		viewControler.addViewListener(new PropertyChangeListener()
+		new ActionCreator(VIEW_SPIN, ViewControler.PROPERTY_SPIN_CHANGED)
 		{
-
 			@Override
-			public void propertyChange(PropertyChangeEvent evt)
+			public void action()
 			{
-				if (evt.getPropertyName().equals(ViewControler.PROPERTY_HIDE_UNSELECT_CHANGED))
-				{
-					vActionHideUnselectedCompounds.putValue(Action.SELECTED_KEY, viewControler.isHideUnselected());
-				}
+				viewControler.setSpinEnabled((Boolean) getActionValue());
 			}
-		});
 
-		vActionSpin = new AbstractAction("Spin enabled")
-		{
 			@Override
-			public void actionPerformed(ActionEvent e)
+			public Object getValueFromGUI()
 			{
-				viewControler.setSpinEnabled((Boolean) vActionSpin.getValue(Action.SELECTED_KEY));
+				return viewControler.isSpinEnabled();
 			}
 		};
-		vActionSpin.putValue(Action.SELECTED_KEY, viewControler.isSpinEnabled());
-		viewControler.addViewListener(new PropertyChangeListener()
+		new ActionCreator(VIEW_BLACK_WHITE, ViewControler.PROPERTY_BACKGROUND_CHANGED)
 		{
-
 			@Override
-			public void propertyChange(PropertyChangeEvent evt)
+			public void action()
 			{
-				if (evt.getPropertyName().equals(ViewControler.PROPERTY_SPIN_CHANGED))
-				{
-					vActionSpin.putValue(Action.SELECTED_KEY, viewControler.isSpinEnabled());
-				}
+				viewControler.setBlackgroundBlack((Boolean) getActionValue());
 			}
-		});
 
-		vActionBlackWhite = new AbstractAction("Background color black")
-		{
 			@Override
-			public void actionPerformed(ActionEvent e)
+			public Object getValueFromGUI()
 			{
-				viewControler.setBlackgroundBlack((Boolean) vActionBlackWhite.getValue(Action.SELECTED_KEY));
+				return viewControler.isBlackgroundBlack();
 			}
 		};
-		vActionBlackWhite.putValue(Action.SELECTED_KEY, viewControler.isBlackgroundBlack());
-		viewControler.addViewListener(new PropertyChangeListener()
+		new ActionCreator(VIEW_ANTIALIAS, ViewControler.PROPERTY_ANTIALIAS_CHANGED)
 		{
-
 			@Override
-			public void propertyChange(PropertyChangeEvent evt)
+			public void action()
 			{
-				if (evt.getPropertyName().equals(ViewControler.PROPERTY_BACKGROUND_CHANGED))
-				{
-					vActionBlackWhite.putValue(Action.SELECTED_KEY, viewControler.isBlackgroundBlack());
-				}
+				viewControler.setAntialiasEnabled((Boolean) getActionValue());
 			}
-		});
 
-		vActionAntialias = new AbstractAction("Antialias enabled")
-		{
 			@Override
-			public void actionPerformed(ActionEvent e)
+			public Object getValueFromGUI()
 			{
-				viewControler.setAntialiasEnabled((Boolean) vActionAntialias.getValue(Action.SELECTED_KEY));
+				return viewControler.isAntialiasEnabled();
 			}
 		};
-		vActionAntialias.putValue(Action.SELECTED_KEY, viewControler.isAntialiasEnabled());
-		viewControler.addViewListener(new PropertyChangeListener()
-		{
-
-			@Override
-			public void propertyChange(PropertyChangeEvent evt)
-			{
-				if (evt.getPropertyName().equals(ViewControler.PROPERTY_ANTIALIAS_CHANGED))
-				{
-					vActionAntialias.putValue(Action.SELECTED_KEY, viewControler.isAntialiasEnabled());
-				}
-			}
-		});
-
-		vActionMoleculeDescriptor = new AbstractAction("Compound identifier")
+		new ActionCreator(VIEW_MOLECULE_DESCRIPTOR)
 		{
 			@Override
-			public void actionPerformed(ActionEvent e)
+			public void action()
 			{
 				List<MoleculeProperty> props = new ArrayList<MoleculeProperty>();
 				props.add(ViewControler.COMPOUND_INDEX_PROPERTY);
@@ -550,11 +559,10 @@ public class Actions
 					viewControler.setMoleculeDescriptor(p);
 			}
 		};
-
-		hActionDocu = new AbstractAction("Online Documentation")
+		new ActionCreator(HELP_DOCU)
 		{
 			@Override
-			public void actionPerformed(ActionEvent e)
+			public void action()
 			{
 				try
 				{
@@ -566,173 +574,132 @@ public class Actions
 				}
 			}
 		};
-		hActionAbout = new AbstractAction("About " + Settings.TITLE)
+		new ActionCreator(HELP_ABOUT)
 		{
 			@Override
-			public void actionPerformed(ActionEvent e)
+			public void action()
 			{
 				showAboutDialog();
 			}
 		};
-
-		xActionDisablePopup = new AbstractAction()
+		new ActionCreator(HIDDEN_ENABLE_JMOL_POPUP)
 		{
 			@Override
-			public void actionPerformed(ActionEvent e)
+			public void action()
 			{
 				View.instance.scriptWait("set disablePopupMenu off");
 			}
 		};
-
-		xActionUpdateMouseSelectionPressed = new AbstractAction()
+		new ActionCreator(HIDDEN_UPDATE_MOUSE_SELECTION_PRESSED)
 		{
 			@Override
-			public void actionPerformed(ActionEvent e)
+			public void action()
 			{
 				viewControler.updateMouseSelection(true);
 			}
 		};
-		xActionUpdateMouseSelectionReleased = new AbstractAction()
+		new ActionCreator(HIDDEN_UPDATE_MOUSE_SELECTION_RELEASED)
 		{
 			@Override
-			public void actionPerformed(ActionEvent e)
+			public void action()
 			{
 				viewControler.updateMouseSelection(false);
 			}
 		};
-
-		xActionDecreaseCompoundSize = new AbstractAction()
+		new ActionCreator(HIDDEN_DECR_COMPOUND_SIZE)
 		{
 			@Override
-			public void actionPerformed(ActionEvent e)
+			public void action()
 			{
 				if (viewControler.canChangeCompoundSize(false))
 					viewControler.changeCompoundSize(false);
 			}
 		};
-		xActionIncreaseCompoundSize = new AbstractAction()
+		new ActionCreator(HIDDEN_INCR_COMPOUND_SIZE)
 		{
 			@Override
-			public void actionPerformed(ActionEvent e)
+			public void action()
 			{
 				if (viewControler.canChangeCompoundSize(true))
 					viewControler.changeCompoundSize(true);
 			}
 		};
-
-		tActionColorMatch = new AbstractAction("Substructure match color")
+		new ActionCreator(HIGHLIGHT_COLOR_MATCH, ViewControler.PROPERTY_MATCH_COLOR_CHANGED)
 		{
 			@Override
-			public void actionPerformed(ActionEvent e)
+			public void action()
 			{
-				Color col = JColorChooser.showDialog(Settings.TOP_LEVEL_FRAME, "Select Color",
-						(Color) tActionColorMatch.getValue("matchcolor"));
+				Color col = JColorChooser
+						.showDialog(Settings.TOP_LEVEL_FRAME, "Select Color", (Color) getActionValue());
 				if (col != null)
 				{
-					tActionColorMatch.putValue("matchcolor", col);
-					viewControler.setMatchColor((Color) tActionColorMatch.getValue("matchcolor"));
+					//					tActionColorMatch.putValue("matchcolor", col);
+					viewControler.setMatchColor(col);
 				}
+			}
+
+			@Override
+			public Object getValueFromGUI()
+			{
+				return viewControler.getMatchColor();
 			}
 		};
-		tActionColorMatch.putValue("matchcolor", viewControler.getMatchColor());
-		viewControler.addViewListener(new PropertyChangeListener()
+		new ActionCreator(HIGHLIGHT_LOG, ViewControler.PROPERTY_HIGHLIGHT_LOG_CHANGED)
 		{
-
 			@Override
-			public void propertyChange(PropertyChangeEvent evt)
+			public void action()
 			{
-				if (evt.getPropertyName().equals(ViewControler.PROPERTY_MATCH_COLOR_CHANGED))
-				{
-					tActionColorMatch.putValue("matchcolor", viewControler.getMatchColor());
-				}
+				viewControler.setHighlightLogEnabled((Boolean) getActionValue());
 			}
-		});
 
-		tActionHighlightLog = new AbstractAction("Enable log highlighting")
-		{
 			@Override
-			public void actionPerformed(ActionEvent e)
+			public Object getValueFromGUI()
 			{
-				viewControler.setHighlightLogEnabled((Boolean) tActionHighlightLog.getValue(Action.SELECTED_KEY));
+				return viewControler.isHighlightLogEnabled();
 			}
 		};
-		tActionHighlightLog.putValue(Action.SELECTED_KEY, viewControler.isHighlightLogEnabled());
-		viewControler.addViewListener(new PropertyChangeListener()
+		new ActionCreator(HIGHLIGHT_LAST_FEATURE, viewControler.getHighlightMode() == HighlightMode.Spheres,
+				ViewControler.PROPERTY_HIGHLIGHT_LAST_FEATURE)
 		{
-
 			@Override
-			public void propertyChange(PropertyChangeEvent evt)
+			public void action()
 			{
-				if (evt.getPropertyName().equals(ViewControler.PROPERTY_HIGHLIGHT_LOG_CHANGED))
-				{
-					tActionHighlightLog.putValue(Action.SELECTED_KEY, viewControler.isHighlightLogEnabled());
-				}
+				viewControler.setHighlightLastFeatureEnabled((Boolean) getActionValue());
 			}
-		});
 
-		tActionHighlightLastFeature = new AbstractAction("Highlight last selected feature with second sphere")
-		{
 			@Override
-			public void actionPerformed(ActionEvent e)
+			public Object getValueFromGUI()
 			{
-				viewControler.setHighlightLastFeatureEnabled((Boolean) tActionHighlightLastFeature
-						.getValue(Action.SELECTED_KEY));
+				return viewControler.isHighlightLastFeatureEnabled();
 			}
 		};
-		tActionHighlightLastFeature.putValue(Action.SELECTED_KEY, viewControler.isHighlightLastFeatureEnabled());
-		viewControler.addViewListener(new PropertyChangeListener()
-		{
-
-			@Override
-			public void propertyChange(PropertyChangeEvent evt)
-			{
-				if (evt.getPropertyName().equals(ViewControler.PROPERTY_HIGHLIGHT_LAST_FEATURE))
-				{
-					tActionHighlightLastFeature.putValue(Action.SELECTED_KEY,
-							viewControler.isHighlightLastFeatureEnabled());
-				}
-			}
-		});
-
-		tActionSelectLastFeature = new AbstractAction("Selected last feature")
+		new ActionCreator(HIGHLIGHT_SELECT_LAST_FEATURE)
 		{
 			@Override
-			public void actionPerformed(ActionEvent e)
+			public void action()
 			{
 				viewControler.setSelectLastSelectedHighlighter();
 			}
 		};
-
-		tActionHighlightMode = new AbstractAction("Highlight features with spheres")
+		new ActionCreator(HIGHLIGHT_MODE, ViewControler.PROPERTY_HIGHLIGHT_MODE_CHANGED)
 		{
 			@Override
-			public void actionPerformed(ActionEvent e)
+			public void action()
 			{
-				viewControler
-						.setHighlightMode(((Boolean) tActionHighlightMode.getValue(Action.SELECTED_KEY)) ? MainPanel.HighlightMode.Spheres
-								: MainPanel.HighlightMode.ColorCompounds);
+				viewControler.setHighlightMode(((Boolean) getActionValue()) ? MainPanel.HighlightMode.Spheres
+						: MainPanel.HighlightMode.ColorCompounds);
+			}
+
+			@Override
+			public Object getValueFromGUI()
+			{
+				return viewControler.getHighlightMode() == MainPanel.HighlightMode.Spheres;
 			}
 		};
-		tActionHighlightMode.putValue(Action.SELECTED_KEY,
-				viewControler.getHighlightMode() == MainPanel.HighlightMode.Spheres);
-		viewControler.addViewListener(new PropertyChangeListener()
-		{
-
-			@Override
-			public void propertyChange(PropertyChangeEvent evt)
-			{
-				if (evt.getPropertyName().equals(ViewControler.PROPERTY_HIGHLIGHT_MODE_CHANGED))
-				{
-					tActionHighlightMode.putValue(Action.SELECTED_KEY,
-							viewControler.getHighlightMode() == MainPanel.HighlightMode.Spheres);
-				}
-			}
-		});
-
-		tActionDecreaseSphereSize = new AbstractAction("Decrease Highlight Sphere Size")
+		new ActionCreator(HIGHLIGHT_DECR_SPHERE_SIZE, viewControler.getHighlightMode() == HighlightMode.Spheres)
 		{
 			@Override
-			public void actionPerformed(ActionEvent e)
+			public void action()
 			{
 				if (View.instance.sphereSize >= 0.1)
 					viewControler.setSphereSize(View.instance.sphereSize - 0.1);
@@ -740,10 +707,10 @@ public class Actions
 					viewControler.setSphereSize(0);
 			}
 		};
-		tActionIncreaseSphereSize = new AbstractAction("Increase Highlight Sphere Size")
+		new ActionCreator(HIGHLIGHT_INCR_SPHERE_SIZE, viewControler.getHighlightMode() == HighlightMode.Spheres)
 		{
 			@Override
-			public void actionPerformed(ActionEvent e)
+			public void action()
 			{
 				if (View.instance.sphereSize <= 0.9)
 					viewControler.setSphereSize(View.instance.sphereSize + 0.1);
@@ -751,10 +718,10 @@ public class Actions
 					viewControler.setSphereSize(1);
 			}
 		};
-		tActionDecreaseSphereTranslucency = new AbstractAction("Decrease Highlight Sphere Translucency")
+		new ActionCreator(HIGHLIGHT_DECR_SPHERE_TRANSLUCENCY, viewControler.getHighlightMode() == HighlightMode.Spheres)
 		{
 			@Override
-			public void actionPerformed(ActionEvent e)
+			public void action()
 			{
 				if (View.instance.sphereTranslucency >= 0.1)
 					viewControler.setSphereTranslucency(View.instance.sphereTranslucency - 0.1);
@@ -762,10 +729,10 @@ public class Actions
 					viewControler.setSphereTranslucency(0);
 			}
 		};
-		tActionIncreaseSphereTranslucency = new AbstractAction("Increase Highlight Sphere Translucency")
+		new ActionCreator(HIGHLIGHT_INCR_SPHERE_TRANSLUCENCY, viewControler.getHighlightMode() == HighlightMode.Spheres)
 		{
 			@Override
-			public void actionPerformed(ActionEvent e)
+			public void action()
 			{
 				if (View.instance.sphereTranslucency <= 0.9)
 					viewControler.setSphereTranslucency(View.instance.sphereTranslucency + 0.1);
@@ -773,10 +740,6 @@ public class Actions
 					viewControler.setSphereTranslucency(1);
 			}
 		};
-		tActionIncreaseSphereSize.setEnabled(viewControler.getHighlightMode() == HighlightMode.Spheres);
-		tActionDecreaseSphereSize.setEnabled(viewControler.getHighlightMode() == HighlightMode.Spheres);
-		tActionIncreaseSphereTranslucency.setEnabled(viewControler.getHighlightMode() == HighlightMode.Spheres);
-		tActionDecreaseSphereTranslucency.setEnabled(viewControler.getHighlightMode() == HighlightMode.Spheres);
 	}
 
 	private void newClustering(final int startPanel)
@@ -789,11 +752,15 @@ public class Actions
 				try
 				{
 					JFrame top = Settings.TOP_LEVEL_FRAME;
-					final CheSMapperWizard wwd = new CheSMapperWizard(top, startPanel);
-					wwd.setCloseButtonText("Cancel");
-					Settings.TOP_LEVEL_FRAME = top;
-					SwingUtil.waitWhileVisible(wwd);
-					if (wwd.isWorkflowSelected())
+					CheSMapperWizard wwd = null;
+					while (wwd == null || wwd.getReturnValue() == CheSMapperWizard.RETURN_VALUE_IMPORT)
+					{
+						wwd = new CheSMapperWizard(top, startPanel);
+						wwd.setCloseButtonText("Cancel");
+						Settings.TOP_LEVEL_FRAME = top;
+						SwingUtil.waitWhileVisible(wwd);
+					}
+					if (wwd.getReturnValue() == CheSMapperWizard.RETURN_VALUE_FINISH && wwd.isWorkflowSelected())
 					{
 						View.instance.suspendAnimation("remap");
 						clustering.clear();
@@ -829,60 +796,62 @@ public class Actions
 				JOptionPane.INFORMATION_MESSAGE, Settings.CHES_MAPPER_IMAGE);
 	}
 
+	private Action[] getActions(String actionNames[])
+	{
+		Action a[] = new Action[actionNames.length];
+		for (int i = 0; i < a.length; i++)
+			a[i] = actions.get(actionNames[i]);
+		return a;
+	}
+
 	public Action[] getFileActions()
 	{
-		return new Action[] { fActionNew, fActionExit };
+		return getActions(FILE_ACTIONS);
 	}
 
 	public Action[] getExportActions()
 	{
-		return new Action[] { eActionExportCurrent, eActionExportClusters, eActionExportModels, eActionExportImage,
-				eActionExportWorkflow };
+		return getActions(EXPORT_ACTIONS);
 	}
 
 	public Action[] getRemoveActions()
 	{
-		return new Action[] { rActionRemoveCurrent, rActionRemoveClusters, rActionRemoveModels };
+		return getActions(REMOVE_ACTIONS);
 	}
 
 	public Action[] getViewActions()
 	{
-		return new Action[] { vActionFullScreen, vActionDrawHydrogens, vActionHideUnselectedCompounds, vActionSpin,
-				vActionBlackWhite, vActionAntialias, vActionMoleculeDescriptor };
+		return getActions(VIEW_ACTIONS);
 	}
 
 	public Action[] getHighlightActions()
 	{
-		return new Action[] { tActionColorMatch, tActionHighlightLog, tActionSelectLastFeature, tActionHighlightMode,
-				tActionHighlightLastFeature, tActionDecreaseSphereSize, tActionIncreaseSphereSize,
-				tActionDecreaseSphereTranslucency, tActionIncreaseSphereTranslucency };
+		return getActions(HIGHLIGHT_ACTIONS);
 	}
 
 	public Action[] getHelpActions()
 	{
-		return new Action[] { hActionDocu, hActionAbout };
+		return getActions(HELP_ACTIONS);
 	}
 
 	public Action[] getHiddenActions()
 	{
-		return new Action[] { xActionUpdateMouseSelectionPressed, xActionUpdateMouseSelectionReleased,
-				xActionDisablePopup, xActionDecreaseCompoundSize, xActionIncreaseCompoundSize };
+		return getActions(HIDDEN_ACTIONS);
 	}
 
 	public void performActions(Object source, KeyStroke k)
 	{
-		System.out.println("\nlook for actions: " + k);
-		//for (Action a : allActions)
-		for (Action a : getHiddenActions())
+		//		System.out.println("\nlook for actions: " + k);
+		for (String a : HIDDEN_ACTIONS)
 		{
-			KeyStroke k2 = getKeyStroke(a);
-			if (a.isEnabled() && k2 != null)
+			KeyStroke keyStroke = keys.get(a);
+			if (actions.get(a).isEnabled() && keyStroke != null)
 			{
-				System.out.println("? " + a + " : " + k2);
-				if (k2.equals(k))
+				//				System.out.println("? " + a + " : " + keyStroke);
+				if (keyStroke.equals(k))
 				{
-					System.out.println("! " + a);
-					a.actionPerformed(new ActionEvent(source, -1, ""));
+					//					System.out.println("! " + a);
+					actions.get(a).actionPerformed(new ActionEvent(source, -1, ""));
 				}
 			}
 		}

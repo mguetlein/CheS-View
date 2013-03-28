@@ -8,7 +8,9 @@ import javax.swing.Action;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
+import javax.swing.ToolTipManager;
 
 import cluster.Clustering;
 
@@ -140,6 +142,19 @@ public class MenuBar extends JMenuBar
 		buildMenu();
 	}
 
+	private JMenuItem createItemFromAction(Action a)
+	{
+		JMenuItem m;
+		if (a.getValue(Action.SELECTED_KEY) instanceof Boolean)
+			m = new JCheckBoxMenuItem(a);
+		else
+			m = new JMenuItem(a);
+		m.setToolTipText((String) a.getValue(Actions.TOOLTIP));
+		ToolTipManager.sharedInstance().setDismissDelay(10000);
+		ToolTipManager.sharedInstance().registerComponent(m);
+		return m;
+	}
+
 	private void buildMenu()
 	{
 		for (MyMenu m : menuBar.menus)
@@ -148,28 +163,12 @@ public class MenuBar extends JMenuBar
 			for (MyMenuItem i : m.items)
 			{
 				if (!i.isMenu())
-				{
-					if (i.getAction().getValue(Action.SELECTED_KEY) != null)
-					{
-						JCheckBoxMenuItem c = new JCheckBoxMenuItem(i.getAction());
-						menu.add(c);
-					}
-					else
-						menu.add(i.getAction());
-				}
+					menu.add(createItemFromAction(i.getAction()));
 				else if (i instanceof MyMenu)
 				{
 					JMenu mm = new JMenu(((MyMenu) i).name);
 					for (MyMenuItem ii : ((MyMenu) i).items)
-					{
-						if (ii.getAction().getValue(Action.SELECTED_KEY) != null)
-						{
-							JCheckBoxMenuItem c = new JCheckBoxMenuItem(ii.getAction());
-							mm.add(c);
-						}
-						else
-							mm.add(ii.getAction());
-					}
+						mm.add(createItemFromAction(ii.getAction()));
 					menu.add(mm);
 				}
 			}
@@ -190,28 +189,12 @@ public class MenuBar extends JMenuBar
 			for (MyMenuItem i : m.items)
 			{
 				if (!i.isMenu())
-				{
-					if (i.getAction().getValue(Action.SELECTED_KEY) != null)
-					{
-						JCheckBoxMenuItem c = new JCheckBoxMenuItem(i.getAction());
-						p.add(c);
-					}
-					else
-						p.add(i.getAction());
-				}
+					p.add(createItemFromAction(i.getAction()));
 				else
 				{
 					JMenu mm = new JMenu(((MyMenu) i).name);
 					for (MyMenuItem ii : ((MyMenu) i).items)
-					{
-						if (ii.getAction().getValue(Action.SELECTED_KEY) != null)
-						{
-							JCheckBoxMenuItem c = new JCheckBoxMenuItem(ii.getAction());
-							mm.add(c);
-						}
-						else
-							mm.add(ii.getAction());
-					}
+						mm.add(createItemFromAction(ii.getAction()));
 					p.add(mm);
 				}
 			}
