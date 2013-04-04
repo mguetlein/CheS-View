@@ -19,7 +19,12 @@ public interface GUIControler extends Blockable
 	//	public void handleKeyEvent(KeyEvent e);
 
 	public static final String PROPERTY_FULLSCREEN_CHANGED = "PROPERTY_FULLSCREEN_CHANGED";
+	public static final String PROPERTY_VIEWER_SIZE_CHANGED = "PROPERTY_VIEWER_SIZE_CHANGED";
 
 	public void addPropertyChangeListener(PropertyChangeListener l);
+
+	public int getViewerWidth();
+
+	public int getViewerHeight();
 
 }

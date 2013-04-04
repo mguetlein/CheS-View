@@ -60,7 +60,7 @@ public class MainPanel extends JPanel implements ViewControler
 	private boolean spinEnabled = false;
 	private boolean hideHydrogens = true;
 	private String style = STYLE_WIREFRAME;
-	boolean hideUnselected = true;
+	boolean hideUnselected = false;
 	Color matchColor = Color.ORANGE;
 	MoleculeProperty modelDescriptorProperty = null;
 	List<JComponent> ignoreMouseMovementPanels = new ArrayList<JComponent>();
@@ -212,6 +212,7 @@ public class MainPanel extends JPanel implements ViewControler
 					{
 						clustering.getModelWatched().clearSelection();
 						clustering.getClusterWatched().clearSelection();
+						clustering.getModelActive().clearSelection();
 					}
 				}
 				else if (SwingUtilities.isRightMouseButton(e))
@@ -638,7 +639,7 @@ public class MainPanel extends JPanel implements ViewControler
 				if (highlightMode == HighlightMode.Spheres)
 					sphereVisible = false;
 			}
-			else if (hideUnselected)
+			else if (hideUnselected || clustering.getModelActive().getSelected() != -1)
 			{
 				if (clus == activeCluster)
 				{

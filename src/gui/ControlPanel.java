@@ -51,11 +51,13 @@ public class ControlPanel extends TransparentViewPanel
 
 	ViewControler viewControler;
 	Clustering clustering;
+	GUIControler guiControler;
 
-	public ControlPanel(ViewControler viewControler, Clustering clustering)
+	public ControlPanel(ViewControler viewControler, Clustering clustering, GUIControler guiControler)
 	{
 		this.viewControler = viewControler;
 		this.clustering = clustering;
+		this.guiControler = guiControler;
 
 		buildLayout();
 		addListeners();
@@ -283,6 +285,18 @@ public class ControlPanel extends TransparentViewPanel
 				}
 			}
 		});
+
+		guiControler.addPropertyChangeListener(new PropertyChangeListener()
+		{
+			@Override
+			public void propertyChange(PropertyChangeEvent evt)
+			{
+				if (evt.getPropertyName().equals(GUIControler.PROPERTY_VIEWER_SIZE_CHANGED))
+				{
+					updateComboSize();
+				}
+			}
+		});
 	}
 
 	private void updateComboStuff()
@@ -316,140 +330,19 @@ public class ControlPanel extends TransparentViewPanel
 				for (Highlighter hh : h.get(desc))
 					highlightCombobox.addItem(hh);
 			}
-			Dimension dim = highlightCombobox.getPreferredSize();
-			highlightCombobox.setPreferredSize(new Dimension(250, dim.height));
 		}
+		updateComboSize();
 		selfUpdate = false;
 	}
 
-	//	public static void main(String args[])
-	//	{
-	//		SwingUtil.showInDialog(new ControlPanel(new ViewControler()
-	//		{
-	//
-	//			@Override
-	//			public boolean isSpinEnabled()
-	//			{
-	//				return false;
-	//			}
-	//
-	//			@Override
-	//			public void setSpinEnabled(boolean spinEnabled)
-	//			{
-	//			}
-	//
-	//			@Override
-	//			public void setDensitiyHigher(boolean higher)
-	//			{
-	//			}
-	//
-	//			@Override
-	//			public String getStyle()
-	//			{
-	//				return ViewControler.STYLE_WIREFRAME;
-	//			}
-	//
-	//			@Override
-	//			public void setStyle(String style)
-	//			{
-	//			}
-	//
-	//			@Override
-	//			public HashMap<String, Highlighter[]> getHighlighters()
-	//			{
-	//				return null;
-	//			}
-	//
-	//			@Override
-	//			public void setHighlighter(Highlighter highlighter)
-	//			{
-	//			}
-	//
-	//			@Override
-	//			public Highlighter getHighlighter()
-	//			{
-	//				return null;
-	//			}
-	//
-	//			@Override
-	//			public boolean isHighlighterLabelsVisible()
-	//			{
-	//				return false;
-	//			}
-	//
-	//			@Override
-	//			public void setHighlighterLabelsVisible(boolean selected)
-	//			{
-	//			}
-	//
-	//			@Override
-	//			public void setHighlightSorting(HighlightSorting sorting)
-	//			{
-	//
-	//			}
-	//
-	//			@Override
-	//			public HighlightSorting getHighlightSorting()
-	//			{
-	//				return null;
-	//			}
-	//
-	//			@Override
-	//			public void addViewListener(PropertyChangeListener l)
-	//			{
-	//			}
-	//
-	//			@Override
-	//			public boolean canChangeDensitiy(boolean higher)
-	//			{
-	//				return true;
-	//			}
-	//
-	//			//			@Override
-	//			//			public boolean isHideUnselected()
-	//			//			{
-	//			//				return false;
-	//			//			}
-	//			//
-	//			//			@Override
-	//			//			public void setHideUnselected(boolean hide)
-	//			//			{
-	//			//			}
-	//
-	//			@Override
-	//			public boolean isHideHydrogens()
-	//			{
-	//				return false;
-	//			}
-	//
-	//			@Override
-	//			public void setHideHydrogens(boolean b)
-	//			{
-	//			}
-	//
-	//			@Override
-	//			public void setSuperimpose(boolean superimpose)
-	//			{
-	//			}
-	//
-	//			@Override
-	//			public boolean isSuperimpose()
-	//			{
-	//				return false;
-	//			}
-	//
-	//			@Override
-	//			public boolean isAllClustersSpreadable()
-	//			{
-	//				return false;
-	//			}
-	//
-	//			@Override
-	//			public boolean isSingleClusterSpreadable()
-	//			{
-	//				return false;
-	//			}
-	//
-	//		}));
-	//	}
+	private void updateComboSize()
+	{
+		highlightCombobox.setPreferredSize(null);
+		Dimension dim = highlightCombobox.getPreferredSize();
+		int width = Math.min(dim.width, guiControler.getViewerWidth() / 3);
+		System.out.println(width);
+		highlightCombobox.setPreferredSize(new Dimension(width, dim.height));
+		highlightCombobox.revalidate();
+	}
+
 }

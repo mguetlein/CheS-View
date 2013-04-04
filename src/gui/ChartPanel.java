@@ -49,6 +49,7 @@ public class ChartPanel extends TransparentViewPanel
 {
 	Clustering clustering;
 	ViewControler viewControler;
+	GUIControler guiControler;
 
 	Cluster cluster;
 	List<Model> models;
@@ -69,10 +70,11 @@ public class ChartPanel extends TransparentViewPanel
 
 	SequentialWorkerThread workerThread = new SequentialWorkerThread();
 
-	public ChartPanel(Clustering clustering, ViewControler viewControler)
+	public ChartPanel(Clustering clustering, ViewControler viewControler, GUIControler guiControler)
 	{
 		this.clustering = clustering;
 		this.viewControler = viewControler;
+		this.guiControler = guiControler;
 
 		buildLayout();
 		addListeners();
@@ -463,7 +465,7 @@ public class ChartPanel extends TransparentViewPanel
 				if (vals[i] == null)
 					vals[i] = "null";
 
-			plot = new StackedBarPlot(null, null, "#compounds", data, vals);
+			plot = new StackedBarPlot(null, null, "#compounds", StackedBarPlot.convertTotalToAdditive(data), vals);
 			plot.addSelectionListener(new NominalModelSelector((StackedBarPlot) plot));
 			configurePlotColors(plot, c, ms, p);
 		}
@@ -553,7 +555,6 @@ public class ChartPanel extends TransparentViewPanel
 		});
 		chartPanel.setShadowVisible(false);
 		chartPanel.setIntegerTickUnits();
-		chartPanel.setPreferredSize(new Dimension(400, 220));
 		chartPanel.setBarWidthLimited();
 		chartPanel.setFontSize(ScreenSetup.SETUP.getFontSize());
 	}
@@ -578,9 +579,10 @@ public class ChartPanel extends TransparentViewPanel
 		if (clustering.getNumClusters() == 1)
 			c = null;
 
-		int mIndex[] = clustering.getModelWatched().getSelectedIndices();
+		int mIndex[] = clustering.getModelActive().getSelectedIndices();
 		if (mIndex.length == 0)
-			mIndex = clustering.getModelActive().getSelectedIndices();
+			mIndex = clustering.getModelWatched().getSelectedIndices();
+
 		List<Model> ms = new ArrayList<Model>();
 		for (int i : mIndex)
 			ms.add(clustering.getModelWithModelIndex(i));
@@ -675,7 +677,8 @@ public class ChartPanel extends TransparentViewPanel
 	public Dimension getPreferredSize()
 	{
 		Dimension dim = super.getPreferredSize();
-		dim.width = Math.min(400, dim.width);
+		dim.width = Math.min(guiControler.getViewerWidth() / 3, dim.width);
+		dim.height = (int) (dim.width * 0.55);
 		return dim;
 	}
 }

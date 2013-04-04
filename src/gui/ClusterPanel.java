@@ -53,42 +53,37 @@ public class ClusterPanel extends JPanel
 		messagePanel.setVisible(false);
 		add(messagePanel);
 
-		JPanel sideBarContainer = new JPanel(new BorderLayout());
-		sideBarContainer.setOpaque(false);
-		clusterListPanel = new ClusterListPanel(mainPanel.getClustering(), mainPanel);
-		sideBarContainer.add(clusterListPanel, BorderLayout.WEST);
-		add(sideBarContainer, BorderLayout.WEST);
+		JPanel allPanelsContainer = new JPanel(new BorderLayout());
+		allPanelsContainer.setOpaque(false);
+		clusterListPanel = new ClusterListPanel(mainPanel.getClustering(), mainPanel, guiControler);
+		allPanelsContainer.add(clusterListPanel, BorderLayout.WEST);
+		add(allPanelsContainer, BorderLayout.WEST);
 
-		JPanel pp = new JPanel(new BorderLayout());
-		pp.setOpaque(false);
+		JPanel infoAndChartContainer = new JPanel(new BorderLayout(0, 20));
+		infoAndChartContainer.setOpaque(false);
 
-		InfoPanel infoPanel = new InfoPanel(mainPanel, mainPanel.getClustering());
-		JPanel ppp = new JPanel(new BorderLayout());
-		ppp.setOpaque(false);
-		ppp.add(infoPanel, BorderLayout.NORTH);
-		ppp.setBorder(new EmptyBorder(0, 0, 10, 0));
+		InfoPanel infoPanel = new InfoPanel(mainPanel, mainPanel.getClustering(), guiControler);
+		ChartPanel chartPanel = new ChartPanel(mainPanel.getClustering(), mainPanel, guiControler);
+		chartPanel.setBorder(new EmptyBorder(0, 0, 0, 0));
+		infoAndChartContainer.add(infoPanel, BorderLayout.EAST);
 
-		JPanel infoContainer = new JPanel(new BorderLayout());
-		infoContainer.setOpaque(false);
-		infoContainer.add(ppp, BorderLayout.CENTER);
-		pp.add(infoContainer, BorderLayout.EAST);
-		pp.setBorder(new EmptyBorder(25, 25, 25, 25));
+		JPanel chartContainer = new JPanel(new BorderLayout());
+		chartContainer.setOpaque(false);
+		chartContainer.add(chartPanel, BorderLayout.EAST);
 
-		ChartPanel cp = new ChartPanel(mainPanel.getClustering(), mainPanel);
-		cp.setBorder(new EmptyBorder(0, 0, 0, 0));
-		infoContainer.add(cp, BorderLayout.SOUTH);
+		infoAndChartContainer.add(chartContainer, BorderLayout.SOUTH);
+		infoAndChartContainer.setBorder(new EmptyBorder(25, 25, 25, 25));
 
-		mainPanel.addIgnoreMouseMovementComponents(cp);
+		mainPanel.addIgnoreMouseMovementComponents(chartPanel);
 
-		sideBarContainer.add(pp);
+		allPanelsContainer.add(infoAndChartContainer);
 
-		//		SwingUtil.setDebugBorder(cp, Color.LIGHT_GRAY);
-		//		SwingUtil.setDebugBorder(sideBarContainer, Color.RED);
-		//		SwingUtil.setDebugBorder(pp, Color.GREEN);
-		//		SwingUtil.setDebugBorder(sideBar, Color.ORANGE);
-		//		SwingUtil.setDebugBorder(info, Color.BLUE);
-		//		SwingUtil.setDebugBorder(ppp, Color.MAGENTA);
-		//		SwingUtil.setDebugBorder(infoContainer, Color.CYAN);
+		//		SwingUtil.setDebugBorder(chartPanel, Color.LIGHT_GRAY);
+		//		SwingUtil.setDebugBorder(allPanelsContainer, Color.RED);
+		//		SwingUtil.setDebugBorder(infoAndChartContainer, Color.GREEN);
+		//		SwingUtil.setDebugBorder(chartContainer, Color.ORANGE);
+		//		SwingUtil.setDebugBorder(infoPanel, Color.BLUE);
+		//		SwingUtil.setDebugBorder(clusterListPanel, Color.MAGENTA);
 
 		add(mainPanel);
 		setOpaque(false);

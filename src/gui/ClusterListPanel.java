@@ -45,15 +45,19 @@ public class ClusterListPanel extends JPanel
 
 	Clustering clustering;
 	ViewControler viewControler;
+	GUIControler guiControler;
 
 	ControlPanel controlPanel;
 
 	JCheckBox superimposeCheckBox;
 
-	public ClusterListPanel(Clustering clustering, ViewControler viewControler)
+	private DefaultListCellRenderer clusterListRenderer;
+
+	public ClusterListPanel(Clustering clustering, ViewControler viewControler, GUIControler guiControler)
 	{
 		this.clustering = clustering;
 		this.viewControler = viewControler;
+		this.guiControler = guiControler;
 
 		buildLayout();
 		installListeners();
@@ -186,6 +190,18 @@ public class ClusterListPanel extends JPanel
 				}
 			}
 		});
+
+		guiControler.addPropertyChangeListener(new PropertyChangeListener()
+		{
+
+			@Override
+			public void propertyChange(PropertyChangeEvent evt)
+			{
+				if (evt.getPropertyName().equals(GUIControler.PROPERTY_VIEWER_SIZE_CHANGED))
+					updateListSize();
+			}
+		});
+
 	}
 
 	private void updateSuperimposeCheckBox()
@@ -217,8 +233,7 @@ public class ClusterListPanel extends JPanel
 		for (Cluster c : clustering.getClusters())
 			listModel.addElement(c);
 
-		clusterList.setVisibleRowCount(16);//Math.min(16, clustering.numClusters() + 1));
-
+		updateListSize();
 		scroll.setVisible(listModel.size() > 1);
 
 		if (listModel.size() == 0)
@@ -235,6 +250,13 @@ public class ClusterListPanel extends JPanel
 		revalidate();
 	}
 
+	private void updateListSize()
+	{
+		int rowCount = (guiControler.getViewerHeight() / clusterListRenderer.getPreferredSize().height) / 3;
+		clusterList.setVisibleRowCount(rowCount);
+		clusterList.revalidate();
+	}
+
 	private void buildLayout()
 	{
 		listModel = new DefaultListModel();
@@ -243,7 +265,7 @@ public class ClusterListPanel extends JPanel
 		clusterList.setFocusable(false);
 		clusterList.setOpaque(false);
 
-		clusterList.setCellRenderer(new DefaultListCellRenderer()
+		clusterListRenderer = new DefaultListCellRenderer()
 		{
 			public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected,
 					boolean cellHasFocus)
@@ -270,9 +292,10 @@ public class ClusterListPanel extends JPanel
 				}
 				return this;
 			}
-		});
+		};
+		clusterList.setCellRenderer(clusterListRenderer);
 
-		modelListPanel = new ModelListPanel(clustering, viewControler)
+		modelListPanel = new ModelListPanel(clustering, viewControler, guiControler)
 		{
 			public Dimension getPreferredSize()
 			{
@@ -299,7 +322,7 @@ public class ClusterListPanel extends JPanel
 		panel.add(clusterPanel, cc.xy(1, 1));
 		panel.add(modelListPanel, cc.xy(3, 1));
 		add(panel, BorderLayout.WEST);
-		controlPanel = new ControlPanel(viewControler, clustering);
+		controlPanel = new ControlPanel(viewControler, clustering, guiControler);
 		add(controlPanel, BorderLayout.SOUTH);
 
 		setBorder(new EmptyBorder(25, 25, 25, 25));

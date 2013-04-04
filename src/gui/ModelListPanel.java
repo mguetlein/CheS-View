@@ -24,9 +24,7 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
-import util.DoubleUtil;
 import util.SelectionModel;
-import util.StringUtil;
 import cluster.Cluster;
 import cluster.Clustering;
 import cluster.Model;
@@ -35,8 +33,6 @@ import com.jgoodies.forms.builder.DefaultFormBuilder;
 import com.jgoodies.forms.layout.CellConstraints;
 import com.jgoodies.forms.layout.ConstantSize;
 import com.jgoodies.forms.layout.FormLayout;
-
-import dataInterface.MoleculeProperty;
 
 public class ModelListPanel extends TransparentViewPanel
 {
@@ -51,16 +47,19 @@ public class ModelListPanel extends TransparentViewPanel
 	JScrollPane listScrollPane;
 	MouseOverList list;
 	DefaultListModel listModel;
+	DoubleNameListCellRenderer listRenderer;
 
 	boolean selfBlock = false;
 
 	Clustering clustering;
 	ViewControler controler;
+	GUIControler guiControler;
 
-	public ModelListPanel(Clustering clustering, ViewControler controler)
+	public ModelListPanel(Clustering clustering, ViewControler controler, GUIControler guiControler)
 	{
 		this.clustering = clustering;
 		this.controler = controler;
+		this.guiControler = guiControler;
 
 		this.clusterActive = clustering.getClusterActive();
 		this.clusterWatched = clustering.getClusterWatched();
@@ -218,6 +217,17 @@ public class ModelListPanel extends TransparentViewPanel
 			}
 		});
 
+		guiControler.addPropertyChangeListener(new PropertyChangeListener()
+		{
+
+			@Override
+			public void propertyChange(PropertyChangeEvent evt)
+			{
+				if (evt.getPropertyName().equals(GUIControler.PROPERTY_VIEWER_SIZE_CHANGED))
+					updateListSize();
+			}
+		});
+
 	}
 
 	private void updateCluster(int index, boolean active)
@@ -252,10 +262,9 @@ public class ModelListPanel extends TransparentViewPanel
 
 		list = new MouseOverList(listModel);
 		list.setClearOnExit(false);
-		list.setVisibleRowCount(16);
 
 		list.setOpaque(false);
-		list.setCellRenderer(new DoubleNameListCellRenderer(listModel)
+		listRenderer = new DoubleNameListCellRenderer(listModel)
 		{
 			public Component getListCellRendererComponent(JList list, Object value, int i, boolean isSelected,
 					boolean cellHasFocus)
@@ -278,7 +287,8 @@ public class ModelListPanel extends TransparentViewPanel
 				}
 				return this;
 			}
-		});
+		};
+		list.setCellRenderer(listRenderer);
 
 		list.setOpaque(false);
 		list.setFocusable(false);
@@ -374,20 +384,26 @@ public class ModelListPanel extends TransparentViewPanel
 				for (Model model : m)
 					listModel.addElement(model);
 				updateActiveModelSelection();
+				updateListSize();
 				listScrollPane.setVisible(true);
-				if (listScrollPane.getPreferredSize().getWidth() > 400)
-					listScrollPane.setPreferredSize(new Dimension(400, listScrollPane.getPreferredSize().height));
+
 			}
 		}
 		setIgnoreRepaint(false);
 		repaint();
 	}
 
-	private static int compare(Model m1, Model m2, MoleculeProperty p)
+	private void updateListSize()
 	{
-		if (p.getType() == MoleculeProperty.Type.NUMERIC)
-			return DoubleUtil.compare(m1.getDoubleValue(p), m2.getDoubleValue(p));
-		else
-			return StringUtil.compare(m1.getStringValue(p), m2.getStringValue(p));
+		System.err.println("row height " + listRenderer.getRowHeight());
+		int rowCount = (guiControler.getViewerHeight() / listRenderer.getRowHeight()) / 3;
+		System.err.println("row count " + rowCount);
+		list.setVisibleRowCount(rowCount);
+
+		listScrollPane.setPreferredSize(null);
+		listScrollPane.setPreferredSize(new Dimension(Math.min(guiControler.getViewerWidth() / 5,
+				listScrollPane.getPreferredSize().width), listScrollPane.getPreferredSize().height));
+		listScrollPane.revalidate();
+		listScrollPane.repaint();
 	}
 }

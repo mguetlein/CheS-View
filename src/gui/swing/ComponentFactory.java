@@ -305,6 +305,11 @@ public class ComponentFactory
 
 	public static JTable createTable()
 	{
+		return createTable(false);
+	}
+
+	public static JTable createTable(final boolean halfTransparent)
+	{
 		DefaultTableModel m = new DefaultTableModel()
 		{
 			public boolean isCellEditable(int row, int column)
@@ -322,21 +327,26 @@ public class ComponentFactory
 		t.setRowHeight(t.getRowHeight() + 1);
 		t.setDefaultRenderer(Object.class, new DefaultTableCellRenderer()
 		{
-
 			@Override
 			public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
 					boolean hasFocus, int row, int column)
 			{
 				super.getTableCellRendererComponent(table, value, isSelected, false, row, column);
-				setBackground(LIST_ACTIVE_BACKGROUND);
 				if (isSelected)
 				{
+					setBackground(LIST_ACTIVE_BACKGROUND);
 					setOpaque(true);
 					setForeground(LIST_SELECTION_FOREGROUND);
 				}
 				else
 				{
-					setOpaque(false);
+					if (halfTransparent)
+					{
+						setBackground(new Color(BACKGROUND.getRed(), BACKGROUND.getGreen(), BACKGROUND.getBlue(), 100));
+						setOpaque(true);
+					}
+					else
+						setOpaque(false);
 					setForeground(FOREGROUND);
 				}
 				return this;

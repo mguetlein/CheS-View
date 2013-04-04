@@ -38,10 +38,12 @@ public class CheSViewer implements GUIControler
 
 	public CheSViewer(ClusteringData clusteredDataset)
 	{
-		clusterPanel = new ClusterPanel(this);
-
 		oldSize = ScreenSetup.SETUP.getViewerSize();
+		if (oldSize == null)
+			throw new Error();
 		oldLocation = null;
+
+		clusterPanel = new ClusterPanel(this);
 
 		//		oldSize = new Dimension(1024, 768);
 		//oldLocation = new Point(0, 0);
@@ -98,7 +100,7 @@ public class CheSViewer implements GUIControler
 					+ Settings.VERSION_STRING + ")");
 	}
 
-	public void show(boolean undecorated, Dimension size, Point location)
+	private void show(boolean undecorated, Dimension size, Point location)
 	{
 		Settings.LOGGER.info("showing - size: " + size);
 
@@ -114,6 +116,11 @@ public class CheSViewer implements GUIControler
 			public void componentMoved(ComponentEvent e)
 			{
 				ScreenSetup.SETUP.setScreen(ScreenUtil.getScreen(frame));
+			}
+
+			public void componentResized(ComponentEvent e)
+			{
+				fireEvent(PROPERTY_VIEWER_SIZE_CHANGED);
 			}
 		});
 
@@ -212,5 +219,23 @@ public class CheSViewer implements GUIControler
 				}
 			});
 		}
+	}
+
+	@Override
+	public int getViewerWidth()
+	{
+		if (frame != null)
+			return frame.getWidth();
+		else
+			return oldSize.width;
+	}
+
+	@Override
+	public int getViewerHeight()
+	{
+		if (frame != null)
+			return frame.getHeight();
+		else
+			return oldSize.height;
 	}
 }
