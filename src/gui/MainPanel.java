@@ -342,6 +342,29 @@ public class MainPanel extends JPanel implements ViewControler
 	}
 
 	@Override
+	public void setHighlighter(MoleculeProperty prop)
+	{
+		Highlighter high = null;
+		for (Highlighter hs[] : highlighters.values())
+		{
+			for (Highlighter h : hs)
+			{
+				if (h instanceof MoleculePropertyHighlighter)
+				{
+					MoleculePropertyHighlighter m = (MoleculePropertyHighlighter) h;
+					if (m.getProperty() == prop)
+					{
+						high = h;
+						break;
+					}
+				}
+			}
+		}
+		if (high != null)
+			setHighlighter(high);
+	}
+
+	@Override
 	public void setSelectLastSelectedHighlighter()
 	{
 		setHighlighter(lastSelectedHighlighter);
@@ -866,6 +889,7 @@ public class MainPanel extends JPanel implements ViewControler
 	private void updateClusteringNew()
 	{
 		Highlighter[] h = new Highlighter[] { Highlighter.DEFAULT_HIGHLIGHTER, Highlighter.CLUSTER_HIGHLIGHTER };
+		//, new MoleculePropertyHighlighter(clustering.getEmbeddingQualityProperty()) };
 		if (clustering.getSubstructures().size() > 0)
 			for (SubstructureSmartsType type : clustering.getSubstructures())
 				h = ArrayUtil.concat(Highlighter.class, h, new Highlighter[] { new SubstructureHighlighter(type) });

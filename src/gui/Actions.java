@@ -19,6 +19,7 @@ import javax.swing.Action;
 import javax.swing.JColorChooser;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import javax.swing.KeyStroke;
 
 import main.Settings;
@@ -52,7 +53,8 @@ public class Actions
 
 	private final static String FILE_NEW = "file-new";
 	private final static String FILE_EXIT = "file-exit";
-	private final static String[] FILE_ACTIONS = { FILE_NEW, FILE_EXIT };
+	private final static String FILE_FEATURE_EMBEDDING_INFO = "file-feature-embedding-info";
+	private final static String[] FILE_ACTIONS = { FILE_NEW, FILE_FEATURE_EMBEDDING_INFO, FILE_EXIT };
 
 	private final static String REMOVE_CURRENT = "remove-current";
 	private final static String REMOVE_CLUSTERS = "remove-clusters";
@@ -368,12 +370,28 @@ public class Actions
 				newClustering(0);
 			}
 		};
+		new ActionCreator(FILE_FEATURE_EMBEDDING_INFO)
+		{
+			@SuppressWarnings("unchecked")
+			@Override
+			public void action()
+			{
+				new FeatureDialog(viewControler, clustering);
+			}
+		};
 		new ActionCreator(FILE_EXIT)
 		{
 			@Override
 			public void action()
 			{
-				System.exit(0);
+				JFrame f = null;
+				if (viewControler instanceof JPanel)
+				{
+					java.awt.Container top = ((JPanel) viewControler).getTopLevelAncestor();
+					if (top instanceof JFrame)
+						f = (JFrame) top;
+				}
+				LaunchCheSMapper.exit(f);
 			}
 		};
 		new ActionCreator(REMOVE_CURRENT, false)
@@ -761,13 +779,13 @@ public class Actions
 						Settings.TOP_LEVEL_FRAME = top;
 						SwingUtil.waitWhileVisible(wwd);
 					}
-					if (wwd.getReturnValue() == CheSMapperWizard.RETURN_VALUE_FINISH && wwd.isWorkflowSelected())
+					if (wwd.getReturnValue() == CheSMapperWizard.RETURN_VALUE_FINISH)
 					{
 						View.instance.suspendAnimation("remap");
 						clustering.clear();
 						Task task = TaskProvider.initTask("Chemical space mapping");
 						new TaskDialog(task, Settings.TOP_LEVEL_FRAME);
-						ClusteringData d = wwd.doMapping();
+						ClusteringData d = wwd.getChesMapping().doMapping();
 						if (d != null)
 						{
 							clustering.newClustering(d);

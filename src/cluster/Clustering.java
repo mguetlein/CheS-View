@@ -794,4 +794,14 @@ public class Clustering implements Zoomable
 		return clusteringData.numDistinctValues(p);
 	}
 
+	//	public MoleculeProperty getEmbeddingQualityProperty()
+	//	{
+	//		return clusteringData.getEmbeddingQualityProperty();
+	//	}
+	//
+	//	public MoleculePropertyEmbedQuality getEmbeddingQuality(MoleculeProperty p)
+	//	{
+	//		return clusteringData.getEmbeddingQuality(p);
+	//	}
+
 }

@@ -4,6 +4,8 @@ import java.awt.Dimension;
 import java.awt.Point;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
@@ -137,7 +139,17 @@ public class CheSViewer implements GUIControler
 
 		frame.getContentPane().add(clusterPanel);
 
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+		frame.addWindowListener(new WindowAdapter()
+		{
+			@Override
+			public void windowClosing(WindowEvent e)
+			{
+				super.windowClosing(e);
+				LaunchCheSMapper.exit(frame);
+			};
+		});
+
 		frame.setIconImage(Settings.CHES_MAPPER_IMAGE.getImage());
 		frame.setVisible(true);
 		SwingUtilities.invokeLater(new Runnable()

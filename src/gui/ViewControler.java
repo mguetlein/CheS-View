@@ -52,6 +52,8 @@ public interface ViewControler
 
 	public void setHighlighter(Highlighter highlighter);
 
+	public void setHighlighter(MoleculeProperty prop);
+
 	public Highlighter getHighlighter();
 
 	public void setSuperimpose(boolean superimpose);

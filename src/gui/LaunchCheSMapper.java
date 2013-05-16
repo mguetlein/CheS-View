@@ -3,7 +3,10 @@ package gui;
 import java.util.Date;
 import java.util.Locale;
 
+import javax.swing.JFrame;
+
 import main.BinHandler;
+import main.CheSMapping;
 import main.PropHandler;
 import main.ScreenSetup;
 import main.Settings;
@@ -45,16 +48,38 @@ public class LaunchCheSMapper
 		}
 		PropHandler.init(loadProperties);
 		BinHandler.init();
-		startWizard();
+		start();
 	}
 
-	public static void startWizard()
-	{
-		ClusteringData clusteringData = null;
-		Task task = null;
-		TaskDialog waitingDialog = null;
+	private static boolean exitOnClose = true;
 
-		while (clusteringData == null)
+	public static void setExitOnClose(boolean exit)
+	{
+		exitOnClose = exit;
+	}
+
+	public static void exit(JFrame f)
+	{
+		if (exitOnClose)
+			System.exit(0);
+		else
+		{
+			if (f != null && f.isVisible())
+				f.setVisible(false);
+			if (Settings.TOP_LEVEL_FRAME != null && Settings.TOP_LEVEL_FRAME != f
+					&& Settings.TOP_LEVEL_FRAME.isVisible())
+				Settings.TOP_LEVEL_FRAME.setVisible(false);
+		}
+	}
+
+	public static void start()
+	{
+		start(null);
+	}
+
+	public static void start(CheSMapping mapping)
+	{
+		if (mapping == null)
 		{
 			CheSMapperWizard wwd = null;
 			while (wwd == null || wwd.getReturnValue() == CheSMapperWizard.RETURN_VALUE_IMPORT)
@@ -62,21 +87,27 @@ public class LaunchCheSMapper
 				wwd = new CheSMapperWizard(null);
 				SwingUtil.waitWhileVisible(wwd);
 			}
-			if (wwd.getReturnValue() == CheSMapperWizard.RETURN_VALUE_FINISH && wwd.isWorkflowSelected())
-			{
-				task = TaskProvider.initTask("Chemical space mapping");
-				waitingDialog = new TaskDialog(task, null);
-				clusteringData = wwd.doMapping();
-			}
-			else
-				break;
+			if (wwd.getReturnValue() == CheSMapperWizard.RETURN_VALUE_FINISH)
+				mapping = wwd.getChesMapping();
 		}
-		if (clusteringData == null)
-			System.exit(1);
-
-		// starting Viewer
-		try
+		if (mapping == null) //wizard cancelled
 		{
+			exit(null);
+			return;
+		}
+
+		Task task = TaskProvider.initTask("Chemical space mapping");
+		TaskDialog waitingDialog = new TaskDialog(task, null);
+		ClusteringData clusteringData = mapping.doMapping();
+		if (clusteringData == null) //mapping failed
+		{
+			TaskProvider.removeTask();
+			start();
+			return;
+		}
+
+		try
+		{ // starting Viewer
 			CheSViewer viewer = new CheSViewer(clusteringData);
 			while (!viewer.frame.isShowing())
 				ThreadUtil.sleep(100);
@@ -88,11 +119,12 @@ public class LaunchCheSMapper
 			Settings.LOGGER.error(e);
 			TaskProvider.failed("Could not load viewer", e);
 			System.gc();
-			startWizard();
+			start();
 		}
 		finally
 		{
 			TaskProvider.removeTask();
 		}
 	}
+
 }

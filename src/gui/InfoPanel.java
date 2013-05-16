@@ -407,7 +407,7 @@ public class InfoPanel extends JPanel
 			datasetPanel.setPreferredSize(null);
 			Dimension d = datasetPanel.getPreferredSize();
 			datasetPanel
-					.setPreferredSize(new Dimension(Math.min(d.width, guiControler.getViewerWidth() / 6), d.height));
+					.setPreferredSize(new Dimension(Math.min(d.width, guiControler.getViewerWidth() / 5), d.height));
 		}
 		if (clusterPanel.isVisible())
 		{
