@@ -238,8 +238,9 @@ public class ChartPanel extends TransparentViewPanel
 					return;
 				}
 				updateSelectionCriterion();
-				System.err.println("interval : " + ((NumericModelSelector) this).hist.getSelectedMin() + " "
-						+ ((NumericModelSelector) this).hist.getSelectedMax());
+				if (this instanceof NumericModelSelector)
+					System.err.println("interval : " + ((NumericModelSelector) this).hist.getSelectedMin() + " "
+							+ ((NumericModelSelector) this).hist.getSelectedMax());
 
 				//				if (clustering.isClusterActive())
 				//				{
