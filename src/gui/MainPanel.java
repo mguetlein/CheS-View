@@ -37,9 +37,7 @@ import org.jmol.api.JmolSimpleViewer;
 
 import util.ArrayUtil;
 import util.ColorUtil;
-import util.DoubleUtil;
 import util.ObjectUtil;
-import util.StringUtil;
 import util.ThreadUtil;
 import cluster.Cluster;
 import cluster.Clustering;
@@ -71,7 +69,7 @@ public class MainPanel extends JPanel implements ViewControler
 			return MoleculePropertyUtil.getColor(clustering.getClusterIndexForModel(m));
 		else if (p == null)
 			return null;
-		else if (m.getTemperature(p).equals("null"))
+		else if (m.getFormattedValue(p).equals("null"))
 			return Color.DARK_GRAY;
 		else if (p.getType() == Type.NOMINAL)
 			return MoleculePropertyUtil.getNominalColor(p, m.getStringValue(p));
@@ -793,11 +791,8 @@ public class MainPanel extends JPanel implements ViewControler
 				}
 				else
 				{
-					Object val = clustering.getModelWithModelIndex(modelIndex).getTemperature(
-							((MoleculePropertyHighlighter) selectedHighlighter).getProperty());
-					Double d = DoubleUtil.parseDouble(val + "");
-					if (d != null)
-						val = StringUtil.formatDouble(d);
+					MoleculeProperty p = ((MoleculePropertyHighlighter) selectedHighlighter).getProperty();
+					Object val = clustering.getModelWithModelIndex(modelIndex).getFormattedValue(p);
 					//				Settings.LOGGER.warn("label : " + i + " : " + c + " : " + val);
 					labelString = ((MoleculePropertyHighlighter) selectedHighlighter).getProperty() + ": " + val;
 				}
@@ -1475,8 +1470,13 @@ public class MainPanel extends JPanel implements ViewControler
 				{
 					for (MoleculeProperty p : props)
 					{
+						// cond 1 : prop-name has to match
+						// cond 2 : distinct values are > 75% of the dataset size
+						// cond 3 : if its the id column, it has to either non-numeric or numeric & integer
 						if (p.toString().matches(names)
-								&& clustering.numDistinctValues(p) > (clustering.numModels() * 3 / 4.0))
+								&& clustering.numDistinctValues(p) > (clustering.numModels() * 3 / 4.0)
+								&& (!names.equals("(?i)^id$") || !names.equals("(?i).*id.*")
+										|| p.getType() != Type.NUMERIC || p.isIntegerInMappedDataset()))
 						{
 							modelDescriptorProperty = p;
 							break;

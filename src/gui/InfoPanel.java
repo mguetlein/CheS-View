@@ -284,7 +284,7 @@ public class InfoPanel extends JPanel
 			{
 				Object o[] = new Object[2];
 				o[0] = p.getName() + ":";
-				o[1] = m.getTemperature(p);
+				o[1] = m.getFormattedValue(p);
 				model.addRow(o);
 			}
 

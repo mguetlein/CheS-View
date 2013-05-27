@@ -168,11 +168,31 @@ public class ModelListPanel extends TransparentViewPanel
 					return;
 				selfBlock = true;
 
-				Model m = (Model) listModel.elementAt(list.getLastSelectedIndex());
+				int idx = list.getLastSelectedIndex();
+				Model m = (Model) listModel.elementAt(idx);
+
 				if (m == null)
 					throw new IllegalStateException();
 				if (e.isControlDown())
 					modelActive.setSelectedInverted(m.getModelIndex());
+				else if (e.isShiftDown() && modelActive.getSelected() != -1 && modelActive.getSelected() != idx)
+				{
+					int minSel, maxSel;
+					if (modelActive.getSelected() < idx)
+					{
+						minSel = modelActive.getSelected() + 1;
+						maxSel = idx;
+					}
+					else
+					{
+						minSel = idx;
+						maxSel = modelActive.getSelected() - 1;
+					}
+					int newSel[] = new int[1 + maxSel - minSel];
+					for (int i = 0; i < newSel.length; i++)
+						newSel[i] = minSel + i;
+					modelActive.setSelectedIndices(newSel, false);
+				}
 				else
 				{
 					if (modelActive.isSelected(m.getModelIndex()))

@@ -51,10 +51,13 @@ public class Actions
 	private ViewControler viewControler;
 	private Clustering clustering;
 
+	private final static String DATA_COMPOUND_TABLE = "file-compound-table";
+	private final static String DATA_FEATURE_TABLE = "file-feature-table";
+	private final static String[] DATA_ACTIONS = { DATA_COMPOUND_TABLE, DATA_FEATURE_TABLE };
+
 	private final static String FILE_NEW = "file-new";
 	private final static String FILE_EXIT = "file-exit";
-	private final static String FILE_FEATURE_EMBEDDING_INFO = "file-feature-embedding-info";
-	private final static String[] FILE_ACTIONS = { FILE_NEW, FILE_FEATURE_EMBEDDING_INFO, FILE_EXIT };
+	private final static String[] FILE_ACTIONS = { FILE_NEW, FILE_EXIT };
 
 	private final static String REMOVE_CURRENT = "remove-current";
 	private final static String REMOVE_CLUSTERS = "remove-clusters";
@@ -370,13 +373,20 @@ public class Actions
 				newClustering(0);
 			}
 		};
-		new ActionCreator(FILE_FEATURE_EMBEDDING_INFO)
+		new ActionCreator(DATA_COMPOUND_TABLE)
 		{
-			@SuppressWarnings("unchecked")
 			@Override
 			public void action()
 			{
-				new FeatureDialog(viewControler, clustering);
+				new CompoundTable(viewControler, clustering);
+			}
+		};
+		new ActionCreator(DATA_FEATURE_TABLE)
+		{
+			@Override
+			public void action()
+			{
+				new FeatureTable(viewControler, clustering);
 			}
 		};
 		new ActionCreator(FILE_EXIT)
@@ -826,6 +836,11 @@ public class Actions
 	public Action[] getFileActions()
 	{
 		return getActions(FILE_ACTIONS);
+	}
+
+	public Action[] getDataActions()
+	{
+		return getActions(DATA_ACTIONS);
 	}
 
 	public Action[] getExportActions()

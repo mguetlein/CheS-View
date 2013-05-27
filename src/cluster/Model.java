@@ -58,10 +58,15 @@ public class Model implements Zoomable, Comparable<Model>, DoubleNameElement
 		setDescriptor(ViewControler.COMPOUND_INDEX_PROPERTY);
 	}
 
-	public String getTemperature(MoleculeProperty property)
+	public String getFormattedValue(MoleculeProperty property)
 	{
 		if (property.getType() == Type.NUMERIC)
-			return getDoubleValue(property) + "";
+			if (getDoubleValue(property) == null)
+				return "null";
+			else if (property.isIntegerInMappedDataset())
+				return StringUtil.formatDouble(getDoubleValue(property), 0);
+			else
+				return StringUtil.formatDouble(getDoubleValue(property));
 		else
 			return getStringValue(property) + "";
 	}
@@ -312,14 +317,8 @@ public class Model implements Zoomable, Comparable<Model>, DoubleNameElement
 			if (highlightMoleculeProperty != null)
 			{
 				if (highlightMoleculeProperty.getType() == Type.NUMERIC)
-				{
-					Double d = getDoubleValue(highlightMoleculeProperty);
-					if (d != null)
-						displayName.val = StringUtil.formatDouble(d);
-					displayName.valD = d;
-				}
-				else
-					displayName.val = getStringValue(highlightMoleculeProperty);
+					displayName.valD = getDoubleValue(highlightMoleculeProperty);
+				displayName.val = getFormattedValue(highlightMoleculeProperty);
 			}
 			this.highlightMoleculeProperty = highlightMoleculeProperty;
 		}
@@ -396,7 +395,7 @@ public class Model implements Zoomable, Comparable<Model>, DoubleNameElement
 			else if (descriptorProperty == ViewControler.COMPOUND_SMILES_PROPERTY)
 				displayName.name = getSmiles();
 			else
-				displayName.name = getTemperature(descriptorProperty);
+				displayName.name = getFormattedValue(descriptorProperty);
 			this.descriptorProperty = descriptorProperty;
 		}
 	}

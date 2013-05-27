@@ -76,11 +76,38 @@ public class MenuBar extends JMenuBar
 
 		public MyMenu(String name, Action actions[], MyMenuItem... items)
 		{
+			this(name, actions, items, null);
+		}
+
+		public MyMenu(String name, Action actions[], MyMenuItem items[], int insertMenusAt[])
+		{
 			this.name = name;
-			for (Action action : actions)
-				this.items.add(new DefaultMyMenuItem(action));
-			for (MyMenuItem item : items)
-				this.items.add(item);
+			if (insertMenusAt == null)
+			{
+				for (Action action : actions)
+					this.items.add(new DefaultMyMenuItem(action));
+				for (MyMenuItem item : items)
+					this.items.add(item);
+			}
+			else
+			{
+				int menuIndex = 0;
+				int actionIndex = 0;
+				for (int i = 0; i < actions.length + items.length; i++)
+				{
+					if (menuIndex < insertMenusAt.length && i == insertMenusAt[menuIndex])
+					{
+						this.items.add(items[menuIndex]);
+						menuIndex++;
+					}
+					else
+					{
+						this.items.add(new DefaultMyMenuItem(actions[actionIndex]));
+						actionIndex++;
+					}
+				}
+
+			}
 		}
 
 		@Override
@@ -127,6 +154,7 @@ public class MenuBar extends JMenuBar
 	MyMenuBar menuBar;
 
 	private final static String SPHERE_SETTINGS_MENU = "Sphere settings";
+	private final static String DATA_MENU = "Data tables";
 
 	public MenuBar(GUIControler guiControler, ViewControler viewControler, Clustering clustering)
 	{
@@ -136,7 +164,8 @@ public class MenuBar extends JMenuBar
 
 		Actions a = Actions.getInstance(guiControler, viewControler, clustering);
 
-		MyMenu fileMenu = new MyMenu("File", a.getFileActions());
+		MyMenu dataMenu = new MyMenu(DATA_MENU, a.getDataActions());
+		MyMenu fileMenu = new MyMenu("File", a.getFileActions(), new MyMenu[] { dataMenu }, new int[] { 1 });
 		MyMenu removeMenu = new MyMenu("Remove", a.getRemoveActions());
 		MyMenu exportMenu = new MyMenu("Export", a.getExportActions());
 		MyMenu editMenu = new MyMenu("Edit", removeMenu, exportMenu);

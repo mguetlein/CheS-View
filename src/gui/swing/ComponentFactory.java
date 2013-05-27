@@ -53,6 +53,11 @@ public class ComponentFactory
 	public static Color LIST_ACTIVE_BACKGROUND;
 	public static Color LIST_WATCH_BACKGROUND;
 
+	public static Color LIST_ACTIVE_BACKGROUND_BLACK = new Color(51, 102, 255);
+	public static Color LIST_WATCH_BACKGROUND_BLACK = LIST_ACTIVE_BACKGROUND_BLACK.darker().darker();
+	public static Color LIST_ACTIVE_BACKGROUND_WHITE = new Color(101, 152, 255);
+	public static Color LIST_WATCH_BACKGROUND_WHITE = LIST_ACTIVE_BACKGROUND_WHITE.brighter().brighter();
+
 	static
 	{
 		setBackgroundBlack(true);
@@ -66,8 +71,8 @@ public class ComponentFactory
 			FOREGROUND = new Color(250, 250, 250);
 			BORDER_FOREGROUND = FOREGROUND;
 			LIST_SELECTION_FOREGROUND = Color.WHITE;
-			LIST_ACTIVE_BACKGROUND = new Color(51, 102, 255);
-			LIST_WATCH_BACKGROUND = LIST_ACTIVE_BACKGROUND.darker().darker();
+			LIST_ACTIVE_BACKGROUND = LIST_ACTIVE_BACKGROUND_BLACK;
+			LIST_WATCH_BACKGROUND = LIST_WATCH_BACKGROUND_BLACK;
 		}
 		else
 		{
@@ -75,8 +80,8 @@ public class ComponentFactory
 			FOREGROUND = new Color(5, 5, 5);
 			BORDER_FOREGROUND = Color.LIGHT_GRAY;
 			LIST_SELECTION_FOREGROUND = Color.BLACK;
-			LIST_ACTIVE_BACKGROUND = new Color(101, 152, 255);
-			LIST_WATCH_BACKGROUND = LIST_ACTIVE_BACKGROUND.brighter().brighter();
+			LIST_ACTIVE_BACKGROUND = LIST_ACTIVE_BACKGROUND_WHITE;
+			LIST_WATCH_BACKGROUND = LIST_WATCH_BACKGROUND_WHITE;
 		}
 		if (Settings.TOP_LEVEL_FRAME != null)
 			SwingUtilities.updateComponentTreeUI(Settings.TOP_LEVEL_FRAME);

@@ -30,6 +30,7 @@ import dataInterface.ClusterData;
 import dataInterface.CompoundData;
 import dataInterface.MoleculeProperty;
 import dataInterface.MoleculeProperty.Type;
+import dataInterface.MoleculePropertyUtil;
 import dataInterface.SubstructureSmartsType;
 
 public class Clustering implements Zoomable
@@ -61,6 +62,7 @@ public class Clustering implements Zoomable
 	HashMap<Integer, Model> modelIndexToModel;
 	HashMap<Integer, Cluster> modelIndexToCluster;
 	HashMap<MoleculeProperty, Integer> numMissingValues;
+	HashMap<MoleculeProperty, Integer> numDistinctValues;
 
 	List<Model> modelList;
 	List<Model> modelListIncludingMultiClusteredModels;
@@ -82,6 +84,7 @@ public class Clustering implements Zoomable
 		modelWatched = new SelectionModel(true);
 		clusters = new Vector<Cluster>();
 		numMissingValues = new HashMap<MoleculeProperty, Integer>();
+		numDistinctValues = new HashMap<MoleculeProperty, Integer>();
 	}
 
 	public void addListener(PropertyChangeListener l)
@@ -151,6 +154,7 @@ public class Clustering implements Zoomable
 			}
 
 		numMissingValues.clear();
+		numDistinctValues.clear();
 		normalizedLogValues.clear();
 		normalizedValues.clear();
 
@@ -263,6 +267,18 @@ public class Clustering implements Zoomable
 			numMissingValues.put(p, num);
 		}
 		return numMissingValues.get(p);
+	}
+
+	public int numDistinctValues(MoleculeProperty p)
+	{
+		update();
+		if (!numDistinctValues.containsKey(p))
+		{
+			int numDistinct = p.getType() == Type.NUMERIC ? MoleculePropertyUtil.computeNumDistinct(getDoubleValues(p))
+					: MoleculePropertyUtil.computeNumDistinct(getStringValues(p, null));
+			numDistinctValues.put(p, numDistinct);
+		}
+		return numDistinctValues.get(p);
 	}
 
 	public int numModels()
@@ -789,10 +805,6 @@ public class Clustering implements Zoomable
 		return normalizedLogValues.get(m, p);
 	}
 
-	public int numDistinctValues(MoleculeProperty p)
-	{
-		return clusteringData.numDistinctValues(p);
-	}
 
 	//	public MoleculeProperty getEmbeddingQualityProperty()
 	//	{
