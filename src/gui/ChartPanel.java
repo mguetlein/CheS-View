@@ -222,25 +222,24 @@ public class ChartPanel extends TransparentViewPanel
 
 		private void handleEvent(boolean hover, boolean ctrlDown)
 		{
-			System.err.println();
+			//			System.err.println();
 			if (selfUpdate)
 			{
-				System.err.println("self update");
+				//				System.err.println("self update");
 				return;
-
 			}
 			selfUpdate = true;
 			try
 			{
 				if (!hasSelectionCriterionChanged() && hover)
 				{
-					System.err.println("selection criterion has not changed");
+					//					System.err.println("selection criterion has not changed");
 					return;
 				}
 				updateSelectionCriterion();
-				if (this instanceof NumericCompoundSelector)
-					System.err.println("interval : " + ((NumericCompoundSelector) this).hist.getSelectedMin() + " "
-							+ ((NumericCompoundSelector) this).hist.getSelectedMax());
+				//				if (this instanceof NumericCompoundSelector)
+				//					System.err.println("interval : " + ((NumericCompoundSelector) this).hist.getSelectedMin() + " "
+				//							+ ((NumericCompoundSelector) this).hist.getSelectedMax());
 
 				//				if (clustering.isClusterActive())
 				//				{
@@ -264,18 +263,18 @@ public class ChartPanel extends TransparentViewPanel
 					if (ObjectUtil.equals(selfUpdateCompounds, m))
 						return;
 					selfUpdateCompounds = m;
-					System.err.println("updating via chart panel " + m);
+					//					System.err.println("updating via chart panel " + m);
 					clustering.getCompoundWatched().setSelectedIndices(ArrayUtil.toPrimitiveIntArray(m));
 				}
 				else
 				{
-					System.err.println("before: "
-							+ ArrayUtil.toString(clustering.getCompoundActive().getSelectedIndices()));
-					System.err.println("select " + (!ctrlDown) + " " + m);
+					//					System.err.println("before: "
+					//							+ ArrayUtil.toString(clustering.getCompoundActive().getSelectedIndices()));
+					//					System.err.println("select " + (!ctrlDown) + " " + m);
 					clustering.getCompoundActive().setSelectedIndices(ArrayUtil.toPrimitiveIntArray(m), !ctrlDown);
-					System.err.println("after: "
-							+ ArrayUtil.toString(clustering.getCompoundActive().getSelectedIndices()));
-					System.err.println();
+					//					System.err.println("after: "
+					//							+ ArrayUtil.toString(clustering.getCompoundActive().getSelectedIndices()));
+					//					System.err.println();
 				}
 			}
 			finally
@@ -616,14 +615,14 @@ public class ChartPanel extends TransparentViewPanel
 						if (fCluster != cluster || fProperty != property || fCompounds != compounds)
 							return;
 
-						System.out.println("updating chart");
+						//						System.out.println("updating chart");
 
 						String plotKey = getKey(fCluster, fProperty, fCompounds);
 						if (force && cardContents.contains(plotKey))
 							cardContents.remove(plotKey);
 						if (!cardContents.contains(plotKey))
 						{
-							System.out.println("create new plot");
+							//							System.out.println("create new plot");
 							CompoundProperty.Type type = fProperty.getType();
 							PlotData d = null;
 							if (type == Type.NOMINAL)
@@ -636,8 +635,8 @@ public class ChartPanel extends TransparentViewPanel
 								cardPanel.add(d.getPlot(), plotKey);
 							}
 						}
-						else
-							System.out.println("plot was cached");
+						//						else
+						//							System.out.println("plot was cached");
 
 						if (fCluster != cluster || fProperty != property || fCompounds != compounds)
 							return;

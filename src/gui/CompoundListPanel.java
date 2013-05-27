@@ -415,9 +415,9 @@ public class CompoundListPanel extends TransparentViewPanel
 
 	private void updateListSize()
 	{
-		System.err.println("row height " + listRenderer.getRowHeight());
+		//		System.err.println("row height " + listRenderer.getRowHeight());
 		int rowCount = (guiControler.getViewerHeight() / listRenderer.getRowHeight()) / 3;
-		System.err.println("row count " + rowCount);
+		//		System.err.println("row count " + rowCount);
 		list.setVisibleRowCount(rowCount);
 
 		listScrollPane.setPreferredSize(null);

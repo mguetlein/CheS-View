@@ -21,10 +21,8 @@ import main.PropHandler;
 import main.Settings;
 
 import org.jmol.export.dialog.Dialog;
-import org.jmol.util.BoxInfo;
 import org.jmol.viewer.Viewer;
 
-import util.ArrayUtil;
 import util.DoubleArraySummary;
 import util.FileUtil;
 import util.SequentialWorkerThread;
@@ -128,9 +126,9 @@ public class View
 		final float diameter = zoomable.getDiameter(superimposed);
 		final Vector3f center = zoomable.getCenter(superimposed);
 
-		Settings.LOGGER.debug("Superimposed " + superimposed);
-		Settings.LOGGER.debug("Center       " + center);
-		Settings.LOGGER.debug("Diameter     " + diameter);
+		//		Settings.LOGGER.debug("Superimposed " + superimposed);
+		//		Settings.LOGGER.debug("Center       " + center);
+		//		Settings.LOGGER.debug("Diameter     " + diameter);
 		//		Settings.LOGGER.debug("Rot radius   " + viewer.getRotationRadius());
 
 		int zoom = (int) ((1200 / (10 / viewer.getRotationRadius())) / diameter);
@@ -494,18 +492,18 @@ public class View
 		return Vector3fUtil.maxDist(points.toArray(a));
 	}
 
-	public List<Vector3f> getCenterAndAxes(BitSet bitSet)
-	{
-		BoxInfo info = viewer.getBoxInfo(bitSet, 1.0F);
-		Point3f center = info.getBoundBoxCenter();
-		Vector3f corner = info.getBoundBoxCornerVector();
-
-		System.out.println(info);
-		System.out.println(corner);
-		System.out.println(ArrayUtil.toString(info.getBboxVertices()));
-
-		return null;
-	}
+	//	public List<Vector3f> getCenterAndAxes(BitSet bitSet)
+	//	{
+	//		BoxInfo info = viewer.getBoxInfo(bitSet, 1.0F);
+	//		Point3f center = info.getBoundBoxCenter();
+	//		Vector3f corner = info.getBoundBoxCornerVector();
+	//
+	////		System.out.println(info);
+	////		System.out.println(corner);
+	////		System.out.println(ArrayUtil.toString(info.getBboxVertices()));
+	//
+	//		return null;
+	//	}
 
 	HashMap<Dimension, Dimension> cachedResolutions = new HashMap<Dimension, Dimension>();
 

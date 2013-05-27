@@ -68,7 +68,7 @@ public class ClusteringUtil
 			throw new Error("illegal compound size");
 		// convert "int range 0 - COMPOUND_SIZE_MAX" to "float range 4.0 - 0.1"  
 		float density = (float) (((1 - COMPOUND_SIZE / ((double) COMPOUND_SIZE_MAX)) * 3.9f) + 0.1f);
-		System.err.println(ClusteringUtil.COMPOUND_SIZE + " -> " + density);
+		//		System.err.println(ClusteringUtil.COMPOUND_SIZE + " -> " + density);
 
 		// scale is multiplied with the DENSITY, which is configurable by the user
 		SCALE = s * density;

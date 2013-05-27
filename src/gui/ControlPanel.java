@@ -4,8 +4,8 @@ import gui.ViewControler.HighlightSorting;
 import gui.swing.ComponentFactory;
 import gui.swing.ComponentFactory.StyleButton;
 import gui.swing.TransparentViewPanel;
-import gui.util.Highlighter;
 import gui.util.CompoundPropertyHighlighter;
+import gui.util.Highlighter;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
@@ -340,7 +340,7 @@ public class ControlPanel extends TransparentViewPanel
 		highlightCombobox.setPreferredSize(null);
 		Dimension dim = highlightCombobox.getPreferredSize();
 		int width = Math.min(dim.width, guiControler.getViewerWidth() / 3);
-		System.out.println(width);
+		//		System.out.println(width);
 		highlightCombobox.setPreferredSize(new Dimension(width, dim.height));
 		highlightCombobox.revalidate();
 	}
