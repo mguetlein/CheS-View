@@ -76,6 +76,16 @@ public class FeatureTable extends BlockableFrame
 				FeatureTable.this.setVisible(false);
 			}
 		});
+		clustering.addListener(new PropertyChangeListener()
+		{
+			@Override
+			public void propertyChange(PropertyChangeEvent evt)
+			{
+				if (!FeatureTable.this.isVisible())
+					return;
+				FeatureTable.this.setVisible(false);
+			}
+		});
 
 		final DefaultTableModel model = new DefaultTableModel()
 		{

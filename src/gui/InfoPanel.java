@@ -86,6 +86,7 @@ public class InfoPanel extends JPanel
 			public void propertyChange(PropertyChangeEvent evt)
 			{
 				updateDataset();
+				updateCluster();
 			}
 		});
 

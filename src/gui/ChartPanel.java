@@ -6,8 +6,8 @@ import freechart.HistogramPanel;
 import freechart.StackedBarPlot;
 import gui.swing.ComponentFactory;
 import gui.swing.TransparentViewPanel;
-import gui.util.Highlighter;
 import gui.util.CompoundPropertyHighlighter;
+import gui.util.Highlighter;
 
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
@@ -273,8 +273,8 @@ public class ChartPanel extends TransparentViewPanel
 							+ ArrayUtil.toString(clustering.getCompoundActive().getSelectedIndices()));
 					System.err.println("select " + (!ctrlDown) + " " + m);
 					clustering.getCompoundActive().setSelectedIndices(ArrayUtil.toPrimitiveIntArray(m), !ctrlDown);
-					System.err
-							.println("after: " + ArrayUtil.toString(clustering.getCompoundActive().getSelectedIndices()));
+					System.err.println("after: "
+							+ ArrayUtil.toString(clustering.getCompoundActive().getSelectedIndices()));
 					System.err.println();
 				}
 			}
@@ -593,7 +593,7 @@ public class ChartPanel extends TransparentViewPanel
 			ms.clear();
 		}
 
-		System.err.println("update " + ms);
+		//		System.err.println("update " + ms);
 
 		if (force || cluster != c || property != prop || !compounds.equals(ms))
 		{

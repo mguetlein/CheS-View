@@ -84,6 +84,16 @@ public class CompoundTable extends BlockableFrame
 				CompoundTable.this.setVisible(false);
 			}
 		});
+		clustering.addListener(new PropertyChangeListener()
+		{
+			@Override
+			public void propertyChange(PropertyChangeEvent evt)
+			{
+				if (!CompoundTable.this.isVisible())
+					return;
+				CompoundTable.this.setVisible(false);
+			}
+		});
 
 		this.clustering = clustering;
 		this.viewControler = viewControler;

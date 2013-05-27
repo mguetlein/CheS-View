@@ -328,6 +328,7 @@ public class Cluster implements Zoomable
 
 		compoundsOrderedByPropterty.clear();
 
+		clusterData.remove(compoundIndices);
 		update();
 	}
 
