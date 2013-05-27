@@ -22,7 +22,7 @@ public class LaunchCheSMapper
 
 	public static void main(String args[])
 	{
-		Settings.LOGGER.info("starting Ches-Mapper at " + new Date());
+		Settings.LOGGER.info("Starting CheS-Mapper at " + new Date());
 		Settings.LOGGER.info("OS is '" + System.getProperty("os.name") + "'");
 		Settings.LOGGER.info("Java runtime version is '" + System.getProperty("java.runtime.version") + "'");
 

@@ -8,6 +8,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,12 +18,28 @@ import javax.swing.SwingUtilities;
 
 import main.ScreenSetup;
 import main.Settings;
+
+import org.jmol.util.DefaultLogger;
+import org.jmol.util.Logger;
+
 import util.ScreenUtil;
 import cluster.Clustering;
 import data.ClusteringData;
 
 public class CheSViewer implements GUIControler
 {
+	static
+	{
+		Logger.setLogger(new DefaultLogger()
+		{
+			@Override
+			protected void log(PrintStream out, int level, String txt, Throwable e)
+			{
+				super.log(out, level, txt != null ? "Jmol > " + txt : null, e);
+			}
+		});
+	}
+
 	//	static
 	//	{
 	//		Settings.LOGGER.warn(JmolConstants.version);
@@ -104,7 +121,7 @@ public class CheSViewer implements GUIControler
 
 	private void show(boolean undecorated, Dimension size, Point location)
 	{
-		Settings.LOGGER.info("showing - size: " + size);
+		//		Settings.LOGGER.info("showing - size: " + size);
 
 		if (clustering == null)
 			throw new Error("clustering is null");

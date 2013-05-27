@@ -1012,7 +1012,7 @@ public class MainPanel extends JPanel implements ViewControler
 		if (!activeClusterChanged && clustering.isClusterActive())
 			return;
 
-		Settings.LOGGER.info("updating cluster selection: " + cIndex + " " + cIndexOld + " " + activeClusterChanged);
+		//		Settings.LOGGER.info("updating cluster selection: " + cIndex + " " + cIndexOld + " " + activeClusterChanged);
 
 		highlightAutomatic.resetClusterHighlighter(activeClusterChanged);
 
