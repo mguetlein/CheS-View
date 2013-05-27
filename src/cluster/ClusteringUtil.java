@@ -15,25 +15,25 @@ public class ClusteringUtil
 		return list;
 	}
 
-	public static Vector3f[] getModelPositions(Cluster c)
+	public static Vector3f[] getCompoundPositions(Cluster c)
 	{
 		Vector3f list[] = new Vector3f[c.size()];
 		int i = 0;
-		for (Model m : c.getModels())
+		for (Compound m : c.getCompounds())
 			list[i++] = m.getPosition();
 		return list;
 	}
 
-	public static Vector3f[] getModelPositions(Clustering c)
+	public static Vector3f[] getCompoundPositions(Clustering c)
 	{
-		return getModelPositions(c, true);
+		return getCompoundPositions(c, true);
 	}
 
-	private static Vector3f[] getModelPositions(Clustering c, boolean scale)
+	private static Vector3f[] getCompoundPositions(Clustering c, boolean scale)
 	{
 		Vector3f list[] = new Vector3f[c.getNumCompounds(true)];
 		int i = 0;
-		for (Model m : c.getModels(true))
+		for (Compound m : c.getCompounds(true))
 			list[i++] = m.getPosition(scale);
 		return list;
 	}
@@ -50,7 +50,7 @@ public class ClusteringUtil
 	 */
 	public static void updateScaleFactor(Clustering c)
 	{
-		Vector3f[] v = ClusteringUtil.getModelPositions(c, false);
+		Vector3f[] v = ClusteringUtil.getCompoundPositions(c, false);
 
 		// the average min distance mean distance of each compound to its closest neighbor compound
 		float d = Vector3fUtil.avgMinDist(v);

@@ -17,12 +17,12 @@ import util.DoubleUtil;
 import util.ObjectUtil;
 import util.StringUtil;
 import dataInterface.CompoundData;
-import dataInterface.MoleculeProperty;
-import dataInterface.MoleculeProperty.Type;
+import dataInterface.CompoundProperty;
+import dataInterface.CompoundProperty.Type;
 
-public class Model implements Zoomable, Comparable<Model>, DoubleNameElement
+public class Compound implements Zoomable, Comparable<Compound>, DoubleNameElement
 {
-	private int modelIndex;
+	private int compoundIndex;
 	private BitSet bitSet;
 
 	private CompoundData compoundData;
@@ -34,13 +34,13 @@ public class Model implements Zoomable, Comparable<Model>, DoubleNameElement
 	private String smarts = null;
 
 	private HashMap<String, BitSet> smartsMatches;
-	private String modelColor;
+	private String compoundColor;
 	private String highlightColor;
 	private String lastHighlightColor;
 	private Vector3f spherePosition;
-	private MoleculeProperty highlightMoleculeProperty;
+	private CompoundProperty highlightCompoundProperty;
 	private String style;
-	private MoleculeProperty descriptorProperty = null;
+	private CompoundProperty descriptorProperty = null;
 	private boolean sphereVisible;
 	private boolean lastFeatureSphereVisible;
 
@@ -48,17 +48,17 @@ public class Model implements Zoomable, Comparable<Model>, DoubleNameElement
 
 	public final Vector3f origCenter;
 
-	public Model(int modelIndex, CompoundData compoundData)
+	public Compound(int compoundIndex, CompoundData compoundData)
 	{
-		this.modelIndex = modelIndex;
+		this.compoundIndex = compoundIndex;
 		this.compoundData = compoundData;
-		bitSet = View.instance.getModelUndeletedAtomsBitSet(modelIndex);
+		bitSet = View.instance.getCompoundBitSet(compoundIndex);
 		origCenter = new Vector3f(View.instance.getAtomSetCenter(bitSet));
 		smartsMatches = new HashMap<String, BitSet>();
 		setDescriptor(ViewControler.COMPOUND_INDEX_PROPERTY);
 	}
 
-	public String getFormattedValue(MoleculeProperty property)
+	public String getFormattedValue(CompoundProperty property)
 	{
 		if (property.getType() == Type.NUMERIC)
 			if (getDoubleValue(property) == null)
@@ -71,12 +71,12 @@ public class Model implements Zoomable, Comparable<Model>, DoubleNameElement
 			return getStringValue(property) + "";
 	}
 
-	public String getStringValue(MoleculeProperty property)
+	public String getStringValue(CompoundProperty property)
 	{
 		return compoundData.getStringValue(property);
 	}
 
-	public Double getDoubleValue(MoleculeProperty property)
+	public Double getDoubleValue(CompoundProperty property)
 	{
 		return compoundData.getDoubleValue(property);
 	}
@@ -89,15 +89,15 @@ public class Model implements Zoomable, Comparable<Model>, DoubleNameElement
 	/**
 	 * index in jmol
 	 */
-	public int getModelIndex()
+	public int getCompoundIndex()
 	{
-		return modelIndex;
+		return compoundIndex;
 	}
 
 	/**
 	 * index in original data file
 	 */
-	public int getModelOrigIndex()
+	public int getCompoundOrigIndex()
 	{
 		return compoundData.getIndex();
 	}
@@ -166,7 +166,7 @@ public class Model implements Zoomable, Comparable<Model>, DoubleNameElement
 	}
 
 	@Override
-	public int compareTo(Model m)
+	public int compareTo(Compound m)
 	{
 		return displayName.compareTo(m.displayName);
 	}
@@ -176,9 +176,9 @@ public class Model implements Zoomable, Comparable<Model>, DoubleNameElement
 		return compoundData.getSmiles();
 	}
 
-	public void modelIndexOffset(int offset)
+	public void compoundIndexOffset(int offset)
 	{
-		modelIndex += offset;
+		compoundIndex += offset;
 	}
 
 	public Translucency getTranslucency()
@@ -269,14 +269,14 @@ public class Model implements Zoomable, Comparable<Model>, DoubleNameElement
 		return smartsMatches.get(smarts);
 	}
 
-	public void setModelColor(String colorString)
+	public void setCompoundColor(String colorString)
 	{
-		this.modelColor = colorString;
+		this.compoundColor = colorString;
 	}
 
-	public String getModelColor()
+	public String getCompoundColor()
 	{
-		return modelColor;
+		return compoundColor;
 	}
 
 	public void setHighlightColor(String color)
@@ -308,38 +308,38 @@ public class Model implements Zoomable, Comparable<Model>, DoubleNameElement
 		this.spherePosition = spherePosition;
 	}
 
-	public void setHighlightMoleculeProperty(MoleculeProperty highlightMoleculeProperty)
+	public void setHighlightCompoundProperty(CompoundProperty highlightCompoundProperty)
 	{
-		if (this.highlightMoleculeProperty != highlightMoleculeProperty)
+		if (this.highlightCompoundProperty != highlightCompoundProperty)
 		{
 			displayName.val = null;
 			displayName.valD = null;
-			if (highlightMoleculeProperty != null)
+			if (highlightCompoundProperty != null)
 			{
-				if (highlightMoleculeProperty.getType() == Type.NUMERIC)
-					displayName.valD = getDoubleValue(highlightMoleculeProperty);
-				displayName.val = getFormattedValue(highlightMoleculeProperty);
+				if (highlightCompoundProperty.getType() == Type.NUMERIC)
+					displayName.valD = getDoubleValue(highlightCompoundProperty);
+				displayName.val = getFormattedValue(highlightCompoundProperty);
 			}
-			this.highlightMoleculeProperty = highlightMoleculeProperty;
+			this.highlightCompoundProperty = highlightCompoundProperty;
 		}
 
-		//		if (highlightMoleculeProperty != null && this.highlightMoleculeProperty.getType() == Type.NUMERIC)
+		//		if (highlightCompoundProperty != null && this.highlightCompoundProperty.getType() == Type.NUMERIC)
 		//		{
 		//			// string properties do have a normalized double value as well
 		//			// values are normalize between 0-1, fixed temp scheme from jmol expects values between 0-100 => multiply with 100
-		//			Double d = compoundData.getNormalizedValue(highlightMoleculeProperty);
+		//			Double d = compoundData.getNormalizedValue(highlightCompoundProperty);
 		//			if (d != null)
 		//			{
-		//				double v = compoundData.getNormalizedValue(highlightMoleculeProperty) * 100.0;
-		//				//			Settings.LOGGER.warn(getModelOrigIndex() + " " + highlightMoleculeProperty + " " + v);
+		//				double v = compoundData.getNormalizedValue(highlightCompoundProperty) * 100.0;
+		//				//			Settings.LOGGER.warn(getCompoundOrigIndex() + " " + highlightCompoundProperty + " " + v);
 		//				View.instance.setAtomProperty(bitSet, Token.temperature, (int) v, (float) v, v + "", null, null);
 		//			}
 		//		}
 	}
 
-	public Object getHighlightMoleculeProperty()
+	public Object getHighlightCompoundProperty()
 	{
-		return highlightMoleculeProperty;
+		return highlightCompoundProperty;
 	}
 
 	public void setStyle(String style)
@@ -382,15 +382,15 @@ public class Model implements Zoomable, Comparable<Model>, DoubleNameElement
 		return compoundData.getIcon(backgroundBlack);
 	}
 
-	public void setDescriptor(MoleculeProperty descriptorProperty)
+	public void setDescriptor(CompoundProperty descriptorProperty)
 	{
 		if (this.descriptorProperty != descriptorProperty)
 		{
 			displayName.compareIndex = null;
 			if (descriptorProperty == ViewControler.COMPOUND_INDEX_PROPERTY)
 			{
-				displayName.compareIndex = getModelOrigIndex();
-				displayName.name = "Compound " + (getModelOrigIndex() + 1);
+				displayName.compareIndex = getCompoundOrigIndex();
+				displayName.name = "Compound " + (getCompoundOrigIndex() + 1);
 			}
 			else if (descriptorProperty == ViewControler.COMPOUND_SMILES_PROPERTY)
 				displayName.name = getSmiles();

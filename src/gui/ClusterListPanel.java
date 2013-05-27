@@ -25,7 +25,7 @@ import javax.swing.event.ListSelectionListener;
 
 import cluster.Cluster;
 import cluster.Clustering;
-import cluster.Model;
+import cluster.Compound;
 
 import com.jgoodies.forms.layout.CellConstraints;
 import com.jgoodies.forms.layout.FormLayout;
@@ -41,7 +41,7 @@ public class ClusterListPanel extends JPanel
 	JScrollPane scroll;
 	boolean selfBlock = false;
 
-	ModelListPanel modelListPanel;
+	CompoundListPanel compoundListPanel;
 
 	Clustering clustering;
 	ViewControler viewControler;
@@ -149,21 +149,21 @@ public class ClusterListPanel extends JPanel
 				if (c == null)
 				{
 					View.instance.suspendAnimation("clear cluster selection");
-					clustering.getModelWatched().clearSelection();
-					if (View.instance.getZoomTarget() instanceof Model)
-						clustering.getModelActive().clearSelection();
+					clustering.getCompoundWatched().clearSelection();
+					if (View.instance.getZoomTarget() instanceof Compound)
+						clustering.getCompoundActive().clearSelection();
 					View.instance.proceedAnimation("clear cluster selection");
 					clustering.getClusterActive().clearSelection();
 				}
 				else
 				{
 					int cIndex = clustering.indexOf(c);
-					clustering.getModelWatched().clearSelection();
+					clustering.getCompoundWatched().clearSelection();
 					boolean suspendAnim = clustering.getClusterActive().getSelected() != cIndex;
 					if (suspendAnim)
 						View.instance.suspendAnimation("change cluster selection");
-					if (View.instance.getZoomTarget() instanceof Model)
-						clustering.getModelActive().clearSelection();
+					if (View.instance.getZoomTarget() instanceof Compound)
+						clustering.getCompoundActive().clearSelection();
 					if (suspendAnim)
 						View.instance.proceedAnimation("change cluster selection");
 					clustering.getClusterActive().setSelected(cIndex);
@@ -242,7 +242,7 @@ public class ClusterListPanel extends JPanel
 		{
 			updateSuperimposeCheckBox();
 			if (listModel.size() == 1)
-				modelListPanel.appendCheckbox(superimposeCheckBox);
+				compoundListPanel.appendCheckbox(superimposeCheckBox);
 			else
 				clusterPanel.add(superimposeCheckBox, BorderLayout.SOUTH);
 		}
@@ -295,7 +295,7 @@ public class ClusterListPanel extends JPanel
 		};
 		clusterList.setCellRenderer(clusterListRenderer);
 
-		modelListPanel = new ModelListPanel(clustering, viewControler, guiControler)
+		compoundListPanel = new CompoundListPanel(clustering, viewControler, guiControler)
 		{
 			public Dimension getPreferredSize()
 			{
@@ -320,7 +320,7 @@ public class ClusterListPanel extends JPanel
 		superimposeCheckBox.setOpaque(false);
 		clusterPanel.add(superimposeCheckBox, BorderLayout.SOUTH);
 		panel.add(clusterPanel, cc.xy(1, 1));
-		panel.add(modelListPanel, cc.xy(3, 1));
+		panel.add(compoundListPanel, cc.xy(3, 1));
 		add(panel, BorderLayout.WEST);
 		controlPanel = new ControlPanel(viewControler, clustering, guiControler);
 		add(controlPanel, BorderLayout.SOUTH);

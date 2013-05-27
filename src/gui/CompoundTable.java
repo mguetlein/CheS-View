@@ -3,7 +3,7 @@ package gui;
 import gui.ClickMouseOverTable.ClickMouseOverRenderer;
 import gui.View.AnimationSpeed;
 import gui.swing.ComponentFactory;
-import gui.util.MoleculePropertyHighlighter;
+import gui.util.CompoundPropertyHighlighter;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
@@ -37,9 +37,9 @@ import util.ListUtil;
 import util.SelectionModel;
 import util.ThreadUtil;
 import cluster.Clustering;
-import cluster.Model;
-import dataInterface.MoleculeProperty;
-import dataInterface.MoleculeProperty.Type;
+import cluster.Compound;
+import dataInterface.CompoundProperty;
+import dataInterface.CompoundProperty.Type;
 
 public class CompoundTable extends BlockableFrame
 {
@@ -47,7 +47,7 @@ public class CompoundTable extends BlockableFrame
 	private Clustering clustering;
 	private ClickMouseOverTable table;
 	private TableRowSorter<DefaultTableModel> sorter;
-	private List<MoleculeProperty> props;
+	private List<CompoundProperty> props;
 	private ViewControler viewControler;
 
 	private static final int NON_PROP_COLUMNS = 3;
@@ -99,7 +99,7 @@ public class CompoundTable extends BlockableFrame
 				if (columnIndex == 0)
 					return Integer.class;
 				if (columnIndex == 1)
-					return Model.class;
+					return Compound.class;
 				if (columnIndex >= NON_PROP_COLUMNS
 						&& props.get(columnIndex - NON_PROP_COLUMNS).getType() == Type.NUMERIC)
 					return Double.class;
@@ -132,18 +132,18 @@ public class CompoundTable extends BlockableFrame
 		model.addColumn("Compound");
 		model.addColumn("Smiles");
 
-		for (MoleculeProperty p : props)
+		for (CompoundProperty p : props)
 			model.addColumn(p);
 		table.getSelectionModel().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 		int count = 0;
-		for (Model m : clustering.getModels(false))
+		for (Compound m : clustering.getCompounds(false))
 		{
 			Object o[] = new Object[model.getColumnCount()];
 			int i = 0;
 			o[i++] = ++count;
 			o[i++] = m;
 			o[i++] = m.getSmiles();
-			for (MoleculeProperty p : props)
+			for (CompoundProperty p : props)
 			{
 				if (p.getType() == Type.NUMERIC)
 					o[i++] = m.getDoubleValue(p);
@@ -153,24 +153,24 @@ public class CompoundTable extends BlockableFrame
 			model.addRow(o);
 		}
 
-		clustering.getModelActive().addListener(new PropertyChangeListener()
+		clustering.getCompoundActive().addListener(new PropertyChangeListener()
 		{
 			@Override
 			public void propertyChange(PropertyChangeEvent evt)
 			{
 				if (!CompoundTable.this.isVisible())
 					return;
-				updateTableFromCompound(clustering.getModelActive(), null, table.getClickSelectionModel());
+				updateTableFromCompound(clustering.getCompoundActive(), null, table.getClickSelectionModel());
 			}
 		});
-		clustering.getModelWatched().addListener(new PropertyChangeListener()
+		clustering.getCompoundWatched().addListener(new PropertyChangeListener()
 		{
 			@Override
 			public void propertyChange(PropertyChangeEvent evt)
 			{
 				if (!CompoundTable.this.isVisible())
 					return;
-				updateTableFromCompound(clustering.getModelWatched(), table.getSelectionModel(), null);
+				updateTableFromCompound(clustering.getCompoundWatched(), table.getSelectionModel(), null);
 			}
 		});
 
@@ -214,7 +214,7 @@ public class CompoundTable extends BlockableFrame
 		//				List<? extends SortKey> keys = sorter.getSortKeys();
 		//				if (keys.size() > 0 && keys.get(0).getColumn() > 2)
 		//				{
-		//					MoleculeProperty p = props.get(keys.get(0).getColumn() - 2);
+		//					CompoundProperty p = props.get(keys.get(0).getColumn() - 2);
 		//					viewControler.setHighlighter(p);
 		//				}
 		//				selfUpdate = false;
@@ -227,7 +227,7 @@ public class CompoundTable extends BlockableFrame
 			public void propertyChange(PropertyChangeEvent e)
 			{
 				updateCompoundFromTable(table.getClickSelectionModel().getSelectedIndices(),
-						clustering.getModelActive());
+						clustering.getCompoundActive());
 			}
 		});
 
@@ -238,7 +238,7 @@ public class CompoundTable extends BlockableFrame
 			{
 				if (e.getValueIsAdjusting())
 					return;
-				updateCompoundFromTable(table.getSelectedRows(), clustering.getModelWatched());
+				updateCompoundFromTable(table.getSelectedRows(), clustering.getCompoundWatched());
 			}
 		});
 		ClickMouseOverRenderer renderer = new ClickMouseOverTable.ClickMouseOverRenderer(table)
@@ -249,7 +249,7 @@ public class CompoundTable extends BlockableFrame
 			{
 				Object val;
 				if (column > NON_PROP_COLUMNS)
-					val = ((Model) table.getValueAt(row, 1)).getFormattedValue(props.get(column - NON_PROP_COLUMNS));
+					val = ((Compound) table.getValueAt(row, 1)).getFormattedValue(props.get(column - NON_PROP_COLUMNS));
 				else
 					val = value;
 				return super.getTableCellRendererComponent(table, val, isSelected, hasFocus, row, column);
@@ -280,7 +280,7 @@ public class CompoundTable extends BlockableFrame
 		//			{
 		//				while (!table.isShowing())
 		//					ThreadUtil.sleep(100);
-		//				for (MoleculeProperty p : props)
+		//				for (CompoundProperty p : props)
 		//				{
 		//					if (!table.isShowing())
 		//						break;
@@ -311,8 +311,8 @@ public class CompoundTable extends BlockableFrame
 				getHeight()));
 		setLocationRelativeTo(Settings.TOP_LEVEL_FRAME);
 
-		updateTableFromCompound(clustering.getModelWatched(), table.getSelectionModel(), null);
-		updateTableFromCompound(clustering.getModelActive(), null, table.getClickSelectionModel());
+		updateTableFromCompound(clustering.getCompoundWatched(), table.getSelectionModel(), null);
+		updateTableFromCompound(clustering.getCompoundActive(), null, table.getClickSelectionModel());
 		updateFeatureSelection();
 
 		setVisible(true);
@@ -374,9 +374,9 @@ public class CompoundTable extends BlockableFrame
 			return;
 		selfUpdate = true;
 
-		if (viewControler.getHighlighter() instanceof MoleculePropertyHighlighter)
+		if (viewControler.getHighlighter() instanceof CompoundPropertyHighlighter)
 		{
-			MoleculeProperty prop = ((MoleculePropertyHighlighter) viewControler.getHighlighter()).getProperty();
+			CompoundProperty prop = ((CompoundPropertyHighlighter) viewControler.getHighlighter()).getProperty();
 			int idx = props.indexOf(prop);
 			if (idx != -1)
 				sortColumn = idx + NON_PROP_COLUMNS;

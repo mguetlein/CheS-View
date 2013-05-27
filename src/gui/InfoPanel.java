@@ -2,7 +2,7 @@ package gui;
 
 import gui.swing.ComponentFactory;
 import gui.swing.TransparentViewPanel;
-import gui.util.MoleculePropertyHighlighter;
+import gui.util.CompoundPropertyHighlighter;
 
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
@@ -23,13 +23,13 @@ import javax.swing.table.DefaultTableModel;
 import util.ListUtil;
 import cluster.Cluster;
 import cluster.Clustering;
-import cluster.Model;
+import cluster.Compound;
 
 import com.jgoodies.forms.builder.DefaultFormBuilder;
 import com.jgoodies.forms.layout.FormLayout;
 import com.jgoodies.forms.layout.Sizes;
 
-import dataInterface.MoleculeProperty;
+import dataInterface.CompoundProperty;
 import dataInterface.SubstructureSmartsType;
 
 public class InfoPanel extends JPanel
@@ -90,7 +90,7 @@ public class InfoPanel extends JPanel
 		});
 
 		buildLayout();
-		clustering.getModelWatched().addListener(new PropertyChangeListener()
+		clustering.getCompoundWatched().addListener(new PropertyChangeListener()
 		{
 			@Override
 			public void propertyChange(PropertyChangeEvent evt)
@@ -98,7 +98,7 @@ public class InfoPanel extends JPanel
 				updateCompound();
 			}
 		});
-		clustering.getModelActive().addListener(new PropertyChangeListener()
+		clustering.getCompoundActive().addListener(new PropertyChangeListener()
 		{
 			@Override
 			public void propertyChange(PropertyChangeEvent evt)
@@ -250,11 +250,11 @@ public class InfoPanel extends JPanel
 	@SuppressWarnings("unchecked")
 	private void updateCompound()
 	{
-		int index = InfoPanel.this.clustering.getModelActive().getSelected();
+		int index = InfoPanel.this.clustering.getCompoundActive().getSelected();
 		interactive = true;
 		if (index == -1)
 		{
-			index = InfoPanel.this.clustering.getModelWatched().getSelected();
+			index = InfoPanel.this.clustering.getCompoundWatched().getSelected();
 			interactive = false;
 		}
 
@@ -267,7 +267,7 @@ public class InfoPanel extends JPanel
 		{
 			compoundPanel.setIgnoreRepaint(true);
 
-			final Model m = clustering.getModelWithModelIndex(index);
+			final Compound m = clustering.getCompoundWithCompoundIndex(index);
 			compoundNameLabel.setText("<html><b>Compound:</b>&nbsp;" + m.toString().replace(" ", "&nbsp;") + "<html>");
 			//			compoundSmilesLabel.setText(m.getSmiles());
 
@@ -279,8 +279,8 @@ public class InfoPanel extends JPanel
 			while (model.getRowCount() > 0)
 				model.removeRow(0);
 			model.addRow(new String[] { "Smiles:", m.getSmiles() });
-			List<MoleculeProperty> props = ListUtil.concat(clustering.getProperties(), clustering.getFeatures());
-			for (MoleculeProperty p : props)
+			List<CompoundProperty> props = ListUtil.concat(clustering.getProperties(), clustering.getFeatures());
+			for (CompoundProperty p : props)
 			{
 				Object o[] = new Object[2];
 				o[0] = p.getName() + ":";
@@ -294,9 +294,9 @@ public class InfoPanel extends JPanel
 					interactive ? Integer.MAX_VALUE : guiControler.getViewerWidth() / 12);
 			compoundPanelMinWidth = Math.max(compoundPanelMinWidth, width);
 
-			if (viewControler.getHighlighter() instanceof MoleculePropertyHighlighter)
+			if (viewControler.getHighlighter() instanceof CompoundPropertyHighlighter)
 			{
-				MoleculeProperty p = ((MoleculePropertyHighlighter) viewControler.getHighlighter()).getProperty();
+				CompoundProperty p = ((CompoundPropertyHighlighter) viewControler.getHighlighter()).getProperty();
 				int pIndex = 1 + props.indexOf(p);
 				table.setRowSelectionInterval(pIndex, pIndex);
 				table.scrollRectToVisible(new Rectangle(table.getCellRect(pIndex, 0, true)));
@@ -381,9 +381,9 @@ public class InfoPanel extends JPanel
 			clusterMCSLabelHeader.setVisible(smartsFound);
 			clusterMCSLabel.setVisible(smartsFound);
 
-			if (viewControler.getHighlighter() instanceof MoleculePropertyHighlighter)
+			if (viewControler.getHighlighter() instanceof CompoundPropertyHighlighter)
 			{
-				MoleculeProperty p = ((MoleculePropertyHighlighter) viewControler.getHighlighter()).getProperty();
+				CompoundProperty p = ((CompoundPropertyHighlighter) viewControler.getHighlighter()).getProperty();
 				clusterFeatureLabelHeader.setText(p.getName() + ":");
 				clusterFeatureLabel.setText(c.getSummaryStringValue(p));
 				clusterFeatureLabel.setVisible(true);

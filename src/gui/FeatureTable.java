@@ -1,8 +1,8 @@
 package gui;
 
 import gui.swing.ComponentFactory;
+import gui.util.CompoundPropertyHighlighter;
 import gui.util.Highlighter;
-import gui.util.MoleculePropertyHighlighter;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
@@ -32,8 +32,8 @@ import util.CountedSet;
 import util.DoubleArraySummary;
 import util.StringUtil;
 import cluster.Clustering;
-import dataInterface.MoleculeProperty;
-import dataInterface.MoleculeProperty.Type;
+import dataInterface.CompoundProperty;
+import dataInterface.CompoundProperty.Type;
 
 public class FeatureTable extends BlockableFrame
 {
@@ -92,7 +92,7 @@ public class FeatureTable extends BlockableFrame
 				if (columnIndex >= 6 || columnIndex <= 8)
 					return Double.class;
 				//				if (columnIndex >= 5 || columnIndex <= 8)
-				//					return MoleculePropertyEmbedQuality.class;
+				//					return CompoundPropertyEmbedQuality.class;
 				return String.class;
 			}
 
@@ -165,7 +165,7 @@ public class FeatureTable extends BlockableFrame
 			for (Highlighter h : hh)
 				highlighters.add(h);
 
-		//		final DoubleKeyHashMap<Dimensions, MoleculeProperty, MoleculePropertyEmbedQuality> embMap = new DoubleKeyHashMap<EmbedUtil.Dimensions, MoleculeProperty, EmbedUtil.MoleculePropertyEmbedQuality>();
+		//		final DoubleKeyHashMap<Dimensions, CompoundProperty, CompoundPropertyEmbedQuality> embMap = new DoubleKeyHashMap<EmbedUtil.Dimensions, CompoundProperty, EmbedUtil.CompoundPropertyEmbedQuality>();
 		int count = 0;
 		for (Highlighter h : highlighters)
 		{
@@ -173,9 +173,9 @@ public class FeatureTable extends BlockableFrame
 			int i = 0;
 			o[i++] = ++count;
 			o[i++] = h;
-			if (h instanceof MoleculePropertyHighlighter)
+			if (h instanceof CompoundPropertyHighlighter)
 			{
-				MoleculeProperty p = ((MoleculePropertyHighlighter) h).getProperty();
+				CompoundProperty p = ((CompoundPropertyHighlighter) h).getProperty();
 				o[i++] = (clustering.getFeatures().contains(p) ? "Yes" : "no");
 				o[i++] = p.getType() == Type.NUMERIC ? "Numeric" : (p.getType() == Type.NOMINAL ? "Nominal" : "undef.");
 				o[i++] = clustering.numMissingValues(p);
@@ -222,7 +222,7 @@ public class FeatureTable extends BlockableFrame
 		//			{
 		//				while (!table.isShowing())
 		//					ThreadUtil.sleep(100);
-		//				for (MoleculeProperty p : props)
+		//				for (CompoundProperty p : props)
 		//				{
 		//					if (!table.isShowing())
 		//						break;

@@ -9,9 +9,9 @@ import java.util.HashMap;
 
 import javax.swing.JComponent;
 
-import dataInterface.AbstractMoleculeProperty;
-import dataInterface.MoleculeProperty;
-import dataInterface.MoleculePropertySet;
+import dataInterface.AbstractCompoundProperty;
+import dataInterface.CompoundProperty;
+import dataInterface.CompoundPropertySet;
 
 public interface ViewControler
 {
@@ -52,7 +52,7 @@ public interface ViewControler
 
 	public void setHighlighter(Highlighter highlighter);
 
-	public void setHighlighter(MoleculeProperty prop);
+	public void setHighlighter(CompoundProperty prop);
 
 	public Highlighter getHighlighter();
 
@@ -77,7 +77,7 @@ public interface ViewControler
 	public static final String PROPERTY_SPIN_CHANGED = "propertySpinChanged";
 	public static final String PROPERTY_BACKGROUND_CHANGED = "propertyBackgroundChanged";
 	public static final String PROPERTY_MATCH_COLOR_CHANGED = "propertyMatchColorChanged";
-	public static final String PROPERTY_MOLECULE_DESCRIPTOR_CHANGED = "propertyMoleculeDescriptorChanged";
+	public static final String PROPERTY_COMPOUND_DESCRIPTOR_CHANGED = "propertyCompoundDescriptorChanged";
 	public static final String PROPERTY_HIGHLIGHT_MODE_CHANGED = "propertyHighlightModeChanged";
 	public static final String PROPERTY_HIGHLIGHT_LOG_CHANGED = "propertyHighlightLogChanged";
 	public static final String PROPERTY_ANTIALIAS_CHANGED = "propertyAntialiasChanged";
@@ -106,26 +106,26 @@ public interface ViewControler
 
 	public Color getMatchColor();
 
-	static final MoleculeProperty COMPOUND_INDEX_PROPERTY = new AbstractMoleculeProperty("Compound Index", "no-desc")
+	static final CompoundProperty COMPOUND_INDEX_PROPERTY = new AbstractCompoundProperty("Compound Index", "no-desc")
 	{
 		@Override
-		public MoleculePropertySet getMoleculePropertySet()
+		public CompoundPropertySet getCompoundPropertySet()
 		{
 			return null;
 		}
 	};
-	static final MoleculeProperty COMPOUND_SMILES_PROPERTY = new AbstractMoleculeProperty("Compound SMILES", "no-desc")
+	static final CompoundProperty COMPOUND_SMILES_PROPERTY = new AbstractCompoundProperty("Compound SMILES", "no-desc")
 	{
 		@Override
-		public MoleculePropertySet getMoleculePropertySet()
+		public CompoundPropertySet getCompoundPropertySet()
 		{
 			return null;
 		}
 	};
 
-	public void setMoleculeDescriptor(MoleculeProperty prop);
+	public void setCompoundDescriptor(CompoundProperty prop);
 
-	public MoleculeProperty getMoleculeDescriptor();
+	public CompoundProperty getCompoundDescriptor();
 
 	public void addIgnoreMouseMovementComponents(JComponent ignore);
 

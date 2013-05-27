@@ -21,8 +21,8 @@ import util.FileUtil;
 import data.DatasetFile;
 import data.IntegratedProperty;
 import dataInterface.CompoundData;
-import dataInterface.MoleculeProperty;
-import dataInterface.MoleculeProperty.Type;
+import dataInterface.CompoundProperty;
+import dataInterface.CompoundProperty.Type;
 
 public class ExportData
 {
@@ -30,17 +30,17 @@ public class ExportData
 	{
 		List<Integer> l = new ArrayList<Integer>();
 		for (int i = 0; i < clusterIndices.length; i++)
-			for (Model m : clustering.getCluster(clusterIndices[i]).getModels())
-				l.add(m.getModelOrigIndex());
-		exportModels(clustering, l);
+			for (Compound m : clustering.getCluster(clusterIndices[i]).getCompounds())
+				l.add(m.getCompoundOrigIndex());
+		exportCompounds(clustering, l);
 	}
 
-	public static void exportModels(Clustering clustering, List<Integer> modelIndices)
+	public static void exportCompounds(Clustering clustering, List<Integer> compoundIndices)
 	{
-		exportModels(clustering, ArrayUtil.toPrimitiveIntArray(modelIndices));
+		exportCompounds(clustering, ArrayUtil.toPrimitiveIntArray(compoundIndices));
 	}
 
-	public static void exportModels(Clustering clustering, int modelOrigIndices[])
+	public static void exportCompounds(Clustering clustering, int compoundOrigIndices[])
 	{
 		JFileChooser f = new JFileChooser(clustering.getOrigSdfFile());//origSDFFile);
 		int i = f.showSaveDialog(Settings.TOP_LEVEL_FRAME);
@@ -63,22 +63,22 @@ public class ExportData
 		DatasetFile.clearFilesWith3DSDF(dest);
 
 		DoubleKeyHashMap<Integer, Object, Object> featureValues = new DoubleKeyHashMap<Integer, Object, Object>();
-		for (Integer j : modelOrigIndices)
+		for (Integer j : compoundOrigIndices)
 		{
 			if (clustering.numClusters() > 1)
 			{
 				if (clustering.isClusterAlgorithmDisjoint())
 				{
-					Model m = null;
+					Compound m = null;
 					for (Cluster c : clustering.getClusters())
-						for (Model mm : c.getModels())
-							if (mm.getModelOrigIndex() == j)
+						for (Compound mm : c.getCompounds())
+							if (mm.getCompoundOrigIndex() == j)
 							{
 								m = mm;
 								break;
 							}
 					featureValues.put(j, (clustering.getClusterAlgorithm() + " cluster assignement").replace(' ', '_'),
-							clustering.getClusterIndexForModel(m));
+							clustering.getClusterIndexForCompound(m));
 				}
 				else
 				{
@@ -86,9 +86,9 @@ public class ExportData
 					{
 						if (!c.containsNotClusteredCompounds())
 						{
-							Model m = null;
-							for (Model mm : c.getModels())
-								if (mm.getModelOrigIndex() == j)
+							Compound m = null;
+							for (Compound mm : c.getCompounds())
+								if (mm.getCompoundOrigIndex() == j)
 								{
 									m = mm;
 									break;
@@ -102,7 +102,7 @@ public class ExportData
 			}
 			//			if (csvExport)
 			//			{
-			for (MoleculeProperty p : clustering.getProperties())
+			for (CompoundProperty p : clustering.getProperties())
 				if (!p.getName().matches("(?i)smiles"))
 				{
 					if (p.getType() == Type.NUMERIC)
@@ -113,7 +113,7 @@ public class ExportData
 								: clustering.getCompounds().get(j).getStringValue(p));
 				}
 			//			}
-			for (MoleculeProperty p : clustering.getFeatures())
+			for (CompoundProperty p : clustering.getFeatures())
 				if (!(p instanceof IntegratedProperty))
 					if (p.getType() == Type.NUMERIC)
 						featureValues.put(j, p, clustering.getCompounds().get(j).getDoubleValue(p));
@@ -123,14 +123,14 @@ public class ExportData
 		List<Object> skipUniform = new ArrayList<Object>();
 		List<Object> skipNull = new ArrayList<Object>();
 		List<Object> skip = new ArrayList<Object>();
-		if (featureValues.keySet1().size() > 0 && featureValues.keySet2(modelOrigIndices[0]).size() > 0)
-			for (Object prop : featureValues.keySet2(modelOrigIndices[0]))
+		if (featureValues.keySet1().size() > 0 && featureValues.keySet2(compoundOrigIndices[0]).size() > 0)
+			for (Object prop : featureValues.keySet2(compoundOrigIndices[0]))
 			{
 				boolean uniform = true;
 				boolean nullValues = false;
 				boolean first = true;
 				Object val = null;
-				for (Integer j : modelOrigIndices)
+				for (Integer j : compoundOrigIndices)
 				{
 					Object newVal = featureValues.get(j, prop);
 					nullValues |= (newVal == null || new Double(Double.NaN).equals(newVal));
@@ -145,7 +145,7 @@ public class ExportData
 							uniform = false;
 					}
 				}
-				if (uniform && modelOrigIndices.length > 1)
+				if (uniform && compoundOrigIndices.length > 1)
 					skipUniform.add(prop);
 				if (nullValues)
 					skipNull.add(prop);
@@ -175,13 +175,13 @@ public class ExportData
 		for (Object p : skip)
 		{
 			Settings.LOGGER.info("Skipping from export: " + p);
-			for (Integer j : modelOrigIndices)
+			for (Integer j : compoundOrigIndices)
 				featureValues.remove(j, p);
 		}
 		if (csvExport)
 		{
 			List<Object> feats = new ArrayList<Object>();
-			for (Integer j : modelOrigIndices)
+			for (Integer j : compoundOrigIndices)
 				for (Object feat : featureValues.keySet2(j))
 					if (!feats.contains(feat))
 						feats.add(feat);
@@ -203,16 +203,16 @@ public class ExportData
 					b.write("\"");
 				}
 				b.write("\n");
-				for (Integer modelIndex : modelOrigIndices)
+				for (Integer compoundIndex : compoundOrigIndices)
 				{
-					CompoundData c = clustering.getCompounds().get(modelIndex);
+					CompoundData c = clustering.getCompounds().get(compoundIndex);
 					b.write("\"");
 					b.write(c.getSmiles());
 					b.write("\"");
 					for (Object feat : feats)
 					{
 						b.write(",\"");
-						Object val = featureValues.get(modelIndex, feat);
+						Object val = featureValues.get(compoundIndex, feat);
 						String s = val == null ? "" : val.toString();
 						if (s.contains("\""))
 						{
@@ -233,6 +233,6 @@ public class ExportData
 			}
 		}
 		else
-			SDFUtil.filter(clustering.getOrigSdfFile(), dest, modelOrigIndices, featureValues);
+			SDFUtil.filter(clustering.getOrigSdfFile(), dest, compoundOrigIndices, featureValues);
 	}
 }

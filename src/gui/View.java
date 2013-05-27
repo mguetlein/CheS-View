@@ -30,7 +30,7 @@ import util.FileUtil;
 import util.SequentialWorkerThread;
 import util.Vector3fUtil;
 import cluster.Clustering;
-import cluster.Model;
+import cluster.Compound;
 
 public class View
 {
@@ -67,8 +67,8 @@ public class View
 						|| evt.getPropertyName().equals(Clustering.CLUSTER_CLEAR))
 				{
 					medianDiameter = null;
-					for (Model m : spheresForModel)
-						if (!clustering.getModels(true).contains(m))
+					for (Compound m : spheresForCompound)
+						if (!clustering.getCompounds(true).contains(m))
 							hideSphere(m);
 				}
 			}
@@ -197,7 +197,7 @@ public class View
 		return viewer.findNearestAtomIndexFixed(x, y);
 	}
 
-	public synchronized int getAtomModelIndex(int atomIndex)
+	public synchronized int getAtomCompoundIndex(int atomIndex)
 	{
 		return viewer.getAtomModelIndex(atomIndex);
 	}
@@ -259,12 +259,12 @@ public class View
 		viewer.scriptWait("select (not hidden) OR selected; select not selected; hide selected");
 	}
 
-	public synchronized BitSet getModelUndeletedAtomsBitSet(int modelIndex)
+	public synchronized BitSet getCompoundBitSet(int modelIndex)
 	{
 		return viewer.getModelUndeletedAtomsBitSet(modelIndex);
 	}
 
-	public synchronized String getModelNumberDotted(int i)
+	public synchronized String getCompoundNumberDotted(int i)
 	{
 		return viewer.getModelNumberDotted(i);
 	}
@@ -274,15 +274,15 @@ public class View
 		return viewer.getAtomSetCenter(bitSet);
 	}
 
-	HashSet<Model> spheresForModel = new HashSet<Model>();
+	HashSet<Compound> spheresForCompound = new HashSet<Compound>();
 	public double sphereSize = 0.5;
 	public double sphereTranslucency = 0.5;
 
-	public synchronized void hideSphere(Model m)
+	public synchronized void hideSphere(Compound m)
 	{
-		if (spheresForModel.contains(m))
+		if (spheresForCompound.contains(m))
 		{
-			String id = "sphere" + m.getModelIndex();
+			String id = "sphere" + m.getCompoundIndex();
 			scriptWait("ellipsoid ID " + id + " color translucent 1.0");
 			scriptWait("ellipsoid ID " + id + "_2 color translucent 1.0");
 		}
@@ -295,18 +295,18 @@ public class View
 		if (medianDiameter == null)
 		{
 			List<Float> d = new ArrayList<Float>();
-			for (Model m : clustering.getModels(true))
+			for (Compound m : clustering.getCompounds(true))
 				d.add(m.getDiameter());
 			medianDiameter = (float) DoubleArraySummary.create(d).getMedian();
 		}
 		return medianDiameter;
 	}
 
-	private synchronized void updateSpherePosition(Model m)
+	private synchronized void updateSpherePosition(Compound m)
 	{
-		if (spheresForModel.contains(m))
+		if (spheresForCompound.contains(m))
 		{
-			String id = "sphere" + m.getModelIndex();
+			String id = "sphere" + m.getCompoundIndex();
 
 			//			BoxInfo info = viewer.getBoxInfo(m.getBitSet(), 1.0F);
 			//				Point3f center = info.getBoundBoxCenter();
@@ -334,12 +334,12 @@ public class View
 		}
 	}
 
-	public synchronized void showSphere(Model m, boolean showLastHighlightColor, boolean updateSizeAndPos)
+	public synchronized void showSphere(Compound m, boolean showLastHighlightColor, boolean updateSizeAndPos)
 	{
-		String id = "sphere" + m.getModelIndex();
-		if (!spheresForModel.contains(m) || updateSizeAndPos)
+		String id = "sphere" + m.getCompoundIndex();
+		if (!spheresForCompound.contains(m) || updateSizeAndPos)
 		{
-			spheresForModel.add(m);
+			spheresForCompound.add(m);
 			updateSpherePosition(m);
 		}
 
@@ -368,13 +368,13 @@ public class View
 		viewer.zap(b, c, d);
 	}
 
-	public synchronized void loadModelFromFile(String s, String filename, String s2[], Object reader, boolean b,
+	public synchronized void loadCompoundFromFile(String s, String filename, String s2[], Object reader, boolean b,
 			Hashtable<String, Object> t, StringBuffer sb, int i)
 	{
 		viewer.loadModelFromFile(s, filename, s2, reader, b, t, sb, i);
 	}
 
-	public synchronized int getModelCount()
+	public synchronized int getCompoundCount()
 	{
 		return viewer.getModelCount();
 	}
@@ -423,7 +423,7 @@ public class View
 		viewer.setAtomProperty(bitSet, temperature, v, v2, string, f, s);
 	}
 
-	public synchronized int getAtomCountInModel(int index)
+	public synchronized int getAtomCountInCompound(int index)
 	{
 		return viewer.getAtomCountInModel(index);
 	}

@@ -7,7 +7,7 @@ import freechart.StackedBarPlot;
 import gui.swing.ComponentFactory;
 import gui.swing.TransparentViewPanel;
 import gui.util.Highlighter;
-import gui.util.MoleculePropertyHighlighter;
+import gui.util.CompoundPropertyHighlighter;
 
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
@@ -35,15 +35,15 @@ import util.SequentialWorkerThread;
 import util.ToStringComparator;
 import cluster.Cluster;
 import cluster.Clustering;
-import cluster.Model;
+import cluster.Compound;
 
 import com.jgoodies.forms.builder.DefaultFormBuilder;
 import com.jgoodies.forms.layout.FormLayout;
 import com.jgoodies.forms.layout.Sizes;
 
-import dataInterface.MoleculeProperty;
-import dataInterface.MoleculeProperty.Type;
-import dataInterface.MoleculePropertyUtil;
+import dataInterface.CompoundProperty;
+import dataInterface.CompoundProperty.Type;
+import dataInterface.CompoundPropertyUtil;
 
 public class ChartPanel extends TransparentViewPanel
 {
@@ -52,8 +52,8 @@ public class ChartPanel extends TransparentViewPanel
 	GUIControler guiControler;
 
 	Cluster cluster;
-	List<Model> models;
-	MoleculeProperty property;
+	List<Compound> compounds;
+	CompoundProperty property;
 
 	private JPanel featurePanel;
 	private JLabel featureNameLabel = ComponentFactory.createViewLabel("");
@@ -170,7 +170,7 @@ public class ChartPanel extends TransparentViewPanel
 				update(false);
 			}
 		});
-		clustering.getModelActive().addListener(new PropertyChangeListener()
+		clustering.getCompoundActive().addListener(new PropertyChangeListener()
 		{
 			@Override
 			public void propertyChange(PropertyChangeEvent evt)
@@ -178,7 +178,7 @@ public class ChartPanel extends TransparentViewPanel
 				update(false);
 			}
 		});
-		clustering.getModelWatched().addListener(new PropertyChangeListener()
+		clustering.getCompoundWatched().addListener(new PropertyChangeListener()
 		{
 			@Override
 			public void propertyChange(PropertyChangeEvent evt)
@@ -189,24 +189,24 @@ public class ChartPanel extends TransparentViewPanel
 
 	}
 
-	private static String getKey(Cluster c, MoleculeProperty p, List<Model> m)
+	private static String getKey(Cluster c, CompoundProperty p, List<Compound> m)
 	{
 		String mString = "";
-		for (Model model : m)
-			mString = mString.concat(model.toString());
+		for (Compound compound : m)
+			mString = mString.concat(compound.toString());
 		return (c == null ? "null" : c.getName()) + "_" + p.toString() + "_" + mString;
 	}
 
 	boolean selfUpdate = false;
-	List<Integer> selfUpdateModels = null;
+	List<Integer> selfUpdateCompounds = null;
 
-	private abstract class ModelSelector implements ChartMouseSelectionListener
+	private abstract class CompoundSelector implements ChartMouseSelectionListener
 	{
 		protected abstract boolean hasSelectionCriterionChanged();
 
 		protected abstract void updateSelectionCriterion();
 
-		protected abstract boolean isSelected(Model m, MoleculeProperty p);
+		protected abstract boolean isSelected(Compound m, CompoundProperty p);
 
 		@Override
 		public void hoverEvent()
@@ -238,43 +238,43 @@ public class ChartPanel extends TransparentViewPanel
 					return;
 				}
 				updateSelectionCriterion();
-				if (this instanceof NumericModelSelector)
-					System.err.println("interval : " + ((NumericModelSelector) this).hist.getSelectedMin() + " "
-							+ ((NumericModelSelector) this).hist.getSelectedMax());
+				if (this instanceof NumericCompoundSelector)
+					System.err.println("interval : " + ((NumericCompoundSelector) this).hist.getSelectedMin() + " "
+							+ ((NumericCompoundSelector) this).hist.getSelectedMax());
 
 				//				if (clustering.isClusterActive())
 				//				{
 				Highlighter h = viewControler.getHighlighter();
-				MoleculeProperty prop = null;
-				if (h instanceof MoleculePropertyHighlighter)
-					prop = ((MoleculePropertyHighlighter) h).getProperty();
+				CompoundProperty prop = null;
+				if (h instanceof CompoundPropertyHighlighter)
+					prop = ((CompoundPropertyHighlighter) h).getProperty();
 
 				final List<Integer> m = new ArrayList<Integer>();
-				Iterable<Model> models;
+				Iterable<Compound> compounds;
 				if (clustering.isClusterActive())
-					models = clustering.getCluster(clustering.getClusterActive().getSelected()).getModels();
+					compounds = clustering.getCluster(clustering.getClusterActive().getSelected()).getCompounds();
 				else
-					models = clustering.getModels(false);
-				for (Model model : models)
-					if (isSelected(model, prop))
-						m.add(model.getModelIndex());
+					compounds = clustering.getCompounds(false);
+				for (Compound compound : compounds)
+					if (isSelected(compound, prop))
+						m.add(compound.getCompoundIndex());
 
 				if (hover)
 				{
-					if (ObjectUtil.equals(selfUpdateModels, m))
+					if (ObjectUtil.equals(selfUpdateCompounds, m))
 						return;
-					selfUpdateModels = m;
+					selfUpdateCompounds = m;
 					System.err.println("updating via chart panel " + m);
-					clustering.getModelWatched().setSelectedIndices(ArrayUtil.toPrimitiveIntArray(m));
+					clustering.getCompoundWatched().setSelectedIndices(ArrayUtil.toPrimitiveIntArray(m));
 				}
 				else
 				{
 					System.err.println("before: "
-							+ ArrayUtil.toString(clustering.getModelActive().getSelectedIndices()));
+							+ ArrayUtil.toString(clustering.getCompoundActive().getSelectedIndices()));
 					System.err.println("select " + (!ctrlDown) + " " + m);
-					clustering.getModelActive().setSelectedIndices(ArrayUtil.toPrimitiveIntArray(m), !ctrlDown);
+					clustering.getCompoundActive().setSelectedIndices(ArrayUtil.toPrimitiveIntArray(m), !ctrlDown);
 					System.err
-							.println("after: " + ArrayUtil.toString(clustering.getModelActive().getSelectedIndices()));
+							.println("after: " + ArrayUtil.toString(clustering.getCompoundActive().getSelectedIndices()));
 					System.err.println();
 				}
 			}
@@ -288,11 +288,11 @@ public class ChartPanel extends TransparentViewPanel
 	double selectedMin = 1.0;
 	double selectedMax = 0.0;
 
-	private class NumericModelSelector extends ModelSelector
+	private class NumericCompoundSelector extends CompoundSelector
 	{
 		HistogramPanel hist;
 
-		public NumericModelSelector(HistogramPanel hist)
+		public NumericCompoundSelector(HistogramPanel hist)
 		{
 			this.hist = hist;
 		}
@@ -311,7 +311,7 @@ public class ChartPanel extends TransparentViewPanel
 		}
 
 		@Override
-		protected boolean isSelected(Model m, MoleculeProperty p)
+		protected boolean isSelected(Compound m, CompoundProperty p)
 		{
 			Double d = m.getDoubleValue(p);
 			return d != null && d >= selectedMin && d <= selectedMax;
@@ -333,7 +333,7 @@ public class ChartPanel extends TransparentViewPanel
 		List<String> captions;
 		List<double[]> vals;
 
-		public NumericPlotData(Cluster c, MoleculeProperty p, List<Model> m)
+		public NumericPlotData(Cluster c, CompoundProperty p, List<Compound> m)
 		{
 			Double v[] = clustering.getDoubleValues(p);
 			captions = new ArrayList<String>();
@@ -363,18 +363,18 @@ public class ChartPanel extends TransparentViewPanel
 			}
 
 			plot = new HistogramPanel(null, null, null, "#compounds", captions, vals, 20);
-			plot.addSelectionListener(new NumericModelSelector((HistogramPanel) plot));
+			plot.addSelectionListener(new NumericCompoundSelector((HistogramPanel) plot));
 			configurePlotColors(plot, c, m, p);
 		}
 	}
 
 	String selectedCategory;
 
-	private class NominalModelSelector extends ModelSelector
+	private class NominalCompoundSelector extends CompoundSelector
 	{
 		StackedBarPlot bar;
 
-		public NominalModelSelector(StackedBarPlot bar)
+		public NominalCompoundSelector(StackedBarPlot bar)
 		{
 			this.bar = bar;
 		}
@@ -392,7 +392,7 @@ public class ChartPanel extends TransparentViewPanel
 		}
 
 		@Override
-		protected boolean isSelected(Model m, MoleculeProperty p)
+		protected boolean isSelected(Compound m, CompoundProperty p)
 		{
 			return ObjectUtil.equals(m.getStringValue(p), selectedCategory);
 		}
@@ -403,9 +403,9 @@ public class ChartPanel extends TransparentViewPanel
 		LinkedHashMap<String, List<Double>> data;
 		String vals[];
 
-		public NominalPlotData(Cluster c, MoleculeProperty p, List<Model> ms)
+		public NominalPlotData(Cluster c, CompoundProperty p, List<Compound> ms)
 		{
-			Model m = ms.size() > 0 ? ms.get(0) : null;
+			Compound m = ms.size() > 0 ? ms.get(0) : null;
 
 			String v[] = clustering.getStringValues(p, m);
 			CountedSet<String> datasetSet = CountedSet.fromArray(v);
@@ -467,13 +467,13 @@ public class ChartPanel extends TransparentViewPanel
 					vals[i] = "null";
 
 			plot = new StackedBarPlot(null, null, "#compounds", StackedBarPlot.convertTotalToAdditive(data), vals);
-			plot.addSelectionListener(new NominalModelSelector((StackedBarPlot) plot));
+			plot.addSelectionListener(new NominalCompoundSelector((StackedBarPlot) plot));
 			configurePlotColors(plot, c, ms, p);
 		}
 	}
 
-	private void configurePlotColors(AbstractFreeChartPanel chartPanel, Cluster cluster, List<Model> models,
-			MoleculeProperty property)
+	private void configurePlotColors(AbstractFreeChartPanel chartPanel, Cluster cluster, List<Compound> compounds,
+			CompoundProperty property)
 	{
 		int dIndex = -1;
 		int cIndex = -1;
@@ -481,7 +481,7 @@ public class ChartPanel extends TransparentViewPanel
 
 		if (cluster == null)
 		{
-			if (models.size() == 0)
+			if (compounds.size() == 0)
 				dIndex = 0;
 			else
 			{
@@ -491,7 +491,7 @@ public class ChartPanel extends TransparentViewPanel
 		}
 		else
 		{
-			if (models.size() == 0)
+			if (compounds.size() == 0)
 			{
 				cIndex = 0;
 				dIndex = 1;
@@ -510,17 +510,17 @@ public class ChartPanel extends TransparentViewPanel
 				throw new IllegalArgumentException(
 						"does NOT help much in terms of visualisation (color code should be enough), difficult to realize in terms of color brightness");
 
-			Color cols[] = MoleculePropertyUtil.getNominalColors(property);
+			Color cols[] = CompoundPropertyUtil.getNominalColors(property);
 			if (cIndex == -1)
 			{
-				chartPanel.setSeriesColor(dIndex, ColorUtil.grayscale(MoleculePropertyUtil.getColor(0)));
+				chartPanel.setSeriesColor(dIndex, ColorUtil.grayscale(CompoundPropertyUtil.getColor(0)));
 				((StackedBarPlot) chartPanel).setSeriesCategoryColors(dIndex, cols);
 			}
 			else
 			{
 				chartPanel.setSeriesColor(dIndex,
-						ColorUtil.grayscale(MoleculePropertyUtil.getColor(0).darker().darker().darker()));
-				chartPanel.setSeriesColor(cIndex, ColorUtil.grayscale(MoleculePropertyUtil.getColor(0)).brighter());
+						ColorUtil.grayscale(CompoundPropertyUtil.getColor(0).darker().darker().darker()));
+				chartPanel.setSeriesColor(cIndex, ColorUtil.grayscale(CompoundPropertyUtil.getColor(0)).brighter());
 
 				((StackedBarPlot) chartPanel).setSeriesCategoryColors(dIndex,
 						ColorUtil.darker(ColorUtil.darker(ColorUtil.darker(cols))));
@@ -530,15 +530,15 @@ public class ChartPanel extends TransparentViewPanel
 		else
 		{
 			if (cIndex == -1)
-				chartPanel.setSeriesColor(dIndex, MoleculePropertyUtil.getColor(0));
+				chartPanel.setSeriesColor(dIndex, CompoundPropertyUtil.getColor(0));
 			else
 			{
-				chartPanel.setSeriesColor(dIndex, MoleculePropertyUtil.getColor(0).darker().darker().darker());
-				chartPanel.setSeriesColor(cIndex, MoleculePropertyUtil.getColor(0).brighter());
+				chartPanel.setSeriesColor(dIndex, CompoundPropertyUtil.getColor(0).darker().darker().darker());
+				chartPanel.setSeriesColor(cIndex, CompoundPropertyUtil.getColor(0).brighter());
 			}
 
 			if (mIndex != -1)
-				chartPanel.setSeriesColor(mIndex, MoleculePropertyUtil.getColor(1));
+				chartPanel.setSeriesColor(mIndex, CompoundPropertyUtil.getColor(1));
 		}
 
 		chartPanel.setOpaqueFalse();
@@ -569,9 +569,9 @@ public class ChartPanel extends TransparentViewPanel
 		}
 
 		Highlighter h = viewControler.getHighlighter();
-		MoleculeProperty prop = null;
-		if (h instanceof MoleculePropertyHighlighter)
-			prop = ((MoleculePropertyHighlighter) h).getProperty();
+		CompoundProperty prop = null;
+		if (h instanceof CompoundPropertyHighlighter)
+			prop = ((CompoundPropertyHighlighter) h).getProperty();
 
 		int cIndex = clustering.getClusterActive().getSelected();
 		if (cIndex == -1)
@@ -580,13 +580,13 @@ public class ChartPanel extends TransparentViewPanel
 		if (clustering.getNumClusters() == 1)
 			c = null;
 
-		int mIndex[] = clustering.getModelActive().getSelectedIndices();
+		int mIndex[] = clustering.getCompoundActive().getSelectedIndices();
 		if (mIndex.length == 0)
-			mIndex = clustering.getModelWatched().getSelectedIndices();
+			mIndex = clustering.getCompoundWatched().getSelectedIndices();
 
-		List<Model> ms = new ArrayList<Model>();
+		List<Compound> ms = new ArrayList<Compound>();
 		for (int i : mIndex)
-			ms.add(clustering.getModelWithModelIndex(i));
+			ms.add(clustering.getCompoundWithCompoundIndex(i));
 		if (prop != null && prop.getType() == Type.NOMINAL)
 		{
 			//does NOT help much in terms of visualisation (color code should be enough), difficult to realize in terms of color brightness
@@ -595,41 +595,41 @@ public class ChartPanel extends TransparentViewPanel
 
 		System.err.println("update " + ms);
 
-		if (force || cluster != c || property != prop || !models.equals(ms))
+		if (force || cluster != c || property != prop || !compounds.equals(ms))
 		{
 			cluster = c;
 			property = prop;
-			models = ms;
+			compounds = ms;
 
 			if (property == null)
 				setVisible(false);
 			else
 			{
 				final Cluster fCluster = this.cluster;
-				final MoleculeProperty fProperty = this.property;
-				final List<Model> fModels = this.models;
+				final CompoundProperty fProperty = this.property;
+				final List<Compound> fCompounds = this.compounds;
 
 				workerThread.addJob(new Runnable()
 				{
 					public void run()
 					{
-						if (fCluster != cluster || fProperty != property || fModels != models)
+						if (fCluster != cluster || fProperty != property || fCompounds != compounds)
 							return;
 
 						System.out.println("updating chart");
 
-						String plotKey = getKey(fCluster, fProperty, fModels);
+						String plotKey = getKey(fCluster, fProperty, fCompounds);
 						if (force && cardContents.contains(plotKey))
 							cardContents.remove(plotKey);
 						if (!cardContents.contains(plotKey))
 						{
 							System.out.println("create new plot");
-							MoleculeProperty.Type type = fProperty.getType();
+							CompoundProperty.Type type = fProperty.getType();
 							PlotData d = null;
 							if (type == Type.NOMINAL)
-								d = new NominalPlotData(fCluster, fProperty, fModels);
+								d = new NominalPlotData(fCluster, fProperty, fCompounds);
 							else if (type == Type.NUMERIC)
-								d = new NumericPlotData(fCluster, fProperty, fModels);
+								d = new NumericPlotData(fCluster, fProperty, fCompounds);
 							if (d != null)
 							{
 								cardContents.add(plotKey);
@@ -639,14 +639,14 @@ public class ChartPanel extends TransparentViewPanel
 						else
 							System.out.println("plot was cached");
 
-						if (fCluster != cluster || fProperty != property || fModels != models)
+						if (fCluster != cluster || fProperty != property || fCompounds != compounds)
 							return;
 						setIgnoreRepaint(true);
 
 						featureNameLabel.setText(fProperty.toString());
-						featureSetLabel.setText(fProperty.getMoleculePropertySet().toString());
+						featureSetLabel.setText(fProperty.getCompoundPropertySet().toString());
 						//hack, ommits this for cdk features
-						featureSetLabel.setVisible(fProperty.getMoleculePropertySet().isSizeDynamic());
+						featureSetLabel.setVisible(fProperty.getCompoundPropertySet().isSizeDynamic());
 						featureDescriptionLabel.setText(fProperty.getDescription() + "");
 						featureDescriptionLabel.setVisible(fProperty.getDescription() != null);
 						featureDescriptionLabelHeader.setVisible(fProperty.getDescription() != null);
@@ -654,7 +654,7 @@ public class ChartPanel extends TransparentViewPanel
 						featureSmartsLabel.setVisible(fProperty.getSmarts() != null);
 						featureSmartsLabelHeader.setVisible(fProperty.getSmarts() != null);
 						featureMappingLabel
-								.setText((fProperty.getMoleculePropertySet().isUsedForMapping() ? "Used for clustering and/or embedding."
+								.setText((fProperty.getCompoundPropertySet().isUsedForMapping() ? "Used for clustering and/or embedding."
 										: "NOT used for clustering and/or embedding."));
 						featureMissingLabel.setText(clustering.numMissingValues(fProperty) + "");
 

@@ -17,13 +17,13 @@ import javax.vecmath.Vector3f;
 import util.ArrayUtil;
 import util.Vector3fUtil;
 import dataInterface.ClusterData;
-import dataInterface.MoleculeProperty;
-import dataInterface.MoleculeProperty.Type;
+import dataInterface.CompoundProperty;
+import dataInterface.CompoundProperty.Type;
 import dataInterface.SubstructureSmartsType;
 
 public class Cluster implements Zoomable
 {
-	private Vector<Model> models;
+	private Vector<Compound> compounds;
 	private ClusterData clusterData;
 
 	private BitSet bitSet;
@@ -35,36 +35,36 @@ public class Cluster implements Zoomable
 	private Vector3f nonSuperimposeCenter;
 	private boolean allCompoundsHaveSamePosition = false;
 
-	HashMap<String, List<Model>> modelsOrderedByPropterty = new HashMap<String, List<Model>>();
+	HashMap<String, List<Compound>> compoundsOrderedByPropterty = new HashMap<String, List<Compound>>();
 
 	private boolean watched;
 	private boolean visible;
-	private MoleculeProperty highlightProp;
+	private CompoundProperty highlightProp;
 	private HighlightSorting highlightSorting;
-	private boolean someModelsHidden;
+	private boolean someCompoundsHidden;
 	private boolean showLabel = false;
 
 	public Cluster(dataInterface.ClusterData clusterData, int begin, int endExcl) //boolean firstCluster, 
 	{
 		this.clusterData = clusterData;
 
-		//		int before = firstCluster ? 0 : View.instance.getModelCount();
-		//		View.instance.loadModelFromFile(null, clusterData.getFilename(), null, null, !firstCluster, null, null, 0);
-		//		int after = View.instance.getModelCount();
+		//		int before = firstCluster ? 0 : View.instance.getCompoundCount();
+		//		View.instance.loadCompoundFromFile(null, clusterData.getFilename(), null, null, !firstCluster, null, null, 0);
+		//		int after = View.instance.getCompoundCount();
 
 		//		if ((after - before) != clusterData.getSize())
-		//			throw new IllegalStateException("models in file: " + (after - before) + " != model props passed: "
+		//			throw new IllegalStateException("compounds in file: " + (after - before) + " != compound props passed: "
 		//					+ clusterData.getSize());
 
 		if ((endExcl - begin) != clusterData.getSize())
-			throw new IllegalStateException("should be: " + (endExcl - begin) + " != model props passed: "
+			throw new IllegalStateException("should be: " + (endExcl - begin) + " != compound props passed: "
 					+ clusterData.getSize());
 
-		models = new Vector<Model>();
+		compounds = new Vector<Compound>();
 		int mCount = 0;
 		//for (int i = before; i < after; i++)
 		for (int i = begin; i < endExcl; i++)
-			models.add(new Model(i, clusterData.getCompounds().get(mCount++)));
+			compounds.add(new Compound(i, clusterData.getCompounds().get(mCount++)));
 
 		update();
 	}
@@ -73,8 +73,8 @@ public class Cluster implements Zoomable
 
 	public void updatePositions()
 	{
-		// the actual model position that is stored in model is never changed (depends only on scaling)
-		// this method moves all models to the cluster position
+		// the actual compound position that is stored in compound is never changed (depends only on scaling)
+		// this method moves all compounds to the cluster position
 
 		// recalculate non-superimposed diameter
 		update();
@@ -83,7 +83,7 @@ public class Cluster implements Zoomable
 		{
 			// the compounds have not been aligned
 			// the compounds may have a center != 0, calibrate to 0
-			for (Model m : models)
+			for (Compound m : compounds)
 				m.moveTo(new Vector3f(0f, 0f, 0f));
 		}
 		else
@@ -92,15 +92,15 @@ public class Cluster implements Zoomable
 			// however, the compound center may have an offset, calculate and remove
 			if (!alignedCompoundsCalibrated)
 			{
-				Vector3f[] origCenters = new Vector3f[models.size()];
+				Vector3f[] origCenters = new Vector3f[compounds.size()];
 				for (int i = 0; i < origCenters.length; i++)
-					origCenters[i] = models.get(i).origCenter;
+					origCenters[i] = compounds.get(i).origCenter;
 				Vector3f center = Vector3fUtil.center(origCenters);
 				for (int i = 0; i < origCenters.length; i++)
-					models.get(i).origCenter.sub(center);
+					compounds.get(i).origCenter.sub(center);
 				alignedCompoundsCalibrated = true;
 			}
-			for (Model m : models)
+			for (Compound m : compounds)
 				m.moveTo(m.origCenter);
 		}
 
@@ -108,7 +108,7 @@ public class Cluster implements Zoomable
 		View.instance.setAtomCoordRelative(getCenter(true), getBitSet());
 	}
 
-	public String getSummaryStringValue(MoleculeProperty property)
+	public String getSummaryStringValue(CompoundProperty property)
 	{
 		return clusterData.getSummaryStringValue(property);
 	}
@@ -131,21 +131,21 @@ public class Cluster implements Zoomable
 	private void update()
 	{
 		bitSet = new BitSet();
-		for (Model m : models)
+		for (Compound m : compounds)
 			bitSet.or(m.getBitSet());
 
 		// updating (unscaled!) cluster position
 		// this is only needed in case a compound was removed
-		Vector3f[] positions = ClusteringUtil.getModelPositions(this);
+		Vector3f[] positions = ClusteringUtil.getCompoundPositions(this);
 		superimposeCenter = Vector3fUtil.center(positions);
 		nonSuperimposeCenter = Vector3fUtil.centerConvexHull(positions);
 
 		superimposeDiameter = -1;
-		for (Model m : models)
+		for (Compound m : compounds)
 			superimposeDiameter = Math.max(superimposeDiameter, m.getDiameter());
 
 		// recompute diameter, depends on the scaling
-		positions = ClusteringUtil.getModelPositions(this);
+		positions = ClusteringUtil.getCompoundPositions(this);
 		float maxCompoundDist = Vector3fUtil.maxDist(positions);
 		allCompoundsHaveSamePosition = maxCompoundDist == 0;
 
@@ -154,32 +154,32 @@ public class Cluster implements Zoomable
 		nonSuperimposeDiameter = Math.max(superimposeDiameter, maxCompoundDist);
 	}
 
-	public Model getModelWithModelIndex(int modelIndex)
+	public Compound getCompoundWithCompoundIndex(int compoundIndex)
 	{
-		for (Model m : models)
-			if (m.getModelIndex() == modelIndex)
+		for (Compound m : compounds)
+			if (m.getCompoundIndex() == compoundIndex)
 				return m;
 		return null;
 	}
 
-	public int getIndex(Model model)
+	public int getIndex(Compound compound)
 	{
-		return models.indexOf(model);
+		return compounds.indexOf(compound);
 	}
 
-	public Model getModel(int index)
+	public Compound getCompound(int index)
 	{
-		return models.get(index);
+		return compounds.get(index);
 	}
 
 	public int size()
 	{
-		return models.size();
+		return compounds.size();
 	}
 
-	public boolean contains(Model model)
+	public boolean contains(Compound compound)
 	{
-		return models.contains(model);
+		return compounds.contains(compound);
 	}
 
 	public BitSet getBitSet()
@@ -187,36 +187,36 @@ public class Cluster implements Zoomable
 		return bitSet;
 	}
 
-	public boolean containsModelIndex(int modelIndex)
+	public boolean containsCompoundIndex(int compoundIndex)
 	{
-		for (Model m : models)
-			if (m.getModelIndex() == modelIndex)
+		for (Compound m : compounds)
+			if (m.getCompoundIndex() == compoundIndex)
 				return true;
 		return false;
 	}
 
-	public List<Model> getModels()
+	public List<Compound> getCompounds()
 	{
-		return models;
+		return compounds;
 	}
 
-	public List<Model> getModelsInOrder(final MoleculeProperty property, HighlightSorting sorting)
+	public List<Compound> getCompoundsInOrder(final CompoundProperty property, HighlightSorting sorting)
 	{
 		String key = property + "_" + sorting;
-		if (!modelsOrderedByPropterty.containsKey(key))
+		if (!compoundsOrderedByPropterty.containsKey(key))
 		{
-			List<Model> m = new ArrayList<Model>();
-			for (Model model : models)
-				m.add(model);
+			List<Compound> c = new ArrayList<Compound>();
+			for (Compound compound : compounds)
+				c.add(compound);
 			final HighlightSorting finalSorting;
 			if (sorting == HighlightSorting.Median)
 				finalSorting = HighlightSorting.Max;
 			else
 				finalSorting = sorting;
-			Collections.sort(m, new Comparator<Model>()
+			Collections.sort(c, new Comparator<Compound>()
 			{
 				@Override
-				public int compare(Model o1, Model o2)
+				public int compare(Compound o1, Compound o2)
 				{
 					int res;
 					if (o1 == null)
@@ -252,24 +252,24 @@ public class Cluster implements Zoomable
 			if (sorting == HighlightSorting.Median)
 			{
 				//				Settings.LOGGER.warn("max order: ");
-				//				for (Model mm : m)
+				//				for (Compound mm : m)
 				//					Settings.LOGGER.warn(mm.getStringValue(property) + " ");
 				//				Settings.LOGGER.warn();
 
 				/**
 				 * median sorting:
 				 * - first order by max to compute median
-				 * - create a dist-to-median array, sort models according to that array
+				 * - create a dist-to-median array, sort compounds according to that array
 				 */
-				Model medianModel = m.get(m.size() / 2);
-				//				Settings.LOGGER.warn(medianModel.getStringValue(property));
-				double distToMedian[] = new double[m.size()];
+				Compound medianCompound = c.get(c.size() / 2);
+				//				Settings.LOGGER.warn(medianCompound.getStringValue(property));
+				double distToMedian[] = new double[c.size()];
 				if (property.getType() == Type.NUMERIC)
 				{
-					Double med = medianModel.getDoubleValue(property);
+					Double med = medianCompound.getDoubleValue(property);
 					for (int i = 0; i < distToMedian.length; i++)
 					{
-						Double d = m.get(i).getDoubleValue(property);
+						Double d = c.get(i).getDoubleValue(property);
 						if (med == null)
 						{
 							if (d == null)
@@ -285,27 +285,27 @@ public class Cluster implements Zoomable
 				}
 				else
 				{
-					String medStr = medianModel.getStringValue(property);
+					String medStr = medianCompound.getStringValue(property);
 					for (int i = 0; i < distToMedian.length; i++)
-						distToMedian[i] = Math.abs((m.get(i).getStringValue(property) + "").compareTo(medStr + ""));
+						distToMedian[i] = Math.abs((c.get(i).getStringValue(property) + "").compareTo(medStr + ""));
 				}
 				int order[] = ArrayUtil.getOrdering(distToMedian, true);
-				Model a[] = new Model[m.size()];
-				Model s[] = ArrayUtil.sortAccordingToOrdering(order, m.toArray(a));
-				m = ArrayUtil.toList(s);
+				Compound a[] = new Compound[c.size()];
+				Compound s[] = ArrayUtil.sortAccordingToOrdering(order, c.toArray(a));
+				c = ArrayUtil.toList(s);
 
 				//				Settings.LOGGER.warn("med order: ");
-				//				for (Model mm : m)
+				//				for (Compound mm : m)
 				//					Settings.LOGGER.warn(mm.getStringValue(property) + " ");
 				//				Settings.LOGGER.warn();
 			}
-			modelsOrderedByPropterty.put(key, m);
+			compoundsOrderedByPropterty.put(key, c);
 		}
 		//		Settings.LOGGER.warn("in order: ");
-		//		for (Model m : order.get(key))
-		//			Settings.LOGGER.warn(m.getModelOrigIndex() + " ");
+		//		for (Compound m : order.get(key))
+		//			Settings.LOGGER.warn(m.getCompoundOrigIndex() + " ");
 		//		Settings.LOGGER.warn("");
-		return modelsOrderedByPropterty.get(key);
+		return compoundsOrderedByPropterty.get(key);
 	}
 
 	public String getSubstructureSmarts(SubstructureSmartsType type)
@@ -313,20 +313,20 @@ public class Cluster implements Zoomable
 		return clusterData.getSubstructureSmarts(type);
 	}
 
-	public void remove(int[] modelIndices)
+	public void remove(int[] compoundIndices)
 	{
-		List<Model> toDel = new ArrayList<Model>();
-		for (int i : modelIndices)
-			toDel.add(getModelWithModelIndex(i));
+		List<Compound> toDel = new ArrayList<Compound>();
+		for (int i : compoundIndices)
+			toDel.add(getCompoundWithCompoundIndex(i));
 		BitSet bs = new BitSet();
-		for (Model m : toDel)
+		for (Compound m : toDel)
 		{
 			bs.or(m.getBitSet());
-			models.remove(m);
+			compounds.remove(m);
 		}
 		View.instance.hide(bs);
 
-		modelsOrderedByPropterty.clear();
+		compoundsOrderedByPropterty.clear();
 
 		update();
 	}
@@ -351,12 +351,12 @@ public class Cluster implements Zoomable
 		this.visible = visible;
 	}
 
-	public void setHighlighProperty(MoleculeProperty highlightProp)
+	public void setHighlighProperty(CompoundProperty highlightProp)
 	{
 		this.highlightProp = highlightProp;
 	}
 
-	public MoleculeProperty getHighlightProperty()
+	public CompoundProperty getHighlightProperty()
 	{
 		return highlightProp;
 	}
@@ -371,31 +371,31 @@ public class Cluster implements Zoomable
 		return highlightSorting;
 	}
 
-	public void setSomeModelsHidden(boolean someModelsHidden)
+	public void setSomeCompoundsHidden(boolean someCompoundsHidden)
 	{
-		this.someModelsHidden = someModelsHidden;
+		this.someCompoundsHidden = someCompoundsHidden;
 	}
 
-	public boolean someModelsHidden()
+	public boolean someCompoundsHidden()
 	{
-		return someModelsHidden;
+		return someCompoundsHidden;
 	}
 
-	public String[] getStringValues(MoleculeProperty property, Model excludeModel)
+	public String[] getStringValues(CompoundProperty property, Compound excludeCompound)
 	{
 		List<String> l = new ArrayList<String>();
-		for (Model m : models)
-			if (m != excludeModel && m.getStringValue(property) != null)
-				l.add(m.getStringValue(property));
+		for (Compound c : compounds)
+			if (c != excludeCompound && c.getStringValue(property) != null)
+				l.add(c.getStringValue(property));
 		String v[] = new String[l.size()];
 		return l.toArray(v);
 	}
 
-	public Double[] getDoubleValues(MoleculeProperty property)
+	public Double[] getDoubleValues(CompoundProperty property)
 	{
-		Double v[] = new Double[models.size()];
+		Double v[] = new Double[compounds.size()];
 		for (int i = 0; i < v.length; i++)
-			v[i] = models.get(i).getDoubleValue(property);
+			v[i] = compounds.get(i).getDoubleValue(property);
 		return v;
 	}
 
@@ -442,7 +442,7 @@ public class Cluster implements Zoomable
 		this.superimposed = superimposed;
 	}
 
-	public int numMissingValues(MoleculeProperty p)
+	public int numMissingValues(CompoundProperty p)
 	{
 		return clusterData.numMissingValues(p);
 	}

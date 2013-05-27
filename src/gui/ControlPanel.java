@@ -5,7 +5,7 @@ import gui.swing.ComponentFactory;
 import gui.swing.ComponentFactory.StyleButton;
 import gui.swing.TransparentViewPanel;
 import gui.util.Highlighter;
-import gui.util.MoleculePropertyHighlighter;
+import gui.util.CompoundPropertyHighlighter;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
@@ -305,7 +305,7 @@ public class ControlPanel extends TransparentViewPanel
 		highlightCombobox.setSelectedItem(viewControler.getHighlighter());
 		labelCheckbox.setSelected(viewControler.isHighlighterLabelsVisible());
 		highlightMinMaxCombobox.setSelectedItem(viewControler.getHighlightSorting());
-		boolean featHighSel = ((Highlighter) highlightCombobox.getSelectedItem()) instanceof MoleculePropertyHighlighter;
+		boolean featHighSel = ((Highlighter) highlightCombobox.getSelectedItem()) instanceof CompoundPropertyHighlighter;
 		labelCheckbox.setVisible(featHighSel);
 		highlightMinMaxCombobox.setVisible(featHighSel && viewControler.isSuperimpose()
 				&& !clustering.isClusterActive());

@@ -32,7 +32,7 @@ import workflow.MappingWorkflow;
 import cluster.Clustering;
 import cluster.ExportData;
 import data.ClusteringData;
-import dataInterface.MoleculeProperty;
+import dataInterface.CompoundProperty;
 
 public class Actions
 {
@@ -61,15 +61,15 @@ public class Actions
 
 	private final static String REMOVE_CURRENT = "remove-current";
 	private final static String REMOVE_CLUSTERS = "remove-clusters";
-	private final static String REMOVE_MODELS = "remove-models";
-	private final static String[] REMOVE_ACTIONS = { REMOVE_CURRENT, REMOVE_CLUSTERS, REMOVE_MODELS };
+	private final static String REMOVE_COMPOUNDS = "remove-compounds";
+	private final static String[] REMOVE_ACTIONS = { REMOVE_CURRENT, REMOVE_CLUSTERS, REMOVE_COMPOUNDS };
 
 	private final static String EXPORT_CURRENT = "export-current";
 	private final static String EXPORT_CLUSTERS = "export-clusters";
-	private final static String EXPORT_MODELS = "export-models";
+	private final static String EXPORT_COMPOUNDS = "export-compounds";
 	private final static String EXPORT_IMAGE = "export-image";
 	private final static String EXPORT_WORKFLOW = "export-workflow";
-	private final static String[] EXPORT_ACTIONS = { EXPORT_CURRENT, EXPORT_CLUSTERS, EXPORT_MODELS, EXPORT_IMAGE,
+	private final static String[] EXPORT_ACTIONS = { EXPORT_CURRENT, EXPORT_CLUSTERS, EXPORT_COMPOUNDS, EXPORT_IMAGE,
 			EXPORT_WORKFLOW };
 
 	private final static String VIEW_FULL_SCREEN = "view-full-screen";
@@ -78,10 +78,10 @@ public class Actions
 	private final static String VIEW_SPIN = "view-spin";
 	private final static String VIEW_BLACK_WHITE = "view-black-white";
 	private final static String VIEW_ANTIALIAS = "view-antialias";
-	private final static String VIEW_MOLECULE_DESCRIPTOR = "view-molecule-descriptor";
+	private final static String VIEW_COMPOUND_DESCRIPTOR = "view-compound-descriptor";
 	private final static String VIEW_SELECT_LAST_FEATURE = "view-select-last-feature";
 	private final static String[] VIEW_ACTIONS = { VIEW_FULL_SCREEN, VIEW_DRAW_HYDROGENS, VIEW_HIDE_UNSELECTED,
-			VIEW_SPIN, VIEW_BLACK_WHITE, VIEW_ANTIALIAS, VIEW_MOLECULE_DESCRIPTOR, VIEW_SELECT_LAST_FEATURE };
+			VIEW_SPIN, VIEW_BLACK_WHITE, VIEW_ANTIALIAS, VIEW_COMPOUND_DESCRIPTOR, VIEW_SELECT_LAST_FEATURE };
 
 	private final static String HIGHLIGHT_LOG = "highlight-log";
 	private final static String HIGHLIGHT_COLOR_MATCH = "highlight-color-match";
@@ -126,7 +126,7 @@ public class Actions
 		keys.put(VIEW_SPIN, KeyStroke.getKeyStroke(KeyEvent.VK_S, ActionEvent.ALT_MASK));
 		keys.put(VIEW_BLACK_WHITE, KeyStroke.getKeyStroke(KeyEvent.VK_B, ActionEvent.ALT_MASK));
 		keys.put(HIGHLIGHT_COLOR_MATCH, KeyStroke.getKeyStroke(KeyEvent.VK_C, ActionEvent.ALT_MASK));
-		keys.put(VIEW_MOLECULE_DESCRIPTOR, KeyStroke.getKeyStroke(KeyEvent.VK_D, ActionEvent.ALT_MASK));
+		keys.put(VIEW_COMPOUND_DESCRIPTOR, KeyStroke.getKeyStroke(KeyEvent.VK_D, ActionEvent.ALT_MASK));
 		keys.put(HIDDEN_ENABLE_JMOL_POPUP, KeyStroke.getKeyStroke(KeyEvent.VK_R, ActionEvent.ALT_MASK));
 		keys.put(HIDDEN_UPDATE_MOUSE_SELECTION_PRESSED,
 				KeyStroke.getKeyStroke(KeyEvent.VK_SHIFT, ActionEvent.SHIFT_MASK));
@@ -178,7 +178,7 @@ public class Actions
 				update();
 			}
 		});
-		clustering.getModelWatched().addListener(new PropertyChangeListener()
+		clustering.getCompoundWatched().addListener(new PropertyChangeListener()
 		{
 			@Override
 			public void propertyChange(PropertyChangeEvent evt)
@@ -186,7 +186,7 @@ public class Actions
 				update();
 			}
 		});
-		clustering.getModelActive().addListener(new PropertyChangeListener()
+		clustering.getCompoundActive().addListener(new PropertyChangeListener()
 		{
 			@Override
 			public void propertyChange(PropertyChangeEvent evt)
@@ -232,25 +232,26 @@ public class Actions
 
 		if (clustering.isClusterActive())
 		{
-			if (clustering.isModelActive())
-				m = ArrayUtil.concat(m, clustering.getModelActive().getSelectedIndices());
-			if (clustering.isModelWatched() && ArrayUtil.indexOf(m, clustering.getModelWatched().getSelected()) == -1)
-				m = ArrayUtil.concat(m, new int[] { clustering.getModelWatched().getSelected() });
+			if (clustering.isCompoundActive())
+				m = ArrayUtil.concat(m, clustering.getCompoundActive().getSelectedIndices());
+			if (clustering.isCompoundWatched()
+					&& ArrayUtil.indexOf(m, clustering.getCompoundWatched().getSelected()) == -1)
+				m = ArrayUtil.concat(m, new int[] { clustering.getCompoundWatched().getSelected() });
 		}
 		else if (clustering.isClusterWatched())
 			c = clustering.getClusterWatched().getSelected();
 
 		actions.get(REMOVE_CURRENT).putValue("Cluster", c);
-		actions.get(REMOVE_CURRENT).putValue("Model", m);
+		actions.get(REMOVE_CURRENT).putValue("Compound", m);
 
 		if (m.length > 0 || c != null)
 		{
 			if (m.length == 1)
 			{
 				((AbstractAction) actions.get(REMOVE_CURRENT)).putValue(Action.NAME,
-						"Remove " + clustering.getModelWithModelIndex(m[0]));
+						"Remove " + clustering.getCompoundWithCompoundIndex(m[0]));
 				((AbstractAction) actions.get(EXPORT_CURRENT)).putValue(Action.NAME,
-						"Export " + clustering.getModelWithModelIndex(m[0]));
+						"Export " + clustering.getCompoundWithCompoundIndex(m[0]));
 			}
 			else if (m.length > 1)
 			{
@@ -409,11 +410,11 @@ public class Actions
 			@Override
 			public void action()
 			{
-				int[] m = (int[]) ((AbstractAction) actions.get(REMOVE_CURRENT)).getValue("Model");
+				int[] m = (int[]) ((AbstractAction) actions.get(REMOVE_CURRENT)).getValue("Compound");
 				Integer c = (Integer) ((AbstractAction) actions.get(REMOVE_CURRENT)).getValue("Cluster");
 				View.instance.suspendAnimation("remove selected");
 				if (m.length > 0)
-					clustering.removeModels(m);
+					clustering.removeCompounds(m);
 				else if (c != null)
 					clustering.removeCluster(c);
 				View.instance.proceedAnimation("remove selected");
@@ -429,13 +430,13 @@ public class Actions
 				View.instance.proceedAnimation("remove clusters");
 			}
 		};
-		new ActionCreator(REMOVE_MODELS)
+		new ActionCreator(REMOVE_COMPOUNDS)
 		{
 			@Override
 			public void action()
 			{
 				View.instance.suspendAnimation("remove compounds");
-				clustering.chooseModelsToRemove();
+				clustering.chooseCompoundsToRemove();
 				View.instance.proceedAnimation("remove compounds");
 			}
 		};
@@ -444,10 +445,10 @@ public class Actions
 			@Override
 			public void action()
 			{
-				int[] m = (int[]) ((AbstractAction) actions.get(REMOVE_CURRENT)).getValue("Model");
+				int[] m = (int[]) ((AbstractAction) actions.get(REMOVE_CURRENT)).getValue("Compound");
 				Integer c = (Integer) ((AbstractAction) actions.get(REMOVE_CURRENT)).getValue("Cluster");
 				if (m.length > 0)
-					ExportData.exportModels(clustering, m);
+					ExportData.exportCompounds(clustering, m);
 				else if (c != null)
 					ExportData.exportClusters(clustering, new int[] { c });
 			}
@@ -460,12 +461,12 @@ public class Actions
 				clustering.chooseClustersToExport();
 			}
 		};
-		new ActionCreator(EXPORT_MODELS)
+		new ActionCreator(EXPORT_COMPOUNDS)
 		{
 			@Override
 			public void action()
 			{
-				clustering.chooseModelsToExport();
+				clustering.chooseCompoundsToExport();
 			}
 		};
 		new ActionCreator(EXPORT_IMAGE)
@@ -568,24 +569,24 @@ public class Actions
 				return viewControler.isAntialiasEnabled();
 			}
 		};
-		new ActionCreator(VIEW_MOLECULE_DESCRIPTOR)
+		new ActionCreator(VIEW_COMPOUND_DESCRIPTOR)
 		{
 			@Override
 			public void action()
 			{
-				List<MoleculeProperty> props = new ArrayList<MoleculeProperty>();
+				List<CompoundProperty> props = new ArrayList<CompoundProperty>();
 				props.add(ViewControler.COMPOUND_INDEX_PROPERTY);
 				props.add(ViewControler.COMPOUND_SMILES_PROPERTY);
-				for (MoleculeProperty moleculeProperty : clustering.getProperties())
-					props.add(moleculeProperty);
-				for (MoleculeProperty moleculeProperty : clustering.getFeatures())
-					if (!props.contains(moleculeProperty))
-						props.add(moleculeProperty);
-				MoleculeProperty selected = viewControler.getMoleculeDescriptor();
-				MoleculeProperty p = SwingUtil.selectFromListWithDialog(props, selected, "Set compound identifier",
+				for (CompoundProperty compoundProperty : clustering.getProperties())
+					props.add(compoundProperty);
+				for (CompoundProperty compoundProperty : clustering.getFeatures())
+					if (!props.contains(compoundProperty))
+						props.add(compoundProperty);
+				CompoundProperty selected = viewControler.getCompoundDescriptor();
+				CompoundProperty p = SwingUtil.selectFromListWithDialog(props, selected, "Set compound identifier",
 						Settings.TOP_LEVEL_FRAME);
 				if (p != null)
-					viewControler.setMoleculeDescriptor(p);
+					viewControler.setCompoundDescriptor(p);
 			}
 		};
 		new ActionCreator(HELP_DOCU)

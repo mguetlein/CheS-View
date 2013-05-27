@@ -28,9 +28,9 @@ import util.VectorUtil;
 import data.ClusteringData;
 import dataInterface.ClusterData;
 import dataInterface.CompoundData;
-import dataInterface.MoleculeProperty;
-import dataInterface.MoleculeProperty.Type;
-import dataInterface.MoleculePropertyUtil;
+import dataInterface.CompoundProperty;
+import dataInterface.CompoundProperty.Type;
+import dataInterface.CompoundPropertyUtil;
 import dataInterface.SubstructureSmartsType;
 
 public class Clustering implements Zoomable
@@ -40,8 +40,8 @@ public class Clustering implements Zoomable
 
 	SelectionModel clusterActive;
 	SelectionModel clusterWatched;
-	SelectionModel modelActive;
-	SelectionModel modelWatched;
+	SelectionModel compoundActive;
+	SelectionModel compoundWatched;
 
 	boolean suppresAddEvent = false;
 	Vector<PropertyChangeListener> listeners;
@@ -53,19 +53,19 @@ public class Clustering implements Zoomable
 	public static String CLUSTER_CLEAR = "cluster_clear";
 
 	boolean dirty = true;
-	int numModels = -1;
+	int numCompounds = -1;
 	private boolean superimposed = false;
 	float superimposedDiameter;
 	float nonSuperimposedDiameter;
 
 	BitSet bitSetAll;
-	HashMap<Integer, Model> modelIndexToModel;
-	HashMap<Integer, Cluster> modelIndexToCluster;
-	HashMap<MoleculeProperty, Integer> numMissingValues;
-	HashMap<MoleculeProperty, Integer> numDistinctValues;
+	HashMap<Integer, Compound> compoundIndexToCompound;
+	HashMap<Integer, Cluster> compoundIndexToCluster;
+	HashMap<CompoundProperty, Integer> numMissingValues;
+	HashMap<CompoundProperty, Integer> numDistinctValues;
 
-	List<Model> modelList;
-	List<Model> modelListIncludingMultiClusteredModels;
+	List<Compound> compoundList;
+	List<Compound> compoundListIncludingMultiClusteredCompounds;
 
 	Vector3f superimposedCenter;
 	Vector3f nonSuperimposedCenter;
@@ -80,11 +80,11 @@ public class Clustering implements Zoomable
 	{
 		clusterActive = new SelectionModel();
 		clusterWatched = new SelectionModel();
-		modelActive = new SelectionModel(true);
-		modelWatched = new SelectionModel(true);
+		compoundActive = new SelectionModel(true);
+		compoundWatched = new SelectionModel(true);
 		clusters = new Vector<Cluster>();
-		numMissingValues = new HashMap<MoleculeProperty, Integer>();
-		numDistinctValues = new HashMap<MoleculeProperty, Integer>();
+		numMissingValues = new HashMap<CompoundProperty, Integer>();
+		numDistinctValues = new HashMap<CompoundProperty, Integer>();
 	}
 
 	public void addListener(PropertyChangeListener l)
@@ -115,41 +115,41 @@ public class Clustering implements Zoomable
 		if (!dirty)
 			return;
 
-		numModels = 0;
+		numCompounds = 0;
 		for (Cluster c : clusters)
-			numModels += c.size();
+			numCompounds += c.size();
 
 		bitSetAll = new BitSet();
 		for (Cluster c : clusters)
 			bitSetAll.or(c.getBitSet());
 
-		modelIndexToCluster = new HashMap<Integer, Cluster>();
-		modelIndexToModel = new HashMap<Integer, Model>();
+		compoundIndexToCluster = new HashMap<Integer, Cluster>();
+		compoundIndexToCompound = new HashMap<Integer, Compound>();
 		for (Cluster c : clusters)
 		{
-			for (Model m : c.getModels())
+			for (Compound m : c.getCompounds())
 			{
-				if (modelIndexToModel.get(m.getModelIndex()) != null)
+				if (compoundIndexToCompound.get(m.getCompoundIndex()) != null)
 					throw new Error("WTF");
-				modelIndexToModel.put(m.getModelIndex(), m);
-				modelIndexToCluster.put(m.getModelIndex(), c);
+				compoundIndexToCompound.put(m.getCompoundIndex(), m);
+				compoundIndexToCluster.put(m.getCompoundIndex(), c);
 			}
 		}
 
-		modelListIncludingMultiClusteredModels = new ArrayList<Model>();
+		compoundListIncludingMultiClusteredCompounds = new ArrayList<Compound>();
 		for (Cluster c : clusters)
-			for (Model mm : c.getModels())
-				modelListIncludingMultiClusteredModels.add(mm);
+			for (Compound mm : c.getCompounds())
+				compoundListIncludingMultiClusteredCompounds.add(mm);
 
-		modelList = new ArrayList<Model>();
-		HashSet<Integer> modelIndex = new HashSet<Integer>();
+		compoundList = new ArrayList<Compound>();
+		HashSet<Integer> compoundIndex = new HashSet<Integer>();
 		for (Cluster c : clusters)
-			for (Model mm : c.getModels())
+			for (Compound mm : c.getCompounds())
 			{
-				if (!modelIndex.contains(mm.getModelOrigIndex()))
+				if (!compoundIndex.contains(mm.getCompoundOrigIndex()))
 				{
-					modelList.add(mm);
-					modelIndex.add(mm.getModelOrigIndex());
+					compoundList.add(mm);
+					compoundIndex.add(mm.getCompoundOrigIndex());
 				}
 			}
 
@@ -171,34 +171,34 @@ public class Clustering implements Zoomable
 		return clusterWatched.getSelected() != -1;
 	}
 
-	public boolean isModelActive()
+	public boolean isCompoundActive()
 	{
-		return modelActive.getSelected() != -1;
+		return compoundActive.getSelected() != -1;
 	}
 
-	public boolean isModelWatched()
+	public boolean isCompoundWatched()
 	{
-		return modelWatched.getSelected() != -1;
+		return compoundWatched.getSelected() != -1;
 	}
 
-	public boolean isModelActiveFromCluster(int cluster)
+	public boolean isCompoundActiveFromCluster(int cluster)
 	{
-		int sel[] = modelActive.getSelectedIndices();
+		int sel[] = compoundActive.getSelectedIndices();
 		if (sel.length == 0)
 			return false;
-		for (int model : sel)
-			if (getClusterIndexForModelIndex(model) == cluster)
+		for (int compound : sel)
+			if (getClusterIndexForCompoundIndex(compound) == cluster)
 				return true;
 		return false;
 	}
 
-	public boolean isModelWatchedFromCluster(int cluster)
+	public boolean isCompoundWatchedFromCluster(int cluster)
 	{
-		int sel[] = modelWatched.getSelectedIndices();
+		int sel[] = compoundWatched.getSelectedIndices();
 		if (sel.length == 0)
 			return false;
-		for (int model : sel)
-			if (getClusterIndexForModelIndex(model) == cluster)
+		for (int compound : sel)
+			if (getClusterIndexForCompoundIndex(compound) == cluster)
 				return true;
 		return false;
 	}
@@ -213,26 +213,26 @@ public class Clustering implements Zoomable
 		return clusterWatched;
 	}
 
-	public SelectionModel getModelActive()
+	public SelectionModel getCompoundActive()
 	{
-		return modelActive;
+		return compoundActive;
 	}
 
-	public SelectionModel getModelWatched()
+	public SelectionModel getCompoundWatched()
 	{
-		return modelWatched;
+		return compoundWatched;
 	}
 
-	public Cluster getClusterForModel(Model model)
+	public Cluster getClusterForCompound(Compound compound)
 	{
 		update();
-		return modelIndexToCluster.get(model.getModelIndex());
+		return compoundIndexToCluster.get(compound.getCompoundIndex());
 	}
 
-	public Cluster getClusterForModelIndex(int modelIndex)
+	public Cluster getClusterForCompoundIndex(int compoundIndex)
 	{
 		update();
-		return modelIndexToCluster.get(modelIndex);
+		return compoundIndexToCluster.get(compoundIndex);
 	}
 
 	public int indexOf(Cluster cluster)
@@ -240,23 +240,23 @@ public class Clustering implements Zoomable
 		return clusters.indexOf(cluster);
 	}
 
-	public int getClusterIndexForModel(Model model)
+	public int getClusterIndexForCompound(Compound compound)
 	{
-		return indexOf(getClusterForModel(model));
+		return indexOf(getClusterForCompound(compound));
 	}
 
-	public int getClusterIndexForModelIndex(int modelIndex)
+	public int getClusterIndexForCompoundIndex(int compoundIndex)
 	{
-		return indexOf(getClusterForModelIndex(modelIndex));
+		return indexOf(getClusterForCompoundIndex(compoundIndex));
 	}
 
-	public Model getModelWithModelIndex(int modelIndex)
+	public Compound getCompoundWithCompoundIndex(int compoundIndex)
 	{
 		update();
-		return modelIndexToModel.get(modelIndex);
+		return compoundIndexToCompound.get(compoundIndex);
 	}
 
-	public int numMissingValues(MoleculeProperty p)
+	public int numMissingValues(CompoundProperty p)
 	{
 		update();
 		if (!numMissingValues.containsKey(p))
@@ -269,22 +269,22 @@ public class Clustering implements Zoomable
 		return numMissingValues.get(p);
 	}
 
-	public int numDistinctValues(MoleculeProperty p)
+	public int numDistinctValues(CompoundProperty p)
 	{
 		update();
 		if (!numDistinctValues.containsKey(p))
 		{
-			int numDistinct = p.getType() == Type.NUMERIC ? MoleculePropertyUtil.computeNumDistinct(getDoubleValues(p))
-					: MoleculePropertyUtil.computeNumDistinct(getStringValues(p, null));
+			int numDistinct = p.getType() == Type.NUMERIC ? CompoundPropertyUtil.computeNumDistinct(getDoubleValues(p))
+					: CompoundPropertyUtil.computeNumDistinct(getStringValues(p, null));
 			numDistinctValues.put(p, numDistinct);
 		}
 		return numDistinctValues.get(p);
 	}
 
-	public int numModels()
+	public int numCompounds()
 	{
 		update();
-		return numModels;
+		return numCompounds;
 	}
 
 	public int numClusters()
@@ -300,8 +300,8 @@ public class Clustering implements Zoomable
 
 	private void clearSelection()
 	{
-		modelActive.clearSelection();
-		modelWatched.clearSelection();
+		compoundActive.clearSelection();
+		compoundWatched.clearSelection();
 		clusterActive.clearSelection();
 		clusterWatched.clearSelection();
 	}
@@ -314,8 +314,8 @@ public class Clustering implements Zoomable
 		clusters.removeAllElements();
 		clusteringData = null;
 		View.instance.zap(true, true, true);
-		modelList.clear();
-		modelListIncludingMultiClusteredModels.clear();
+		compoundList.clear();
+		compoundListIncludingMultiClusteredCompounds.clear();
 		normalizedValues.clear();
 		normalizedLogValues.clear();
 		dirty = true;
@@ -375,10 +375,10 @@ public class Clustering implements Zoomable
 			else
 				filename = d.getCluster(0).getFilename();
 			TaskProvider.update("Loading dataset into Jmol");
-			View.instance.loadModelFromFile(null, filename, null, null, false, null, null, 0);
+			View.instance.loadCompoundFromFile(null, filename, null, null, false, null, null, 0);
 
-			if (d.getNumCompounds(true) != View.instance.getModelCount())
-				throw new Error("illegal num compounds, loaded by Jmol: " + View.instance.getModelCount()
+			if (d.getNumCompounds(true) != View.instance.getCompoundCount())
+				throw new Error("illegal num compounds, loaded by Jmol: " + View.instance.getCompoundCount()
 						+ " != from wizard: " + d.getNumCompounds(true));
 		}
 
@@ -413,7 +413,7 @@ public class Clustering implements Zoomable
 		ClusteringUtil.updateScaleFactor(this);
 
 		getClusterWatched().clearSelection();
-		getModelWatched().clearSelection();
+		getCompoundWatched().clearSelection();
 
 		Vector3f[] positions = ClusteringUtil.getClusterPositions(this);
 
@@ -438,14 +438,14 @@ public class Clustering implements Zoomable
 		for (Cluster c : clusters)
 			superimposedDiameter = Math.max(superimposedDiameter, c.getDiameter(true));
 
-		// take only model positions into account (ignore model sizes)
-		positions = ClusteringUtil.getModelPositions(this);
+		// take only compound positions into account (ignore compound sizes)
+		positions = ClusteringUtil.getCompoundPositions(this);
 		nonSuperimposedCenter = Vector3fUtil.centerConvexHull(positions);
 		nonSuperimposedDiameter = Vector3fUtil.maxDist(positions);
 	}
 
 	/**
-	 * toggles model positions between model position (overlap=false) and cluster position (overlap=true) 
+	 * toggles compound positions between compound position (overlap=false) and cluster position (overlap=true) 
 	 * 
 	 * @param clusters
 	 * @param overlap
@@ -453,7 +453,7 @@ public class Clustering implements Zoomable
 	 */
 	public void setClusterOverlap(List<Cluster> clusters, boolean overlap, View.AnimationSpeed anim)
 	{
-		List<Vector3f> modelPositions = new ArrayList<Vector3f>();
+		List<Vector3f> compoundPositions = new ArrayList<Vector3f>();
 		List<BitSet> bitsets = new ArrayList<BitSet>();
 
 		for (Cluster cluster : clusters)
@@ -462,20 +462,20 @@ public class Clustering implements Zoomable
 			{
 				for (int i = 0; i < cluster.size(); i++)
 				{
-					bitsets.add(cluster.getModel(i).getBitSet());
+					bitsets.add(cluster.getCompound(i).getBitSet());
 
-					// destination is model position
-					Vector3f pos = cluster.getModel(i).getPosition();
-					// model is already at cluster position, sub to get relative vector
+					// destination is compound position
+					Vector3f pos = cluster.getCompound(i).getPosition();
+					// compound is already at cluster position, sub to get relative vector
 					pos.sub(cluster.getCenter(true));
 					if (overlap)
 						pos.scale(-1);
-					modelPositions.add(pos);
+					compoundPositions.add(pos);
 				}
 			}
 			cluster.setSuperimposed(overlap);
 		}
-		View.instance.setAtomCoordRelative(modelPositions, bitsets, anim);
+		View.instance.setAtomCoordRelative(compoundPositions, bitsets, anim);
 	}
 
 	public void setClusterOverlap(Cluster cluster, boolean overlap, View.AnimationSpeed anim)
@@ -502,7 +502,7 @@ public class Clustering implements Zoomable
 	}
 
 	/**
-	 * returns jmol model index (not orig sdf model index)  
+	 * returns jmol compound index (not orig sdf compound index)  
 	 */
 	private int[] compoundChooser(String title, String description)
 	{
@@ -510,7 +510,7 @@ public class Clustering implements Zoomable
 		if (clusterIndex == -1)
 			clusterIndex = getClusterWatched().getSelected();
 
-		List<Model> l = new ArrayList<Model>();
+		List<Compound> l = new ArrayList<Compound>();
 		List<Boolean> lb = new ArrayList<Boolean>();
 
 		for (int i = 0; i < numClusters(); i++)
@@ -518,11 +518,11 @@ public class Clustering implements Zoomable
 			Cluster c = getCluster(i);
 			for (int j = 0; j < c.size(); j++)
 			{
-				l.add(c.getModel(j));
+				l.add(c.getCompound(j));
 				lb.add(clusterIndex == -1 || clusterIndex == i);
 			}
 		}
-		Model m[] = new Model[l.size()];
+		Compound m[] = new Compound[l.size()];
 		int selectedIndices[] = CheckBoxSelectDialog.select(Settings.TOP_LEVEL_FRAME, title, description, l.toArray(m),
 				ArrayUtil.toPrimitiveBooleanArray(lb));
 		return selectedIndices;
@@ -549,16 +549,16 @@ public class Clustering implements Zoomable
 			ExportData.exportClusters(this, indices);
 	}
 
-	public void chooseModelsToRemove()
+	public void chooseCompoundsToRemove()
 	{
 		int[] indices = compoundChooser("Remove Compounds/s",
 				"Select the compounds you want to remove from the dataset (the original dataset is not modified).");
 		if (indices == null)
 			return;
-		removeModels(indices);
+		removeCompounds(indices);
 	}
 
-	public void chooseModelsToExport()
+	public void chooseCompoundsToExport()
 	{
 		int indices[] = compoundChooser("Export Compounds/s",
 				"Select the compounds you want to export. The compounds will be stored in a single SDF file.");
@@ -566,8 +566,8 @@ public class Clustering implements Zoomable
 			return;
 		List<Integer> l = new ArrayList<Integer>();
 		for (int i = 0; i < indices.length; i++)
-			l.add(getModelWithModelIndex(indices[i]).getModelOrigIndex());
-		ExportData.exportModels(this, l);
+			l.add(getCompoundWithCompoundIndex(indices[i]).getCompoundOrigIndex());
+		ExportData.exportCompounds(this, l);
 	}
 
 	public String getName()
@@ -604,29 +604,29 @@ public class Clustering implements Zoomable
 		removeCluster(getCluster(clusterIndex));
 	}
 
-	public void removeSelectedModel()
+	public void removeSelectedCompounds()
 	{
 		if (getClusterWatched().getSelected() != -1)
 		{
-			removeModels(getModelWatched().getSelectedIndices());
+			removeCompounds(getCompoundWatched().getSelectedIndices());
 		}
 	}
 
-	public void removeModels(int modelIndices[])
+	public void removeCompounds(int compoundIndices[])
 	{
 		LinkedHashMap<Cluster, List<Integer>> toDel = new LinkedHashMap<Cluster, List<Integer>>();
 
 		// assign indices to clusters
-		for (int i = 0; i < modelIndices.length; i++)
+		for (int i = 0; i < compoundIndices.length; i++)
 		{
-			Cluster c = getCluster(getClusterIndexForModelIndex(modelIndices[i]));
+			Cluster c = getCluster(getClusterIndexForCompoundIndex(compoundIndices[i]));
 			List<Integer> l = toDel.get(c);
 			if (l == null)
 			{
 				l = new ArrayList<Integer>();
 				toDel.put(c, l);
 			}
-			l.add(modelIndices[i]);
+			l.add(compoundIndices[i]);
 		}
 
 		// delete clusterwise
@@ -637,8 +637,8 @@ public class Clustering implements Zoomable
 				removeCluster(c);
 			else
 			{
-				modelActive.clearSelection();
-				modelWatched.clearSelection();
+				compoundActive.clearSelection();
+				compoundWatched.clearSelection();
 				c.remove(indices);
 				dirty = true;
 				updatePositions();
@@ -652,12 +652,12 @@ public class Clustering implements Zoomable
 		return clusteringData.getSubstructureSmartsTypes();
 	}
 
-	public List<MoleculeProperty> getFeatures()
+	public List<CompoundProperty> getFeatures()
 	{
 		return clusteringData.getFeatures();
 	}
 
-	public List<MoleculeProperty> getProperties()
+	public List<CompoundProperty> getProperties()
 	{
 		return clusteringData.getProperties();
 	}
@@ -674,35 +674,35 @@ public class Clustering implements Zoomable
 
 	public int getNumCompounds(boolean includingMultiClusteredCompounds)
 	{
-		//		if (modelList == null)//not yet computed, hence no clusters removed yet, can use complete clustering data
+		//		if (compoundList == null)//not yet computed, hence no clusters removed yet, can use complete clustering data
 		//			return clusteringData.getNumCompounds(includingMultiClusteredCompounds);
 		//		else
-		return getModels(includingMultiClusteredCompounds).size();
+		return getCompounds(includingMultiClusteredCompounds).size();
 	}
 
-	public List<Model> getModels(boolean includingMultiClusteredCompounds)
+	public List<Compound> getCompounds(boolean includingMultiClusteredCompounds)
 	{
 		if (includingMultiClusteredCompounds)
-			return modelListIncludingMultiClusteredModels;
+			return compoundListIncludingMultiClusteredCompounds;
 		else
-			return modelList;
+			return compoundList;
 	}
 
-	public String[] getStringValues(MoleculeProperty property, Model excludeModel)
+	public String[] getStringValues(CompoundProperty property, Compound excludeCompound)
 	{
 		List<String> l = new ArrayList<String>();
-		for (Model m : getModels(false))
-			if (m != excludeModel && m.getStringValue(property) != null)
+		for (Compound m : getCompounds(false))
+			if (m != excludeCompound && m.getStringValue(property) != null)
 				l.add(m.getStringValue(property));
 		String v[] = new String[l.size()];
 		return l.toArray(v);
 	}
 
-	public Double[] getDoubleValues(MoleculeProperty property)
+	public Double[] getDoubleValues(CompoundProperty property)
 	{
 		Double v[] = new Double[getNumCompounds(false)];
 		int i = 0;
-		for (Model m : getModels(false))
+		for (Compound m : getCompounds(false))
 			v[i++] = m.getDoubleValue(property);
 		return v;
 	}
@@ -756,32 +756,32 @@ public class Clustering implements Zoomable
 		this.superimposed = superimposed;
 	}
 
-	DoubleKeyHashMap<Model, MoleculeProperty, Double> normalizedValues = new DoubleKeyHashMap<Model, MoleculeProperty, Double>();
-	DoubleKeyHashMap<Model, MoleculeProperty, Double> normalizedLogValues = new DoubleKeyHashMap<Model, MoleculeProperty, Double>();
+	DoubleKeyHashMap<Compound, CompoundProperty, Double> normalizedValues = new DoubleKeyHashMap<Compound, CompoundProperty, Double>();
+	DoubleKeyHashMap<Compound, CompoundProperty, Double> normalizedLogValues = new DoubleKeyHashMap<Compound, CompoundProperty, Double>();
 
-	private void updateNormalizedValues(MoleculeProperty p)
+	private void updateNormalizedValues(CompoundProperty p)
 	{
 		Double valNorm[] = null;
 		Double valNormLog[] = null;
 		if (p.getType() == Type.NUMERIC)
 		{
-			Double d[] = new Double[modelList.size()];
+			Double d[] = new Double[compoundList.size()];
 			int i = 0;
-			for (Model m : modelList)
+			for (Compound m : compoundList)
 				d[i++] = m.getDoubleValue(p);
 			valNorm = ArrayUtil.normalize(d, false);
 			valNormLog = ArrayUtil.normalizeLog(d, false);
 		}
 		else
 		{
-			String s[] = new String[modelList.size()];
+			String s[] = new String[compoundList.size()];
 			int i = 0;
-			for (Model m : modelList)
+			for (Compound m : compoundList)
 				s[i++] = m.getStringValue(p);
 			valNorm = ArrayUtil.normalizeObjectArray(s);
 		}
 		int i = 0;
-		for (Model m : modelList)
+		for (Compound m : compoundList)
 		{
 			normalizedValues.put(m, p, valNorm[i]);
 			if (valNormLog != null)
@@ -789,14 +789,14 @@ public class Clustering implements Zoomable
 		}
 	}
 
-	public double getNormalizedDoubleValue(Model m, MoleculeProperty p)
+	public double getNormalizedDoubleValue(Compound m, CompoundProperty p)
 	{
 		if (!normalizedValues.containsKeyPair(m, p))
 			updateNormalizedValues(p);
 		return normalizedValues.get(m, p);
 	}
 
-	public double getNormalizedLogDoubleValue(Model m, MoleculeProperty p)
+	public double getNormalizedLogDoubleValue(Compound m, CompoundProperty p)
 	{
 		if (p.getType() != Type.NUMERIC)
 			throw new IllegalStateException();
@@ -805,13 +805,12 @@ public class Clustering implements Zoomable
 		return normalizedLogValues.get(m, p);
 	}
 
-
-	//	public MoleculeProperty getEmbeddingQualityProperty()
+	//	public CompoundProperty getEmbeddingQualityProperty()
 	//	{
 	//		return clusteringData.getEmbeddingQualityProperty();
 	//	}
 	//
-	//	public MoleculePropertyEmbedQuality getEmbeddingQuality(MoleculeProperty p)
+	//	public CompoundPropertyEmbedQuality getEmbeddingQuality(CompoundProperty p)
 	//	{
 	//		return clusteringData.getEmbeddingQuality(p);
 	//	}
