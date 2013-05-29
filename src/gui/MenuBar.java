@@ -154,7 +154,7 @@ public class MenuBar extends JMenuBar
 	MyMenuBar menuBar;
 
 	private final static String SPHERE_SETTINGS_MENU = "Sphere settings";
-	private final static String DATA_MENU = "Data tables";
+	private final static String DATA_MENU = "Dataset properties";
 
 	public MenuBar(GUIControler guiControler, ViewControler viewControler, Clustering clustering)
 	{
