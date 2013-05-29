@@ -20,6 +20,7 @@ import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableModel;
 
+import util.ArrayUtil;
 import util.ListUtil;
 import cluster.Cluster;
 import cluster.Clustering;
@@ -251,12 +252,29 @@ public class InfoPanel extends JPanel
 	@SuppressWarnings("unchecked")
 	private void updateCompound()
 	{
-		int index = InfoPanel.this.clustering.getCompoundActive().getSelected();
-		interactive = true;
-		if (index == -1)
+		int index = -1;
+		if (clustering.isCompoundActive() && clustering.isCompoundWatched())
 		{
-			index = InfoPanel.this.clustering.getCompoundWatched().getSelected();
+			interactive = true;
+			int active[] = InfoPanel.this.clustering.getCompoundActive().getSelectedIndices();
+			int watched[] = InfoPanel.this.clustering.getCompoundWatched().getSelectedIndices();
+			Integer activeAndWatched[] = ArrayUtil.cut(Integer.class, ArrayUtil.toIntegerArray(active),
+					ArrayUtil.toIntegerArray(watched));
+			if (activeAndWatched.length > 0)
+				index = activeAndWatched[0];
+			else
+				index = active[0];
+		}
+		else if (clustering.isCompoundActive())
+		{
+			interactive = true;
+			index = clustering.getCompoundActive().getSelected();
+
+		}
+		else if (clustering.isCompoundWatched())
+		{
 			interactive = false;
+			index = clustering.getCompoundWatched().getSelected();
 		}
 
 		if (index == -1)
