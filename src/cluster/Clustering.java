@@ -516,7 +516,7 @@ public class Clustering implements Zoomable
 		if (clusterIndex != -1)
 			b[clusterIndex] = true;
 
-		return CheckBoxSelectDialog.select(Settings.TOP_LEVEL_FRAME, title, description, c, b);
+		return CheckBoxSelectDialog.selectIndices(Settings.TOP_LEVEL_FRAME, title, description, c, b);
 	}
 
 	/**
@@ -541,8 +541,8 @@ public class Clustering implements Zoomable
 			}
 		}
 		Compound m[] = new Compound[l.size()];
-		int selectedIndices[] = CheckBoxSelectDialog.select(Settings.TOP_LEVEL_FRAME, title, description, l.toArray(m),
-				ArrayUtil.toPrimitiveBooleanArray(lb));
+		int selectedIndices[] = CheckBoxSelectDialog.selectIndices(Settings.TOP_LEVEL_FRAME, title, description,
+				l.toArray(m), ArrayUtil.toPrimitiveBooleanArray(lb));
 		return selectedIndices;
 	}
 
@@ -562,7 +562,7 @@ public class Clustering implements Zoomable
 	public void chooseClustersToExport()
 	{
 		int[] indices = clusterChooser("Export Cluster/s",
-				"Select the clusters you want to export. The compounds will be stored in a single SDF file.");
+				"Select the clusters you want to export. The compounds will be stored in a single SDF/CSV file.");
 		if (indices != null)
 			ExportData.exportClusters(this, indices);
 	}
@@ -579,7 +579,7 @@ public class Clustering implements Zoomable
 	public void chooseCompoundsToExport()
 	{
 		int indices[] = compoundChooser("Export Compounds/s",
-				"Select the compounds you want to export. The compounds will be stored in a single SDF file.");
+				"Select the compounds you want to export. The compounds will be stored in a single SDF/CSV file.");
 		if (indices == null)
 			return;
 		List<Integer> l = new ArrayList<Integer>();
@@ -821,6 +821,11 @@ public class Clustering implements Zoomable
 		if (!normalizedLogValues.containsKeyPair(m, p))
 			updateNormalizedValues(p);
 		return normalizedLogValues.get(m, p);
+	}
+
+	public String getOrigLocalPath()
+	{
+		return clusteringData.getOrigLocalPath();
 	}
 
 	//	public CompoundProperty getEmbeddingQualityProperty()

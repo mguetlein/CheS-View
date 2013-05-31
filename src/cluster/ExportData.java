@@ -1,5 +1,6 @@
 package cluster;
 
+import gui.CheckBoxSelectDialog;
 import io.SDFUtil;
 
 import java.io.BufferedWriter;
@@ -42,7 +43,11 @@ public class ExportData
 
 	public static void exportCompounds(Clustering clustering, int compoundOrigIndices[])
 	{
-		JFileChooser f = new JFileChooser(clustering.getOrigSdfFile());//origSDFFile);
+		String dir = clustering.getOrigLocalPath();
+		if (dir == null)
+			dir = System.getProperty("user.home");
+		JFileChooser f = new JFileChooser(dir);//origSDFFile);
+		f.setDialogTitle("Save to SDF/CSV file (according to filename extension)");
 		int i = f.showSaveDialog(Settings.TOP_LEVEL_FRAME);
 		if (i != JFileChooser.APPROVE_OPTION)
 			return;
@@ -61,6 +66,42 @@ public class ExportData
 		}
 		// file may be overwritten, and then reloaded -> clear
 		DatasetFile.clearFilesWith3DSDF(dest);
+
+		boolean integratedPropsAlreadyIncluded = !csvExport
+				&& (clustering.getFullName().endsWith("sdf") || clustering.getFullName().endsWith("SDF"));
+		CompoundProperty selectedProps[];
+		List<CompoundProperty> availableProps = new ArrayList<CompoundProperty>();
+		for (CompoundProperty p : clustering.getProperties())
+			if (!integratedPropsAlreadyIncluded || !(p instanceof IntegratedProperty))
+				availableProps.add(p);
+		for (CompoundProperty p : clustering.getFeatures())
+			if (!integratedPropsAlreadyIncluded || !(p instanceof IntegratedProperty))
+				availableProps.add(p);
+
+		if (availableProps.size() == 0) // no features to select
+			selectedProps = new CompoundProperty[0];
+		else
+		{
+			if (csvExport)
+			{
+				selectedProps = ArrayUtil.cast(CompoundProperty.class, CheckBoxSelectDialog.select(
+						Settings.TOP_LEVEL_FRAME, "Select features for CSV export", null,
+						ArrayUtil.toArray(CompoundProperty.class, availableProps), true));
+			}
+			else
+			{
+				selectedProps = ArrayUtil
+						.cast(CompoundProperty.class,
+								CheckBoxSelectDialog
+										.select(Settings.TOP_LEVEL_FRAME,
+												"Select features for SDF export",
+												integratedPropsAlreadyIncluded ? "(Features that are integrated in the original SDF file, will be included in the exported SDF as well.)"
+														: "",
+												ArrayUtil.toArray(CompoundProperty.class, availableProps), true));
+			}
+		}
+		if (selectedProps == null)//pressed cancel
+			return;
 
 		DoubleKeyHashMap<Integer, Object, Object> featureValues = new DoubleKeyHashMap<Integer, Object, Object>();
 		for (Integer j : compoundOrigIndices)
@@ -100,9 +141,8 @@ public class ExportData
 					}
 				}
 			}
-			//			if (csvExport)
-			//			{
-			for (CompoundProperty p : clustering.getProperties())
+
+			for (CompoundProperty p : selectedProps)
 				if (!p.getName().matches("(?i)smiles"))
 				{
 					if (p.getType() == Type.NUMERIC)
@@ -112,13 +152,6 @@ public class ExportData
 						featureValues.put(j, p, clustering.getCompounds().get(j).getStringValue(p) == null ? ""
 								: clustering.getCompounds().get(j).getStringValue(p));
 				}
-			//			}
-			for (CompoundProperty p : clustering.getFeatures())
-				if (!(p instanceof IntegratedProperty))
-					if (p.getType() == Type.NUMERIC)
-						featureValues.put(j, p, clustering.getCompounds().get(j).getDoubleValue(p));
-					else
-						featureValues.put(j, p, clustering.getCompounds().get(j).getStringValue(p));
 		}
 		List<Object> skipUniform = new ArrayList<Object>();
 		List<Object> skipNull = new ArrayList<Object>();
@@ -182,9 +215,10 @@ public class ExportData
 		{
 			List<Object> feats = new ArrayList<Object>();
 			for (Integer j : compoundOrigIndices)
-				for (Object feat : featureValues.keySet2(j))
-					if (!feats.contains(feat))
-						feats.add(feat);
+				if (featureValues.keySet1().size() > 0 && featureValues.keySet2(j) != null)
+					for (Object feat : featureValues.keySet2(j))
+						if (!feats.contains(feat))
+							feats.add(feat);
 			File file = new File(dest);
 			try
 			{
@@ -234,5 +268,7 @@ public class ExportData
 		}
 		else
 			SDFUtil.filter(clustering.getOrigSdfFile(), dest, compoundOrigIndices, featureValues);
+		JOptionPane.showMessageDialog(Settings.TOP_LEVEL_FRAME, "Successfully exported " + compoundOrigIndices.length
+				+ " compounds to\n" + dest, "Export done", JOptionPane.INFORMATION_MESSAGE);
 	}
 }
