@@ -4,6 +4,7 @@ import gui.DoubleNameListCellRenderer.DoubleNameElement;
 import gui.MainPanel.Translucency;
 import gui.View;
 import gui.ViewControler;
+import gui.ViewControler.Style;
 import gui.Zoomable;
 
 import java.util.BitSet;
@@ -24,6 +25,8 @@ public class Compound implements Zoomable, Comparable<Compound>, DoubleNameEleme
 {
 	private int compoundIndex;
 	private BitSet bitSet;
+	private BitSet dotModeHideBitSet;
+	private BitSet dotModeDisplayBitSet;
 
 	private CompoundData compoundData;
 
@@ -39,7 +42,7 @@ public class Compound implements Zoomable, Comparable<Compound>, DoubleNameEleme
 	private String lastHighlightColor;
 	private Vector3f spherePosition;
 	private CompoundProperty highlightCompoundProperty;
-	private String style;
+	private Style style;
 	private CompoundProperty descriptorProperty = null;
 	private boolean sphereVisible;
 	private boolean lastFeatureSphereVisible;
@@ -47,13 +50,17 @@ public class Compound implements Zoomable, Comparable<Compound>, DoubleNameEleme
 	private float diameter = -1;
 
 	public final Vector3f origCenter;
+	public final Vector3f origDotPosition;
 
 	public Compound(int compoundIndex, CompoundData compoundData)
 	{
 		this.compoundIndex = compoundIndex;
 		this.compoundData = compoundData;
 		bitSet = View.instance.getCompoundBitSet(compoundIndex);
+		dotModeHideBitSet = View.instance.getDotModeHideBitSet(bitSet);
+		dotModeDisplayBitSet = View.instance.getDotModeDisplayBitSet(bitSet);
 		origCenter = new Vector3f(View.instance.getAtomSetCenter(bitSet));
+		origDotPosition = new Vector3f(View.instance.getAtomSetCenter(getDotModeDisplayBitSet()));
 		smartsMatches = new HashMap<String, BitSet>();
 		setDescriptor(ViewControler.COMPOUND_INDEX_PROPERTY);
 	}
@@ -79,11 +86,6 @@ public class Compound implements Zoomable, Comparable<Compound>, DoubleNameEleme
 	public Double getDoubleValue(CompoundProperty property)
 	{
 		return compoundData.getDoubleValue(property);
-	}
-
-	public BitSet getBitSet()
-	{
-		return bitSet;
 	}
 
 	/**
@@ -342,12 +344,12 @@ public class Compound implements Zoomable, Comparable<Compound>, DoubleNameEleme
 		return highlightCompoundProperty;
 	}
 
-	public void setStyle(String style)
+	public void setStyle(Style style)
 	{
 		this.style = style;
 	}
 
-	public String getStyle()
+	public Style getStyle()
 	{
 		return style;
 	}
@@ -418,6 +420,21 @@ public class Compound implements Zoomable, Comparable<Compound>, DoubleNameEleme
 	public void setLastFeatureSphereVisible(boolean s)
 	{
 		this.lastFeatureSphereVisible = s;
+	}
+
+	public BitSet getBitSet()
+	{
+		return bitSet;
+	}
+
+	public BitSet getDotModeHideBitSet()
+	{
+		return dotModeHideBitSet;
+	}
+
+	public BitSet getDotModeDisplayBitSet()
+	{
+		return dotModeDisplayBitSet;
 	}
 
 }

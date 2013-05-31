@@ -169,14 +169,25 @@ public class CheSViewer implements GUIControler
 
 		frame.setIconImage(Settings.CHES_MAPPER_IMAGE.getImage());
 		frame.setVisible(true);
-		SwingUtilities.invokeLater(new Runnable()
-		{
-			@Override
-			public void run()
-			{
-				clusterPanel.requestFocus();
-			}
-		});
+		//		SwingUtilities.invokeLater(new Runnable()
+		//		{
+		//			@Override
+		//			public void run()
+		//			{
+		//				clusterPanel.requestFocus();
+		//			}
+		//		});
+		//
+		//		frame.addWindowFocusListener(new WindowAdapter()
+		//		{
+		//			public void windowGainedFocus(WindowEvent e)
+		//			{
+		//				if (focusComponent != null)
+		//					focusComponent.requestFocus();
+		//				else
+		//					clusterPanel.requestFocus();
+		//			}
+		//		});
 
 		String msg;
 		if (frame.isUndecorated())
@@ -238,15 +249,6 @@ public class CheSViewer implements GUIControler
 		if (frame != null)
 		{
 			frame.unblock(blocker);
-			SwingUtilities.invokeLater(new Runnable()
-			{
-				@Override
-				public void run()
-				{
-					if (!isBlocked())
-						clusterPanel.requestFocus();
-				}
-			});
 		}
 	}
 

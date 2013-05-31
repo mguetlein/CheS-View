@@ -207,7 +207,7 @@ public class View
 
 	public synchronized void select(BitSet bitSet)
 	{
-		//		Settings.LOGGER.warn("XX> selecting bitset: " + bitSet);
+		//		Settings.LOGGER.warn("XX> selecting bitset with " + bitSet.cardinality() + " atoms, bitset: " + bitSet);
 		viewer.select(bitSet, false, null, false);
 		//Settings.LOGGER.warn("XX> " + viewer.getAtomSetCenter(bitSet));
 	}
@@ -239,7 +239,7 @@ public class View
 
 	public synchronized void hide(BitSet bs)
 	{
-		//		Settings.LOGGER.warn("XX> hide " + bs);
+		//		Settings.LOGGER.warn("XX> hide bitset with " + bs.cardinality() + " atoms, bitset: " + bs);
 		viewer.select(bs, false, null, false);
 		hideSelected();
 	}
@@ -252,7 +252,7 @@ public class View
 
 	public synchronized void display(BitSet bs)
 	{
-		//		Settings.LOGGER.warn("XX> display " + bs);
+		//		Settings.LOGGER.warn("XX> display bitset with " + bs.cardinality() + " atoms, bitset: " + bs);
 		viewer.select(bs, false, null, false);
 		viewer.scriptWait("select (not hidden) OR selected; select not selected; hide selected");
 	}
@@ -553,7 +553,7 @@ public class View
 				resSelected.width, resSelected.height));
 	}
 
-	public synchronized void selectFirstCarbonAtom(BitSet bs)
+	private int getFirstCarbonAtom(BitSet bs)
 	{
 		//System.out.println(empty.cardinality());
 		int firstAtom = -1;
@@ -573,8 +573,29 @@ public class View
 			firstCarbon = firstAtom;
 		//		System.out.println("atom to select: " + viewer.getAtomInfo(firstCarbon));
 
+		return firstCarbon;
+	}
+
+	public BitSet getDotModeHideBitSet(BitSet bs)
+	{
+		BitSet set = new BitSet(bs.length());
+		set.or(bs);
+		set.clear(getFirstCarbonAtom(bs));
+		return set;
+	}
+
+	public BitSet getDotModeDisplayBitSet(BitSet bs)
+	{
+		BitSet set = new BitSet(bs.length());
+		set.set(getFirstCarbonAtom(bs));
+		return set;
+	}
+
+	public synchronized void selectFirstCarbonAtom(BitSet bs)
+	{
 		BitSet sel = new BitSet(bs.length());
-		sel.set(firstCarbon);
+		sel.set(getFirstCarbonAtom(bs));
 		select(sel);
 	}
+
 }

@@ -1,6 +1,7 @@
 package gui;
 
 import gui.ViewControler.HighlightSorting;
+import gui.ViewControler.Style;
 import gui.swing.ComponentFactory;
 import gui.swing.ComponentFactory.StyleButton;
 import gui.swing.TransparentViewPanel;
@@ -39,6 +40,7 @@ public class ControlPanel extends TransparentViewPanel
 
 	StyleButton buttonWire;
 	StyleButton buttonBalls;
+	StyleButton buttonDots;
 
 	JButton buttonPlus;
 	JButton buttonMinus;
@@ -68,22 +70,21 @@ public class ControlPanel extends TransparentViewPanel
 		//		spinCheckbox = ComponentFactory.createCheckBox("Spin on/off");
 		//		spinCheckbox.setSelected(viewControler.isSpinEnabled());
 		//		spinCheckbox.setOpaque(false);
-		//		spinCheckbox.setFocusable(false);
 
 		//		setBackground(Settings.TRANSPARENT_BACKGROUND);
 
-		buttonWire = new StyleButton("Wireframe", true, ViewControler.STYLE_WIREFRAME);
-		buttonBalls = new StyleButton("Balls & Sticks", false, ViewControler.STYLE_BALLS_AND_STICKS);
-		ButtonGroup g = new ButtonGroup();
-		g.add(buttonWire);
-		g.add(buttonBalls);
-		buttonWire.setSelected(viewControler.getStyle().equals(buttonWire.style));
-		buttonBalls.setSelected(viewControler.getStyle().equals(buttonBalls.style));
+		buttonWire = new StyleButton("Wireframe", true, Style.wireframe);
+		buttonBalls = new StyleButton("Balls & Sticks", false, Style.ballsAndSticks);
+		buttonDots = new StyleButton("Dots", false, Style.dots);
 
-		buttonWire.setOpaque(false);
-		buttonBalls.setOpaque(false);
-		buttonWire.setFocusable(false);
-		buttonBalls.setFocusable(false);
+		ButtonGroup g = new ButtonGroup();
+		for (StyleButton b : new StyleButton[] { buttonWire, buttonBalls, buttonDots })
+		{
+			g.add(b);
+			b.setSelected(viewControler.getStyle() == b.style);
+			b.setOpaque(false);
+			b.setFocusable(false);
+		}
 
 		buttonPlus = ComponentFactory.createViewButton("+", new Insets(1, 3, 1, 3));
 		buttonMinus = ComponentFactory.createViewButton("-", new Insets(1, 3, 1, 3));
@@ -121,8 +122,10 @@ public class ControlPanel extends TransparentViewPanel
 		p.add(new JLabel("   "));
 		//		p.add(spinCheckbox);
 		p.add(buttonWire);
-		p.add(new JLabel(" "));
+		p.add(new JLabel(""));
 		p.add(buttonBalls);
+		p.add(new JLabel(""));
+		p.add(buttonDots);
 
 		JPanel p2 = new JPanel();
 		p2.setOpaque(false);
@@ -165,8 +168,8 @@ public class ControlPanel extends TransparentViewPanel
 				viewControler.setStyle(((StyleButton) e.getSource()).style);
 			}
 		};
-		buttonWire.addActionListener(l);
-		buttonBalls.addActionListener(l);
+		for (StyleButton b : new StyleButton[] { buttonWire, buttonBalls, buttonDots })
+			b.addActionListener(l);
 
 		ActionListener l2 = new ActionListener()
 		{

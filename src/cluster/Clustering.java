@@ -478,6 +478,24 @@ public class Clustering implements Zoomable
 		View.instance.setAtomCoordRelative(compoundPositions, bitsets, anim);
 	}
 
+	/**
+	 * not animated
+	 * 
+	 * @param comp
+	 * @param enable
+	 */
+	public void moveForDotMode(Compound comp, boolean enable)
+	{
+		// move to compound center ...
+		Vector3f pos = new Vector3f(comp.origCenter);
+		// ... from single atom position
+		pos.sub(comp.origDotPosition);
+		// reverse if neccessary
+		if (!enable)
+			pos.scale(-1);
+		View.instance.setAtomCoordRelative(pos, comp.getDotModeDisplayBitSet());
+	}
+
 	public void setClusterOverlap(Cluster cluster, boolean overlap, View.AnimationSpeed anim)
 	{
 		List<Cluster> l = new ArrayList<Cluster>();

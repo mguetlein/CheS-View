@@ -2,6 +2,7 @@ package gui.swing;
 
 import gui.DescriptionListCellRenderer;
 import gui.LinkButton;
+import gui.ViewControler.Style;
 
 import java.awt.Color;
 import java.awt.Component;
@@ -133,6 +134,7 @@ public class ComponentFactory
 				setForeground(FOREGROUND);
 			}
 		};
+		l.setFocusable(false);
 		l.setEditable(false);
 		l.setBorder(null);
 		l.setOpaque(false);
@@ -178,6 +180,7 @@ public class ComponentFactory
 		l.setForegroundColor(FOREGROUND);
 		l.setSelectedForegroundColor(LIST_SELECTION_FOREGROUND);
 		l.setSelectedForegroundFont(l.getFont());
+		l.setFocusable(false);
 		return l;
 	}
 
@@ -191,6 +194,7 @@ public class ComponentFactory
 				setForeground(FOREGROUND);
 			}
 		};
+		c.setFocusable(false);
 		return c;
 	}
 
@@ -209,9 +213,9 @@ public class ComponentFactory
 
 	public static class StyleButton extends JRadioButton
 	{
-		public String style;
+		public Style style;
 
-		public StyleButton(String text, boolean selected, String style)
+		public StyleButton(String text, boolean selected, Style style)
 		{
 			super(text, selected);
 			this.style = style;
@@ -305,6 +309,7 @@ public class ComponentFactory
 		c.setFont(f);
 		r.setDescriptionForeground(FOREGROUND.darker().darker());
 		c.setRenderer(r);
+		c.setFocusable(false);
 		return c;
 	}
 
@@ -357,6 +362,7 @@ public class ComponentFactory
 				return this;
 			}
 		});
+		t.setFocusable(false);
 
 		return t;
 	}
@@ -480,6 +486,7 @@ public class ComponentFactory
 		c.setOpaque(false);
 		c.setFocusable(false);
 		c.setFont(new JLabel().getFont());
+		c.setFocusable(false);
 		return c;
 	}
 
@@ -502,6 +509,7 @@ public class ComponentFactory
 		}
 		infoTextArea.setWrapStyleWord(wrap);
 		infoTextArea.setLineWrap(wrap);
+		infoTextArea.setFocusable(false);
 		return infoTextArea;
 	}
 

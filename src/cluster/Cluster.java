@@ -27,6 +27,7 @@ public class Cluster implements Zoomable
 	private ClusterData clusterData;
 
 	private BitSet bitSet;
+	private BitSet dotModeDisplayBitSet;
 
 	private boolean superimposed = true;
 	private float superimposeDiameter;
@@ -134,6 +135,10 @@ public class Cluster implements Zoomable
 		for (Compound m : compounds)
 			bitSet.or(m.getBitSet());
 
+		dotModeDisplayBitSet = new BitSet();
+		for (Compound m : compounds)
+			dotModeDisplayBitSet.or(m.getDotModeDisplayBitSet());
+
 		// updating (unscaled!) cluster position
 		// this is only needed in case a compound was removed
 		Vector3f[] positions = ClusteringUtil.getCompoundPositions(this);
@@ -185,6 +190,11 @@ public class Cluster implements Zoomable
 	public BitSet getBitSet()
 	{
 		return bitSet;
+	}
+
+	public BitSet getDotModeDisplayBitSet()
+	{
+		return dotModeDisplayBitSet;
 	}
 
 	public boolean containsCompoundIndex(int compoundIndex)

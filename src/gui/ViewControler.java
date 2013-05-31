@@ -15,8 +15,10 @@ import dataInterface.CompoundPropertySet;
 
 public interface ViewControler
 {
-	public static final String STYLE_WIREFRAME = "spacefill 0; wireframe 0.02";
-	public static final String STYLE_BALLS_AND_STICKS = "wireframe 25; spacefill 15%";
+	public enum Style
+	{
+		wireframe, ballsAndSticks, dots
+	}
 
 	public boolean isHideUnselected();
 
@@ -44,9 +46,9 @@ public interface ViewControler
 
 	public void setSphereTranslucency(double translucency);
 
-	public String getStyle();
+	public Style getStyle();
 
-	public void setStyle(String style);
+	public void setStyle(Style style);
 
 	public HashMap<String, Highlighter[]> getHighlighters();
 

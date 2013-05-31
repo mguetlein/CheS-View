@@ -349,7 +349,6 @@ public class CompoundListPanel extends TransparentViewPanel
 		add(p);
 		//setOpaque(false);
 		//		setBackground(Settings.TRANSPARENT_BACKGROUND);
-		// setFocusable(false);
 	}
 
 	JPanel checkBoxContainer;

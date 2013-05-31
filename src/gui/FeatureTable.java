@@ -19,6 +19,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
+import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionEvent;
@@ -141,6 +142,14 @@ public class FeatureTable extends BlockableFrame
 					row = sorter.convertRowIndexToModel(row);
 					Highlighter p = (Highlighter) model.getValueAt(row, 1);
 					viewControler.setHighlighter(p);
+					SwingUtilities.invokeLater(new Runnable()
+					{
+						@Override
+						public void run()
+						{
+							table.requestFocus();
+						}
+					});
 				}
 			}
 		});
@@ -266,6 +275,14 @@ public class FeatureTable extends BlockableFrame
 		updateFeatureSelection();
 
 		setVisible(true);
+		SwingUtilities.invokeLater(new Runnable()
+		{
+			@Override
+			public void run()
+			{
+				table.requestFocus();
+			}
+		});
 	}
 
 	private void updateFeatureSelection()

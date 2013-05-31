@@ -57,11 +57,25 @@ public class MainPanel extends JPanel implements ViewControler
 	private Clustering clustering;
 	private boolean spinEnabled = false;
 	private boolean hideHydrogens = true;
-	private String style = STYLE_WIREFRAME;
+	private Style style = Style.wireframe;
 	boolean hideUnselected = false;
 	Color matchColor = Color.ORANGE;
 	CompoundProperty compoundDescriptorProperty = null;
 	List<JComponent> ignoreMouseMovementPanels = new ArrayList<JComponent>();
+
+	private String getStyleString()
+	{
+		switch (style)
+		{
+			case wireframe:
+				return "spacefill 0; wireframe 0.02";
+			case ballsAndSticks:
+				return "wireframe 25; spacefill 15%";
+			case dots:
+				return "spacefill 55%";
+		}
+		throw new IllegalStateException("WTF");
+	}
 
 	private Color getCompoundHighlightColor(Compound m, Highlighter h, CompoundProperty p)
 	{
@@ -96,10 +110,14 @@ public class MainPanel extends JPanel implements ViewControler
 		if (t == Translucency.None)
 			return "";
 		double translucency[] = null;
-		if (style.equals(STYLE_WIREFRAME))
+		if (style == Style.wireframe)
 			translucency = new double[] { -1, 0.4, 0.6, 0.8 };
-		else if (style.equals(STYLE_BALLS_AND_STICKS))
+		else if (style == Style.ballsAndSticks)
 			translucency = new double[] { -1, 0.5, 0.7, 0.9 };
+		else if (style == Style.dots)
+			translucency = new double[] { -1, 0.5, 0.7, 0.9 };
+		else
+			throw new IllegalStateException("WTF");
 		double trans = translucency[ArrayUtil.indexOf(Translucency.values(), t)];
 		//		if (Settings.SCREENSHOT_SETUP)
 		//			trans = 0.99;// Math.min(0.95, trans + 0.15);
@@ -297,17 +315,19 @@ public class MainPanel extends JPanel implements ViewControler
 		this.ignoreMouseMovementPanels.add(c);
 	}
 
-	public String getStyle()
+	public Style getStyle()
 	{
 		return style;
 	}
 
-	public void setStyle(String style)
+	public void setStyle(Style style)
 	{
-		if (!this.style.equals(style))
+		if (this.style != style)
 		{
+			guiControler.block("changing style");
 			this.style = style;
 			updateAllClustersAndCompounds(false);
+			guiControler.unblock("changing style");
 		}
 	}
 
@@ -328,6 +348,7 @@ public class MainPanel extends JPanel implements ViewControler
 	{
 		if (this.selectedHighlighter != highlighter)
 		{
+			guiControler.block("set highlighter");
 			lastSelectedHighlighter = selectedHighlighter;
 			selectedHighlighter = highlighter;
 			if (selectedHighlighter instanceof CompoundPropertyHighlighter)
@@ -337,6 +358,7 @@ public class MainPanel extends JPanel implements ViewControler
 
 			updateAllClustersAndCompounds(false);
 			fireViewChange(PROPERTY_HIGHLIGHT_CHANGED);
+			guiControler.unblock("set highlighter");
 		}
 	}
 
@@ -475,7 +497,7 @@ public class MainPanel extends JPanel implements ViewControler
 		{
 			if (!hideSomeCompounds)
 			{
-				toDisplay.or(c.getBitSet());
+				toDisplay.or(style == Style.dots ? c.getDotModeDisplayBitSet() : c.getBitSet());
 				for (Compound compound : c.getCompounds())
 					toDisplayCompound.add(compound);
 			}
@@ -491,7 +513,7 @@ public class MainPanel extends JPanel implements ViewControler
 				//			Settings.LOGGER.warn("hiding: ''" + hide + "'', num '" + numCompounds + "', max '" + max + "'");
 
 				if (numCompounds < max)
-					toDisplay.or(c.getBitSet());
+					toDisplay.or(style == Style.dots ? c.getDotModeDisplayBitSet() : c.getBitSet());
 				else
 				{
 					List<Compound> compounds;
@@ -504,9 +526,9 @@ public class MainPanel extends JPanel implements ViewControler
 					for (Compound m : compounds)
 					{
 						if (count++ >= max)
-							toHide.or(m.getBitSet());
+							toHide.or(style == Style.dots ? m.getDotModeDisplayBitSet() : m.getBitSet());
 						else
-							toDisplay.or(m.getBitSet());
+							toDisplay.or(style == Style.dots ? m.getDotModeDisplayBitSet() : m.getBitSet());
 					}
 				}
 			}
@@ -640,8 +662,6 @@ public class MainPanel extends JPanel implements ViewControler
 		if (!highlighterLabelsVisible)
 			showLabel = false;
 
-		BitSet bs = view.getCompoundBitSet(compoundIndex);
-		view.select(bs);
 		Color col = getCompoundHighlightColor(m, selectedHighlighter, selectedHighlightCompoundProperty);
 		String highlightColor = col == null ? null : "color " + ColorUtil.toJMolString(col);
 		String compoundColor;
@@ -649,6 +669,9 @@ public class MainPanel extends JPanel implements ViewControler
 			compoundColor = "color cpk";
 		else
 			compoundColor = col == null ? "color cpk" : "color " + ColorUtil.toJMolString(col);
+		if (compoundColor.equals("color cpk") && style == Style.dots)
+			compoundColor = "color "
+					+ ColorUtil.toJMolString(isBlackgroundBlack() ? Color.LIGHT_GRAY.brighter() : Color.GRAY);
 
 		boolean sphereVisible = (highlightMode == HighlightMode.Spheres && highlightColor != null);
 		boolean lastFeatureSphereVisible = sphereVisible && highlightLastFeatureEnabled;
@@ -682,7 +705,9 @@ public class MainPanel extends JPanel implements ViewControler
 		else
 			translucency = Translucency.None;
 
-		boolean styleUpdate = !style.equals(m.getStyle());
+		boolean styleUpdate = style != m.getStyle();
+		boolean styleDotUpdate = (style == Style.dots && m.getStyle() != Style.dots)
+				|| (style != Style.dots && m.getStyle() == Style.dots);
 		boolean compoundUpdate = styleUpdate || translucency != m.getTranslucency()
 				|| !ObjectUtil.equals(compoundColor, m.getCompoundColor());
 		//showLabel is enough because superimpose<->not-superimpose is not tracked in compound
@@ -709,8 +734,29 @@ public class MainPanel extends JPanel implements ViewControler
 		m.setShowHoverBox(showHoverBox);
 		m.setShowActiveBox(showActiveBox);
 
+		if (styleDotUpdate)
+		{
+			if (style == Style.dots)
+			{
+				view.hide(m.getDotModeHideBitSet());
+				clustering.moveForDotMode(m, true);
+			}
+			else
+			{
+				clustering.moveForDotMode(m, false);
+				view.display(m.getDotModeHideBitSet());
+			}
+		}
+
+		// SET SELECTION
+		if (style == Style.dots)
+			view.select(m.getDotModeDisplayBitSet());
+		else
+			view.select(m.getBitSet());
+
 		if (forceUpdate || styleUpdate)
-			view.scriptWait(style);
+			view.scriptWait(getStyleString());
+
 		if (forceUpdate || compoundUpdate)
 			view.scriptWait(compoundColor + getColorSuffixTranslucent(translucency));
 
@@ -726,7 +772,10 @@ public class MainPanel extends JPanel implements ViewControler
 		{
 			if (showHoverBox)
 			{
-				view.scriptWait("boundbox { selected }");
+				if (style == Style.dots)
+					view.scriptWait("boundbox { selected } { 2 2 2 }");
+				else
+					view.scriptWait("boundbox { selected }");
 				view.scriptWait("boundbox off");
 				view.scriptWait("draw ID bb" + m.getCompoundIndex() + "h BOUNDBOX color "
 						+ ColorUtil.toJMolString(ComponentFactory.LIST_WATCH_BACKGROUND) + " translucent "
@@ -741,7 +790,10 @@ public class MainPanel extends JPanel implements ViewControler
 		{
 			if (showActiveBox)
 			{
-				view.scriptWait("boundbox { selected }");
+				if (style == Style.dots)
+					view.scriptWait("boundbox { selected } { 2 2 2 }");
+				else
+					view.scriptWait("boundbox { selected }");
 				view.scriptWait("boundbox off");
 				view.scriptWait("draw ID bb" + m.getCompoundIndex() + "a BOUNDBOX color "
 						+ ColorUtil.toJMolString(ComponentFactory.LIST_ACTIVE_BACKGROUND) + " translucent "
@@ -1435,6 +1487,7 @@ public class MainPanel extends JPanel implements ViewControler
 			this.backgroundBlack = backgroundBlack;
 			ComponentFactory.setBackgroundBlack(backgroundBlack);
 			view.setBackground(ComponentFactory.BACKGROUND);
+			updateAllClustersAndCompounds(false);
 			fireViewChange(PROPERTY_BACKGROUND_CHANGED);
 		}
 	}
