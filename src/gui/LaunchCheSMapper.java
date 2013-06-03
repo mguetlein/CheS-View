@@ -19,35 +19,54 @@ import data.ClusteringData;
 
 public class LaunchCheSMapper
 {
+	private static boolean initialized = false;
 
-	public static void main(String args[])
+	public static void init()
 	{
+		init(Locale.US, ScreenSetup.DEFAULT, true);
+	}
+
+	public static void init(Locale locale, ScreenSetup screenSetup, boolean loadProps)
+	{
+		if (initialized)
+			throw new IllegalStateException("init only once!");
+
 		Settings.LOGGER.info("Starting CheS-Mapper at " + new Date());
 		Settings.LOGGER.info("OS is '" + System.getProperty("os.name") + "'");
 		Settings.LOGGER.info("Java runtime version is '" + System.getProperty("java.runtime.version") + "'");
 
 		Locale.setDefault(Locale.US);
-		if (args.length > 0)
+		ScreenSetup.SETUP = screenSetup;
+
+		PropHandler.init(loadProps);
+		BinHandler.init();
+
+		initialized = true;
+	}
+
+	public static void main(String args[])
+	{
+		ScreenSetup screenSetup = ScreenSetup.DEFAULT;
+		if (args != null && args.length > 0)
 		{
 			if (args[0].equals("screenshot"))
-				ScreenSetup.SETUP = ScreenSetup.SCREENSHOT;
+				screenSetup = ScreenSetup.SCREENSHOT;
 			else if (args[0].equals("video"))
-				ScreenSetup.SETUP = ScreenSetup.VIDEO;
+				screenSetup = ScreenSetup.VIDEO;
 			else if (args[0].equals("small_screen"))
-				ScreenSetup.SETUP = ScreenSetup.SMALL_SCREEN;
+				screenSetup = ScreenSetup.SMALL_SCREEN;
 			else if (!args[0].equals("default"))
 				throw new Error("illegal screen setup arg: " + args[0]);
 		}
 		boolean loadProperties = true;
-		if (args.length > 1)
+		if (args != null && args.length > 1)
 		{
 			if (args[1].equals("no-properties"))
 				loadProperties = false;
 			else
 				throw new Error("illegal properties arg: " + args[1]);
 		}
-		PropHandler.init(loadProperties);
-		BinHandler.init();
+		init(Locale.US, screenSetup, loadProperties);
 		start();
 	}
 
@@ -79,6 +98,9 @@ public class LaunchCheSMapper
 
 	public static void start(CheSMapping mapping)
 	{
+		if (!initialized)
+			throw new IllegalStateException("not initialized!");
+
 		if (mapping == null)
 		{
 			CheSMapperWizard wwd = null;
