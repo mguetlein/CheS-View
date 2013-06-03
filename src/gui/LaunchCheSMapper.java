@@ -108,10 +108,10 @@ public class LaunchCheSMapper
 
 		try
 		{ // starting Viewer
-			CheSViewer viewer = new CheSViewer(clusteringData);
-			while (!viewer.frame.isShowing())
+			CheSViewer.show(clusteringData);
+			while (!CheSViewer.getFrame().isShowing())
 				ThreadUtil.sleep(100);
-			waitingDialog.setWarningDialogOwner(viewer.frame);
+			waitingDialog.setWarningDialogOwner(CheSViewer.getFrame());
 			task.finish();
 		}
 		catch (Throwable e)

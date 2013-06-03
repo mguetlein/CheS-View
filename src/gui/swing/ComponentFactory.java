@@ -59,13 +59,21 @@ public class ComponentFactory
 	public static Color LIST_ACTIVE_BACKGROUND_WHITE = new Color(101, 152, 255);
 	public static Color LIST_WATCH_BACKGROUND_WHITE = LIST_ACTIVE_BACKGROUND_WHITE.brighter().brighter();
 
+	private static boolean backgroundBlack = true;
+
+	public static boolean isBackgroundBlack()
+	{
+		return backgroundBlack;
+	}
+
 	static
 	{
-		setBackgroundBlack(true);
+		setBackgroundBlack(backgroundBlack);
 	}
 
 	public static void setBackgroundBlack(Boolean b)
 	{
+		backgroundBlack = b;
 		if (b)
 		{
 			BACKGROUND = Color.BLACK;

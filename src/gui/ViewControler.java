@@ -102,7 +102,7 @@ public interface ViewControler
 
 	public boolean isBlackgroundBlack();
 
-	public void setBlackgroundBlack(boolean backgroudBlack);
+	public void setBackgroundBlack(boolean backgroudBlack);
 
 	public void setMatchColor(Color color);
 

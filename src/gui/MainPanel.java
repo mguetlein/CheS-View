@@ -132,7 +132,6 @@ public class MainPanel extends JPanel implements ViewControler
 	boolean highlighterLabelsVisible = false;
 	HighlightSorting highlightSorting = HighlightSorting.Median;
 	HighlightAutomatic highlightAutomatic;
-	boolean backgroundBlack = true;
 	HighlightMode highlightMode = HighlightMode.ColorCompounds;
 	boolean highlightLogEnabled = false;
 	boolean antialiasEnabled = ScreenSetup.SETUP.isAntialiasOn();
@@ -185,6 +184,8 @@ public class MainPanel extends JPanel implements ViewControler
 		View.init(jmolPanel, guiControler, this, clustering);
 		view = View.instance;
 		highlightAutomatic = new HighlightAutomatic(this, clustering);
+
+		setBackgroundBlack(ComponentFactory.isBackgroundBlack(), true);
 
 		// mouse listener to click atoms or clusters (zoom in)
 		jmolPanel.addMouseListener(new MouseAdapter()
@@ -878,6 +879,12 @@ public class MainPanel extends JPanel implements ViewControler
 
 	public void init(ClusteringData clusteredDataset)
 	{
+		if (clustering.numClusters() > 0)
+		{
+			View.instance.suspendAnimation("clearing");
+			clustering.clear();
+			View.instance.proceedAnimation("clearing");
+		}
 		clustering.newClustering(clusteredDataset);
 
 		clustering.getClusterActive().addListener(new PropertyChangeListener()
@@ -1471,20 +1478,19 @@ public class MainPanel extends JPanel implements ViewControler
 	@Override
 	public boolean isBlackgroundBlack()
 	{
-		return backgroundBlack;
+		return ComponentFactory.isBackgroundBlack();
 	}
 
 	@Override
-	public void setBlackgroundBlack(boolean backgroundBlack)
+	public void setBackgroundBlack(boolean backgroundBlack)
 	{
-		setBlackgroundBlack(backgroundBlack, false);
+		setBackgroundBlack(backgroundBlack, false);
 	}
 
-	public void setBlackgroundBlack(boolean backgroundBlack, boolean forceUpdate)
+	public void setBackgroundBlack(boolean backgroundBlack, boolean forceUpdate)
 	{
-		if (backgroundBlack != this.backgroundBlack || forceUpdate)
+		if (backgroundBlack != ComponentFactory.isBackgroundBlack() || forceUpdate)
 		{
-			this.backgroundBlack = backgroundBlack;
 			ComponentFactory.setBackgroundBlack(backgroundBlack);
 			view.setBackground(ComponentFactory.BACKGROUND);
 			updateAllClustersAndCompounds(false);

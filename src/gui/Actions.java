@@ -548,7 +548,7 @@ public class Actions
 			@Override
 			public void action()
 			{
-				viewControler.setBlackgroundBlack((Boolean) getActionValue());
+				viewControler.setBackgroundBlack((Boolean) getActionValue());
 			}
 
 			@Override

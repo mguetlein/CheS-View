@@ -55,7 +55,21 @@ public class CheSViewer implements GUIControler
 
 	List<PropertyChangeListener> listeners = new ArrayList<PropertyChangeListener>();
 
-	public CheSViewer(ClusteringData clusteredDataset)
+	private static CheSViewer instance;
+
+	public static void show(ClusteringData clusteringData)
+	{
+		if (instance == null)
+			instance = new CheSViewer(clusteringData);
+		else
+		{
+			instance.clusterPanel.init(clusteringData);
+			if (!instance.isFullScreen() && !instance.frame.isVisible())
+				instance.frame.setVisible(true);
+		}
+	}
+
+	private CheSViewer(ClusteringData clusteredDataset)
 	{
 		oldSize = ScreenSetup.SETUP.getViewerSize();
 		if (oldSize == null)
@@ -268,5 +282,13 @@ public class CheSViewer implements GUIControler
 			return frame.getHeight();
 		else
 			return oldSize.height;
+	}
+
+	public static JFrame getFrame()
+	{
+		if (instance == null)
+			return null;
+		else
+			return instance.frame;
 	}
 }
