@@ -27,21 +27,23 @@ import dataInterface.CompoundProperty.Type;
 
 public class ExportData
 {
-	public static void exportClusters(Clustering clustering, int clusterIndices[])
+	public static void exportClusters(Clustering clustering, int clusterIndices[], CompoundProperty logSelectedFeature)
 	{
 		List<Integer> l = new ArrayList<Integer>();
 		for (int i = 0; i < clusterIndices.length; i++)
 			for (Compound m : clustering.getCluster(clusterIndices[i]).getCompounds())
 				l.add(m.getCompoundOrigIndex());
-		exportCompounds(clustering, l);
+		exportCompounds(clustering, l, logSelectedFeature);
 	}
 
-	public static void exportCompounds(Clustering clustering, List<Integer> compoundIndices)
+	public static void exportCompounds(Clustering clustering, List<Integer> compoundIndices,
+			CompoundProperty logSelectedFeature)
 	{
-		exportCompounds(clustering, ArrayUtil.toPrimitiveIntArray(compoundIndices));
+		exportCompounds(clustering, ArrayUtil.toPrimitiveIntArray(compoundIndices), logSelectedFeature);
 	}
 
-	public static void exportCompounds(Clustering clustering, int compoundOrigIndices[])
+	public static void exportCompounds(Clustering clustering, int compoundOrigIndices[],
+			CompoundProperty logSelectedFeature)
 	{
 		String dir = clustering.getOrigLocalPath();
 		if (dir == null)
@@ -103,6 +105,14 @@ public class ExportData
 		if (selectedProps == null)//pressed cancel
 			return;
 
+		if (logSelectedFeature != null)
+		{
+			int ret = JOptionPane.showConfirmDialog(Settings.TOP_LEVEL_FRAME, "Add log-transformation of '"
+					+ logSelectedFeature + "'");
+			if (ret != JOptionPane.OK_OPTION)
+				logSelectedFeature = null;
+		}
+
 		DoubleKeyHashMap<Integer, Object, Object> featureValues = new DoubleKeyHashMap<Integer, Object, Object>();
 		for (Integer j : compoundOrigIndices)
 		{
@@ -152,6 +162,13 @@ public class ExportData
 						featureValues.put(j, p, clustering.getCompounds().get(j).getStringValue(p) == null ? ""
 								: clustering.getCompounds().get(j).getStringValue(p));
 				}
+
+			if (logSelectedFeature != null)
+				featureValues.put(
+						j,
+						logSelectedFeature + "_log",
+						clustering.getCompounds().get(j).getDoubleValue(logSelectedFeature) == null ? "" : Math
+								.log10(clustering.getCompounds().get(j).getDoubleValue(logSelectedFeature)));
 		}
 		List<Object> skipUniform = new ArrayList<Object>();
 		List<Object> skipNull = new ArrayList<Object>();

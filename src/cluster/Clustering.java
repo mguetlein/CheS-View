@@ -559,12 +559,12 @@ public class Clustering implements Zoomable
 		}
 	}
 
-	public void chooseClustersToExport()
+	public void chooseClustersToExport(CompoundProperty logProp)
 	{
 		int[] indices = clusterChooser("Export Cluster/s",
 				"Select the clusters you want to export. The compounds will be stored in a single SDF/CSV file.");
 		if (indices != null)
-			ExportData.exportClusters(this, indices);
+			ExportData.exportClusters(this, indices, logProp);
 	}
 
 	public void chooseCompoundsToRemove()
@@ -576,7 +576,7 @@ public class Clustering implements Zoomable
 		removeCompounds(indices);
 	}
 
-	public void chooseCompoundsToExport()
+	public void chooseCompoundsToExport(CompoundProperty logProp)
 	{
 		int indices[] = compoundChooser("Export Compounds/s",
 				"Select the compounds you want to export. The compounds will be stored in a single SDF/CSV file.");
@@ -585,7 +585,7 @@ public class Clustering implements Zoomable
 		List<Integer> l = new ArrayList<Integer>();
 		for (int i = 0; i < indices.length; i++)
 			l.add(getCompoundWithCompoundIndex(indices[i]).getCompoundOrigIndex());
-		ExportData.exportCompounds(this, l);
+		ExportData.exportCompounds(this, l, logProp);
 	}
 
 	public String getName()

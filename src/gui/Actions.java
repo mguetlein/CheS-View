@@ -1,6 +1,7 @@
 package gui;
 
 import gui.MainPanel.HighlightMode;
+import gui.util.CompoundPropertyHighlighter;
 
 import java.awt.Color;
 import java.awt.Desktop;
@@ -366,6 +367,15 @@ public class Actions
 		}
 	}
 
+	private CompoundProperty getLogProp()
+	{
+		CompoundProperty logProp = null;
+		if (viewControler.isHighlightLogEnabled()
+				&& viewControler.getHighlighter() instanceof CompoundPropertyHighlighter)
+			logProp = ((CompoundPropertyHighlighter) viewControler.getHighlighter()).getProperty();
+		return logProp;
+	}
+
 	private void buildActions()
 	{
 		new ActionCreator(FILE_NEW)
@@ -450,9 +460,9 @@ public class Actions
 				int[] m = (int[]) ((AbstractAction) actions.get(REMOVE_CURRENT)).getValue("Compound");
 				Integer c = (Integer) ((AbstractAction) actions.get(REMOVE_CURRENT)).getValue("Cluster");
 				if (m.length > 0)
-					ExportData.exportCompounds(clustering, m);
+					ExportData.exportCompounds(clustering, m, getLogProp());
 				else if (c != null)
-					ExportData.exportClusters(clustering, new int[] { c });
+					ExportData.exportClusters(clustering, new int[] { c }, getLogProp());
 			}
 		};
 		new ActionCreator(EXPORT_CLUSTERS)
@@ -460,7 +470,7 @@ public class Actions
 			@Override
 			public void action()
 			{
-				clustering.chooseClustersToExport();
+				clustering.chooseClustersToExport(getLogProp());
 			}
 		};
 		new ActionCreator(EXPORT_COMPOUNDS)
@@ -468,7 +478,7 @@ public class Actions
 			@Override
 			public void action()
 			{
-				clustering.chooseCompoundsToExport();
+				clustering.chooseCompoundsToExport(getLogProp());
 			}
 		};
 		new ActionCreator(EXPORT_IMAGE)
