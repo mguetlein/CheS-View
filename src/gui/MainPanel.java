@@ -1528,7 +1528,7 @@ public class MainPanel extends JPanel implements ViewControler
 			for (String names : new String[] { "(?i)^name$", "(?i).*name.*", "(?i)^id$", "(?i).*id.*", "(?i)^cas$",
 					"(?i).*cas.*" })
 			{
-				for (List<CompoundProperty> props : new List[] { clustering.getFeatures(), clustering.getProperties() })
+				for (List<CompoundProperty> props : new List[] { clustering.getProperties(), clustering.getFeatures() })
 				{
 					for (CompoundProperty p : props)
 					{

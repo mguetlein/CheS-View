@@ -56,11 +56,20 @@ public class Compound implements Zoomable, Comparable<Compound>, DoubleNameEleme
 	{
 		this.compoundIndex = compoundIndex;
 		this.compoundData = compoundData;
-		bitSet = View.instance.getCompoundBitSet(compoundIndex);
-		dotModeHideBitSet = View.instance.getDotModeHideBitSet(bitSet);
-		dotModeDisplayBitSet = View.instance.getDotModeDisplayBitSet(bitSet);
-		origCenter = new Vector3f(View.instance.getAtomSetCenter(bitSet));
-		origDotPosition = new Vector3f(View.instance.getAtomSetCenter(getDotModeDisplayBitSet()));
+		if (View.instance != null)
+		{
+			bitSet = View.instance.getCompoundBitSet(compoundIndex);
+			dotModeHideBitSet = View.instance.getDotModeHideBitSet(bitSet);
+			dotModeDisplayBitSet = View.instance.getDotModeDisplayBitSet(bitSet);
+			origCenter = new Vector3f(View.instance.getAtomSetCenter(bitSet));
+			origDotPosition = new Vector3f(View.instance.getAtomSetCenter(getDotModeDisplayBitSet()));
+		}
+		else
+		{
+			//for export without graphics
+			origCenter = null;
+			origDotPosition = null;
+		}
 		smartsMatches = new HashMap<String, BitSet>();
 		setDescriptor(ViewControler.COMPOUND_INDEX_PROPERTY);
 	}

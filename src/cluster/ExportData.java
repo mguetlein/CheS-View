@@ -1,6 +1,7 @@
 package cluster;
 
 import gui.CheckBoxSelectDialog;
+import gui.LaunchCheSMapper;
 import io.SDFUtil;
 
 import java.io.BufferedWriter;
@@ -10,62 +11,123 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Properties;
 import java.util.Set;
 
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 
+import main.CheSMapping;
 import main.Settings;
 import util.ArrayUtil;
 import util.DoubleKeyHashMap;
 import util.FileUtil;
+import util.StringUtil;
+import workflow.MappingWorkflow;
+import workflow.MappingWorkflow.DescriptorSelection;
+import data.ClusteringData;
 import data.DatasetFile;
 import data.IntegratedProperty;
+import data.cdk.CDKProperty;
+import data.obdesc.OBDescriptorProperty;
+import data.obfingerprints.OBFingerprintProperty;
 import dataInterface.CompoundData;
 import dataInterface.CompoundProperty;
 import dataInterface.CompoundProperty.Type;
 
 public class ExportData
 {
+	public static void exportAll(Clustering clustering, CompoundProperty logSelectedFeature, Script script)
+	{
+		List<Integer> l = new ArrayList<Integer>();
+		for (Compound m : clustering.getCompounds(false))
+			l.add(m.getCompoundOrigIndex());
+		exportCompounds(clustering, l, logSelectedFeature, script);
+	}
+
 	public static void exportClusters(Clustering clustering, int clusterIndices[], CompoundProperty logSelectedFeature)
 	{
 		List<Integer> l = new ArrayList<Integer>();
 		for (int i = 0; i < clusterIndices.length; i++)
 			for (Compound m : clustering.getCluster(clusterIndices[i]).getCompounds())
 				l.add(m.getCompoundOrigIndex());
-		exportCompounds(clustering, l, logSelectedFeature);
+		exportCompounds(clustering, l, logSelectedFeature, null);
 	}
 
 	public static void exportCompounds(Clustering clustering, List<Integer> compoundIndices,
 			CompoundProperty logSelectedFeature)
 	{
-		exportCompounds(clustering, ArrayUtil.toPrimitiveIntArray(compoundIndices), logSelectedFeature);
+		exportCompounds(clustering, ArrayUtil.toPrimitiveIntArray(compoundIndices), logSelectedFeature, null);
+	}
+
+	public static void exportCompounds(Clustering clustering, List<Integer> compoundIndices,
+			CompoundProperty logSelectedFeature, Script script)
+	{
+		exportCompounds(clustering, ArrayUtil.toPrimitiveIntArray(compoundIndices), logSelectedFeature, script);
 	}
 
 	public static void exportCompounds(Clustering clustering, int compoundOrigIndices[],
 			CompoundProperty logSelectedFeature)
 	{
-		String dir = clustering.getOrigLocalPath();
-		if (dir == null)
-			dir = System.getProperty("user.home");
-		JFileChooser f = new JFileChooser(dir);//origSDFFile);
-		f.setDialogTitle("Save to SDF/CSV file (according to filename extension)");
-		int i = f.showSaveDialog(Settings.TOP_LEVEL_FRAME);
-		if (i != JFileChooser.APPROVE_OPTION)
-			return;
-		String dest = f.getSelectedFile().getAbsolutePath();
-		if (!f.getSelectedFile().exists() && !FileUtil.getFilenamExtension(dest).matches("(?i)sdf")
-				&& !FileUtil.getFilenamExtension(dest).matches("(?i)csv"))
-			dest += ".sdf";
-		boolean csvExport = FileUtil.getFilenamExtension(dest).matches("(?i)csv");
+		exportCompounds(clustering, compoundOrigIndices, logSelectedFeature, null);
+	}
 
-		if (new File(dest).exists())
+	public static class Script
+	{
+		String dest;
+		boolean allFeatures;
+		public boolean skipEqualValues;
+		public boolean skipNullValues;
+
+		public Script(String dest, boolean allFeatures, boolean skipEqualValues, boolean skipNullValues)
 		{
-			if (JOptionPane
-					.showConfirmDialog(Settings.TOP_LEVEL_FRAME, "File '" + dest + "' already exists, overwrite?",
-							"Warning", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE) != JOptionPane.YES_OPTION)
-				return;
+			this.dest = dest;
+			this.allFeatures = allFeatures;
+			this.skipEqualValues = skipEqualValues;
+			this.skipNullValues = skipNullValues;
 		}
+	}
+
+	private static String propToExportString(CompoundProperty p)
+	{
+		if (p instanceof CDKProperty)
+			return "CDK:" + p.toString();
+		if (p instanceof OBDescriptorProperty)
+			return "OB:" + p.toString();
+		if (p instanceof OBFingerprintProperty)
+			return "OB-" + ((OBFingerprintProperty) p).getOBType() + ":" + p.toString();
+		return p.toString();
+	}
+
+	public static void exportCompounds(Clustering clustering, int compoundOrigIndices[],
+			CompoundProperty logSelectedFeature, Script script)
+	{
+		String dest;
+		if (script != null)
+			dest = script.dest;
+		else
+		{
+			String dir = clustering.getOrigLocalPath();
+			if (dir == null)
+				dir = System.getProperty("user.home");
+			JFileChooser f = new JFileChooser(dir);//origSDFFile);
+			f.setDialogTitle("Save to SDF/CSV file (according to filename extension)");
+			int i = f.showSaveDialog(Settings.TOP_LEVEL_FRAME);
+			if (i != JFileChooser.APPROVE_OPTION)
+				return;
+			dest = f.getSelectedFile().getAbsolutePath();
+			if (!f.getSelectedFile().exists() && !FileUtil.getFilenamExtension(dest).matches("(?i)sdf")
+					&& !FileUtil.getFilenamExtension(dest).matches("(?i)csv"))
+				dest += ".sdf";
+			if (new File(dest).exists())
+			{
+				if (JOptionPane.showConfirmDialog(Settings.TOP_LEVEL_FRAME, "File '" + dest
+						+ "' already exists, overwrite?", "Warning", JOptionPane.YES_NO_OPTION,
+						JOptionPane.WARNING_MESSAGE) != JOptionPane.YES_OPTION)
+					return;
+			}
+		}
+		boolean csvExport = FileUtil.getFilenamExtension(dest).matches("(?i)csv");
 		// file may be overwritten, and then reloaded -> clear
 		DatasetFile.clearFilesWith3DSDF(dest);
 
@@ -82,29 +144,30 @@ public class ExportData
 
 		if (availableProps.size() == 0) // no features to select
 			selectedProps = new CompoundProperty[0];
+		if (script != null && script.allFeatures)
+			selectedProps = ArrayUtil.toArray(CompoundProperty.class, availableProps);
 		else
 		{
+			String title;
+			String desc;
 			if (csvExport)
 			{
-				selectedProps = ArrayUtil.cast(CompoundProperty.class, CheckBoxSelectDialog.select(
-						Settings.TOP_LEVEL_FRAME, "Select features for CSV export", null,
-						ArrayUtil.toArray(CompoundProperty.class, availableProps), true));
+				title = "Select features for CSV export";
+				desc = null;
 			}
 			else
 			{
-				selectedProps = ArrayUtil
-						.cast(CompoundProperty.class,
-								CheckBoxSelectDialog
-										.select(Settings.TOP_LEVEL_FRAME,
-												"Select features for SDF export",
-												integratedPropsAlreadyIncluded ? "(Features that are integrated in the original SDF file, will be included in the exported SDF as well.)"
-														: "",
-												ArrayUtil.toArray(CompoundProperty.class, availableProps), true));
+				title = "Select features for SDF export";
+				desc = integratedPropsAlreadyIncluded ? "(Features that are integrated in the original SDF file, will be included in the exported SDF as well.)"
+						: null;
 			}
+			selectedProps = ArrayUtil.cast(
+					CompoundProperty.class,
+					CheckBoxSelectDialog.select(Settings.TOP_LEVEL_FRAME, title, desc,
+							ArrayUtil.toArray(CompoundProperty.class, availableProps), true));
+			if (selectedProps == null)//pressed cancel
+				return;
 		}
-		if (selectedProps == null)//pressed cancel
-			return;
-
 		if (logSelectedFeature != null)
 		{
 			int ret = JOptionPane.showConfirmDialog(Settings.TOP_LEVEL_FRAME, "Add log-transformation of '"
@@ -155,18 +218,24 @@ public class ExportData
 			for (CompoundProperty p : selectedProps)
 				if (!p.getName().matches("(?i)smiles"))
 				{
+					Object val;
 					if (p.getType() == Type.NUMERIC)
-						featureValues.put(j, p, clustering.getCompounds().get(j).getDoubleValue(p) == null ? ""
-								: clustering.getCompounds().get(j).getDoubleValue(p));
+					{
+						val = clustering.getCompounds().get(j).getDoubleValue(p);
+						if (val != null && p.isIntegerInMappedDataset())
+							val = StringUtil.formatDouble((Double) val, 0);
+					}
 					else
-						featureValues.put(j, p, clustering.getCompounds().get(j).getStringValue(p) == null ? ""
-								: clustering.getCompounds().get(j).getStringValue(p));
+						val = clustering.getCompounds().get(j).getStringValue(p);
+					if (val == null)
+						val = "";
+					featureValues.put(j, propToExportString(p), val);
 				}
 
 			if (logSelectedFeature != null)
 				featureValues.put(
 						j,
-						logSelectedFeature + "_log",
+						propToExportString(logSelectedFeature) + "_log",
 						clustering.getCompounds().get(j).getDoubleValue(logSelectedFeature) == null ? "" : Math
 								.log10(clustering.getCompounds().get(j).getDoubleValue(logSelectedFeature)));
 		}
@@ -202,29 +271,46 @@ public class ExportData
 			}
 		if (skipUniform.size() > 0)
 		{
-			String msg = skipUniform.size() + " feature/s have equal values for each compound.\nSkip from export?";
-			int sel = JOptionPane.showConfirmDialog(Settings.TOP_LEVEL_FRAME, msg, "Skip feature",
-					JOptionPane.YES_NO_OPTION);
-			if (sel == JOptionPane.YES_OPTION)
+			boolean doSkip;
+			if (script != null && script.skipEqualValues)
+				doSkip = true;
+			else
+			{
+				String msg = skipUniform.size() + " feature/s have equal values for each compound.\nSkip from export?";
+				int sel = JOptionPane.showConfirmDialog(Settings.TOP_LEVEL_FRAME, msg, "Skip feature",
+						JOptionPane.YES_NO_OPTION);
+				doSkip = sel == JOptionPane.YES_OPTION;
+			}
+			if (doSkip)
 				for (Object p : skipUniform)
 				{
 					if (skipNull.contains(p))
 						skipNull.remove(p);
+					Settings.LOGGER.info("uniform values, skipping from export: " + p + " ");
 					skip.add(p);
 				}
 		}
 		if (skipNull.size() > 0)
 		{
-			String msg = skipNull.size() + " feature/s have null values.\nSkip from export?";
-			int sel = JOptionPane.showConfirmDialog(Settings.TOP_LEVEL_FRAME, msg, "Skip feature",
-					JOptionPane.YES_NO_OPTION);
-			if (sel == JOptionPane.YES_OPTION)
+			boolean doSkip;
+			if (script != null && script.skipNullValues)
+				doSkip = true;
+			else
+			{
+				String msg = skipNull.size() + " feature/s have null values.\nSkip from export?";
+				int sel = JOptionPane.showConfirmDialog(Settings.TOP_LEVEL_FRAME, msg, "Skip feature",
+						JOptionPane.YES_NO_OPTION);
+				doSkip = sel == JOptionPane.YES_OPTION;
+			}
+			if (doSkip)
 				for (Object p : skipNull)
+				{
+					Settings.LOGGER.info("uniform values, skipping from export: " + p + " ");
 					skip.add(p);
+				}
 		}
 		for (Object p : skip)
 		{
-			Settings.LOGGER.info("Skipping from export: " + p);
 			for (Integer j : compoundOrigIndices)
 				featureValues.remove(j, p);
 		}
@@ -285,7 +371,42 @@ public class ExportData
 		}
 		else
 			SDFUtil.filter(clustering.getOrigSdfFile(), dest, compoundOrigIndices, featureValues);
-		JOptionPane.showMessageDialog(Settings.TOP_LEVEL_FRAME, "Successfully exported " + compoundOrigIndices.length
-				+ " compounds to\n" + dest, "Export done", JOptionPane.INFORMATION_MESSAGE);
+
+		String msg = "Successfully exported " + compoundOrigIndices.length + " compounds to\n" + dest;
+		if (script != null)
+			System.out.println("\n" + msg);
+		else
+			JOptionPane
+					.showMessageDialog(Settings.TOP_LEVEL_FRAME, msg, "Export done", JOptionPane.INFORMATION_MESSAGE);
 	}
+
+	public static void scriptExport(String datasetFile, DescriptorSelection features, String outfile)
+	{
+		Properties props = MappingWorkflow.createMappingWorkflow(datasetFile, features, null, null);
+		CheSMapping mapping = MappingWorkflow.createMappingFromMappingWorkflow(props, "");
+
+		ClusteringData clusteringData = mapping.doMapping();
+		Clustering clustering = new Clustering();
+		clustering.newClustering(clusteringData);
+
+		//		LaunchCheSMapper.start(mapping);
+		//		while (CheSViewer.getFrame() == null || CheSViewer.getClustering() == null)
+		//			ThreadUtil.sleep(100);
+		//		ExportData.exportAll(CheSViewer.getClustering(), null, new Script(outfile, true, true, true));
+
+		ExportData.exportAll(clustering, null, new Script(outfile, true, true, true));
+		//LaunchCheSMapper.exit(CheSViewer.getFrame());
+		LaunchCheSMapper.exit(null);
+	}
+
+	public static void main(String[] args)
+	{
+		LaunchCheSMapper.init();
+
+		//String input = "/home/martin/data/valium.csv";
+		String input = "/home/martin/data/caco2.sdf";
+		scriptExport(input, new DescriptorSelection("integrated"), "/tmp/data.csv");
+
+	}
+
 }

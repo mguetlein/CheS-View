@@ -119,9 +119,12 @@ public class Clustering implements Zoomable
 		for (Cluster c : clusters)
 			numCompounds += c.size();
 
-		bitSetAll = new BitSet();
-		for (Cluster c : clusters)
-			bitSetAll.or(c.getBitSet());
+		if (View.instance != null) // for export without graphics
+		{
+			bitSetAll = new BitSet();
+			for (Cluster c : clusters)
+				bitSetAll.or(c.getBitSet());
+		}
 
 		compoundIndexToCluster = new HashMap<Integer, Cluster>();
 		compoundIndexToCompound = new HashMap<Integer, Compound>();
@@ -375,11 +378,14 @@ public class Clustering implements Zoomable
 			else
 				filename = d.getCluster(0).getFilename();
 			TaskProvider.update("Loading dataset into Jmol");
-			View.instance.loadCompoundFromFile(null, filename, null, null, false, null, null, 0);
 
-			if (d.getNumCompounds(true) != View.instance.getCompoundCount())
-				throw new Error("illegal num compounds, loaded by Jmol: " + View.instance.getCompoundCount()
-						+ " != from wizard: " + d.getNumCompounds(true));
+			if (View.instance != null) // for export without graphics
+			{
+				View.instance.loadCompoundFromFile(null, filename, null, null, false, null, null, 0);
+				if (d.getNumCompounds(true) != View.instance.getCompoundCount())
+					throw new Error("illegal num compounds, loaded by Jmol: " + View.instance.getCompoundCount()
+							+ " != from wizard: " + d.getNumCompounds(true));
+			}
 		}
 
 		int num = 0;
@@ -393,16 +399,21 @@ public class Clustering implements Zoomable
 			num += d.getCluster(i).getSize();
 			//			TaskProvider.update("Loading cluster dataset " + (i + 1) + "/" + d.getNumClusters());
 		}
-		TaskProvider.update(90, "Loading graphics");
 
-		updatePositions();
+		update();
+		if (View.instance != null) // for export without graphics
+		{
+			TaskProvider.update(90, "Loading graphics");
+			updatePositions();
+		}
 
 		suppresAddEvent = false;
 
 		fire(CLUSTER_ADDED, old, clusters);
 		fire(CLUSTER_NEW, old, clusters);
 
-		View.instance.scriptWait("hover off");
+		if (View.instance != null) // for export without graphics
+			View.instance.scriptWait("hover off");
 	}
 
 	public void updatePositions()

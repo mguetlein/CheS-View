@@ -67,7 +67,8 @@ public class Cluster implements Zoomable
 		for (int i = begin; i < endExcl; i++)
 			compounds.add(new Compound(i, clusterData.getCompounds().get(mCount++)));
 
-		update();
+		if (View.instance != null) // for export without graphics
+			update();
 	}
 
 	boolean alignedCompoundsCalibrated = false;

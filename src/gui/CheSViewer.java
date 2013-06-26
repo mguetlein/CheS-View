@@ -291,4 +291,12 @@ public class CheSViewer implements GUIControler
 		else
 			return instance.frame;
 	}
+
+	public static Clustering getClustering()
+	{
+		if (instance == null)
+			return null;
+		else
+			return instance.clustering;
+	}
 }
