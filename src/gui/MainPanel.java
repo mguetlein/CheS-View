@@ -58,7 +58,8 @@ public class MainPanel extends JPanel implements ViewControler
 	private boolean spinEnabled = false;
 	private boolean hideHydrogens = true;
 	private Style style = Style.wireframe;
-	boolean hideUnselected = false;
+
+	HideCompounds hideCompounds = HideCompounds.nonActive;
 	Color matchColor = Color.ORANGE;
 	CompoundProperty compoundDescriptorProperty = null;
 	List<JComponent> ignoreMouseMovementPanels = new ArrayList<JComponent>();
@@ -594,19 +595,23 @@ public class MainPanel extends JPanel implements ViewControler
 		boolean showHoverBox = false;
 		boolean showActiveBox = false;
 		boolean showLabel = false;
-		boolean translucent;
+		boolean translucent = false;
 
 		// inside the active cluster
 		if (clus == activeCluster)
 		{
-			if (!clustering.isCompoundWatchedFromCluster(clus) && !clustering.isCompoundActiveFromCluster(clus))
-				translucent = false;
-			else
+			if (hideCompounds == HideCompounds.nonActive)
 			{
-				if (clustering.getCompoundWatched().isSelected(compoundIndex)
-						|| clustering.getCompoundActive().isSelected(compoundIndex))
-					translucent = false;
-				else
+				if (clustering.isCompoundActiveFromCluster(clus)
+						&& !clustering.getCompoundWatched().isSelected(compoundIndex)
+						&& !clustering.getCompoundActive().isSelected(compoundIndex))
+					translucent = true;
+			}
+			else if (hideCompounds == HideCompounds.nonWatched)
+			{
+				if ((clustering.isCompoundWatchedFromCluster(clus) || clustering.isCompoundActiveFromCluster(clus))
+						&& !clustering.getCompoundWatched().isSelected(compoundIndex)
+						&& !clustering.getCompoundActive().isSelected(compoundIndex))
 					translucent = true;
 			}
 
@@ -631,10 +636,9 @@ public class MainPanel extends JPanel implements ViewControler
 					&& (compounds.indexOf(m) == 0 || !clustering.isSuperimposed()))
 				showLabel = true;
 
-			translucent = false;
 			if (clustering.isSuperimposed())
 				translucent = (compounds.indexOf(m) > 0);
-			else
+			else if (hideCompounds != HideCompounds.none)
 			{
 				if (clustering.isCompoundWatched() || clustering.isCompoundActive())
 				{
@@ -686,7 +690,10 @@ public class MainPanel extends JPanel implements ViewControler
 				if (highlightMode == HighlightMode.Spheres)
 					sphereVisible = false;
 			}
-			else if (hideUnselected || clustering.getCompoundActive().getSelected() != -1)
+			//			else if (hideCompounds != HideCompounds.none && ())
+			//			else if (clus  hideCompounds (hideCompounds == HideCompounds.nonActive && clustering.getCompoundActive().getSelected() != -1)
+			//					|| (hideCompounds == HideCompounds.nonWatched && clustering.getCompoundWatched().getSelected() != -1))
+			else
 			{
 				if (clus == activeCluster)
 				{
@@ -700,8 +707,8 @@ public class MainPanel extends JPanel implements ViewControler
 				else
 					translucency = Translucency.ModerateStrong;
 			}
-			else
-				translucency = Translucency.None;
+			//			else
+			//				translucency = Translucency.None;
 		}
 		else
 			translucency = Translucency.None;
@@ -1446,17 +1453,17 @@ public class MainPanel extends JPanel implements ViewControler
 	}
 
 	@Override
-	public boolean isHideUnselected()
+	public HideCompounds getHideCompounds()
 	{
-		return hideUnselected;
+		return hideCompounds;
 	}
 
 	@Override
-	public void setHideUnselected(boolean hide)
+	public void setHideCompounds(HideCompounds hide)
 	{
-		if (this.hideUnselected != hide)
+		if (this.hideCompounds != hide)
 		{
-			hideUnselected = hide;
+			hideCompounds = hide;
 			updateAllClustersAndCompounds(false);
 			fireViewChange(PROPERTY_HIDE_UNSELECT_CHANGED);
 		}
@@ -1526,7 +1533,7 @@ public class MainPanel extends JPanel implements ViewControler
 		if (compoundDescriptorProperty == null)
 		{
 			for (String names : new String[] { "(?i)^name$", "(?i).*name.*", "(?i)^id$", "(?i).*id.*", "(?i)^cas$",
-					"(?i).*cas.*" })
+					"(?i).*cas.*", "(?i).*title.*" })
 			{
 				for (List<CompoundProperty> props : new List[] { clustering.getProperties(), clustering.getFeatures() })
 				{

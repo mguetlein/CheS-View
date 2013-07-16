@@ -9,13 +9,16 @@ import java.util.List;
 import java.util.Vector;
 
 import javax.swing.Action;
+import javax.swing.ButtonGroup;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
+import javax.swing.JRadioButtonMenuItem;
 import javax.swing.ToolTipManager;
 
+import main.Settings;
 import cluster.Clustering;
 
 public class MenuBar extends JMenuBar
@@ -32,11 +35,6 @@ public class MenuBar extends JMenuBar
 		Action action;
 
 		public DefaultMyMenuItem(Action action)
-		{
-			this.action = action;
-		}
-
-		public DefaultMyMenuItem(Action action, boolean checkbox)
 		{
 			this.action = action;
 		}
@@ -64,7 +62,6 @@ public class MenuBar extends JMenuBar
 			this.name = name;
 			for (Action action : actions)
 				items.add(new DefaultMyMenuItem(action));
-
 		}
 
 		public MyMenu(String name, MyMenuItem... items)
@@ -153,7 +150,8 @@ public class MenuBar extends JMenuBar
 
 	MyMenuBar menuBar;
 
-	private final static String SPHERE_SETTINGS_MENU = "Sphere settings";
+	private final static String SPHERE_SETTINGS_MENU = Settings.text("action.highlight-sphere.settings");
+	private final static String VIEW_HIDE_MENU = Settings.text("action.view-hide.settings");
 	private final static String DATA_MENU = "Dataset properties";
 
 	public MenuBar(GUIControler guiControler, ViewControler viewControler, Clustering clustering)
@@ -169,7 +167,8 @@ public class MenuBar extends JMenuBar
 		MyMenu removeMenu = new MyMenu("Remove", a.getRemoveActions());
 		MyMenu exportMenu = new MyMenu("Export", a.getExportActions());
 		MyMenu editMenu = new MyMenu("Edit", removeMenu, exportMenu);
-		MyMenu viewMenu = new MyMenu("View", a.getViewActions());
+		MyMenu viewHideMenu = new MyMenu(VIEW_HIDE_MENU, a.getViewHideActions());
+		MyMenu viewMenu = new MyMenu("View", a.getViewActions(), viewHideMenu);
 		MyMenu highlightSphereMenu = new MyMenu(SPHERE_SETTINGS_MENU, a.getHighlightSphereActions());
 		MyMenu highlightMenu = new MyMenu("Highlighting", a.getHighlightActions(), highlightSphereMenu);
 		MyMenu helpMenu = new MyMenu("Help", a.getHelpActions());
@@ -181,7 +180,9 @@ public class MenuBar extends JMenuBar
 	private JMenuItem createItemFromAction(Action a)
 	{
 		JMenuItem m;
-		if (a.getValue(Action.SELECTED_KEY) instanceof Boolean)
+		if (a.getValue("is-radio-buttion") != null && (Boolean) a.getValue("is-radio-buttion"))
+			m = new JRadioButtonMenuItem(a);
+		else if (a.getValue(Action.SELECTED_KEY) instanceof Boolean)
 			m = new JCheckBoxMenuItem(a);
 		else
 			m = new JMenuItem(a);
@@ -220,8 +221,14 @@ public class MenuBar extends JMenuBar
 				else if (i instanceof MyMenu)
 				{
 					JMenu mm = new JMenu(((MyMenu) i).name);
+					ButtonGroup group = new ButtonGroup();
 					for (MyMenuItem ii : ((MyMenu) i).items)
-						mm.add(createItemFromAction(ii.getAction()));
+					{
+						JMenuItem item = createItemFromAction(ii.getAction());
+						if (item instanceof JRadioButtonMenuItem)
+							group.add(item);
+						mm.add(item);
+					}
 					createMenuListener(mm);
 					menu.add(mm);
 				}

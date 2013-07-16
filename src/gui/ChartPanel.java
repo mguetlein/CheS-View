@@ -24,6 +24,7 @@ import java.util.Set;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 
 import main.ScreenSetup;
 import util.ArrayUtil;
@@ -543,20 +544,26 @@ public class ChartPanel extends TransparentViewPanel
 		chartPanel.setOpaqueFalse();
 		chartPanel.setForegroundColor(ComponentFactory.FOREGROUND);
 		final AbstractFreeChartPanel finalP = chartPanel;
-		viewControler.addViewListener(new PropertyChangeListener()
-		{
-
-			@Override
-			public void propertyChange(PropertyChangeEvent evt)
-			{
-				if (evt.getPropertyName().equals(ViewControler.PROPERTY_BACKGROUND_CHANGED))
-					finalP.setForegroundColor(ComponentFactory.FOREGROUND);
-			}
-		});
 		chartPanel.setShadowVisible(false);
 		chartPanel.setIntegerTickUnits();
 		chartPanel.setBarWidthLimited();
 		chartPanel.setFontSize(ScreenSetup.SETUP.getFontSize());
+		SwingUtilities.invokeLater(new Runnable()
+		{
+			@Override
+			public void run()
+			{
+				viewControler.addViewListener(new PropertyChangeListener()
+				{
+					@Override
+					public void propertyChange(PropertyChangeEvent evt)
+					{
+						if (evt.getPropertyName().equals(ViewControler.PROPERTY_BACKGROUND_CHANGED))
+							finalP.setForegroundColor(ComponentFactory.FOREGROUND);
+					}
+				});
+			}
+		});
 	}
 
 	private void update(final boolean force)

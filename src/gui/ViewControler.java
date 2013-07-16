@@ -20,9 +20,14 @@ public interface ViewControler
 		wireframe, ballsAndSticks, dots
 	}
 
-	public boolean isHideUnselected();
+	public enum HideCompounds
+	{
+		none, nonWatched, nonActive
+	}
 
-	public void setHideUnselected(boolean hide);
+	public HideCompounds getHideCompounds();
+
+	public void setHideCompounds(HideCompounds hide);
 
 	public boolean isSpinEnabled();
 

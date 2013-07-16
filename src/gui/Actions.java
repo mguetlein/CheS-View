@@ -1,6 +1,7 @@
 package gui;
 
 import gui.MainPanel.HighlightMode;
+import gui.ViewControler.HideCompounds;
 import gui.util.CompoundPropertyHighlighter;
 
 import java.awt.Color;
@@ -73,16 +74,20 @@ public class Actions
 	private final static String[] EXPORT_ACTIONS = { EXPORT_CURRENT, EXPORT_CLUSTERS, EXPORT_COMPOUNDS, EXPORT_IMAGE,
 			EXPORT_WORKFLOW };
 
+	private final static String VIEW_HIDE_NONE = "view-hide-none";
+	private final static String VIEW_HIDE_NON_WATCHED = "view-hide-non-watched";
+	private final static String VIEW_HIDE_NON_ACTIVE = "view-hide-non-active";
+	private final static String[] VIEW_HIDE_ACTIONS = { VIEW_HIDE_NONE, VIEW_HIDE_NON_ACTIVE, VIEW_HIDE_NON_WATCHED };
+
 	private final static String VIEW_FULL_SCREEN = "view-full-screen";
 	private final static String VIEW_DRAW_HYDROGENS = "view-draw-hydrogens";
-	private final static String VIEW_HIDE_UNSELECTED = "view-hide-unselected";
 	private final static String VIEW_SPIN = "view-spin";
 	private final static String VIEW_BLACK_WHITE = "view-black-white";
 	private final static String VIEW_ANTIALIAS = "view-antialias";
 	private final static String VIEW_COMPOUND_DESCRIPTOR = "view-compound-descriptor";
 	private final static String VIEW_SELECT_LAST_FEATURE = "view-select-last-feature";
-	private final static String[] VIEW_ACTIONS = { VIEW_FULL_SCREEN, VIEW_DRAW_HYDROGENS, VIEW_HIDE_UNSELECTED,
-			VIEW_SPIN, VIEW_BLACK_WHITE, VIEW_ANTIALIAS, VIEW_COMPOUND_DESCRIPTOR, VIEW_SELECT_LAST_FEATURE };
+	private final static String[] VIEW_ACTIONS = { VIEW_FULL_SCREEN, VIEW_DRAW_HYDROGENS, VIEW_SPIN, VIEW_BLACK_WHITE,
+			VIEW_ANTIALIAS, VIEW_COMPOUND_DESCRIPTOR, VIEW_SELECT_LAST_FEATURE };
 
 	private final static String HIGHLIGHT_LOG = "highlight-log";
 	private final static String HIGHLIGHT_COLOR_MATCH = "highlight-color-match";
@@ -125,7 +130,7 @@ public class Actions
 		keys.put(EXPORT_WORKFLOW, KeyStroke.getKeyStroke(KeyEvent.VK_W, ActionEvent.ALT_MASK));
 		keys.put(VIEW_FULL_SCREEN, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, ActionEvent.ALT_MASK));
 		keys.put(VIEW_DRAW_HYDROGENS, KeyStroke.getKeyStroke(KeyEvent.VK_H, ActionEvent.ALT_MASK));
-		keys.put(VIEW_HIDE_UNSELECTED, KeyStroke.getKeyStroke(KeyEvent.VK_V, ActionEvent.ALT_MASK));
+		//		keys.put(VIEW_HIDE_UNSELECTED, KeyStroke.getKeyStroke(KeyEvent.VK_V, ActionEvent.ALT_MASK));
 		keys.put(VIEW_SPIN, KeyStroke.getKeyStroke(KeyEvent.VK_S, ActionEvent.ALT_MASK));
 		keys.put(VIEW_BLACK_WHITE, KeyStroke.getKeyStroke(KeyEvent.VK_B, ActionEvent.ALT_MASK));
 		keys.put(HIGHLIGHT_COLOR_MATCH, KeyStroke.getKeyStroke(KeyEvent.VK_C, ActionEvent.ALT_MASK));
@@ -314,6 +319,11 @@ public class Actions
 
 		public ActionCreator(String s, boolean enabled, final String changeProperty)
 		{
+			this(s, enabled, changeProperty, false);
+		}
+
+		public ActionCreator(String s, boolean enabled, final String changeProperty, boolean isRadio)
+		{
 			String name = null;
 			String tooltip = null;
 			if (ArrayUtil.indexOf(HIDDEN_ACTIONS, s) == -1)
@@ -331,6 +341,7 @@ public class Actions
 				}
 			};
 			action.putValue(TOOLTIP, tooltip);
+			action.putValue("is-radio-buttion", (Boolean) isRadio);
 			action.setEnabled(enabled);
 
 			if (changeProperty != null)
@@ -525,20 +536,50 @@ public class Actions
 				return !viewControler.isHideHydrogens();
 			}
 		};
-		new ActionCreator(VIEW_HIDE_UNSELECTED, ViewControler.PROPERTY_HIDE_UNSELECT_CHANGED)
+
+		new ActionCreator(VIEW_HIDE_NONE, true, ViewControler.PROPERTY_HIDE_UNSELECT_CHANGED, true)
 		{
 			@Override
 			public void action()
 			{
-				viewControler.setHideUnselected((Boolean) getActionValue());
+				viewControler.setHideCompounds(HideCompounds.none);
 			}
 
 			@Override
 			public Object getValueFromGUI()
 			{
-				return viewControler.isHideUnselected();
+				return viewControler.getHideCompounds() == HideCompounds.none;
 			}
 		};
+		new ActionCreator(VIEW_HIDE_NON_WATCHED, true, ViewControler.PROPERTY_HIDE_UNSELECT_CHANGED, true)
+		{
+			@Override
+			public void action()
+			{
+				viewControler.setHideCompounds(HideCompounds.nonWatched);
+			}
+
+			@Override
+			public Object getValueFromGUI()
+			{
+				return viewControler.getHideCompounds() == HideCompounds.nonWatched;
+			}
+		};
+		new ActionCreator(VIEW_HIDE_NON_ACTIVE, true, ViewControler.PROPERTY_HIDE_UNSELECT_CHANGED, true)
+		{
+			@Override
+			public void action()
+			{
+				viewControler.setHideCompounds(HideCompounds.nonActive);
+			}
+
+			@Override
+			public Object getValueFromGUI()
+			{
+				return viewControler.getHideCompounds() == HideCompounds.nonActive;
+			}
+		};
+
 		new ActionCreator(VIEW_SPIN, ViewControler.PROPERTY_SPIN_CHANGED)
 		{
 			@Override
@@ -864,6 +905,11 @@ public class Actions
 	public Action[] getRemoveActions()
 	{
 		return getActions(REMOVE_ACTIONS);
+	}
+
+	public Action[] getViewHideActions()
+	{
+		return getActions(VIEW_HIDE_ACTIONS);
 	}
 
 	public Action[] getViewActions()
