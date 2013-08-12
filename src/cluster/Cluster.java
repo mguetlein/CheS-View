@@ -326,9 +326,17 @@ public class Cluster implements Zoomable
 
 	public void remove(int[] compoundIndices)
 	{
+		System.out.println("to remove from cluster: " + ArrayUtil.toString(compoundIndices));
 		List<Compound> toDel = new ArrayList<Compound>();
+		int[] toDelIndex = new int[compoundIndices.length];
+
+		int count = 0;
 		for (int i : compoundIndices)
-			toDel.add(getCompoundWithCompoundIndex(i));
+		{
+			Compound c = getCompoundWithCompoundIndex(i);
+			toDel.add(c);
+			toDelIndex[count++] = getIndex(c);
+		}
 		BitSet bs = new BitSet();
 		for (Compound m : toDel)
 		{
@@ -338,8 +346,7 @@ public class Cluster implements Zoomable
 		View.instance.hide(bs);
 
 		compoundsOrderedByPropterty.clear();
-
-		clusterData.remove(compoundIndices);
+		clusterData.remove(toDelIndex);
 		update();
 	}
 
