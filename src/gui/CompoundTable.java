@@ -39,7 +39,6 @@ import util.ThreadUtil;
 import cluster.Clustering;
 import cluster.Compound;
 import dataInterface.CompoundProperty;
-import dataInterface.CompoundProperty.Type;
 
 public class CompoundTable extends BlockableFrame
 {
@@ -111,7 +110,7 @@ public class CompoundTable extends BlockableFrame
 				if (columnIndex == 1)
 					return Compound.class;
 				if (columnIndex >= NON_PROP_COLUMNS
-						&& props.get(columnIndex - NON_PROP_COLUMNS).getType() == Type.NUMERIC)
+						&& props.get(columnIndex - NON_PROP_COLUMNS).getType() == CompoundProperty.Type.NUMERIC)
 					return Double.class;
 				return String.class;
 			}
@@ -155,7 +154,7 @@ public class CompoundTable extends BlockableFrame
 			o[i++] = m.getSmiles();
 			for (CompoundProperty p : props)
 			{
-				if (p.getType() == Type.NUMERIC)
+				if (p.getType() == CompoundProperty.Type.NUMERIC)
 					o[i++] = m.getDoubleValue(p);
 				else
 					o[i++] = m.getStringValue(p);

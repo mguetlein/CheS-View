@@ -34,7 +34,6 @@ import util.DoubleArraySummary;
 import util.StringUtil;
 import cluster.Clustering;
 import dataInterface.CompoundProperty;
-import dataInterface.CompoundProperty.Type;
 
 public class FeatureTable extends BlockableFrame
 {
@@ -196,10 +195,11 @@ public class FeatureTable extends BlockableFrame
 			{
 				CompoundProperty p = ((CompoundPropertyHighlighter) h).getProperty();
 				o[i++] = (clustering.getFeatures().contains(p) ? "Yes" : "no");
-				o[i++] = p.getType() == Type.NUMERIC ? "Numeric" : (p.getType() == Type.NOMINAL ? "Nominal" : "undef.");
+				o[i++] = p.getType() == CompoundProperty.Type.NUMERIC ? "Numeric"
+						: (p.getType() == CompoundProperty.Type.NOMINAL ? "Nominal" : "undef.");
 				o[i++] = clustering.numMissingValues(p);
 				o[i++] = clustering.numDistinctValues(p);
-				if (p.getType() == Type.NUMERIC)
+				if (p.getType() == CompoundProperty.Type.NUMERIC)
 				{
 					DoubleArraySummary s = DoubleArraySummary.create(clustering.getDoubleValues(p));
 					o[i++] = s.getMin();
