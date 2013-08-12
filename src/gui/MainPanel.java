@@ -951,8 +951,13 @@ public class MainPanel extends JPanel implements ViewControler
 
 	private void updateClusteringNew()
 	{
-		Highlighter[] h = new Highlighter[] { Highlighter.DEFAULT_HIGHLIGHTER, Highlighter.CLUSTER_HIGHLIGHTER };
-		//, new CompoundPropertyHighlighter(clustering.getEmbeddingQualityProperty()) };
+		Highlighter[] h = new Highlighter[] { Highlighter.DEFAULT_HIGHLIGHTER };
+		if (clustering.getNumClusters() > 1)
+			h = ArrayUtil.concat(Highlighter.class, h, new Highlighter[] { Highlighter.CLUSTER_HIGHLIGHTER });
+		if (clustering.getEmbeddingQualityProperty() != null)
+			h = ArrayUtil.concat(Highlighter.class, h,
+					new Highlighter[] { new CompoundPropertyHighlighter(clustering.getEmbeddingQualityProperty()) });
+
 		if (clustering.getSubstructures().size() > 0)
 			for (SubstructureSmartsType type : clustering.getSubstructures())
 				h = ArrayUtil.concat(Highlighter.class, h, new Highlighter[] { new SubstructureHighlighter(type) });

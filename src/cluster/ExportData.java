@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
@@ -27,7 +28,6 @@ import workflow.MappingWorkflow;
 import workflow.MappingWorkflow.DescriptorSelection;
 import data.ClusteringData;
 import data.DatasetFile;
-import data.IntegratedProperty;
 import data.cdk.CDKProperty;
 import data.obdesc.OBDescriptorProperty;
 import data.obfingerprints.OBFingerprintProperty;
@@ -37,39 +37,43 @@ import dataInterface.CompoundProperty.Type;
 
 public class ExportData
 {
-	public static void exportAll(Clustering clustering, CompoundProperty logSelectedFeature, Script script)
+	public static void exportAll(Clustering clustering, CompoundProperty logSelectedFeature,
+			CompoundProperty compoundDescriptorFeature, Script script)
 	{
 		List<Integer> l = new ArrayList<Integer>();
 		for (Compound m : clustering.getCompounds(false))
 			l.add(m.getCompoundOrigIndex());
-		exportCompounds(clustering, l, logSelectedFeature, script);
+		exportCompounds(clustering, l, logSelectedFeature, compoundDescriptorFeature, script);
 	}
 
-	public static void exportClusters(Clustering clustering, int clusterIndices[], CompoundProperty logSelectedFeature)
+	public static void exportClusters(Clustering clustering, int clusterIndices[], CompoundProperty logSelectedFeature,
+			CompoundProperty compoundDescriptorFeature)
 	{
 		List<Integer> l = new ArrayList<Integer>();
 		for (int i = 0; i < clusterIndices.length; i++)
 			for (Compound m : clustering.getCluster(clusterIndices[i]).getCompounds())
 				l.add(m.getCompoundOrigIndex());
-		exportCompounds(clustering, l, logSelectedFeature, null);
+		exportCompounds(clustering, l, logSelectedFeature, compoundDescriptorFeature, null);
 	}
 
 	public static void exportCompounds(Clustering clustering, List<Integer> compoundIndices,
-			CompoundProperty logSelectedFeature)
+			CompoundProperty logSelectedFeature, CompoundProperty compoundDescriptorFeature)
 	{
-		exportCompounds(clustering, ArrayUtil.toPrimitiveIntArray(compoundIndices), logSelectedFeature, null);
+		exportCompounds(clustering, ArrayUtil.toPrimitiveIntArray(compoundIndices), logSelectedFeature,
+				compoundDescriptorFeature, null);
 	}
 
 	public static void exportCompounds(Clustering clustering, List<Integer> compoundIndices,
-			CompoundProperty logSelectedFeature, Script script)
+			CompoundProperty logSelectedFeature, CompoundProperty compoundDescriptorFeature, Script script)
 	{
-		exportCompounds(clustering, ArrayUtil.toPrimitiveIntArray(compoundIndices), logSelectedFeature, script);
+		exportCompounds(clustering, ArrayUtil.toPrimitiveIntArray(compoundIndices), logSelectedFeature,
+				compoundDescriptorFeature, script);
 	}
 
 	public static void exportCompounds(Clustering clustering, int compoundOrigIndices[],
-			CompoundProperty logSelectedFeature)
+			CompoundProperty logSelectedFeature, CompoundProperty compoundDescriptorFeature)
 	{
-		exportCompounds(clustering, compoundOrigIndices, logSelectedFeature, null);
+		exportCompounds(clustering, compoundOrigIndices, logSelectedFeature, compoundDescriptorFeature, null);
 	}
 
 	public static class Script
@@ -100,7 +104,7 @@ public class ExportData
 	}
 
 	public static void exportCompounds(Clustering clustering, int compoundOrigIndices[],
-			CompoundProperty logSelectedFeature, Script script)
+			CompoundProperty logSelectedFeature, CompoundProperty compoundDescriptorFeature, Script script)
 	{
 		String dest;
 		if (script != null)
@@ -128,19 +132,16 @@ public class ExportData
 			}
 		}
 		boolean csvExport = FileUtil.getFilenamExtension(dest).matches("(?i)csv");
+
 		// file may be overwritten, and then reloaded -> clear
 		DatasetFile.clearFilesWith3DSDF(dest);
 
-		boolean integratedPropsAlreadyIncluded = !csvExport
-				&& (clustering.getFullName().endsWith("sdf") || clustering.getFullName().endsWith("SDF"));
 		CompoundProperty selectedProps[];
 		List<CompoundProperty> availableProps = new ArrayList<CompoundProperty>();
 		for (CompoundProperty p : clustering.getProperties())
-			if (!integratedPropsAlreadyIncluded || !(p instanceof IntegratedProperty))
-				availableProps.add(p);
+			availableProps.add(p);
 		for (CompoundProperty p : clustering.getFeatures())
-			if (!integratedPropsAlreadyIncluded || !(p instanceof IntegratedProperty))
-				availableProps.add(p);
+			availableProps.add(p);
 
 		if (availableProps.size() == 0) // no features to select
 			selectedProps = new CompoundProperty[0];
@@ -149,21 +150,17 @@ public class ExportData
 		else
 		{
 			String title;
-			String desc;
 			if (csvExport)
 			{
 				title = "Select features for CSV export";
-				desc = null;
 			}
 			else
 			{
 				title = "Select features for SDF export";
-				desc = integratedPropsAlreadyIncluded ? "(Features that are integrated in the original SDF file, will be included in the exported SDF as well.)"
-						: null;
 			}
 			selectedProps = ArrayUtil.cast(
 					CompoundProperty.class,
-					CheckBoxSelectDialog.select(Settings.TOP_LEVEL_FRAME, title, desc,
+					CheckBoxSelectDialog.select(Settings.TOP_LEVEL_FRAME, title, null,
 							ArrayUtil.toArray(CompoundProperty.class, availableProps), true));
 			if (selectedProps == null)//pressed cancel
 				return;
@@ -272,8 +269,8 @@ public class ExportData
 		if (skipUniform.size() > 0)
 		{
 			boolean doSkip;
-			if (script != null && script.skipEqualValues)
-				doSkip = true;
+			if (script != null)
+				doSkip = script.skipEqualValues;
 			else
 			{
 				String msg = skipUniform.size() + " feature/s have equal values for each compound.\nSkip from export?";
@@ -370,7 +367,26 @@ public class ExportData
 			}
 		}
 		else
-			SDFUtil.filter(clustering.getOrigSdfFile(), dest, compoundOrigIndices, featureValues);
+		{
+			HashMap<Integer, Object> newTitle = new HashMap<Integer, Object>();
+			for (Integer j : compoundOrigIndices)
+			{
+				Object val;
+				if (compoundDescriptorFeature.getType() == Type.NUMERIC)
+				{
+					val = clustering.getCompounds().get(j).getDoubleValue(compoundDescriptorFeature);
+					if (val != null && compoundDescriptorFeature.isIntegerInMappedDataset())
+						val = StringUtil.formatDouble((Double) val, 0);
+				}
+				else
+					val = clustering.getCompounds().get(j).getStringValue(compoundDescriptorFeature);
+				if (val == null)
+					val = "";
+				featureValues.put(j, propToExportString(compoundDescriptorFeature), val);
+				newTitle.put(j, val);
+			}
+			SDFUtil.filter(clustering.getOrigSdfFile(), dest, compoundOrigIndices, featureValues, true, newTitle);
+		}
 
 		String msg = "Successfully exported " + compoundOrigIndices.length + " compounds to\n" + dest;
 		if (script != null)
@@ -380,7 +396,8 @@ public class ExportData
 					.showMessageDialog(Settings.TOP_LEVEL_FRAME, msg, "Export done", JOptionPane.INFORMATION_MESSAGE);
 	}
 
-	public static void scriptExport(String datasetFile, DescriptorSelection features, String outfile)
+	public static void scriptExport(String datasetFile, DescriptorSelection features, String outfile,
+			boolean keepUniform)
 	{
 		Properties props = MappingWorkflow.createMappingWorkflow(datasetFile, features, null, null);
 		CheSMapping mapping = MappingWorkflow.createMappingFromMappingWorkflow(props, "");
@@ -394,7 +411,7 @@ public class ExportData
 		//			ThreadUtil.sleep(100);
 		//		ExportData.exportAll(CheSViewer.getClustering(), null, new Script(outfile, true, true, true));
 
-		ExportData.exportAll(clustering, null, new Script(outfile, true, true, true));
+		ExportData.exportAll(clustering, null, null, new Script(outfile, true, !keepUniform, true));
 		//LaunchCheSMapper.exit(CheSViewer.getFrame());
 		LaunchCheSMapper.exit(null);
 	}
@@ -405,7 +422,7 @@ public class ExportData
 
 		//String input = "/home/martin/data/valium.csv";
 		String input = "/home/martin/data/caco2.sdf";
-		scriptExport(input, new DescriptorSelection("integrated"), "/tmp/data.csv");
+		scriptExport(input, new DescriptorSelection("integrated"), "/tmp/data.csv", false);
 
 	}
 

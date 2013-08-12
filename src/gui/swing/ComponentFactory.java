@@ -141,6 +141,13 @@ public class ComponentFactory
 				super.updateUI();
 				setForeground(FOREGROUND);
 			}
+
+			@Override
+			public void setText(String t)
+			{
+				super.setText(t);
+				setToolTipText(t);
+			}
 		};
 		l.setFocusable(false);
 		l.setEditable(false);
@@ -168,7 +175,15 @@ public class ComponentFactory
 				super.updateUI();
 				setForeground(FOREGROUND);
 			}
+
+			@Override
+			public void setText(String text)
+			{
+				super.setText(text);
+				setToolTipText(text);
+			}
 		};
+		l.setToolTipText(text);
 		return l;
 	}
 

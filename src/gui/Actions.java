@@ -471,9 +471,10 @@ public class Actions
 				int[] m = (int[]) ((AbstractAction) actions.get(REMOVE_CURRENT)).getValue("Compound");
 				Integer c = (Integer) ((AbstractAction) actions.get(REMOVE_CURRENT)).getValue("Cluster");
 				if (m.length > 0)
-					ExportData.exportCompounds(clustering, m, getLogProp());
+					ExportData.exportCompounds(clustering, m, getLogProp(), viewControler.getCompoundDescriptor());
 				else if (c != null)
-					ExportData.exportClusters(clustering, new int[] { c }, getLogProp());
+					ExportData.exportClusters(clustering, new int[] { c }, getLogProp(),
+							viewControler.getCompoundDescriptor());
 			}
 		};
 		new ActionCreator(EXPORT_CLUSTERS)
@@ -481,7 +482,7 @@ public class Actions
 			@Override
 			public void action()
 			{
-				clustering.chooseClustersToExport(getLogProp());
+				clustering.chooseClustersToExport(getLogProp(), viewControler.getCompoundDescriptor());
 			}
 		};
 		new ActionCreator(EXPORT_COMPOUNDS)
@@ -489,7 +490,7 @@ public class Actions
 			@Override
 			public void action()
 			{
-				clustering.chooseCompoundsToExport(getLogProp());
+				clustering.chooseCompoundsToExport(getLogProp(), viewControler.getCompoundDescriptor());
 			}
 		};
 		new ActionCreator(EXPORT_IMAGE)

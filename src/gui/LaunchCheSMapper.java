@@ -84,16 +84,37 @@ public class LaunchCheSMapper
 
 	public static void main(String args[])
 	{
-		//args = ("-s -d /home/martin/data/caco2.sdf -f integrated -i caco2").split(" ");
-		//args = ("-x -d /home/martin/data/caco2.sdf -f integrated -i caco2 -o /home/martin/data/caco-workflow.ches").split(" ");
-		//args = ("-w /tmp/delme.ches").split(" ");
-		//args = ("-e -d /home/martin/data/caco2.sdf -f ob -o /tmp/caco-ob-features.csv").split(" ");
-		//		args = ArrayUtil
-		//				.toArray(StringUtil
-		//						.split("-x -d /home/martin/workspace/BMBF-MLC/pct/dataAAgg_noV_Cl68_FP.data.csv -f integrated -i cas,cluster -c \"Manual Cluster Assignment\" -o /tmp/delme.ches",
-		//								' ')); // cannot use .split(" ") to respect quotes
+		if (args != null && args.length == 1 && args[0].equals("debug"))
+		{
+			//Settings.CACHING_ENABLED = false;
+			//args = ("-s -d /home/martin/data/caco2.sdf -f integrated -i caco2").split(" ");
+			//args = ("-x -d /home/martin/data/caco2.sdf -f integrated -i caco2 -o /home/martin/data/caco-workflow.ches").split(" ");
+			//args = ("-w /tmp/delme.ches").split(" ");
+			//args = ("-e -d /home/martin/data/caco2.sdf -f cdk -o /tmp/caco-ob-features.csv").split(" ");
+			//		args = ("-e -d /home/martin/workspace/BMBF-MLC/data/dataZ.sdf -f cdk -o /dev/null").split(" ");
+			//			args = "-z -d /home/martin/workspace/BMBF-MLC/data/dataR.smi -o /home/martin/workspace/BMBF-MLC/data/dataR.sdf"
+			//					.split(" ");
+			//			args = "-n -d /home/martin/workspace/BMBF-MLC/data/dataR.smi -o /home/martin/workspace/BMBF-MLC/data/dataR.inchi"
+			//					.split(" ");
+			//			args = " -z -k -d /home/martin/workspace/BMBF-MLC/predictions/00e884588b8a6ba666fbdf29e9a75eda.smi -o /home/martin/workspace/BMBF-MLC/predictions/00e884588b8a6ba666fbdf29e9a75eda.sdf"
+			//					.split(" ");
+			args = "-e -m -u -d /home/martin/workspace/BMBF-MLC/predictions/9712985d2d3cd4b067bcd77590ab10f0.sdf -f obFP3 -o /home/martin/tmp/delme.csv"
+					.split(" ");
+			//			args = "-z -k -d /home/martin/workspace/BMBF-MLC/predictions/aa53ca0b650dfd85c4f59fa156f7a2cc.smi -o /home/martin/workspace/BMBF-MLC/predictions/aa53ca0b650dfd85c4f59fa156f7a2cc.sdf"
+			//					.split(" ");
 
-		//		args = "-h".split(" ");
+			//args = "-z -d /tmp/test.smi -o /tmp/res.sdf".split(" ");
+
+			//			args = "-e -d /home/martin/workspace/BMBF-MLC/data/dataR.sdf -f cdk,ob -o /home/martin/workspace/BMBF-MLC/features/dataR_PC.csv"
+			//					.split(" ");
+
+			//		args = ArrayUtil
+			//				.toArray(StringUtil
+			//						.split("-x -d /home/martin/workspace/BMBF-MLC/pct/dataAAgg_noV_Cl68_FP.data.csv -f integrated -i cas,cluster -c \"Manual Cluster Assignment\" -o /tmp/delme.ches",
+			//								' ')); // cannot use .split(" ") to respect quotes
+
+			//		args = "-h".split(" ");
+		}
 
 		StringLineAdder examples = new StringLineAdder();
 		examples.add("Examples");
@@ -115,6 +136,9 @@ public class LaunchCheSMapper
 
 		options.addOption(option('e', "export-features",
 				"exports features (from dataset -d and features -f to outfile -o)"));
+		options.addOption(option('m', "match-fingerprints", "usefull when exporting fingerprint features"));
+		options.addOption(option('u', "uniform-values",
+				"exports features including features with uniform feature values"));
 		options.addOption(option('x', "export-workflow",
 				"creates a workflow-file (from dataset -d and features -f to outfile -o)"));
 		options.addOption(option('s', "start-viewer", "directly starts the viewer (from dataset -d and features -f)"));
@@ -141,6 +165,8 @@ public class LaunchCheSMapper
 				"corrupt-3d-sdf-file"));
 
 		options.addOption(option('z', "compute-3d", "uses openbabel to compute a SDF file (-o) for the input-file -d"));
+		options.addOption(option('k', "depict-2d", "depicts 2d images for each compound in dataset file -d"));
+		//		options.addOption(option('n', "compute-inchi", "computes inchi for dataset file -d, saves to outfile -o"));
 
 		CommandLineParser parser = new BasicParser();
 		try
@@ -183,7 +209,8 @@ public class LaunchCheSMapper
 					throw new ParseException(
 							"please give dataset-file (-d) and features (-f) and outfile (-o) for feature export");
 				DescriptorSelection features = new DescriptorSelection(cmd.getOptionValue('f'), cmd.getOptionValue('i'));
-				ExportData.scriptExport(infile, features, outfile);
+				features.setMatchFingerprints(cmd.hasOption('m'));
+				ExportData.scriptExport(infile, features, outfile, cmd.hasOption('u'));
 			}
 			else if (cmd.hasOption('x')) // export workflow
 			{
@@ -232,13 +259,39 @@ public class LaunchCheSMapper
 				p.load(infile, true);
 				if (p.getDatasetFile() == null)
 					throw new Error("Could not load dataset file " + infile);
-				CDKCompoundIcon.createIcons(p.getDatasetFile(), FileUtil.getParent(outfile));
+				if (cmd.hasOption('k'))
+					CDKCompoundIcon.createIcons(p.getDatasetFile(), FileUtil.getParent(infile));
 
 				OpenBabel3DBuilder builder = OpenBabel3DBuilder.INSTANCE;
 				builder.build3D(p.getDatasetFile());
 				if (!FileUtil.copy(builder.get3DSDFFile(), outfile))
 					throw new Error("Could not copy 3D-File to outfile " + outfile);
 			}
+			else if (cmd.hasOption('k'))
+			{
+				String infile = cmd.getOptionValue('d');
+				if (infile == null)
+					throw new ParseException("please give dataset-file (-d) for depict-2d");
+				DatasetWizardPanel p = new DatasetWizardPanel(false);
+				p.load(infile, true);
+				if (p.getDatasetFile() == null)
+					throw new Error("Could not load dataset file " + infile);
+				CDKCompoundIcon.createIcons(p.getDatasetFile(), FileUtil.getParent(infile));
+			}
+			//			else if (cmd.hasOption('n'))
+			//			{
+			//				String infile = cmd.getOptionValue('d');
+			//				String outfile = cmd.getOptionValue('o');
+			//				if (infile == null || outfile == null)
+			//					throw new ParseException("please give dataset-file (-d) and outfile (-o) for compute-3d");
+			//				DatasetWizardPanel p = new DatasetWizardPanel(false);
+			//				p.load(infile, true);
+			//				if (p.getDatasetFile() == null)
+			//					throw new Error("Could not load dataset file " + infile);
+			//				String inichi[] = OBWrapper.computeInchiFromSmiles(
+			//						BinHandler.BABEL_BINARY.getSisterCommandLocation("obabel"), p.getDatasetFile().getSmiles());
+			//				FileUtil.writeStringToFile(outfile, ArrayUtil.toString(inichi, "\n", "", "", "") + "\n");
+			//			}
 			else
 				start();
 		}
