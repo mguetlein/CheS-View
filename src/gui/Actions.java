@@ -2,7 +2,8 @@ package gui;
 
 import gui.MainPanel.HighlightMode;
 import gui.ViewControler.HideCompounds;
-import gui.util.CompoundPropertyHighlighter;
+import gui.property.ColorGradient;
+import gui.property.ColorGradientChooser;
 
 import java.awt.Color;
 import java.awt.Desktop;
@@ -90,6 +91,7 @@ public class Actions
 			VIEW_ANTIALIAS, VIEW_COMPOUND_DESCRIPTOR, VIEW_SELECT_LAST_FEATURE };
 
 	private final static String HIGHLIGHT_LOG = "highlight-log";
+	private final static String HIGHLIGHT_GRADIENT = "highlight-grad";
 	private final static String HIGHLIGHT_COLOR_MATCH = "highlight-color-match";
 	private final static String HIGHLIGHT_MODE = "highlight-mode";
 	private final static String HIGHLIGHT_LAST_FEATURE = "highlight-last-feature";
@@ -97,10 +99,10 @@ public class Actions
 	private final static String HIGHLIGHT_INCR_SPHERE_SIZE = "highlight-incr-sphere-size";
 	private final static String HIGHLIGHT_DECR_SPHERE_TRANSLUCENCY = "highlight-decr-sphere-translucency";
 	private final static String HIGHLIGHT_INCR_SPHERE_TRANSLUCENCY = "highlight-incr-sphere-translucency";
-	private final static String[] HIGHLIGHT_ACTIONS = { HIGHLIGHT_LOG, HIGHLIGHT_COLOR_MATCH, HIGHLIGHT_MODE,
-			HIGHLIGHT_LAST_FEATURE };
+	private final static String[] HIGHLIGHT_ACTIONS = { HIGHLIGHT_COLOR_MATCH, HIGHLIGHT_MODE, HIGHLIGHT_LAST_FEATURE };
 	private final static String[] HIGHLIGHT_SPHERE_ACTIONS = { HIGHLIGHT_DECR_SPHERE_SIZE, HIGHLIGHT_INCR_SPHERE_SIZE,
 			HIGHLIGHT_DECR_SPHERE_TRANSLUCENCY, HIGHLIGHT_INCR_SPHERE_TRANSLUCENCY };
+	private final static String[] HIGHLIGHT_COLOR_ACTIONS = { HIGHLIGHT_LOG, HIGHLIGHT_GRADIENT };
 
 	private final static String HELP_DOCU = "help-docu";
 	private final static String HELP_ABOUT = "help-about";
@@ -141,6 +143,7 @@ public class Actions
 		keys.put(HIDDEN_UPDATE_MOUSE_SELECTION_RELEASED, KeyStroke.getKeyStroke(KeyEvent.VK_SHIFT, 0, true));
 		keys.put(VIEW_ANTIALIAS, KeyStroke.getKeyStroke(KeyEvent.VK_G, ActionEvent.ALT_MASK));
 		keys.put(HIGHLIGHT_LOG, KeyStroke.getKeyStroke(KeyEvent.VK_L, ActionEvent.ALT_MASK));
+		keys.put(HIGHLIGHT_GRADIENT, KeyStroke.getKeyStroke(KeyEvent.VK_O, ActionEvent.ALT_MASK));
 		keys.put(HIGHLIGHT_LAST_FEATURE, KeyStroke.getKeyStroke(KeyEvent.VK_F, ActionEvent.ALT_MASK));
 		keys.put(VIEW_SELECT_LAST_FEATURE, KeyStroke.getKeyStroke(KeyEvent.VK_A, ActionEvent.ALT_MASK));
 		keys.put(HIGHLIGHT_MODE, KeyStroke.getKeyStroke(KeyEvent.VK_T, ActionEvent.ALT_MASK));
@@ -229,6 +232,15 @@ public class Actions
 					actions.get(HIGHLIGHT_DECR_SPHERE_TRANSLUCENCY).setEnabled(
 							viewControler.getHighlightMode() == HighlightMode.Spheres);
 				}
+				else if (evt.getPropertyName().equals(ViewControler.PROPERTY_HIGHLIGHT_CHANGED))
+				{
+					actions.get(HIGHLIGHT_LOG).setEnabled(viewControler.isHighlightLogEnabled() != null);
+					((AbstractAction) actions.get(HIGHLIGHT_LOG)).putValue(Action.NAME,
+							Settings.text("action.highlight-log.feature", viewControler.getHighlighter().toString()));
+					actions.get(HIGHLIGHT_GRADIENT).setEnabled(viewControler.getHighlightGradient() != null);
+					((AbstractAction) actions.get(HIGHLIGHT_GRADIENT)).putValue(Action.NAME,
+							Settings.text("action.highlight-grad.feature", viewControler.getHighlighter().toString()));
+				}
 			}
 		});
 	}
@@ -304,25 +316,25 @@ public class Actions
 
 		public ActionCreator(String s)
 		{
-			this(s, true, null);
+			this(s, true, new String[0]);
 		}
 
 		public ActionCreator(String s, boolean enabled)
 		{
-			this(s, enabled, null);
+			this(s, enabled, new String[0]);
 		}
 
-		public ActionCreator(String s, String guiProperty)
+		public ActionCreator(String s, String... changeProperty)
 		{
-			this(s, true, guiProperty);
+			this(s, true, changeProperty);
 		}
 
-		public ActionCreator(String s, boolean enabled, final String changeProperty)
+		public ActionCreator(String s, boolean enabled, String... changeProperty)
 		{
-			this(s, enabled, changeProperty, false);
+			this(s, enabled, false, changeProperty);
 		}
 
-		public ActionCreator(String s, boolean enabled, final String changeProperty, boolean isRadio)
+		public ActionCreator(String s, boolean enabled, boolean isRadio, final String... changeProperty)
 		{
 			String name = null;
 			String tooltip = null;
@@ -344,7 +356,7 @@ public class Actions
 			action.putValue("is-radio-buttion", (Boolean) isRadio);
 			action.setEnabled(enabled);
 
-			if (changeProperty != null)
+			if (changeProperty != null && changeProperty.length > 0)
 			{
 				action.putValue(Action.SELECTED_KEY, getValueFromGUI());
 				PropertyChangeListener l = new PropertyChangeListener()
@@ -352,7 +364,7 @@ public class Actions
 					@Override
 					public void propertyChange(PropertyChangeEvent evt)
 					{
-						if (evt.getPropertyName().equals(changeProperty))
+						if (ArrayUtil.indexOf(changeProperty, evt.getPropertyName()) != -1)
 						{
 							action.putValue(Action.SELECTED_KEY, getValueFromGUI());
 						}
@@ -376,15 +388,6 @@ public class Actions
 		{
 			return action.getValue(Action.SELECTED_KEY);
 		}
-	}
-
-	private CompoundProperty getLogProp()
-	{
-		CompoundProperty logProp = null;
-		if (viewControler.isHighlightLogEnabled()
-				&& viewControler.getHighlighter() instanceof CompoundPropertyHighlighter)
-			logProp = ((CompoundPropertyHighlighter) viewControler.getHighlighter()).getProperty();
-		return logProp;
 	}
 
 	private void buildActions()
@@ -471,10 +474,9 @@ public class Actions
 				int[] m = (int[]) ((AbstractAction) actions.get(REMOVE_CURRENT)).getValue("Compound");
 				Integer c = (Integer) ((AbstractAction) actions.get(REMOVE_CURRENT)).getValue("Cluster");
 				if (m.length > 0)
-					ExportData.exportCompounds(clustering, m, getLogProp(), viewControler.getCompoundDescriptor());
+					ExportData.exportCompounds(clustering, m, viewControler.getCompoundDescriptor());
 				else if (c != null)
-					ExportData.exportClusters(clustering, new int[] { c }, getLogProp(),
-							viewControler.getCompoundDescriptor());
+					ExportData.exportClusters(clustering, new int[] { c }, viewControler.getCompoundDescriptor());
 			}
 		};
 		new ActionCreator(EXPORT_CLUSTERS)
@@ -482,7 +484,7 @@ public class Actions
 			@Override
 			public void action()
 			{
-				clustering.chooseClustersToExport(getLogProp(), viewControler.getCompoundDescriptor());
+				clustering.chooseClustersToExport(viewControler.getCompoundDescriptor());
 			}
 		};
 		new ActionCreator(EXPORT_COMPOUNDS)
@@ -490,7 +492,7 @@ public class Actions
 			@Override
 			public void action()
 			{
-				clustering.chooseCompoundsToExport(getLogProp(), viewControler.getCompoundDescriptor());
+				clustering.chooseCompoundsToExport(viewControler.getCompoundDescriptor());
 			}
 		};
 		new ActionCreator(EXPORT_IMAGE)
@@ -538,7 +540,7 @@ public class Actions
 			}
 		};
 
-		new ActionCreator(VIEW_HIDE_NONE, true, ViewControler.PROPERTY_HIDE_UNSELECT_CHANGED, true)
+		new ActionCreator(VIEW_HIDE_NONE, true, true, ViewControler.PROPERTY_HIDE_UNSELECT_CHANGED)
 		{
 			@Override
 			public void action()
@@ -552,7 +554,7 @@ public class Actions
 				return viewControler.getHideCompounds() == HideCompounds.none;
 			}
 		};
-		new ActionCreator(VIEW_HIDE_NON_WATCHED, true, ViewControler.PROPERTY_HIDE_UNSELECT_CHANGED, true)
+		new ActionCreator(VIEW_HIDE_NON_WATCHED, true, true, ViewControler.PROPERTY_HIDE_UNSELECT_CHANGED)
 		{
 			@Override
 			public void action()
@@ -566,7 +568,7 @@ public class Actions
 				return viewControler.getHideCompounds() == HideCompounds.nonWatched;
 			}
 		};
-		new ActionCreator(VIEW_HIDE_NON_ACTIVE, true, ViewControler.PROPERTY_HIDE_UNSELECT_CHANGED, true)
+		new ActionCreator(VIEW_HIDE_NON_ACTIVE, true, true, ViewControler.PROPERTY_HIDE_UNSELECT_CHANGED)
 		{
 			@Override
 			public void action()
@@ -728,7 +730,8 @@ public class Actions
 				return viewControler.getMatchColor();
 			}
 		};
-		new ActionCreator(HIGHLIGHT_LOG, ViewControler.PROPERTY_HIGHLIGHT_LOG_CHANGED)
+		new ActionCreator(HIGHLIGHT_LOG, false, ViewControler.PROPERTY_HIGHLIGHT_LOG_CHANGED,
+				ViewControler.PROPERTY_HIGHLIGHT_CHANGED)
 		{
 			@Override
 			public void action()
@@ -739,9 +742,23 @@ public class Actions
 			@Override
 			public Object getValueFromGUI()
 			{
-				return viewControler.isHighlightLogEnabled();
+				return viewControler.isHighlightLogEnabled() != null && viewControler.isHighlightLogEnabled();
 			}
 		};
+		new ActionCreator(HIGHLIGHT_GRADIENT, false, ViewControler.PROPERTY_HIGHLIGHT_GRADIENT_CHANGED,
+				ViewControler.PROPERTY_HIGHLIGHT_CHANGED)
+		{
+			@Override
+			public void action()
+			{
+				ColorGradient grad = ColorGradientChooser.show(Settings.TOP_LEVEL_FRAME,
+						Settings.text("action.highlight-grad.feature", viewControler.getHighlighter().toString()),
+						viewControler.getHighlightGradient());
+				if (grad != null)
+					viewControler.setHighlightGradient(grad);
+			}
+		};
+
 		new ActionCreator(HIGHLIGHT_LAST_FEATURE, viewControler.getHighlightMode() == HighlightMode.Spheres,
 				ViewControler.PROPERTY_HIGHLIGHT_LAST_FEATURE)
 		{
@@ -926,6 +943,11 @@ public class Actions
 	public Action[] getHighlightSphereActions()
 	{
 		return getActions(HIGHLIGHT_SPHERE_ACTIONS);
+	}
+
+	public Action[] getHighlightColorActions()
+	{
+		return getActions(HIGHLIGHT_COLOR_ACTIONS);
 	}
 
 	public Action[] getHelpActions()

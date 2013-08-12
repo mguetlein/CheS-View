@@ -1,6 +1,7 @@
 package gui;
 
 import gui.View.AnimationSpeed;
+import gui.property.ColorGradient;
 import gui.swing.ComponentFactory;
 import gui.util.CompoundPropertyHighlighter;
 import gui.util.HighlightAutomatic;
@@ -64,6 +65,8 @@ public class MainPanel extends JPanel implements ViewControler
 	CompoundProperty compoundDescriptorProperty = null;
 	List<JComponent> ignoreMouseMovementPanels = new ArrayList<JComponent>();
 
+	private static final ColorGradient DEFAULT_COLOR_GRADIENT = new ColorGradient(Color.RED, Color.WHITE, Color.BLUE);
+
 	private String getStyleString()
 	{
 		switch (style)
@@ -88,12 +91,18 @@ public class MainPanel extends JPanel implements ViewControler
 			return Color.DARK_GRAY;
 		else if (p.getType() == Type.NOMINAL)
 			return CompoundPropertyUtil.getNominalColor(p, m.getStringValue(p));
-		else if (highlightLogEnabled && p.getType() == Type.NUMERIC)
-			return ColorUtil.getThreeColorGradient(clustering.getNormalizedLogDoubleValue(m, p), Color.RED,
-					Color.WHITE, Color.BLUE);
 		else
-			return ColorUtil.getThreeColorGradient(clustering.getNormalizedDoubleValue(m, p), Color.RED, Color.WHITE,
-					Color.BLUE);
+		{
+			double val;
+			if (p.getType() == Type.NUMERIC && p.isLogHighlightingEnabled())
+				val = clustering.getNormalizedLogDoubleValue(m, p);
+			else
+				val = clustering.getNormalizedDoubleValue(m, p);
+			ColorGradient grad = DEFAULT_COLOR_GRADIENT;
+			if (p.getType() == Type.NUMERIC && p.getHighlightColorGradient() != null)
+				grad = p.getHighlightColorGradient();
+			return grad.getColor(val);
+		}
 	}
 
 	public static enum Translucency
@@ -134,7 +143,6 @@ public class MainPanel extends JPanel implements ViewControler
 	HighlightSorting highlightSorting = HighlightSorting.Median;
 	HighlightAutomatic highlightAutomatic;
 	HighlightMode highlightMode = HighlightMode.ColorCompounds;
-	boolean highlightLogEnabled = false;
 	boolean antialiasEnabled = ScreenSetup.SETUP.isAntialiasOn();
 	boolean highlightLastFeatureEnabled = false;
 
@@ -1588,19 +1596,51 @@ public class MainPanel extends JPanel implements ViewControler
 	}
 
 	@Override
-	public boolean isHighlightLogEnabled()
+	public Boolean isHighlightLogEnabled()
 	{
-		return highlightLogEnabled;
+		if (selectedHighlightCompoundProperty != null && selectedHighlightCompoundProperty.getType() == Type.NUMERIC)
+			return selectedHighlightCompoundProperty.isLogHighlightingEnabled();
+		else
+			return null;
 	}
 
 	@Override
 	public void setHighlightLogEnabled(boolean b)
 	{
-		if (b != highlightLogEnabled)
+		if (selectedHighlightCompoundProperty == null || selectedHighlightCompoundProperty.getType() != Type.NUMERIC)
+			throw new IllegalStateException();
+		if (selectedHighlightCompoundProperty.isLogHighlightingEnabled() != b)
 		{
-			highlightLogEnabled = b;
+			selectedHighlightCompoundProperty.setLogHighlightingEnabled(b);
 			updateAllClustersAndCompounds(true);
 			fireViewChange(PROPERTY_HIGHLIGHT_LOG_CHANGED);
+		}
+	}
+
+	@Override
+	public ColorGradient getHighlightGradient()
+	{
+		if (selectedHighlightCompoundProperty != null && selectedHighlightCompoundProperty.getType() == Type.NUMERIC)
+		{
+			if (selectedHighlightCompoundProperty.getHighlightColorGradient() == null)
+				return DEFAULT_COLOR_GRADIENT;
+			else
+				return selectedHighlightCompoundProperty.getHighlightColorGradient();
+		}
+		else
+			return null;
+	}
+
+	@Override
+	public void setHighlightGradient(ColorGradient g)
+	{
+		if (selectedHighlightCompoundProperty == null || selectedHighlightCompoundProperty.getType() != Type.NUMERIC)
+			throw new IllegalStateException();
+		if (!getHighlightGradient().equals(g))
+		{
+			selectedHighlightCompoundProperty.setHighlightColorGradient(g);
+			updateAllClustersAndCompounds(true);
+			fireViewChange(PROPERTY_HIGHLIGHT_GRADIENT_CHANGED);
 		}
 	}
 }

@@ -23,6 +23,7 @@ import main.Settings;
 import util.ArrayUtil;
 import util.DoubleKeyHashMap;
 import util.FileUtil;
+import util.ListUtil;
 import util.StringUtil;
 import workflow.MappingWorkflow;
 import workflow.MappingWorkflow.DescriptorSelection;
@@ -37,43 +38,40 @@ import dataInterface.CompoundProperty.Type;
 
 public class ExportData
 {
-	public static void exportAll(Clustering clustering, CompoundProperty logSelectedFeature,
-			CompoundProperty compoundDescriptorFeature, Script script)
+	public static void exportAll(Clustering clustering, CompoundProperty compoundDescriptorFeature, Script script)
 	{
 		List<Integer> l = new ArrayList<Integer>();
 		for (Compound m : clustering.getCompounds(false))
 			l.add(m.getCompoundOrigIndex());
-		exportCompounds(clustering, l, logSelectedFeature, compoundDescriptorFeature, script);
+		exportCompounds(clustering, l, compoundDescriptorFeature, script);
 	}
 
-	public static void exportClusters(Clustering clustering, int clusterIndices[], CompoundProperty logSelectedFeature,
+	public static void exportClusters(Clustering clustering, int clusterIndices[],
 			CompoundProperty compoundDescriptorFeature)
 	{
 		List<Integer> l = new ArrayList<Integer>();
 		for (int i = 0; i < clusterIndices.length; i++)
 			for (Compound m : clustering.getCluster(clusterIndices[i]).getCompounds())
 				l.add(m.getCompoundOrigIndex());
-		exportCompounds(clustering, l, logSelectedFeature, compoundDescriptorFeature, null);
+		exportCompounds(clustering, l, compoundDescriptorFeature, null);
 	}
 
 	public static void exportCompounds(Clustering clustering, List<Integer> compoundIndices,
-			CompoundProperty logSelectedFeature, CompoundProperty compoundDescriptorFeature)
+			CompoundProperty compoundDescriptorFeature)
 	{
-		exportCompounds(clustering, ArrayUtil.toPrimitiveIntArray(compoundIndices), logSelectedFeature,
-				compoundDescriptorFeature, null);
+		exportCompounds(clustering, ArrayUtil.toPrimitiveIntArray(compoundIndices), compoundDescriptorFeature, null);
 	}
 
 	public static void exportCompounds(Clustering clustering, List<Integer> compoundIndices,
-			CompoundProperty logSelectedFeature, CompoundProperty compoundDescriptorFeature, Script script)
+			CompoundProperty compoundDescriptorFeature, Script script)
 	{
-		exportCompounds(clustering, ArrayUtil.toPrimitiveIntArray(compoundIndices), logSelectedFeature,
-				compoundDescriptorFeature, script);
+		exportCompounds(clustering, ArrayUtil.toPrimitiveIntArray(compoundIndices), compoundDescriptorFeature, script);
 	}
 
 	public static void exportCompounds(Clustering clustering, int compoundOrigIndices[],
-			CompoundProperty logSelectedFeature, CompoundProperty compoundDescriptorFeature)
+			CompoundProperty compoundDescriptorFeature)
 	{
-		exportCompounds(clustering, compoundOrigIndices, logSelectedFeature, compoundDescriptorFeature, null);
+		exportCompounds(clustering, compoundOrigIndices, compoundDescriptorFeature, null);
 	}
 
 	public static class Script
@@ -104,7 +102,7 @@ public class ExportData
 	}
 
 	public static void exportCompounds(Clustering clustering, int compoundOrigIndices[],
-			CompoundProperty logSelectedFeature, CompoundProperty compoundDescriptorFeature, Script script)
+			CompoundProperty compoundDescriptorFeature, Script script)
 	{
 		String dest;
 		if (script != null)
@@ -165,12 +163,16 @@ public class ExportData
 			if (selectedProps == null)//pressed cancel
 				return;
 		}
-		if (logSelectedFeature != null)
+		List<CompoundProperty> logFeatures = new ArrayList<CompoundProperty>();
+		for (CompoundProperty p : selectedProps)
+			if (p.getType() == Type.NUMERIC && p.isLogHighlightingEnabled())
+				logFeatures.add(p);
+		if (logFeatures.size() > 0)
 		{
-			int ret = JOptionPane.showConfirmDialog(Settings.TOP_LEVEL_FRAME, "Add log-transformation of '"
-					+ logSelectedFeature + "'");
+			int ret = JOptionPane.showConfirmDialog(Settings.TOP_LEVEL_FRAME, "Add log-transformation for feature/s: "
+					+ ListUtil.toString(logFeatures));
 			if (ret != JOptionPane.OK_OPTION)
-				logSelectedFeature = null;
+				logFeatures.clear();
 		}
 
 		DoubleKeyHashMap<Integer, Object, Object> featureValues = new DoubleKeyHashMap<Integer, Object, Object>();
@@ -229,12 +231,12 @@ public class ExportData
 					featureValues.put(j, propToExportString(p), val);
 				}
 
-			if (logSelectedFeature != null)
+			for (CompoundProperty c : logFeatures)
 				featureValues.put(
 						j,
-						propToExportString(logSelectedFeature) + "_log",
-						clustering.getCompounds().get(j).getDoubleValue(logSelectedFeature) == null ? "" : Math
-								.log10(clustering.getCompounds().get(j).getDoubleValue(logSelectedFeature)));
+						propToExportString(c) + "_log",
+						clustering.getCompounds().get(j).getDoubleValue(c) == null ? "" : Math.log10(clustering
+								.getCompounds().get(j).getDoubleValue(c)));
 		}
 		List<Object> skipUniform = new ArrayList<Object>();
 		List<Object> skipNull = new ArrayList<Object>();
@@ -411,7 +413,7 @@ public class ExportData
 		//			ThreadUtil.sleep(100);
 		//		ExportData.exportAll(CheSViewer.getClustering(), null, new Script(outfile, true, true, true));
 
-		ExportData.exportAll(clustering, null, null, new Script(outfile, true, !keepUniform, true));
+		ExportData.exportAll(clustering, null, new Script(outfile, true, !keepUniform, true));
 		//LaunchCheSMapper.exit(CheSViewer.getFrame());
 		LaunchCheSMapper.exit(null);
 	}

@@ -151,6 +151,7 @@ public class MenuBar extends JMenuBar
 	MyMenuBar menuBar;
 
 	private final static String SPHERE_SETTINGS_MENU = Settings.text("action.highlight-sphere.settings");
+	private final static String COLOR_SETTINGS_MENU = Settings.text("action.highlight-colors.settings");
 	private final static String VIEW_HIDE_MENU = Settings.text("action.view-hide.settings");
 	private final static String DATA_MENU = "Dataset properties";
 
@@ -170,7 +171,9 @@ public class MenuBar extends JMenuBar
 		MyMenu viewHideMenu = new MyMenu(VIEW_HIDE_MENU, a.getViewHideActions());
 		MyMenu viewMenu = new MyMenu("View", a.getViewActions(), viewHideMenu);
 		MyMenu highlightSphereMenu = new MyMenu(SPHERE_SETTINGS_MENU, a.getHighlightSphereActions());
-		MyMenu highlightMenu = new MyMenu("Highlighting", a.getHighlightActions(), highlightSphereMenu);
+		MyMenu highlightColorsMenu = new MyMenu(COLOR_SETTINGS_MENU, a.getHighlightColorActions());
+		MyMenu highlightMenu = new MyMenu("Highlighting", a.getHighlightActions(), highlightSphereMenu,
+				highlightColorsMenu);
 		MyMenu helpMenu = new MyMenu("Help", a.getHelpActions());
 		menuBar = new MyMenuBar(fileMenu, editMenu, viewMenu, highlightMenu, helpMenu);
 
@@ -204,6 +207,19 @@ public class MenuBar extends JMenuBar
 				{
 					if (evt.getPropertyName().equals(ViewControler.PROPERTY_HIGHLIGHT_MODE_CHANGED))
 						m.setEnabled(viewControler.getHighlightMode() == HighlightMode.Spheres);
+				}
+			});
+		}
+		else if (m.getText().equals(COLOR_SETTINGS_MENU))
+		{
+			m.setEnabled(viewControler.isHighlightLogEnabled() != null);
+			viewControler.addViewListener(new PropertyChangeListener()
+			{
+				@Override
+				public void propertyChange(PropertyChangeEvent evt)
+				{
+					if (evt.getPropertyName().equals(ViewControler.PROPERTY_HIGHLIGHT_CHANGED))
+						m.setEnabled(viewControler.isHighlightLogEnabled() != null);
 				}
 			});
 		}

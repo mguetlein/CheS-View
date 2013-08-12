@@ -1,6 +1,7 @@
 package gui;
 
 import gui.MainPanel.HighlightMode;
+import gui.property.ColorGradient;
 import gui.util.Highlighter;
 
 import java.awt.Color;
@@ -87,6 +88,7 @@ public interface ViewControler
 	public static final String PROPERTY_COMPOUND_DESCRIPTOR_CHANGED = "propertyCompoundDescriptorChanged";
 	public static final String PROPERTY_HIGHLIGHT_MODE_CHANGED = "propertyHighlightModeChanged";
 	public static final String PROPERTY_HIGHLIGHT_LOG_CHANGED = "propertyHighlightLogChanged";
+	public static final String PROPERTY_HIGHLIGHT_GRADIENT_CHANGED = "propertyHighlightGradientChanged";
 	public static final String PROPERTY_ANTIALIAS_CHANGED = "propertyAntialiasChanged";
 	public static final String PROPERTY_HIGHLIGHT_LAST_FEATURE = "propertyHighlightLastFeature";
 
@@ -138,9 +140,13 @@ public interface ViewControler
 
 	public void updateMouseSelection(boolean buttonDown);
 
-	public boolean isHighlightLogEnabled();
+	public Boolean isHighlightLogEnabled();
 
 	public void setHighlightLogEnabled(boolean b);
+
+	public ColorGradient getHighlightGradient();
+
+	public void setHighlightGradient(ColorGradient g);
 
 	public void setSelectLastSelectedHighlighter();
 
