@@ -10,6 +10,7 @@ import java.awt.Dimension;
 import java.awt.Rectangle;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.JLabel;
@@ -298,7 +299,11 @@ public class InfoPanel extends JPanel
 			while (model.getRowCount() > 0)
 				model.removeRow(0);
 			model.addRow(new String[] { "Smiles:", m.getSmiles() });
-			List<CompoundProperty> props = ListUtil.concat(clustering.getProperties(), clustering.getFeatures());
+			List<CompoundProperty> props = new ArrayList<CompoundProperty>();
+			for (CompoundProperty p : clustering.getProperties())
+				if (!p.isSmiles())
+					props.add(p);
+			props = ListUtil.concat(props, clustering.getFeatures());
 			for (CompoundProperty p : props)
 			{
 				Object o[] = new Object[2];

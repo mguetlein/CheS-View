@@ -843,10 +843,16 @@ public class Clustering implements Zoomable
 	{
 		return clusteringData.getEmbeddingQualityProperty();
 	}
+
 	//
 	//	public CompoundPropertyEmbedQuality getEmbeddingQuality(CompoundProperty p)
 	//	{
 	//		return clusteringData.getEmbeddingQuality(p);
 	//	}
+
+	public List<CompoundProperty> getDistanceToProperties()
+	{
+		return clusteringData.getDistanceToProperties();
+	}
 
 }

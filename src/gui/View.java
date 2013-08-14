@@ -99,12 +99,13 @@ public class View
 		return antialiasOn;
 	}
 
-	public synchronized void setSpinEnabled(boolean spinEnabled)
+	public synchronized void setSpinEnabled(boolean spinEnabled, int speed)
 	{
 		if (spinEnabled)
 		{
+			System.out.println("spinning at " + speed);
 			viewer.evalString("set spinx 0");
-			viewer.evalString("set spiny 3");
+			viewer.evalString("set spiny " + speed);
 			viewer.evalString("set spinz 0");
 			viewer.evalString("spin on");
 		}

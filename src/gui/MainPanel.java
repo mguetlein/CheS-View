@@ -91,7 +91,7 @@ public class MainPanel extends JPanel implements ViewControler
 			return Color.DARK_GRAY;
 		else if (p.getType() == Type.NOMINAL)
 			return CompoundPropertyUtil.getNominalColor(p, m.getStringValue(p));
-		else
+		else if (p.getType() == Type.NUMERIC)
 		{
 			double val;
 			if (p.getType() == Type.NUMERIC && p.isLogHighlightingEnabled())
@@ -103,6 +103,8 @@ public class MainPanel extends JPanel implements ViewControler
 				grad = p.getHighlightColorGradient();
 			return grad.getColor(val);
 		}
+		else
+			return null;
 	}
 
 	public static enum Translucency
@@ -156,6 +158,8 @@ public class MainPanel extends JPanel implements ViewControler
 		return spinEnabled;
 	}
 
+	private int spinSpeed = 3;
+
 	public void setSpinEnabled(boolean spin)
 	{
 		setSpinEnabled(spin, false);
@@ -166,8 +170,21 @@ public class MainPanel extends JPanel implements ViewControler
 		if (this.spinEnabled != spinEnabled || force)
 		{
 			this.spinEnabled = spinEnabled;
-			view.setSpinEnabled(spinEnabled);
+			view.setSpinEnabled(spinEnabled, spinSpeed);
 			fireViewChange(PROPERTY_SPIN_CHANGED);
+		}
+	}
+
+	@Override
+	public void increaseSpinSpeed(boolean increase)
+	{
+		if (spinEnabled && (increase || spinSpeed > 2))
+		{
+			if (increase)
+				spinSpeed++;
+			else
+				spinSpeed--;
+			view.setSpinEnabled(spinEnabled, spinSpeed);
 		}
 	}
 
@@ -966,6 +983,10 @@ public class MainPanel extends JPanel implements ViewControler
 			h = ArrayUtil.concat(Highlighter.class, h,
 					new Highlighter[] { new CompoundPropertyHighlighter(clustering.getEmbeddingQualityProperty()) });
 
+		if (clustering.getDistanceToProperties() != null)
+			for (CompoundProperty p : clustering.getDistanceToProperties())
+				h = ArrayUtil.concat(Highlighter.class, h, new Highlighter[] { new CompoundPropertyHighlighter(p) });
+
 		if (clustering.getSubstructures().size() > 0)
 			for (SubstructureSmartsType type : clustering.getSubstructures())
 				h = ArrayUtil.concat(Highlighter.class, h, new Highlighter[] { new SubstructureHighlighter(type) });
@@ -1605,19 +1626,6 @@ public class MainPanel extends JPanel implements ViewControler
 	}
 
 	@Override
-	public void setHighlightLogEnabled(boolean b)
-	{
-		if (selectedHighlightCompoundProperty == null || selectedHighlightCompoundProperty.getType() != Type.NUMERIC)
-			throw new IllegalStateException();
-		if (selectedHighlightCompoundProperty.isLogHighlightingEnabled() != b)
-		{
-			selectedHighlightCompoundProperty.setLogHighlightingEnabled(b);
-			updateAllClustersAndCompounds(true);
-			fireViewChange(PROPERTY_HIGHLIGHT_LOG_CHANGED);
-		}
-	}
-
-	@Override
 	public ColorGradient getHighlightGradient()
 	{
 		if (selectedHighlightCompoundProperty != null && selectedHighlightCompoundProperty.getType() == Type.NUMERIC)
@@ -1632,15 +1640,23 @@ public class MainPanel extends JPanel implements ViewControler
 	}
 
 	@Override
-	public void setHighlightGradient(ColorGradient g)
+	public void setHighlightColors(ColorGradient g, boolean log, CompoundProperty props[])
 	{
-		if (selectedHighlightCompoundProperty == null || selectedHighlightCompoundProperty.getType() != Type.NUMERIC)
-			throw new IllegalStateException();
-		if (!getHighlightGradient().equals(g))
+		boolean fire = false;
+		for (CompoundProperty p : props)
 		{
-			selectedHighlightCompoundProperty.setHighlightColorGradient(g);
+			if (p.getType() != Type.NUMERIC)
+				throw new IllegalStateException();
+			if (p == selectedHighlightCompoundProperty
+					&& (!g.equals(p.getHighlightColorGradient()) || p.isLogHighlightingEnabled() != log))
+				fire = true;
+			p.setHighlightColorGradient(g);
+			p.setLogHighlightingEnabled(log);
+		}
+		if (fire)
+		{
 			updateAllClustersAndCompounds(true);
-			fireViewChange(PROPERTY_HIGHLIGHT_GRADIENT_CHANGED);
+			fireViewChange(PROPERTY_HIGHLIGHT_COLORS_CHANGED);
 		}
 	}
 }

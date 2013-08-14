@@ -33,7 +33,6 @@ import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableRowSorter;
 
 import main.Settings;
-import util.ListUtil;
 import util.SelectionModel;
 import util.ThreadUtil;
 import cluster.Clustering;
@@ -45,6 +44,7 @@ public class CompoundTable extends BlockableFrame
 	boolean selfUpdate = false;
 	private Clustering clustering;
 	private ClickMouseOverTable table;
+	private DefaultTableModel model;
 	private TableRowSorter<DefaultTableModel> sorter;
 	private List<CompoundProperty> props;
 	private ViewControler viewControler;
@@ -97,9 +97,7 @@ public class CompoundTable extends BlockableFrame
 		this.clustering = clustering;
 		this.viewControler = viewControler;
 
-		props = ListUtil.concat(clustering.getProperties(), clustering.getFeatures());
-
-		final DefaultTableModel model = new DefaultTableModel()
+		model = new DefaultTableModel()
 		{
 			@SuppressWarnings({ "rawtypes" })
 			@Override
@@ -140,7 +138,16 @@ public class CompoundTable extends BlockableFrame
 		model.addColumn("");
 		model.addColumn("Compound");
 		model.addColumn("Smiles");
-
+		if (model.getColumnCount() != NON_PROP_COLUMNS)
+			throw new Error();
+		props = new ArrayList<CompoundProperty>();
+		if (clustering.getEmbeddingQualityProperty() != null)
+			props.add(clustering.getEmbeddingQualityProperty());
+		for (CompoundProperty p : clustering.getProperties())
+			if (!p.isSmiles())
+				props.add(p);
+		for (CompoundProperty p : clustering.getFeatures())
+			props.add(p);
 		for (CompoundProperty p : props)
 			model.addColumn(p);
 		table.getSelectionModel().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
@@ -152,13 +159,13 @@ public class CompoundTable extends BlockableFrame
 			o[i++] = ++count;
 			o[i++] = m;
 			o[i++] = m.getSmiles();
+			if (i != NON_PROP_COLUMNS)
+				throw new Error();
 			for (CompoundProperty p : props)
-			{
 				if (p.getType() == CompoundProperty.Type.NUMERIC)
 					o[i++] = m.getDoubleValue(p);
 				else
 					o[i++] = m.getStringValue(p);
-			}
 			model.addRow(o);
 		}
 
@@ -257,7 +264,7 @@ public class CompoundTable extends BlockableFrame
 					boolean hasFocus, int row, int column)
 			{
 				Object val;
-				if (column > NON_PROP_COLUMNS)
+				if (column >= NON_PROP_COLUMNS)
 					val = ((Compound) table.getValueAt(row, 1)).getFormattedValue(props.get(column - NON_PROP_COLUMNS));
 				else
 					val = value;
