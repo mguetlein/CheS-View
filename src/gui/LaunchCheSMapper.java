@@ -102,7 +102,6 @@ public class LaunchCheSMapper
 					.split(" ");
 			//			args = "-z -k -d /home/martin/workspace/BMBF-MLC/predictions/aa53ca0b650dfd85c4f59fa156f7a2cc.smi -o /home/martin/workspace/BMBF-MLC/predictions/aa53ca0b650dfd85c4f59fa156f7a2cc.sdf"
 			//					.split(" ");
-
 			//args = "-z -d /tmp/test.smi -o /tmp/res.sdf".split(" ");
 
 			//			args = "-e -d /home/martin/workspace/BMBF-MLC/data/dataR.sdf -f cdk,ob -o /home/martin/workspace/BMBF-MLC/features/dataR_PC.csv"
