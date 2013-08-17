@@ -106,7 +106,6 @@ public class LaunchCheSMapper
 
 			//			args = "-e -d /home/martin/workspace/BMBF-MLC/data/dataR.sdf -f cdk,ob -o /home/martin/workspace/BMBF-MLC/features/dataR_PC.csv"
 			//					.split(" ");
-
 			//		args = ArrayUtil
 			//				.toArray(StringUtil
 			//						.split("-x -d /home/martin/workspace/BMBF-MLC/pct/dataAAgg_noV_Cl68_FP.data.csv -f integrated -i cas,cluster -c \"Manual Cluster Assignment\" -o /tmp/delme.ches",
