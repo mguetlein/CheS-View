@@ -1,6 +1,5 @@
 package gui;
 
-import gui.MainPanel.HighlightMode;
 import gui.property.ColorGradient;
 import gui.util.Highlighter;
 
@@ -24,6 +23,11 @@ public interface ViewControler
 	public enum HideCompounds
 	{
 		none, nonWatched, nonActive
+	}
+
+	public static enum HighlightMode
+	{
+		ColorCompounds, Spheres;
 	}
 
 	public HideCompounds getHideCompounds();
@@ -90,6 +94,7 @@ public interface ViewControler
 	public static final String PROPERTY_HIGHLIGHT_COLORS_CHANGED = "propertyHighlightColorsChanged";
 	public static final String PROPERTY_ANTIALIAS_CHANGED = "propertyAntialiasChanged";
 	public static final String PROPERTY_HIGHLIGHT_LAST_FEATURE = "propertyHighlightLastFeature";
+	public static final String PROPERTY_STYLE_CHANGED = "propertyStyleChanged";
 
 	public boolean isHighlighterLabelsVisible();
 

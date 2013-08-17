@@ -112,11 +112,6 @@ public class MainPanel extends JPanel implements ViewControler
 		None, ModerateWeak, ModerateStrong, Strong;
 	}
 
-	public static enum HighlightMode
-	{
-		ColorCompounds, Spheres;
-	}
-
 	private String getColorSuffixTranslucent(Translucency t)
 	{
 		if (t == Translucency.None)
@@ -347,13 +342,26 @@ public class MainPanel extends JPanel implements ViewControler
 		return style;
 	}
 
+	private boolean putSpheresBackOn = false;
+
 	public void setStyle(Style style)
 	{
 		if (this.style != style)
 		{
+			if (style == Style.dots && highlightMode == HighlightMode.Spheres)
+			{
+				setHighlightMode(HighlightMode.ColorCompounds);
+				putSpheresBackOn = true;
+			}
+			else if ((style == Style.ballsAndSticks || style == Style.wireframe) && putSpheresBackOn)
+			{
+				setHighlightMode(HighlightMode.Spheres);
+				putSpheresBackOn = false;
+			}
 			guiControler.block("changing style");
 			this.style = style;
 			updateAllClustersAndCompounds(false);
+			fireViewChange(PROPERTY_STYLE_CHANGED);
 			guiControler.unblock("changing style");
 		}
 	}

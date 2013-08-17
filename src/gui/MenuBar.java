@@ -1,6 +1,6 @@
 package gui;
 
-import gui.MainPanel.HighlightMode;
+import gui.ViewControler.HighlightMode;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;

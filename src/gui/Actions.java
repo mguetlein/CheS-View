@@ -1,7 +1,7 @@
 package gui;
 
-import gui.MainPanel.HighlightMode;
 import gui.ViewControler.HideCompounds;
+import gui.ViewControler.HighlightMode;
 import gui.property.ColorGradient;
 import gui.property.ColorGradientChooser;
 import gui.util.CompoundPropertyHighlighter;
@@ -222,31 +222,6 @@ public class Actions
 				update();
 			}
 		});
-		viewControler.addViewListener(new PropertyChangeListener()
-		{
-
-			@Override
-			public void propertyChange(PropertyChangeEvent evt)
-			{
-				if (evt.getPropertyName().equals(ViewControler.PROPERTY_HIGHLIGHT_MODE_CHANGED))
-				{
-					actions.get(HIGHLIGHT_LAST_FEATURE).setEnabled(
-							viewControler.getHighlightMode() == HighlightMode.Spheres);
-					actions.get(HIGHLIGHT_INCR_SPHERE_SIZE).setEnabled(
-							viewControler.getHighlightMode() == HighlightMode.Spheres);
-					actions.get(HIGHLIGHT_DECR_SPHERE_SIZE).setEnabled(
-							viewControler.getHighlightMode() == HighlightMode.Spheres);
-					actions.get(HIGHLIGHT_INCR_SPHERE_TRANSLUCENCY).setEnabled(
-							viewControler.getHighlightMode() == HighlightMode.Spheres);
-					actions.get(HIGHLIGHT_DECR_SPHERE_TRANSLUCENCY).setEnabled(
-							viewControler.getHighlightMode() == HighlightMode.Spheres);
-				}
-				else if (evt.getPropertyName().equals(ViewControler.PROPERTY_HIGHLIGHT_CHANGED))
-				{
-					actions.get(HIGHLIGHT_COLORS).setEnabled(viewControler.isHighlightLogEnabled() != null);
-				}
-			}
-		});
 	}
 
 	private void update()
@@ -320,25 +295,21 @@ public class Actions
 
 		public ActionCreator(String s)
 		{
-			this(s, true, new String[0]);
+			this(s, new String[0], new String[0]);
 		}
 
-		public ActionCreator(String s, boolean enabled)
+		public ActionCreator(String s, String valueProperty)
 		{
-			this(s, enabled, new String[0]);
+			this(s, valueProperty, null);
 		}
 
-		public ActionCreator(String s, String... changeProperty)
+		public ActionCreator(String s, String valueProperty, String enabledProperty)
 		{
-			this(s, true, changeProperty);
+			this(s, valueProperty == null ? new String[0] : new String[] { valueProperty },
+					enabledProperty == null ? new String[0] : new String[] { enabledProperty });
 		}
 
-		public ActionCreator(String s, boolean enabled, String... changeProperty)
-		{
-			this(s, enabled, false, changeProperty);
-		}
-
-		public ActionCreator(String s, boolean enabled, boolean isRadio, final String... changeProperty)
+		public ActionCreator(String s, final String valueProperty[], final String enabledProperty[])
 		{
 			String name = null;
 			String tooltip = null;
@@ -357,21 +328,23 @@ public class Actions
 				}
 			};
 			action.putValue(TOOLTIP, tooltip);
-			action.putValue("is-radio-buttion", (Boolean) isRadio);
-			action.setEnabled(enabled);
+			action.putValue("is-radio-buttion", isRadio());
+			action.setEnabled(isEnabled());
 
-			if (changeProperty != null && changeProperty.length > 0)
+			if ((valueProperty != null && valueProperty.length > 0)
+					|| (enabledProperty != null && enabledProperty.length > 0))
 			{
-				action.putValue(Action.SELECTED_KEY, getValueFromGUI());
+				if (valueProperty != null && valueProperty.length > 0)
+					action.putValue(Action.SELECTED_KEY, getValueFromGUI());
 				PropertyChangeListener l = new PropertyChangeListener()
 				{
 					@Override
 					public void propertyChange(PropertyChangeEvent evt)
 					{
-						if (ArrayUtil.indexOf(changeProperty, evt.getPropertyName()) != -1)
-						{
+						if (ArrayUtil.indexOf(valueProperty, evt.getPropertyName()) != -1)
 							action.putValue(Action.SELECTED_KEY, getValueFromGUI());
-						}
+						if (ArrayUtil.indexOf(enabledProperty, evt.getPropertyName()) != -1)
+							action.setEnabled(isEnabled());
 					}
 				};
 				guiControler.addPropertyChangeListener(l);
@@ -383,6 +356,16 @@ public class Actions
 
 		public abstract void action();
 
+		protected boolean isRadio()
+		{
+			return false;
+		}
+
+		public boolean isEnabled()
+		{
+			return true;
+		}
+
 		public Object getValueFromGUI()
 		{
 			return null;
@@ -391,6 +374,24 @@ public class Actions
 		public Object getActionValue()
 		{
 			return action.getValue(Action.SELECTED_KEY);
+		}
+	}
+
+	private abstract class RadioActionCreator extends ActionCreator
+	{
+		public RadioActionCreator(String s, String valueProperty)
+		{
+			super(s, valueProperty);
+		}
+
+		public RadioActionCreator(String s, String valueProperty, String enabledProperty)
+		{
+			super(s, valueProperty, enabledProperty);
+		}
+
+		protected boolean isRadio()
+		{
+			return true;
 		}
 	}
 
@@ -435,7 +436,7 @@ public class Actions
 				LaunchCheSMapper.exit(f);
 			}
 		};
-		new ActionCreator(REMOVE_CURRENT, false)
+		new ActionCreator(REMOVE_CURRENT)
 		{
 			@Override
 			public void action()
@@ -544,7 +545,7 @@ public class Actions
 			}
 		};
 
-		new ActionCreator(VIEW_HIDE_NONE, true, true, ViewControler.PROPERTY_HIDE_UNSELECT_CHANGED)
+		new RadioActionCreator(VIEW_HIDE_NONE, ViewControler.PROPERTY_HIDE_UNSELECT_CHANGED)
 		{
 			@Override
 			public void action()
@@ -558,7 +559,7 @@ public class Actions
 				return viewControler.getHideCompounds() == HideCompounds.none;
 			}
 		};
-		new ActionCreator(VIEW_HIDE_NON_WATCHED, true, true, ViewControler.PROPERTY_HIDE_UNSELECT_CHANGED)
+		new RadioActionCreator(VIEW_HIDE_NON_WATCHED, ViewControler.PROPERTY_HIDE_UNSELECT_CHANGED)
 		{
 			@Override
 			public void action()
@@ -572,7 +573,7 @@ public class Actions
 				return viewControler.getHideCompounds() == HideCompounds.nonWatched;
 			}
 		};
-		new ActionCreator(VIEW_HIDE_NON_ACTIVE, true, true, ViewControler.PROPERTY_HIDE_UNSELECT_CHANGED)
+		new RadioActionCreator(VIEW_HIDE_NON_ACTIVE, ViewControler.PROPERTY_HIDE_UNSELECT_CHANGED)
 		{
 			@Override
 			public void action()
@@ -734,8 +735,7 @@ public class Actions
 				return viewControler.getMatchColor();
 			}
 		};
-		new ActionCreator(HIGHLIGHT_COLORS, viewControler.isHighlightLogEnabled() != null,
-				ViewControler.PROPERTY_HIGHLIGHT_CHANGED)
+		new ActionCreator(HIGHLIGHT_COLORS, null, ViewControler.PROPERTY_HIGHLIGHT_CHANGED)
 		{
 			@SuppressWarnings("unchecked")
 			@Override
@@ -773,10 +773,16 @@ public class Actions
 				if (grad != null && props.length > 0)
 					viewControler.setHighlightColors(grad, logHighlighting.isSelected(), props);
 			}
+
+			@Override
+			public boolean isEnabled()
+			{
+				return viewControler.isHighlightLogEnabled() != null;
+			}
 		};
 
-		new ActionCreator(HIGHLIGHT_LAST_FEATURE, viewControler.getHighlightMode() == HighlightMode.Spheres,
-				ViewControler.PROPERTY_HIGHLIGHT_LAST_FEATURE)
+		new ActionCreator(HIGHLIGHT_LAST_FEATURE, ViewControler.PROPERTY_HIGHLIGHT_LAST_FEATURE,
+				ViewControler.PROPERTY_HIGHLIGHT_MODE_CHANGED)
 		{
 			@Override
 			public void action()
@@ -789,6 +795,12 @@ public class Actions
 			{
 				return viewControler.isHighlightLastFeatureEnabled();
 			}
+
+			@Override
+			public boolean isEnabled()
+			{
+				return viewControler.getHighlightMode() == HighlightMode.Spheres;
+			}
 		};
 		new ActionCreator(VIEW_SELECT_LAST_FEATURE)
 		{
@@ -798,7 +810,8 @@ public class Actions
 				viewControler.setSelectLastSelectedHighlighter();
 			}
 		};
-		new ActionCreator(HIGHLIGHT_MODE, ViewControler.PROPERTY_HIGHLIGHT_MODE_CHANGED)
+		new ActionCreator(HIGHLIGHT_MODE, ViewControler.PROPERTY_HIGHLIGHT_MODE_CHANGED,
+				ViewControler.PROPERTY_STYLE_CHANGED)
 		{
 			@Override
 			public void action()
@@ -812,8 +825,14 @@ public class Actions
 			{
 				return viewControler.getHighlightMode() == MainPanel.HighlightMode.Spheres;
 			}
+
+			@Override
+			public boolean isEnabled()
+			{
+				return viewControler.getStyle() != ViewControler.Style.dots;
+			}
 		};
-		new ActionCreator(HIGHLIGHT_DECR_SPHERE_SIZE, viewControler.getHighlightMode() == HighlightMode.Spheres)
+		new ActionCreator(HIGHLIGHT_DECR_SPHERE_SIZE, null, ViewControler.PROPERTY_HIGHLIGHT_MODE_CHANGED)
 		{
 			@Override
 			public void action()
@@ -823,8 +842,14 @@ public class Actions
 				else
 					viewControler.setSphereSize(0);
 			}
+
+			@Override
+			public boolean isEnabled()
+			{
+				return viewControler.getHighlightMode() == HighlightMode.Spheres;
+			}
 		};
-		new ActionCreator(HIGHLIGHT_INCR_SPHERE_SIZE, viewControler.getHighlightMode() == HighlightMode.Spheres)
+		new ActionCreator(HIGHLIGHT_INCR_SPHERE_SIZE, null, ViewControler.PROPERTY_HIGHLIGHT_MODE_CHANGED)
 		{
 			@Override
 			public void action()
@@ -834,8 +859,14 @@ public class Actions
 				else
 					viewControler.setSphereSize(1);
 			}
+
+			@Override
+			public boolean isEnabled()
+			{
+				return viewControler.getHighlightMode() == HighlightMode.Spheres;
+			}
 		};
-		new ActionCreator(HIGHLIGHT_DECR_SPHERE_TRANSLUCENCY, viewControler.getHighlightMode() == HighlightMode.Spheres)
+		new ActionCreator(HIGHLIGHT_DECR_SPHERE_TRANSLUCENCY, null, ViewControler.PROPERTY_HIGHLIGHT_MODE_CHANGED)
 		{
 			@Override
 			public void action()
@@ -845,8 +876,14 @@ public class Actions
 				else
 					viewControler.setSphereTranslucency(0);
 			}
+
+			@Override
+			public boolean isEnabled()
+			{
+				return viewControler.getHighlightMode() == HighlightMode.Spheres;
+			}
 		};
-		new ActionCreator(HIGHLIGHT_INCR_SPHERE_TRANSLUCENCY, viewControler.getHighlightMode() == HighlightMode.Spheres)
+		new ActionCreator(HIGHLIGHT_INCR_SPHERE_TRANSLUCENCY, null, ViewControler.PROPERTY_HIGHLIGHT_MODE_CHANGED)
 		{
 			@Override
 			public void action()
@@ -855,6 +892,12 @@ public class Actions
 					viewControler.setSphereTranslucency(View.instance.sphereTranslucency + 0.1);
 				else
 					viewControler.setSphereTranslucency(1);
+			}
+
+			@Override
+			public boolean isEnabled()
+			{
+				return viewControler.getHighlightMode() == HighlightMode.Spheres;
 			}
 		};
 		new ActionCreator(HIDDEN_INCR_SPIN_SPEED)
