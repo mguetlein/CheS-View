@@ -42,6 +42,7 @@ import com.jgoodies.forms.builder.DefaultFormBuilder;
 import com.jgoodies.forms.layout.FormLayout;
 import com.jgoodies.forms.layout.Sizes;
 
+import dataInterface.AbstractFragmentProperty;
 import dataInterface.CompoundProperty;
 import dataInterface.CompoundProperty.Type;
 import dataInterface.CompoundPropertyUtil;
@@ -59,6 +60,8 @@ public class ChartPanel extends TransparentViewPanel
 	private JPanel featurePanel;
 	private JLabel featureNameLabel = ComponentFactory.createViewLabel("");
 	private JLabel featureSetLabel = ComponentFactory.createViewLabel("");
+	private JLabel featureValuesLabel = ComponentFactory.createViewLabel("");
+	private JLabel featureValuesLabelHeader = ComponentFactory.createViewLabel("Values:");
 	private JLabel featureDescriptionLabel = ComponentFactory.createViewLabel("");
 	private JLabel featureDescriptionLabelHeader = ComponentFactory.createViewLabel("Description:");
 	private JLabel featureSmartsLabelHeader = ComponentFactory.createViewLabel("Smarts:");
@@ -91,6 +94,9 @@ public class ChartPanel extends TransparentViewPanel
 		b.nextLine();
 		b.append("");
 		b.append(featureSetLabel);
+		b.nextLine();
+		b.append(featureValuesLabelHeader);
+		b.append(featureValuesLabel);
 		b.nextLine();
 		b.append(featureDescriptionLabelHeader);
 		b.append(featureDescriptionLabel);
@@ -342,7 +348,7 @@ public class ChartPanel extends TransparentViewPanel
 			vals.add(ArrayUtil.toPrimitiveDoubleArray(ArrayUtil.removeNullValues(v)));
 			if (c != null)
 			{
-				captions.add(c.getName());
+				captions.add(c.toString());
 				vals.add(ArrayUtil.toPrimitiveDoubleArray(ArrayUtil.removeNullValues(c.getDoubleValues(p))));
 			}
 
@@ -394,7 +400,8 @@ public class ChartPanel extends TransparentViewPanel
 		@Override
 		protected boolean isSelected(Compound m, CompoundProperty p)
 		{
-			return ObjectUtil.equals(m.getStringValue(p), selectedCategory);
+			return m.getStringValue(p) == null && selectedCategory == null
+					|| m.getFormattedValue(p).equals(selectedCategory);
 		}
 	}
 
@@ -452,7 +459,7 @@ public class ChartPanel extends TransparentViewPanel
 				List<Double> clusterCounts = new ArrayList<Double>();
 				for (String o : datasetValues)
 					clusterCounts.add((double) clusterSet.getCount(o));
-				data.put(c.getName(), clusterCounts);
+				data.put(c.toString(), clusterCounts);
 			}
 			List<Double> datasetCounts = new ArrayList<Double>();
 			for (String o : datasetValues)
@@ -465,6 +472,8 @@ public class ChartPanel extends TransparentViewPanel
 			for (int i = 0; i < vals.length; i++)
 				if (vals[i] == null)
 					vals[i] = "null";
+				else if (p.isSmartsProperty())
+					vals[i] = AbstractFragmentProperty.getFormattedSmartsValue(vals[i]);
 
 			plot = new StackedBarPlot(null, null, "#compounds", StackedBarPlot.convertTotalToAdditive(data), vals);
 			plot.addSelectionListener(new NominalCompoundSelector((StackedBarPlot) plot));
@@ -513,14 +522,13 @@ public class ChartPanel extends TransparentViewPanel
 			Color cols[] = CompoundPropertyUtil.getNominalColors(property);
 			if (cIndex == -1)
 			{
-				chartPanel.setSeriesColor(dIndex, ColorUtil.grayscale(CompoundPropertyUtil.getColor(0)));
+				chartPanel.setSeriesColor(dIndex, ColorUtil.grayscale(cols[0]));
 				((StackedBarPlot) chartPanel).setSeriesCategoryColors(dIndex, cols);
 			}
 			else
 			{
-				chartPanel.setSeriesColor(dIndex,
-						ColorUtil.grayscale(CompoundPropertyUtil.getColor(0).darker().darker().darker()));
-				chartPanel.setSeriesColor(cIndex, ColorUtil.grayscale(CompoundPropertyUtil.getColor(0)).brighter());
+				chartPanel.setSeriesColor(dIndex, ColorUtil.grayscale(cols[0].darker().darker().darker()));
+				chartPanel.setSeriesColor(cIndex, ColorUtil.grayscale(cols[0]).brighter());
 
 				((StackedBarPlot) chartPanel).setSeriesCategoryColors(dIndex,
 						ColorUtil.darker(ColorUtil.darker(ColorUtil.darker(cols))));
@@ -530,15 +538,16 @@ public class ChartPanel extends TransparentViewPanel
 		else
 		{
 			if (cIndex == -1)
-				chartPanel.setSeriesColor(dIndex, CompoundPropertyUtil.getColor(0));
+				chartPanel.setSeriesColor(dIndex, CompoundPropertyUtil.getNumericChartColor());
 			else
 			{
-				chartPanel.setSeriesColor(dIndex, CompoundPropertyUtil.getColor(0).darker().darker().darker());
-				chartPanel.setSeriesColor(cIndex, CompoundPropertyUtil.getColor(0).brighter());
+				chartPanel.setSeriesColor(dIndex, CompoundPropertyUtil.getNumericChartColor().darker().darker()
+						.darker());
+				chartPanel.setSeriesColor(cIndex, CompoundPropertyUtil.getNumericChartColor().brighter());
 			}
 
 			if (mIndex != -1)
-				chartPanel.setSeriesColor(mIndex, CompoundPropertyUtil.getColor(1));
+				chartPanel.setSeriesColor(mIndex, CompoundPropertyUtil.getNumericChartHighlightColor());
 		}
 
 		chartPanel.setOpaqueFalse();
@@ -653,6 +662,8 @@ public class ChartPanel extends TransparentViewPanel
 						featureSetLabel.setText(fProperty.getCompoundPropertySet().toString());
 						//hack, ommits this for cdk features
 						featureSetLabel.setVisible(fProperty.getCompoundPropertySet().isSizeDynamic());
+						featureValuesLabel.setText("<html>" + clustering.getSummaryStringValue(fProperty, true)
+								+ "</html>");
 						featureDescriptionLabel.setText(fProperty.getDescription() + "");
 						featureDescriptionLabel.setVisible(fProperty.getDescription() != null);
 						featureDescriptionLabelHeader.setVisible(fProperty.getDescription() != null);

@@ -7,6 +7,7 @@ import gui.ViewControler;
 import gui.ViewControler.Style;
 import gui.Zoomable;
 
+import java.awt.Color;
 import java.util.BitSet;
 import java.util.HashMap;
 
@@ -14,14 +15,19 @@ import javax.swing.ImageIcon;
 import javax.vecmath.Vector3f;
 
 import main.Settings;
+
+import org.apache.commons.lang.StringEscapeUtils;
+
+import util.ColorUtil;
 import util.DoubleUtil;
 import util.ObjectUtil;
 import util.StringUtil;
 import dataInterface.CompoundData;
 import dataInterface.CompoundProperty;
 import dataInterface.CompoundProperty.Type;
+import dataInterface.CompoundPropertyOwner;
 
-public class Compound implements Zoomable, Comparable<Compound>, DoubleNameElement
+public class Compound implements Zoomable, Comparable<Compound>, DoubleNameElement, CompoundPropertyOwner
 {
 	private int compoundIndex;
 	private BitSet bitSet;
@@ -38,8 +44,9 @@ public class Compound implements Zoomable, Comparable<Compound>, DoubleNameEleme
 
 	private HashMap<String, BitSet> smartsMatches;
 	private String compoundColor;
-	private String highlightColor;
-	private String lastHighlightColor;
+	private String highlightColorString;
+	private Color highlightColor;
+	private String lastHighlightColorString;
 	private Vector3f spherePosition;
 	private CompoundProperty highlightCompoundProperty;
 	private Style style;
@@ -76,15 +83,7 @@ public class Compound implements Zoomable, Comparable<Compound>, DoubleNameEleme
 
 	public String getFormattedValue(CompoundProperty property)
 	{
-		if (property.getType() == Type.NUMERIC)
-			if (getDoubleValue(property) == null)
-				return "null";
-			else if (property.isIntegerInMappedDataset())
-				return StringUtil.formatDouble(getDoubleValue(property), 0);
-			else
-				return StringUtil.formatDouble(getDoubleValue(property));
-		else
-			return getStringValue(property) + "";
+		return compoundData.getFormattedValue(property);
 	}
 
 	public String getStringValue(CompoundProperty property)
@@ -113,22 +112,39 @@ public class Compound implements Zoomable, Comparable<Compound>, DoubleNameEleme
 		return compoundData.getIndex();
 	}
 
-	class DisplayName implements Comparable<DisplayName>
+	public static class DisplayName implements Comparable<DisplayName>
 	{
 		String val;
 		Double valD;
 		Integer compareIndex;
 		String name;
 
-		public String toString()
+		public String toString(boolean html, Color highlightColor)
 		{
 			StringBuffer b = new StringBuffer();
+			if (html)
+				b.append(StringEscapeUtils.escapeHtml(name));
+			else
+				b.append(name);
 			if (val != null && !val.equals(name))
 			{
-				b.append(val);
-				b.append(" ");
+				if (html)
+				{
+					b.append(":&nbsp;");
+					if (highlightColor != null)
+						b.append("<font color='" + ColorUtil.toHtml(highlightColor) + "'>");
+					b.append("<i>");
+					b.append(StringEscapeUtils.escapeHtml(val));
+					b.append("</i>");
+					if (highlightColor != null)
+						b.append("</font>");
+				}
+				else
+				{
+					b.append(": ");
+					b.append(val);
+				}
 			}
-			b.append(name);
 			return b.toString();
 		}
 
@@ -158,22 +174,27 @@ public class Compound implements Zoomable, Comparable<Compound>, DoubleNameEleme
 	@Override
 	public String toString()
 	{
-		return displayName.toString();
+		return getFirstName();
+	}
+
+	public String toStringWithValue()
+	{
+		return displayName.toString(false, null);
 	}
 
 	@Override
 	public String getFirstName()
 	{
-		if (ObjectUtil.equals(displayName.val, displayName.name))
-			return null;
-		else
-			return displayName.val;
+		return displayName.name;
 	}
 
 	@Override
 	public String getSecondName()
 	{
-		return displayName.name;
+		if (ObjectUtil.equals(displayName.val, displayName.name))
+			return null;
+		else
+			return displayName.val;
 	}
 
 	@Override
@@ -290,23 +311,29 @@ public class Compound implements Zoomable, Comparable<Compound>, DoubleNameEleme
 		return compoundColor;
 	}
 
-	public void setHighlightColor(String color)
+	public void setHighlightColor(String colorString, Color color)
 	{
-		if (!ObjectUtil.equals(highlightColor, color))
+		if (!ObjectUtil.equals(highlightColorString, colorString))
 		{
-			this.lastHighlightColor = highlightColor;
+			this.lastHighlightColorString = highlightColorString;
+			this.highlightColorString = colorString;
 			this.highlightColor = color;
 		}
 	}
 
-	public String getHighlightColor()
+	public Color getHighlightColor()
 	{
 		return highlightColor;
 	}
 
-	public String getLastHighlightColor()
+	public String getHighlightColorString()
 	{
-		return lastHighlightColor;
+		return highlightColorString;
+	}
+
+	public String getLastHighlightColorString()
+	{
+		return lastHighlightColorString;
 	}
 
 	public Vector3f getSpherePosition()

@@ -354,9 +354,9 @@ public class View
 			case Strong:
 				trans = 0.6 + 0.35 * sphereTranslucency;
 		}
-		scriptWait("ellipsoid ID " + id + " " + m.getHighlightColor() + " color translucent " + trans);
-		if (showLastHighlightColor && m.getLastHighlightColor() != null)
-			scriptWait("ellipsoid ID " + id + "_2 " + m.getLastHighlightColor() + " color translucent "
+		scriptWait("ellipsoid ID " + id + " " + m.getHighlightColorString() + " color translucent " + trans);
+		if (showLastHighlightColor && m.getLastHighlightColorString() != null)
+			scriptWait("ellipsoid ID " + id + "_2 " + m.getLastHighlightColorString() + " color translucent "
 					+ Math.max(0, (trans - 0.1)));
 		else
 			scriptWait("ellipsoid ID " + id + "_2 color translucent 1.0");

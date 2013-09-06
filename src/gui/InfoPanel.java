@@ -1,24 +1,34 @@
 package gui;
 
 import gui.swing.ComponentFactory;
-import gui.swing.TransparentViewPanel;
 import gui.util.CompoundPropertyHighlighter;
+import gui.util.Highlighter;
+import gui.util.SubstructureHighlighter;
 
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
+import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.Rectangle;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
+import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
 import util.ArrayUtil;
@@ -32,6 +42,7 @@ import com.jgoodies.forms.layout.FormLayout;
 import com.jgoodies.forms.layout.Sizes;
 
 import dataInterface.CompoundProperty;
+import dataInterface.CompoundPropertyUtil;
 import dataInterface.SubstructureSmartsType;
 
 public class InfoPanel extends JPanel
@@ -40,8 +51,6 @@ public class InfoPanel extends JPanel
 	ViewControler viewControler;
 	GUIControler guiControler;
 
-	JPanel datasetAndClusterPanelContainer;
-
 	JPanel datasetPanel;
 	JTextField datasetNameLabel = ComponentFactory.createUneditableViewTextField();
 	JLabel datasetSizeLabel = ComponentFactory.createViewLabel();
@@ -49,32 +58,48 @@ public class InfoPanel extends JPanel
 	JLabel datasetEmbedLabel = ComponentFactory.createViewLabel();
 	JLabel datasetEmbedQualityLabel = ComponentFactory.createViewLabel();
 
-	JPanel clusterPanel;
-	JLabel clusterNameLabel = ComponentFactory.createViewLabel();
-	JLabel clusterSizeLabel = ComponentFactory.createViewLabel();
-	JLabel clusterAlignLabel = ComponentFactory.createViewLabel();
-	JLabel clusterMCSLabelHeader = ComponentFactory.createViewLabel();
-	JLabel clusterMCSLabel = ComponentFactory.createViewLabel();
-	JLabel clusterFeatureLabelHeader = ComponentFactory.createViewLabel();
-	JLabel clusterFeatureLabel = ComponentFactory.createViewLabel();
+	JPanel clusterCompoundPanel;
+	CardLayout clusterCompoundLayout;
+	final static String CARD_CLUSTER = "cluster";
+	final static String CARD_COMPOUND = "compound";
 
-	JPanel compoundPanel;
+	int clusterPanelMinWidth = -1;
+
+	JTable clusterFeatureTable_fix = ComponentFactory.createTable(true);
+	DefaultTableModel clusterFeatureTableModel_fix;
+
+	JTable clusterFeatureTable_interact = ComponentFactory.createTable(true);
+	DefaultTableModel clusterFeatureTableModel_interact;
+	JScrollPane clusterFeatureTableScroll_interact;
+
+	JPanel clusterTableCardPanel;
+	CardLayout clusterTableCardLayout;
+
 	int compoundPanelMinWidth = -1;
-	JLabel compoundNameLabel = ComponentFactory.createViewLabel();
 
-	JTable compoundFeatureTable_fixed = ComponentFactory.createTable(true);
-	DefaultTableModel compoundFeatureTableModel_fixed;
+	JTable compoundFeatureTable_fix = ComponentFactory.createTable(true);
+	DefaultTableModel compoundFeatureTableModel_fix;
 
-	JTable compoundFeatureTable_interactive = ComponentFactory.createTable(true);
-	DefaultTableModel compoundFeatureTableModel_interactive;
-	JScrollPane compoundFeatureTableScroll_interactive;
+	JTable compoundFeatureTable_interact = ComponentFactory.createTable(true);
+	DefaultTableModel compoundFeatureTableModel_interact;
+	JScrollPane compoundFeatureTableScroll_interact;
 
-	JPanel tableCardPanel;
-	CardLayout tableCardLayout;
-	final static String CARD_FIXED = "fixed-card";
-	final static String CARD_INTERACTIVE = "interactive-card";
+	JPanel compoundTableCardPanel;
+	CardLayout compoundTableCardLayout;
+
+	final static String CARD_FIX = "fix-card";
+	final static String CARD_INTERACT = "interact-card";
 
 	JLabel compoundIconLabel = new JLabel("");
+
+	boolean interactive = false;
+	Compound selectedCompound = null;
+	Cluster selectedCluster = null;
+
+	int clusterSubstructureRow = -1;
+	SubstructureSmartsType clusterSubstructureType;
+
+	boolean selfUpdate = true;
 
 	public InfoPanel(ViewControler viewControler, Clustering clustering, GUIControler guiControler)
 	{
@@ -147,7 +172,11 @@ public class InfoPanel extends JPanel
 			public void propertyChange(PropertyChangeEvent evt)
 			{
 				if (evt.getPropertyName().equals(GUIControler.PROPERTY_VIEWER_SIZE_CHANGED))
-					updateDatasetAndClusterPanelSize();
+				{
+					//updateDatasetAndClusterPanelSize();
+					updateDatasetPanelSize();
+					//					updateClusterPanelSize();
+				}
 			}
 		});
 	}
@@ -174,85 +203,151 @@ public class InfoPanel extends JPanel
 		datasetPanel.setOpaque(false);
 		datasetPanel.setVisible(true);
 
-		DefaultFormBuilder b2 = new DefaultFormBuilder(new FormLayout("p,3dlu,p"));
-		b2.setLineGapSize(Sizes.pixel(2));
-		b2.append(ComponentFactory.createViewLabel("<html><b>Cluster:</b><html>"));
-		b2.append(clusterNameLabel);
-		b2.nextLine();
-		b2.append(ComponentFactory.createViewLabel("<html>Num compounds:<html>"));
-		b2.append(clusterSizeLabel);
-		b2.nextLine();
-		b2.append(ComponentFactory.createViewLabel("<html>3D Alignement:<html>"));
-		b2.append(clusterAlignLabel);
-		b2.nextLine();
-		b2.append(clusterMCSLabelHeader);
-		b2.append(clusterMCSLabel);
-		b2.nextLine();
-		b2.append(clusterFeatureLabelHeader);
-		b2.append(clusterFeatureLabel);
+		clusterTableCardLayout = new CardLayout();
+		clusterTableCardPanel = new JPanel(clusterTableCardLayout);
+		clusterTableCardPanel.setOpaque(false);
 
-		clusterPanel = b2.getPanel();
-		clusterPanel.setOpaque(false);
-		clusterPanel.setVisible(false);
-
-		JPanel tablePanel = new JPanel(new BorderLayout(0, 2))
+		clusterFeatureTableScroll_interact = ComponentFactory.createViewScrollpane(clusterFeatureTable_interact);
+		clusterFeatureTableModel_interact = (DefaultTableModel) clusterFeatureTable_interact.getModel();
+		clusterFeatureTableModel_interact.addColumn("Feature");
+		clusterFeatureTableModel_interact.addColumn("Value");
+		clusterTableCardPanel.add(clusterFeatureTableScroll_interact, CARD_INTERACT);
+		clusterFeatureTable_interact.getSelectionModel().addListSelectionListener(new ListSelectionListener()
 		{
+
+			@Override
+			public void valueChanged(ListSelectionEvent e)
+			{
+				if (selfUpdate)
+					return;
+				int r = clusterFeatureTable_interact.getSelectedRow();
+				if (r != -1 && clusterFeatureTable_interact.getValueAt(r, 0) instanceof CompoundProperty)
+					viewControler.setHighlighter((CompoundProperty) clusterFeatureTable_interact.getValueAt(r, 0));
+				else if (r != -1 && r == clusterSubstructureRow)
+					viewControler.setHighlighter(clusterSubstructureType);
+				else
+					viewControler.setHighlighter(Highlighter.DEFAULT_HIGHLIGHTER);
+			}
+		});
+
+		clusterFeatureTableModel_fix = (DefaultTableModel) clusterFeatureTable_fix.getModel();
+		clusterFeatureTableModel_fix.addColumn("Feature");
+		clusterFeatureTableModel_fix.addColumn("Value");
+		clusterTableCardPanel.add(clusterFeatureTable_fix, CARD_FIX);
+
+		compoundTableCardLayout = new CardLayout();
+		compoundTableCardPanel = new JPanel(compoundTableCardLayout);
+		compoundTableCardPanel.setOpaque(false);
+
+		compoundFeatureTableScroll_interact = ComponentFactory.createViewScrollpane(compoundFeatureTable_interact);
+		compoundFeatureTableModel_interact = (DefaultTableModel) compoundFeatureTable_interact.getModel();
+		compoundFeatureTableModel_interact.addColumn("Feature");
+		compoundFeatureTableModel_interact.addColumn("Value");
+		compoundTableCardPanel.add(compoundFeatureTableScroll_interact, CARD_INTERACT);
+		compoundFeatureTable_interact.getSelectionModel().addListSelectionListener(new ListSelectionListener()
+		{
+
+			@Override
+			public void valueChanged(ListSelectionEvent e)
+			{
+				if (selfUpdate)
+					return;
+				int r = compoundFeatureTable_interact.getSelectedRow();
+				if (r != -1 && compoundFeatureTable_interact.getValueAt(r, 0) instanceof CompoundProperty)
+					viewControler.setHighlighter((CompoundProperty) compoundFeatureTable_interact.getValueAt(r, 0));
+				else
+					viewControler.setHighlighter(Highlighter.DEFAULT_HIGHLIGHTER);
+			}
+		});
+
+		compoundFeatureTableModel_fix = (DefaultTableModel) compoundFeatureTable_fix.getModel();
+		compoundFeatureTableModel_fix.addColumn("Feature");
+		compoundFeatureTableModel_fix.addColumn("Value");
+		compoundTableCardPanel.add(compoundFeatureTable_fix, CARD_FIX);
+
+		JPanel compoundIconPanel = new JPanel(new BorderLayout());
+		compoundIconPanel.setOpaque(false);
+		compoundIconPanel.add(compoundIconLabel, BorderLayout.NORTH);
+
+		clusterCompoundLayout = new CardLayout();
+		clusterCompoundPanel = new JPanel(clusterCompoundLayout)
+		{
+			@Override
 			public Dimension getPreferredSize()
 			{
+				if (selectedCompound == null && selectedCluster == null)
+					return new Dimension(0, 0);
+
 				Dimension dim = super.getPreferredSize();
-				dim.width = Math.min(guiControler.getViewerWidth() / (interactive ? 4 : 6),
-						Math.max(compoundPanelMinWidth, compoundNameLabel.getPreferredSize().width));
+				int panelWidth;
+				if (selectedCompound != null)
+					panelWidth = compoundPanelMinWidth; //Math.max(compoundPanelMinWidth, compoundNameLabel.getPreferredSize().width);
+				else
+					panelWidth = clusterPanelMinWidth; //Math.max(clusterPanelMinWidth, clusterNameLabel.getPreferredSize().width);
+				int fraction = interactive ? 4 : 6;
+				dim.width = Math.min(guiControler.getViewerWidth() / fraction, panelWidth);
 				//				dim.height = Math.min(dim.width, 180);
 				return dim;
 			}
 		};
-		tablePanel.setOpaque(false);
+		clusterCompoundPanel.setOpaque(false);
+		clusterCompoundPanel.setVisible(false);
 
-		tableCardLayout = new CardLayout();
-		tableCardPanel = new JPanel(tableCardLayout);
-		tableCardPanel.setOpaque(false);
+		clusterCompoundPanel.add(clusterTableCardPanel, CARD_CLUSTER);
+		clusterCompoundPanel.add(compoundTableCardPanel, CARD_COMPOUND);
 
-		compoundFeatureTableScroll_interactive = ComponentFactory
-				.createViewScrollpane(compoundFeatureTable_interactive);
-		compoundFeatureTableModel_interactive = (DefaultTableModel) compoundFeatureTable_interactive.getModel();
-		compoundFeatureTableModel_interactive.addColumn("Feature");
-		compoundFeatureTableModel_interactive.addColumn("Value");
-		tableCardPanel.add(compoundFeatureTableScroll_interactive, CARD_INTERACTIVE);
-
-		compoundFeatureTableModel_fixed = (DefaultTableModel) compoundFeatureTable_fixed.getModel();
-		compoundFeatureTableModel_fixed.addColumn("Feature");
-		compoundFeatureTableModel_fixed.addColumn("Value");
-		tableCardPanel.add(compoundFeatureTable_fixed, CARD_FIXED);
-
-		tablePanel.add(compoundNameLabel, BorderLayout.NORTH);
-		tablePanel.add(tableCardPanel, BorderLayout.CENTER);
-		JPanel iconPanel = new JPanel(new BorderLayout());
-		iconPanel.setOpaque(false);
-		iconPanel.add(compoundIconLabel, BorderLayout.NORTH);
-
-		compoundPanel = new JPanel(new BorderLayout(5, 0));
-		compoundPanel.add(iconPanel, BorderLayout.WEST);
-		compoundPanel.add(tablePanel, BorderLayout.EAST);
-		compoundPanel.setOpaque(false);
-		compoundPanel.setVisible(false);
-
-		datasetAndClusterPanelContainer = new TransparentViewPanel(new BorderLayout(20, 0));
-		datasetAndClusterPanelContainer.setOpaque(true);
-		datasetAndClusterPanelContainer.add(datasetPanel, BorderLayout.EAST);
-		datasetAndClusterPanelContainer.add(clusterPanel, BorderLayout.WEST);
+		JPanel iconAndClusterCompoundPanel = new JPanel(new BorderLayout(5, 0));
+		iconAndClusterCompoundPanel.add(compoundIconPanel, BorderLayout.WEST);
+		iconAndClusterCompoundPanel.add(clusterCompoundPanel, BorderLayout.EAST);
+		iconAndClusterCompoundPanel.setOpaque(false);
 
 		setLayout(new BorderLayout(0, 20));
-		add(datasetAndClusterPanelContainer, BorderLayout.NORTH);
-		add(compoundPanel, BorderLayout.EAST);
+		JPanel datasetPanelContainer = new JPanel(new BorderLayout());
+		datasetPanelContainer.setOpaque(false);
+		datasetPanelContainer.add(datasetPanel, BorderLayout.EAST);
+		add(datasetPanelContainer, BorderLayout.NORTH);
+		add(iconAndClusterCompoundPanel, BorderLayout.EAST);
+
+		DefaultTableCellRenderer renderer = new ComponentFactory.FactoryTableCellRenderer(true)
+		{
+			public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
+					boolean hasFocus, int row, int column)
+			{
+				Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+				if (row == 0 && column == 0)
+					c.setFont(c.getFont().deriveFont(Font.BOLD));
+				if (column == 1)
+				{
+					if (table.getValueAt(row, 0) instanceof CompoundProperty)
+					{
+						c.setFont(c.getFont().deriveFont(Font.ITALIC));
+
+						if (isSelected == false)
+						{
+							Color col = MainPanel.getHighlightColor(clustering,
+									selectedCompound != null ? selectedCompound : selectedCluster,
+									(CompoundProperty) table.getValueAt(row, 0));
+							if (col != null && col != CompoundPropertyUtil.getNullValueColor())
+								setForeground(col);
+						}
+					}
+				}
+				return c;
+			};
+		};
+		compoundFeatureTable_fix.setDefaultRenderer(Object.class, renderer);
+		compoundFeatureTable_interact.setDefaultRenderer(Object.class, renderer);
+		clusterFeatureTable_fix.setDefaultRenderer(Object.class, renderer);
+		clusterFeatureTable_interact.setDefaultRenderer(Object.class, renderer);
 
 		setOpaque(false);
 	}
 
-	boolean interactive;
-
 	@SuppressWarnings("unchecked")
-	private void updateCompound()
+	private synchronized void updateCompound()
 	{
+		selfUpdate = true;
+
 		int index = -1;
 		if (clustering.isCompoundActive() && clustering.isCompoundWatched())
 		{
@@ -280,35 +375,55 @@ public class InfoPanel extends JPanel
 
 		if (index == -1)
 		{
-			compoundPanel.setVisible(false);
+			selectedCompound = null;
+			compoundIconLabel.setVisible(false);
 			compoundPanelMinWidth = 0;
+
+			if (selectedCluster != null)
+				updateCluster();
+			else
+				clusterCompoundPanel.setVisible(false);
+
 		}
 		else
 		{
-			compoundPanel.setIgnoreRepaint(true);
+			selectedCompound = clustering.getCompoundWithCompoundIndex(index);
+			clusterCompoundPanel.setIgnoreRepaint(true);
+			clusterCompoundLayout.show(clusterCompoundPanel, CARD_COMPOUND);
 
-			final Compound m = clustering.getCompoundWithCompoundIndex(index);
-			compoundNameLabel.setText("<html><b>Compound:</b>&nbsp;" + m.toString().replace(" ", "&nbsp;") + "<html>");
-			//			compoundSmilesLabel.setText(m.getSmiles());
+			CompoundProperty selectedP = null;
+			if (viewControler.getHighlighter() instanceof CompoundPropertyHighlighter)
+				selectedP = ((CompoundPropertyHighlighter) viewControler.getHighlighter()).getProperty();
 
-			tableCardLayout.show(tableCardPanel, interactive ? CARD_INTERACTIVE : CARD_FIXED);
-			DefaultTableModel model = (interactive ? compoundFeatureTableModel_interactive
-					: compoundFeatureTableModel_fixed);
-			JTable table = (interactive ? compoundFeatureTable_interactive : compoundFeatureTable_fixed);
+			compoundTableCardLayout.show(compoundTableCardPanel, interactive ? CARD_INTERACT : CARD_FIX);
+			DefaultTableModel model = (interactive ? compoundFeatureTableModel_interact : compoundFeatureTableModel_fix);
+			JTable table = (interactive ? compoundFeatureTable_interact : compoundFeatureTable_fix);
 
 			while (model.getRowCount() > 0)
 				model.removeRow(0);
-			model.addRow(new String[] { "Smiles:", m.getSmiles() });
+			model.addRow(new String[] { "Compound", selectedCompound.toString() });
+			model.addRow(new String[] { "Smiles", selectedCompound.getSmiles() });
+			//model.addRow(new String[] { "Accented by:", clustering.getAccent(m) });
 			List<CompoundProperty> props = new ArrayList<CompoundProperty>();
 			for (CompoundProperty p : clustering.getProperties())
 				if (!p.isSmiles())
 					props.add(p);
 			props = ListUtil.concat(props, clustering.getFeatures());
+			Collections.sort(props, new Comparator<CompoundProperty>()
+			{
+				@Override
+				public int compare(CompoundProperty o1, CompoundProperty o2)
+				{
+					return Double.compare(clustering.getSpecificity(selectedCompound, o1),
+							clustering.getSpecificity(selectedCompound, o2));
+				}
+			});
+			int rowOffset = model.getRowCount();
 			for (CompoundProperty p : props)
 			{
 				Object o[] = new Object[2];
-				o[0] = p.getName() + ":";
-				o[1] = m.getFormattedValue(p);
+				o[0] = p;
+				o[1] = selectedCompound.getFormattedValue(p);
 				model.addRow(o);
 			}
 
@@ -318,38 +433,42 @@ public class InfoPanel extends JPanel
 					interactive ? Integer.MAX_VALUE : guiControler.getViewerWidth() / 12);
 			compoundPanelMinWidth = Math.max(compoundPanelMinWidth, width);
 
-			if (viewControler.getHighlighter() instanceof CompoundPropertyHighlighter)
+			if (selectedP != null && props.indexOf(selectedP) != -1)
 			{
-				CompoundProperty p = ((CompoundPropertyHighlighter) viewControler.getHighlighter()).getProperty();
-				int pIndex = 1 + props.indexOf(p);
+				int pIndex = rowOffset + props.indexOf(selectedP);
 				table.setRowSelectionInterval(pIndex, pIndex);
 				table.scrollRectToVisible(new Rectangle(table.getCellRect(pIndex, 0, true)));
 			}
 			else
-			{
 				table.scrollRectToVisible(new Rectangle(table.getCellRect(0, 0, true)));
-			}
 
+			final Compound fCompound = selectedCompound;
 			Thread th = new Thread(new Runnable()
 			{
 				public void run()
 				{
-
 					SwingUtilities.invokeLater(new Runnable()
 					{
 						public void run()
 						{
-							compoundPanel.setIgnoreRepaint(false);
-							compoundIconLabel.setIcon(m.getIcon(viewControler.isBlackgroundBlack()));
-							compoundPanel.setIgnoreRepaint(true);
+							ImageIcon icon = null;
+							if (selectedCompound == fCompound)
+								icon = fCompound.getIcon(viewControler.isBlackgroundBlack());
+							if (selectedCompound == fCompound) // after icon is loaded
+							{
+								compoundIconLabel.setIcon(icon);
+								compoundIconLabel.setVisible(true);
+							}
 						}
 					});
 				}
 			});
 			th.start();
-			compoundPanel.setIgnoreRepaint(false);
-			compoundPanel.setVisible(true);
+			clusterCompoundPanel.setIgnoreRepaint(false);
+			clusterCompoundPanel.setVisible(true);
 		}
+
+		selfUpdate = false;
 	}
 
 	private void updateDataset()
@@ -358,73 +477,126 @@ public class InfoPanel extends JPanel
 			datasetPanel.setVisible(false);
 		else
 		{
-			datasetAndClusterPanelContainer.setIgnoreRepaint(true);
+			//datasetAndClusterPanelContainer.setIgnoreRepaint(true);
+			datasetPanel.setIgnoreRepaint(true);
 
 			datasetNameLabel.setText(clustering.getName());
-			//			datasetNameLabel.setCaretPosition(datasetNameLabel.getText().length());
 			datasetSizeLabel.setText(clustering.getNumCompounds(false) + "");
 			datasetAlgLabel.setText(clustering.getClusterAlgorithm());
 			datasetEmbedLabel.setText(clustering.getEmbedAlgorithm());
 			datasetEmbedQualityLabel.setText(clustering.getEmbedQuality());
 
 			datasetPanel.setVisible(true);
-			updateDatasetAndClusterPanelSize();
+			updateDatasetPanelSize();
 		}
 	}
 
-	private void updateCluster()
+	@SuppressWarnings("unchecked")
+	private synchronized void updateCluster()
 	{
-		int index = InfoPanel.this.clustering.getClusterActive().getSelected();
-		if (index == -1)
-			index = InfoPanel.this.clustering.getClusterWatched().getSelected();
+		if (selectedCompound != null)
+			return;
 
+		selfUpdate = true;
+
+		int index = InfoPanel.this.clustering.getClusterActive().getSelected();
+		interactive = true;
 		if (index == -1)
 		{
-			clusterPanel.setVisible(false);
-			compoundPanel.setVisible(false);
+			index = InfoPanel.this.clustering.getClusterWatched().getSelected();
+			interactive = false;
+		}
+
+		if (index == -1 || clustering.getNumClusters() == 1)
+		{
+			selectedCluster = null;
+			clusterCompoundPanel.setVisible(false);
+			clusterPanelMinWidth = 0;
 		}
 		else
 		{
-			datasetAndClusterPanelContainer.setIgnoreRepaint(true);
-			Cluster c = clustering.getCluster(index);
-			clusterNameLabel.setText(c.getName());
-			clusterSizeLabel.setText(c.size() + "");
-			clusterAlignLabel.setText(c.getAlignAlgorithm());
+			selectedCluster = clustering.getCluster(index);
 
-			boolean smartsFound = false;
+			clusterCompoundPanel.setIgnoreRepaint(true);
+			clusterCompoundLayout.show(clusterCompoundPanel, CARD_CLUSTER);
+
+			clusterTableCardLayout.show(clusterTableCardPanel, interactive ? CARD_INTERACT : CARD_FIX);
+			DefaultTableModel model = (interactive ? clusterFeatureTableModel_interact : clusterFeatureTableModel_fix);
+			JTable table = (interactive ? clusterFeatureTable_interact : clusterFeatureTable_fix);
+
+			while (model.getRowCount() > 0)
+				model.removeRow(0);
+			model.addRow(new String[] { "Cluster", selectedCluster.toString() });
+			model.addRow(new String[] { "Size", selectedCluster.size() + "" });
+			clusterSubstructureRow = -1;
+			clusterSubstructureType = null;
 			for (SubstructureSmartsType t : SubstructureSmartsType.values())
 			{
-				if (c.getSubstructureSmarts(t) != null)
+				if (selectedCluster.getSubstructureSmarts(t) != null)
 				{
-					smartsFound = true;
-					clusterMCSLabelHeader.setText(t.getName() + ":");
-					clusterMCSLabel.setText(c.getSubstructureSmarts(t));
+					clusterSubstructureRow = model.getRowCount();
+					clusterSubstructureType = t;
+					model.addRow(new String[] { t.getName(), selectedCluster.getSubstructureSmarts(t) });
 					break;
 				}
 			}
-			clusterMCSLabelHeader.setVisible(smartsFound);
-			clusterMCSLabel.setVisible(smartsFound);
-
-			if (viewControler.getHighlighter() instanceof CompoundPropertyHighlighter)
+			List<CompoundProperty> props = new ArrayList<CompoundProperty>();
+			for (CompoundProperty p : clustering.getProperties())
+				if (!p.isSmiles())
+					props.add(p);
+			props = ListUtil.concat(props, clustering.getFeatures());
+			Collections.sort(props, new Comparator<CompoundProperty>()
 			{
-				CompoundProperty p = ((CompoundPropertyHighlighter) viewControler.getHighlighter()).getProperty();
-				clusterFeatureLabelHeader.setText(p.getName() + ":");
-				clusterFeatureLabel.setText(c.getSummaryStringValue(p));
-				clusterFeatureLabel.setVisible(true);
-				clusterFeatureLabelHeader.setVisible(true);
+				@Override
+				public int compare(CompoundProperty o1, CompoundProperty o2)
+				{
+					return Double.compare(clustering.getSpecificity(selectedCluster, o1),
+							clustering.getSpecificity(selectedCluster, o2));
+				}
+			});
+			int pOffset = model.getRowCount();
+			for (CompoundProperty p : props)
+			{
+				Object o[] = new Object[2];
+				o[0] = p;
+				o[1] = selectedCluster.getSummaryStringValue(p, false);
+				model.addRow(o);
+			}
+			int width = ComponentFactory.packColumn(table, 0, 2, interactive ? guiControler.getViewerWidth() / 6
+					: guiControler.getViewerWidth() / 12);
+			width += ComponentFactory.packColumn(table, 1, 2,
+					interactive ? Integer.MAX_VALUE : guiControler.getViewerWidth() / 12);
+			clusterPanelMinWidth = Math.max(clusterPanelMinWidth, width);
+
+			CompoundProperty selectedP = null;
+			if ((viewControler.getHighlighter() instanceof CompoundPropertyHighlighter))
+				selectedP = ((CompoundPropertyHighlighter) viewControler.getHighlighter()).getProperty();
+
+			if (selectedP != null && props.indexOf(selectedP) != -1)
+			{
+				int pIndex = pOffset + props.indexOf(selectedP);
+				table.setRowSelectionInterval(pIndex, pIndex);
+				table.scrollRectToVisible(new Rectangle(table.getCellRect(pIndex, 0, true)));
+			}
+			else if (viewControler.getHighlighter() instanceof SubstructureHighlighter
+					&& ((SubstructureHighlighter) viewControler.getHighlighter()).getType() == clusterSubstructureType
+					&& clusterSubstructureRow != -1)
+			{
+				table.setRowSelectionInterval(clusterSubstructureRow, clusterSubstructureRow);
+				table.scrollRectToVisible(new Rectangle(table.getCellRect(clusterSubstructureRow, 0, true)));
 			}
 			else
 			{
-				clusterFeatureLabel.setVisible(false);
-				clusterFeatureLabelHeader.setVisible(false);
+				table.scrollRectToVisible(new Rectangle(table.getCellRect(0, 0, true)));
 			}
 
-			clusterPanel.setVisible(true);
-			updateDatasetAndClusterPanelSize();
+			clusterCompoundPanel.setIgnoreRepaint(true);
+			clusterCompoundPanel.setVisible(true);
 		}
+		selfUpdate = false;
 	}
 
-	private void updateDatasetAndClusterPanelSize()
+	private void updateDatasetPanelSize()
 	{
 		if (datasetPanel.isVisible())
 		{
@@ -433,20 +605,8 @@ public class InfoPanel extends JPanel
 			datasetPanel
 					.setPreferredSize(new Dimension(Math.min(d.width, guiControler.getViewerWidth() / 5), d.height));
 		}
-		if (clusterPanel.isVisible())
-		{
-			clusterFeatureLabelHeader.setPreferredSize(null);
-			Dimension d = clusterFeatureLabelHeader.getPreferredSize();
-			clusterFeatureLabelHeader.setPreferredSize(new Dimension(Math.min(d.width,
-					guiControler.getViewerWidth() / 12), d.height));
-
-			clusterPanel.setPreferredSize(null);
-			d = clusterPanel.getPreferredSize();
-			clusterPanel
-					.setPreferredSize(new Dimension(Math.min(d.width, guiControler.getViewerWidth() / 6), d.height));
-		}
-
-		datasetAndClusterPanelContainer.setIgnoreRepaint(false);
-		datasetAndClusterPanelContainer.revalidate();
+		datasetPanel.setIgnoreRepaint(false);
+		datasetPanel.revalidate();
 	}
+
 }

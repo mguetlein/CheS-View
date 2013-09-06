@@ -336,12 +336,47 @@ public class ComponentFactory
 		return c;
 	}
 
+	public static class FactoryTableCellRenderer extends DefaultTableCellRenderer
+	{
+		boolean halfTransparent;
+
+		public FactoryTableCellRenderer(boolean halfTransparent)
+		{
+			this.halfTransparent = halfTransparent;
+		}
+
+		@Override
+		public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
+				boolean hasFocus, int row, int column)
+		{
+			super.getTableCellRendererComponent(table, value, isSelected, false, row, column);
+			if (isSelected)
+			{
+				setBackground(LIST_ACTIVE_BACKGROUND);
+				setOpaque(true);
+				setForeground(LIST_SELECTION_FOREGROUND);
+			}
+			else
+			{
+				if (halfTransparent)
+				{
+					setBackground(new Color(BACKGROUND.getRed(), BACKGROUND.getGreen(), BACKGROUND.getBlue(), 100));
+					setOpaque(true);
+				}
+				else
+					setOpaque(false);
+				setForeground(FOREGROUND);
+			}
+			return this;
+		}
+	}
+
 	public static JTable createTable()
 	{
 		return createTable(false);
 	}
 
-	public static JTable createTable(final boolean halfTransparent)
+	public static JTable createTable(boolean halfTransparent)
 	{
 		DefaultTableModel m = new DefaultTableModel()
 		{
@@ -358,33 +393,7 @@ public class ComponentFactory
 		t.setOpaque(false);
 		t.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 		t.setRowHeight(t.getRowHeight() + 1);
-		t.setDefaultRenderer(Object.class, new DefaultTableCellRenderer()
-		{
-			@Override
-			public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
-					boolean hasFocus, int row, int column)
-			{
-				super.getTableCellRendererComponent(table, value, isSelected, false, row, column);
-				if (isSelected)
-				{
-					setBackground(LIST_ACTIVE_BACKGROUND);
-					setOpaque(true);
-					setForeground(LIST_SELECTION_FOREGROUND);
-				}
-				else
-				{
-					if (halfTransparent)
-					{
-						setBackground(new Color(BACKGROUND.getRed(), BACKGROUND.getGreen(), BACKGROUND.getBlue(), 100));
-						setOpaque(true);
-					}
-					else
-						setOpaque(false);
-					setForeground(FOREGROUND);
-				}
-				return this;
-			}
-		});
+		t.setDefaultRenderer(Object.class, new FactoryTableCellRenderer(halfTransparent));
 		t.setFocusable(false);
 
 		return t;

@@ -12,6 +12,7 @@ import javax.swing.JComponent;
 import dataInterface.AbstractCompoundProperty;
 import dataInterface.CompoundProperty;
 import dataInterface.CompoundPropertySet;
+import dataInterface.SubstructureSmartsType;
 
 public interface ViewControler
 {
@@ -65,6 +66,8 @@ public interface ViewControler
 	public void setHighlighter(Highlighter highlighter);
 
 	public void setHighlighter(CompoundProperty prop);
+
+	public void setHighlighter(SubstructureSmartsType type);
 
 	public Highlighter getHighlighter();
 

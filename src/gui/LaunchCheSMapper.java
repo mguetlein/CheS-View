@@ -98,18 +98,21 @@ public class LaunchCheSMapper
 			//					.split(" ");
 			//			args = " -z -k -d /home/martin/workspace/BMBF-MLC/predictions/00e884588b8a6ba666fbdf29e9a75eda.smi -o /home/martin/workspace/BMBF-MLC/predictions/00e884588b8a6ba666fbdf29e9a75eda.sdf"
 			//					.split(" ");
-			args = "-e -m -u -d /home/martin/workspace/BMBF-MLC/predictions/9712985d2d3cd4b067bcd77590ab10f0.sdf -f obFP3 -o /home/martin/tmp/delme.csv"
-					.split(" ");
+			//			args = "-e -n 10 -u -d /home/martin/data/caco2.sdf -f fminer -o /home/martin/tmp/delme.csv".split(" ");
+			//			args = "-e -m -u -d /home/martin/workspace/BMBF-MLC/predictions/9712985d2d3cd4b067bcd77590ab10f0.sdf -f obFP3 -o /home/martin/tmp/delme.csv"
+			//					.split(" ");
 			//			args = "-z -k -d /home/martin/workspace/BMBF-MLC/predictions/aa53ca0b650dfd85c4f59fa156f7a2cc.smi -o /home/martin/workspace/BMBF-MLC/predictions/aa53ca0b650dfd85c4f59fa156f7a2cc.sdf"
 			//					.split(" ");
 			//args = "-z -d /tmp/test.smi -o /tmp/res.sdf".split(" ");
 
 			//			args = "-e -d /home/martin/workspace/BMBF-MLC/data/dataR.sdf -f cdk,ob -o /home/martin/workspace/BMBF-MLC/features/dataR_PC.csv"
 			//					.split(" ");
-			//		args = ArrayUtil
-			//				.toArray(StringUtil
-			//						.split("-x -d /home/martin/workspace/BMBF-MLC/pct/dataAAgg_noV_Cl68_FP.data.csv -f integrated -i cas,cluster -c \"Manual Cluster Assignment\" -o /tmp/delme.ches",
-			//								' ')); // cannot use .split(" ") to respect quotes
+			//			args = ArrayUtil
+			//					.toArray(StringUtil
+			//							.split("-x -d /home/martin/data/test.csv -f integrated -i cas,cluster -a cluster -c \"Manual Cluster Assignment\" -q \"property-Cluster feature=cluster\" -o /tmp/delme.ches",
+			//									' ')); // cannot use .split(" ") to respect quotes
+			//args = "-e -d data/dataY.sdf -f cdk,ob -o features/dataY_PC2.sdf".split(" ");
+			args = "-w /home/martin/data/presentation/demo-ob-descriptors.ches".split(" ");
 
 			//		args = "-h".split(" ");
 		}
@@ -134,11 +137,19 @@ public class LaunchCheSMapper
 
 		options.addOption(option('e', "export-features",
 				"exports features (from dataset -d and features -f to outfile -o)"));
-		options.addOption(option('m', "match-fingerprints", "usefull when exporting fingerprint features"));
+		options.addOption(option('m', "match-fingerprints",
+				"sets min-freq to 1 and mines omnipresent fingerprint features (eclusive with min frequency)"));
+		options.addOption(paramOption('n', "fp-min-frequency",
+				"sets min-frequency for fingerprints (eclusive with match-fingerprints)", "fp-min-frequency"));
 		options.addOption(option('u', "uniform-values",
 				"exports features including features with uniform feature values"));
 		options.addOption(option('x', "export-workflow",
 				"creates a workflow-file (from dataset -d and features -f to outfile -o)"));
+		options.addOption(paramOption(
+				'q',
+				"export-properties",
+				"for experts only: additional property that are directly written into the worflow file (e.g.: k1=v1,k2=v2)",
+				"export-properties"));
 		options.addOption(option('s', "start-viewer", "directly starts the viewer (from dataset -d and features -f)"));
 		options.addOption(paramOption('w', "start-workflow", "directly starts the viewer", "workflow-file"));
 
@@ -152,6 +163,9 @@ public class LaunchCheSMapper
 						+ ArrayUtil.toString(MappingWorkflow.DescriptorCategory.values(), ",", "", "", ""), "features"));
 		options.addOption(paramOption('i', "ignore-features",
 				"comma seperated list of feature-names that should be ignored (from features -f)", "ignored-features"));
+		options.addOption(paramOption('a', "nominal-features",
+				"comma seperated list of integrated feature-names that should be interpreted as nominal",
+				"nominal-features"));
 		List<String> clusterNames = new ArrayList<String>();
 		for (Algorithm a : DatasetClusterer.CLUSTERERS)
 			clusterNames.add(a.getName());
@@ -206,8 +220,18 @@ public class LaunchCheSMapper
 				if (infile == null || outfile == null || featureNames == null)
 					throw new ParseException(
 							"please give dataset-file (-d) and features (-f) and outfile (-o) for feature export");
-				DescriptorSelection features = new DescriptorSelection(cmd.getOptionValue('f'), cmd.getOptionValue('i'));
-				features.setMatchFingerprints(cmd.hasOption('m'));
+				DescriptorSelection features = new DescriptorSelection(cmd.getOptionValue('f'),
+						cmd.getOptionValue('i'), cmd.getOptionValue('a'));
+				if (cmd.hasOption('m'))
+				{
+					if (cmd.hasOption('n'))
+						throw new IllegalArgumentException("exclusive settings n + m");
+					features.setFingerprintSettings(1, false);
+				}
+				else if (cmd.hasOption('n'))
+				{
+					features.setFingerprintSettings(Integer.parseInt(cmd.getOptionValue('n')), true);
+				}
 				ExportData.scriptExport(infile, features, outfile, cmd.hasOption('u'));
 			}
 			else if (cmd.hasOption('x')) // export workflow
@@ -218,9 +242,10 @@ public class LaunchCheSMapper
 				if (infile == null || outfile == null || featureNames == null)
 					throw new ParseException(
 							"please give dataset-file (-d) and features (-f) and outfile (-o) for workflow export");
-				DescriptorSelection features = new DescriptorSelection(cmd.getOptionValue('f'), cmd.getOptionValue('i'));
+				DescriptorSelection features = new DescriptorSelection(cmd.getOptionValue('f'),
+						cmd.getOptionValue('i'), cmd.getOptionValue('a'));
 				MappingWorkflow.createAndStoreMappingWorkflow(infile, outfile, features,
-						MappingWorkflow.clustererFromName(cmd.getOptionValue('c')));
+						MappingWorkflow.clustererFromName(cmd.getOptionValue('c')), cmd.getOptionValue('q'));
 			}
 			else if (cmd.hasOption('w'))
 			{
@@ -233,7 +258,8 @@ public class LaunchCheSMapper
 				String featureNames = cmd.getOptionValue('f');
 				if (infile == null || featureNames == null)
 					throw new ParseException("please give dataset-file (-d) and features (-f) to start viewer");
-				DescriptorSelection features = new DescriptorSelection(cmd.getOptionValue('f'), cmd.getOptionValue('i'));
+				DescriptorSelection features = new DescriptorSelection(cmd.getOptionValue('f'),
+						cmd.getOptionValue('i'), cmd.getOptionValue('a'));
 				Properties workflow = MappingWorkflow.createMappingWorkflow(infile, features);
 				CheSMapping mapping = MappingWorkflow.createMappingFromMappingWorkflow(workflow);
 				start(mapping);

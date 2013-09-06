@@ -370,22 +370,26 @@ public class ExportData
 		}
 		else
 		{
-			HashMap<Integer, Object> newTitle = new HashMap<Integer, Object>();
-			for (Integer j : compoundOrigIndices)
+			HashMap<Integer, Object> newTitle = null;
+			if (compoundDescriptorFeature != null)
 			{
-				Object val;
-				if (compoundDescriptorFeature.getType() == Type.NUMERIC)
+				newTitle = new HashMap<Integer, Object>();
+				for (Integer j : compoundOrigIndices)
 				{
-					val = clustering.getCompounds().get(j).getDoubleValue(compoundDescriptorFeature);
-					if (val != null && compoundDescriptorFeature.isIntegerInMappedDataset())
-						val = StringUtil.formatDouble((Double) val, 0);
+					Object val;
+					if (compoundDescriptorFeature.getType() == Type.NUMERIC)
+					{
+						val = clustering.getCompounds().get(j).getDoubleValue(compoundDescriptorFeature);
+						if (val != null && compoundDescriptorFeature.isIntegerInMappedDataset())
+							val = StringUtil.formatDouble((Double) val, 0);
+					}
+					else
+						val = clustering.getCompounds().get(j).getStringValue(compoundDescriptorFeature);
+					if (val == null)
+						val = "";
+					featureValues.put(j, propToExportString(compoundDescriptorFeature), val);
+					newTitle.put(j, val);
 				}
-				else
-					val = clustering.getCompounds().get(j).getStringValue(compoundDescriptorFeature);
-				if (val == null)
-					val = "";
-				featureValues.put(j, propToExportString(compoundDescriptorFeature), val);
-				newTitle.put(j, val);
 			}
 			SDFUtil.filter(clustering.getOrigSdfFile(), dest, compoundOrigIndices, featureValues, true, newTitle);
 		}

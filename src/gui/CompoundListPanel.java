@@ -33,6 +33,9 @@ import com.jgoodies.forms.builder.DefaultFormBuilder;
 import com.jgoodies.forms.layout.CellConstraints;
 import com.jgoodies.forms.layout.ConstantSize;
 import com.jgoodies.forms.layout.FormLayout;
+import com.lowagie.text.Font;
+
+import dataInterface.CompoundPropertyUtil;
 
 public class CompoundListPanel extends TransparentViewPanel
 {
@@ -283,7 +286,6 @@ public class CompoundListPanel extends TransparentViewPanel
 		list = new MouseOverList(listModel);
 		list.setClearOnExit(false);
 
-		list.setOpaque(false);
 		listRenderer = new DoubleNameListCellRenderer(listModel)
 		{
 			public Component getListCellRendererComponent(JList list, Object value, int i, boolean isSelected,
@@ -305,9 +307,16 @@ public class CompoundListPanel extends TransparentViewPanel
 					setBackground(ComponentFactory.LIST_WATCH_BACKGROUND);
 					setForeground(ComponentFactory.LIST_SELECTION_FOREGROUND);
 				}
+				else if (((Compound) value).getHighlightColorString() != null
+						&& ((Compound) value).getHighlightColor() != CompoundPropertyUtil.getNullValueColor())
+				{
+					setForegroundLabel2(((Compound) value).getHighlightColor());
+				}
 				return this;
 			}
+
 		};
+		listRenderer.setFontLabel2(listRenderer.getFontLabel2().deriveFont(Font.ITALIC));
 		list.setCellRenderer(listRenderer);
 
 		list.setOpaque(false);

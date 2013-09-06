@@ -1,9 +1,11 @@
 package cluster;
 
+import gui.DoubleNameListCellRenderer.DoubleNameElement;
 import gui.View;
 import gui.ViewControler.HighlightSorting;
 import gui.Zoomable;
 
+import java.awt.Color;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Collections;
@@ -15,13 +17,17 @@ import java.util.Vector;
 import javax.vecmath.Vector3f;
 
 import util.ArrayUtil;
+import util.CountedSet;
+import util.ObjectUtil;
 import util.Vector3fUtil;
+import cluster.Compound.DisplayName;
 import dataInterface.ClusterData;
 import dataInterface.CompoundProperty;
 import dataInterface.CompoundProperty.Type;
+import dataInterface.CompoundPropertyOwner;
 import dataInterface.SubstructureSmartsType;
 
-public class Cluster implements Zoomable
+public class Cluster implements Zoomable, CompoundPropertyOwner, DoubleNameElement, Comparable<Cluster>
 {
 	private Vector<Compound> compounds;
 	private ClusterData clusterData;
@@ -67,6 +73,8 @@ public class Cluster implements Zoomable
 		for (int i = begin; i < endExcl; i++)
 			compounds.add(new Compound(i, clusterData.getCompounds().get(mCount++)));
 
+		displayName.name = getName() + " (#" + size() + ")";
+
 		if (View.instance != null) // for export without graphics
 			update();
 	}
@@ -110,19 +118,54 @@ public class Cluster implements Zoomable
 		View.instance.setAtomCoordRelative(getCenter(true), getBitSet());
 	}
 
-	public String getSummaryStringValue(CompoundProperty property)
-	{
-		return clusterData.getSummaryStringValue(property);
-	}
+	private DisplayName displayName = new DisplayName();
+	private Color highlightColor;
 
-	public String toString()
-	{
-		return getName() + " (#" + size() + ")";
-	}
+	//	public String toString()
+	//	{
+	//		return getName() + " (#" + size() + ")";
+	//	}
+	//	
 
 	public String getName()
 	{
 		return clusterData.getName();
+	}
+
+	@Override
+	public String toString()
+	{
+		return getName();
+	}
+
+	public String toStringWithValue()
+	{
+		return displayName.toString(false, null);
+	}
+
+	@Override
+	public String getFirstName()
+	{
+		return displayName.name;
+	}
+
+	@Override
+	public String getSecondName()
+	{
+		if (ObjectUtil.equals(displayName.val, displayName.name))
+			return null;
+		else
+			return displayName.val;
+	}
+
+	public String getSummaryStringValue(CompoundProperty property, boolean html)
+	{
+		return clusterData.getSummaryStringValue(property, html);
+	}
+
+	public CountedSet<String> getNominalSummary(CompoundProperty p)
+	{
+		return clusterData.getNominalSummary(p);
 	}
 
 	public String getAlignAlgorithm()
@@ -132,6 +175,8 @@ public class Cluster implements Zoomable
 
 	private void update()
 	{
+		displayName.name = getName() + " (#" + size() + ")";
+
 		bitSet = new BitSet();
 		for (Compound m : compounds)
 			bitSet.or(m.getBitSet());
@@ -370,9 +415,18 @@ public class Cluster implements Zoomable
 		this.visible = visible;
 	}
 
-	public void setHighlighProperty(CompoundProperty highlightProp)
+	public void setHighlighProperty(CompoundProperty highlightProp, Color highlightColor)
 	{
+		displayName.val = null;
+		displayName.valD = null;
+		if (highlightProp != null)
+		{
+			if (highlightProp.getType() == Type.NUMERIC)
+				displayName.valD = getDoubleValue(highlightProp);
+			displayName.val = getFormattedValue(highlightProp);
+		}
 		this.highlightProp = highlightProp;
+		this.highlightColor = highlightColor;
 	}
 
 	public CompoundProperty getHighlightProperty()
@@ -402,10 +456,15 @@ public class Cluster implements Zoomable
 
 	public String[] getStringValues(CompoundProperty property, Compound excludeCompound)
 	{
+		return getStringValues(property, excludeCompound, false);
+	}
+
+	public String[] getStringValues(CompoundProperty property, Compound excludeCompound, boolean formatted)
+	{
 		List<String> l = new ArrayList<String>();
 		for (Compound c : compounds)
 			if (c != excludeCompound && c.getStringValue(property) != null)
-				l.add(c.getStringValue(property));
+				l.add(formatted ? c.getFormattedValue(property) : c.getStringValue(property));
 		String v[] = new String[l.size()];
 		return l.toArray(v);
 	}
@@ -469,5 +528,34 @@ public class Cluster implements Zoomable
 	public boolean containsNotClusteredCompounds()
 	{
 		return clusterData.containsNotClusteredCompounds();
+	}
+
+	@Override
+	public Double getDoubleValue(CompoundProperty p)
+	{
+		return clusterData.getDoubleValue(p);
+	}
+
+	@Override
+	public String getFormattedValue(CompoundProperty p)
+	{
+		return clusterData.getFormattedValue(p);
+	}
+
+	@Override
+	public String getStringValue(CompoundProperty p)
+	{
+		return getNominalSummary(p).getMode();
+	}
+
+	public Color getHighlightColor()
+	{
+		return highlightColor;
+	}
+
+	@Override
+	public int compareTo(Cluster m)
+	{
+		return displayName.compareTo(m.displayName);
 	}
 }

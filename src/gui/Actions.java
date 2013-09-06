@@ -4,6 +4,9 @@ import gui.ViewControler.HideCompounds;
 import gui.ViewControler.HighlightMode;
 import gui.property.ColorGradient;
 import gui.property.ColorGradientChooser;
+import gui.table.ClusterTable;
+import gui.table.CompoundTable;
+import gui.table.FeatureTable;
 import gui.util.CompoundPropertyHighlighter;
 
 import java.awt.BorderLayout;
@@ -59,9 +62,10 @@ public class Actions
 	private ViewControler viewControler;
 	private Clustering clustering;
 
+	private final static String DATA_CLUSTER_TABLE = "file-cluster-table";
 	private final static String DATA_COMPOUND_TABLE = "file-compound-table";
 	private final static String DATA_FEATURE_TABLE = "file-feature-table";
-	private final static String[] DATA_ACTIONS = { DATA_COMPOUND_TABLE, DATA_FEATURE_TABLE };
+	private final static String[] DATA_ACTIONS = { DATA_CLUSTER_TABLE, DATA_COMPOUND_TABLE, DATA_FEATURE_TABLE };
 
 	private final static String FILE_NEW = "file-new";
 	private final static String FILE_EXIT = "file-exit";
@@ -129,8 +133,9 @@ public class Actions
 
 	static
 	{
-		keys.put(DATA_COMPOUND_TABLE, KeyStroke.getKeyStroke(KeyEvent.VK_1, ActionEvent.ALT_MASK));
-		keys.put(DATA_FEATURE_TABLE, KeyStroke.getKeyStroke(KeyEvent.VK_2, ActionEvent.ALT_MASK));
+		keys.put(DATA_CLUSTER_TABLE, KeyStroke.getKeyStroke(KeyEvent.VK_1, ActionEvent.ALT_MASK));
+		keys.put(DATA_COMPOUND_TABLE, KeyStroke.getKeyStroke(KeyEvent.VK_2, ActionEvent.ALT_MASK));
+		keys.put(DATA_FEATURE_TABLE, KeyStroke.getKeyStroke(KeyEvent.VK_3, ActionEvent.ALT_MASK));
 		keys.put(FILE_NEW, KeyStroke.getKeyStroke(KeyEvent.VK_N, ActionEvent.ALT_MASK));
 		keys.put(FILE_EXIT, KeyStroke.getKeyStroke(KeyEvent.VK_F4, ActionEvent.ALT_MASK));
 		keys.put(REMOVE_CURRENT, KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, ActionEvent.ALT_MASK));
@@ -229,7 +234,9 @@ public class Actions
 		int m[] = new int[0];
 		Integer c = null;
 
-		if (clustering.isClusterActive())
+		if (!clustering.isClusterActive() && clustering.isClusterWatched())
+			c = clustering.getClusterWatched().getSelected();
+		else
 		{
 			if (clustering.isCompoundActive())
 				m = ArrayUtil.concat(m, clustering.getCompoundActive().getSelectedIndices());
@@ -237,8 +244,6 @@ public class Actions
 					&& ArrayUtil.indexOf(m, clustering.getCompoundWatched().getSelected()) == -1)
 				m = ArrayUtil.concat(m, new int[] { clustering.getCompoundWatched().getSelected() });
 		}
-		else if (clustering.isClusterWatched())
-			c = clustering.getClusterWatched().getSelected();
 
 		actions.get(REMOVE_CURRENT).putValue("Cluster", c);
 		actions.get(REMOVE_CURRENT).putValue("Compound", m);
@@ -403,6 +408,14 @@ public class Actions
 			public void action()
 			{
 				newClustering(0);
+			}
+		};
+		new ActionCreator(DATA_CLUSTER_TABLE)
+		{
+			@Override
+			public void action()
+			{
+				new ClusterTable(viewControler, clustering);
 			}
 		};
 		new ActionCreator(DATA_COMPOUND_TABLE)
@@ -756,7 +769,8 @@ public class Actions
 				boolean selected[] = new boolean[numeric.size()];
 				if (currentPropIdx != -1)
 					selected[currentPropIdx] = true;
-				CheckBoxSelectPanel features = new CheckBoxSelectPanel(null, ArrayUtil.toArray(numeric), selected);
+				CheckBoxSelectPanel features = new CheckBoxSelectPanel(null, ArrayUtil.toArray(CompoundProperty.class,
+						numeric), selected);
 
 				JCheckBox logHighlighting = new JCheckBox(Settings.text("action.highlight-colors.log"),
 						viewControler.isHighlightLogEnabled());
@@ -947,6 +961,7 @@ public class Actions
 						if (d != null)
 						{
 							clustering.newClustering(d);
+							clustering.computeSpecifities();
 							task.finish();
 						}
 						TaskProvider.removeTask();

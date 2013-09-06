@@ -47,6 +47,7 @@ import cluster.Compound;
 import data.ClusteringData;
 import dataInterface.CompoundProperty;
 import dataInterface.CompoundProperty.Type;
+import dataInterface.CompoundPropertyOwner;
 import dataInterface.CompoundPropertyUtil;
 import dataInterface.SubstructureSmartsType;
 
@@ -65,7 +66,8 @@ public class MainPanel extends JPanel implements ViewControler
 	CompoundProperty compoundDescriptorProperty = null;
 	List<JComponent> ignoreMouseMovementPanels = new ArrayList<JComponent>();
 
-	private static final ColorGradient DEFAULT_COLOR_GRADIENT = new ColorGradient(Color.RED, Color.WHITE, Color.BLUE);
+	private static final ColorGradient DEFAULT_COLOR_GRADIENT = new ColorGradient(
+			CompoundPropertyUtil.getHighValueColor(), Color.WHITE, CompoundPropertyUtil.getLowValueColor());
 
 	private String getStyleString()
 	{
@@ -81,24 +83,52 @@ public class MainPanel extends JPanel implements ViewControler
 		throw new IllegalStateException("WTF");
 	}
 
-	private Color getCompoundHighlightColor(Compound m, Highlighter h, CompoundProperty p)
+	public Color getHighlightColor(CompoundPropertyOwner m, Highlighter h, CompoundProperty p)
+	{
+		return getHighlightColor(clustering, m, h, p);
+	}
+
+	public static Color getHighlightColor(Clustering clustering, CompoundPropertyOwner m, Highlighter h,
+			CompoundProperty p)
 	{
 		if (h == Highlighter.CLUSTER_HIGHLIGHTER)
-			return CompoundPropertyUtil.getColor(clustering.getClusterIndexForCompound(m));
-		else if (p == null)
+			if (m instanceof Compound)
+				return CompoundPropertyUtil.getClusterColor(clustering.getClusterIndexForCompound((Compound) m));
+			else
+				return null;
+		else
+			return getHighlightColor(clustering, m, p);
+	}
+
+	public static Color getHighlightColor(Clustering clustering, CompoundPropertyOwner m, CompoundProperty p)
+	{
+		return getHighlightColor(clustering, m, p, false);
+	}
+
+	public static Color getHighlightColor(Clustering clustering, CompoundPropertyOwner m, CompoundProperty p,
+			boolean whiteBackground)
+	{
+		if (p == null)
 			return null;
-		else if (m.getFormattedValue(p).equals("null"))
-			return Color.DARK_GRAY;
 		else if (p.getType() == Type.NOMINAL)
-			return CompoundPropertyUtil.getNominalColor(p, m.getStringValue(p));
+		{
+			if (m.getStringValue(p) == null)
+				return CompoundPropertyUtil.getNullValueColor();
+			else
+				return CompoundPropertyUtil.getNominalColor(p, m.getStringValue(p));
+		}
 		else if (p.getType() == Type.NUMERIC)
 		{
+			if (m.getDoubleValue(p) == null)
+				return CompoundPropertyUtil.getNullValueColor();
 			double val;
 			if (p.getType() == Type.NUMERIC && p.isLogHighlightingEnabled())
 				val = clustering.getNormalizedLogDoubleValue(m, p);
 			else
 				val = clustering.getNormalizedDoubleValue(m, p);
 			ColorGradient grad = DEFAULT_COLOR_GRADIENT;
+			if (whiteBackground && grad.med == Color.WHITE)
+				grad = new ColorGradient(grad.high, Color.BLACK, grad.low);
 			if (p.getType() == Type.NUMERIC && p.getHighlightColorGradient() != null)
 				grad = p.getHighlightColorGradient();
 			return grad.getColor(val);
@@ -421,6 +451,29 @@ public class MainPanel extends JPanel implements ViewControler
 	}
 
 	@Override
+	public void setHighlighter(SubstructureSmartsType type)
+	{
+		Highlighter high = null;
+		for (Highlighter hs[] : highlighters.values())
+		{
+			for (Highlighter h : hs)
+			{
+				if (h instanceof SubstructureHighlighter)
+				{
+					SubstructureHighlighter m = (SubstructureHighlighter) h;
+					if (m.getType() == type)
+					{
+						high = h;
+						break;
+					}
+				}
+			}
+		}
+		if (high != null)
+			setHighlighter(high);
+	}
+
+	@Override
 	public void setSelectLastSelectedHighlighter()
 	{
 		setHighlighter(lastSelectedHighlighter);
@@ -490,7 +543,7 @@ public class MainPanel extends JPanel implements ViewControler
 				view.scriptWait("boundbox off");
 				view.scriptWait("draw ID bb" + clusterIndex + " BOUNDBOX color "
 						+ ColorUtil.toJMolString(ComponentFactory.LIST_WATCH_BACKGROUND) + " translucent "
-						+ boxTranslucency + " MESH NOFILL \"" + c + "\"");
+						+ boxTranslucency + " MESH NOFILL \"" + c.toStringWithValue() + "\"");
 
 				//				jmolPanel.repaint(); // HACK to avoid label display errors
 			}
@@ -503,13 +556,14 @@ public class MainPanel extends JPanel implements ViewControler
 
 		if (forceUpdate
 				|| visible != c.isVisible()
-				|| (visible && (someCompoundsHidden != c.someCompoundsHidden()
-						|| selectedHighlightCompoundProperty != c.getHighlightProperty() || highlightSorting != c
+				|| selectedHighlightCompoundProperty != c.getHighlightProperty()
+				|| (visible && (someCompoundsHidden != c.someCompoundsHidden() || highlightSorting != c
 						.getHighlightSorting())))
 		{
 			c.setVisible(visible);
 			c.setSomeCompoundsHidden(someCompoundsHidden);
-			c.setHighlighProperty(selectedHighlightCompoundProperty);
+			c.setHighlighProperty(selectedHighlightCompoundProperty,
+					MainPanel.getHighlightColor(clustering, c, selectedHighlightCompoundProperty));
 			c.setHighlightSorting(highlightSorting);
 			hideOrDisplayCluster(c, visible, someCompoundsHidden);
 		}
@@ -700,18 +754,18 @@ public class MainPanel extends JPanel implements ViewControler
 		if (!highlighterLabelsVisible)
 			showLabel = false;
 
-		Color col = getCompoundHighlightColor(m, selectedHighlighter, selectedHighlightCompoundProperty);
-		String highlightColor = col == null ? null : "color " + ColorUtil.toJMolString(col);
+		Color highlightColor = getHighlightColor(m, selectedHighlighter, selectedHighlightCompoundProperty);
+		String highlightColorString = highlightColor == null ? null : "color " + ColorUtil.toJMolString(highlightColor);
 		String compoundColor;
 		if (highlightMode == HighlightMode.Spheres)
 			compoundColor = "color cpk";
 		else
-			compoundColor = col == null ? "color cpk" : "color " + ColorUtil.toJMolString(col);
+			compoundColor = highlightColor == null ? "color cpk" : "color " + ColorUtil.toJMolString(highlightColor);
 		if (compoundColor.equals("color cpk") && style == Style.dots)
 			compoundColor = "color "
 					+ ColorUtil.toJMolString(isBlackgroundBlack() ? Color.LIGHT_GRAY.brighter() : Color.GRAY);
 
-		boolean sphereVisible = (highlightMode == HighlightMode.Spheres && highlightColor != null);
+		boolean sphereVisible = (highlightMode == HighlightMode.Spheres && highlightColorString != null);
 		boolean lastFeatureSphereVisible = sphereVisible && highlightLastFeatureEnabled;
 
 		Translucency translucency;
@@ -757,8 +811,8 @@ public class MainPanel extends JPanel implements ViewControler
 				|| selectedHighlightCompoundProperty != m.getHighlightCompoundProperty();
 		boolean sphereUpdate = sphereVisible != m.isSphereVisible()
 				|| (lastFeatureSphereVisible != m.isLastFeatureSphereVisible())
-				|| (sphereVisible && (translucency != m.getTranslucency() || !ObjectUtil.equals(highlightColor,
-						m.getHighlightColor())));
+				|| (sphereVisible && (translucency != m.getTranslucency() || !ObjectUtil.equals(highlightColorString,
+						m.getHighlightColorString())));
 		boolean spherePositionUpdate = sphereVisible && !ObjectUtil.equals(m.getPosition(), m.getSpherePosition());
 		boolean hoverBoxUpdate = showHoverBox != m.isShowHoverBox();
 		boolean activeBoxUpdate = showActiveBox != m.isShowActiveBox();
@@ -768,7 +822,7 @@ public class MainPanel extends JPanel implements ViewControler
 		m.setStyle(style);
 		m.setTranslucency(translucency);
 		m.setHighlightCompoundProperty(selectedHighlightCompoundProperty);
-		m.setHighlightColor(highlightColor);
+		m.setHighlightColor(highlightColorString, highlightColor);
 		m.setSpherePosition(m.getPosition());
 		m.setSphereVisible(sphereVisible);
 		m.setLastFeatureSphereVisible(lastFeatureSphereVisible);
@@ -820,7 +874,7 @@ public class MainPanel extends JPanel implements ViewControler
 				view.scriptWait("boundbox off");
 				view.scriptWait("draw ID bb" + m.getCompoundIndex() + "h BOUNDBOX color "
 						+ ColorUtil.toJMolString(ComponentFactory.LIST_WATCH_BACKGROUND) + " translucent "
-						+ boxTranslucency + " MESH NOFILL \"" + m.toString() + "\"");
+						+ boxTranslucency + " MESH NOFILL \"" + m.toStringWithValue() + "\"");
 				//				jmolPanel.repaint(); // HACK to avoid label display errors
 			}
 			else
@@ -882,7 +936,7 @@ public class MainPanel extends JPanel implements ViewControler
 				{
 					labelString = c.getName() + " - "
 							+ ((CompoundPropertyHighlighter) selectedHighlighter).getProperty() + ": "
-							+ c.getSummaryStringValue(selectedHighlightCompoundProperty);
+							+ c.getSummaryStringValue(selectedHighlightCompoundProperty, false);
 				}
 				else
 				{
@@ -926,6 +980,7 @@ public class MainPanel extends JPanel implements ViewControler
 			View.instance.proceedAnimation("clearing");
 		}
 		clustering.newClustering(clusteredDataset);
+		clustering.computeSpecifities();
 
 		clustering.getClusterActive().addListener(new PropertyChangeListener()
 		{

@@ -1,7 +1,9 @@
 package gui;
 
+import gui.DoubleNameListCellRenderer.DoubleNameElement;
 import gui.swing.ComponentFactory;
 import gui.swing.TransparentViewPanel;
+import gui.util.CompoundPropertyHighlighter;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
@@ -12,8 +14,8 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.Arrays;
 
-import javax.swing.DefaultListCellRenderer;
 import javax.swing.DefaultListModel;
 import javax.swing.JCheckBox;
 import javax.swing.JList;
@@ -29,6 +31,9 @@ import cluster.Compound;
 
 import com.jgoodies.forms.layout.CellConstraints;
 import com.jgoodies.forms.layout.FormLayout;
+import com.lowagie.text.Font;
+
+import dataInterface.CompoundPropertyUtil;
 
 public class ClusterListPanel extends JPanel
 {
@@ -37,6 +42,8 @@ public class ClusterListPanel extends JPanel
 	JPanel clusterPanel;
 
 	DefaultListModel listModel;
+	DoubleNameListCellRenderer listRenderer;
+
 	MouseOverList clusterList;
 	JScrollPane scroll;
 	boolean selfBlock = false;
@@ -51,7 +58,7 @@ public class ClusterListPanel extends JPanel
 
 	JCheckBox superimposeCheckBox;
 
-	private DefaultListCellRenderer clusterListRenderer;
+	//	private DefaultListCellRenderer clusterListRenderer;
 
 	public ClusterListPanel(Clustering clustering, ViewControler viewControler, GUIControler guiControler)
 	{
@@ -124,15 +131,15 @@ public class ClusterListPanel extends JPanel
 					return;
 				selfBlock = true;
 
-				Cluster c = (Cluster) clusterList.getSelectedValue();
-				if (c == null)
+				if (clusterList.getSelectedValue() == AllClusters)
 				{
 					// clear only if home selected
 					if (e.getFirstIndex() == 0)
 						clustering.getClusterWatched().clearSelection();
 				}
 				else
-					clustering.getClusterWatched().setSelected(clustering.indexOf(c));
+					clustering.getClusterWatched().setSelected(
+							clustering.indexOf((Cluster) clusterList.getSelectedValue()));
 
 				selfBlock = false;
 			}
@@ -145,8 +152,7 @@ public class ClusterListPanel extends JPanel
 					return;
 				selfBlock = true;
 
-				final Cluster c = (Cluster) clusterList.getSelectedValue();
-				if (c == null)
+				if (clusterList.getSelectedValue() == AllClusters)
 				{
 					View.instance.suspendAnimation("clear cluster selection");
 					clustering.getCompoundWatched().clearSelection();
@@ -157,7 +163,7 @@ public class ClusterListPanel extends JPanel
 				}
 				else
 				{
-					int cIndex = clustering.indexOf(c);
+					int cIndex = clustering.indexOf((Cluster) clusterList.getSelectedValue());
 					clustering.getCompoundWatched().clearSelection();
 					boolean suspendAnim = clustering.getClusterActive().getSelected() != cIndex;
 					if (suspendAnim)
@@ -184,6 +190,21 @@ public class ClusterListPanel extends JPanel
 				{
 					// if (selfBlock)
 					// return;
+					selfBlock = true;
+					updateList();
+					selfBlock = false;
+				}
+			}
+		});
+
+		viewControler.addViewListener(new PropertyChangeListener()
+		{
+			@Override
+			public void propertyChange(PropertyChangeEvent evt)
+			{
+				if (evt.getPropertyName().equals(ViewControler.PROPERTY_COMPOUND_DESCRIPTOR_CHANGED)
+						|| evt.getPropertyName().equals(ViewControler.PROPERTY_HIGHLIGHT_CHANGED))
+				{
 					selfBlock = true;
 					updateList();
 					selfBlock = false;
@@ -229,8 +250,13 @@ public class ClusterListPanel extends JPanel
 
 		listModel.clear();
 		if (clustering.getNumClusters() > 1)
-			listModel.addElement(null);
-		for (Cluster c : clustering.getClusters())
+			listModel.addElement(AllClusters);
+
+		Cluster clusters[] = new Cluster[clustering.numClusters()];
+		clustering.getClusters().toArray(clusters);
+		if (viewControler.getHighlighter() instanceof CompoundPropertyHighlighter)
+			Arrays.sort(clusters);
+		for (Cluster c : clusters)
 			listModel.addElement(c);
 
 		updateListSize();
@@ -247,15 +273,45 @@ public class ClusterListPanel extends JPanel
 				clusterPanel.add(superimposeCheckBox, BorderLayout.SOUTH);
 		}
 
+		updateListSize();
 		revalidate();
 	}
 
+	//	private void updateListSize()
+	//	{
+	//		int rowCount = (guiControler.getViewerHeight() / listRenderer.getPreferredSize().height) / 3;
+	//		clusterList.setVisibleRowCount(rowCount);
+	//		clusterList.revalidate();
+	//	}
+
 	private void updateListSize()
 	{
-		int rowCount = (guiControler.getViewerHeight() / clusterListRenderer.getPreferredSize().height) / 3;
+		//		System.err.println("row height " + listRenderer.getRowHeight());
+		int rowCount = (guiControler.getViewerHeight() / listRenderer.getRowHeight()) / 3;
+		//		System.err.println("row count " + rowCount);
 		clusterList.setVisibleRowCount(rowCount);
-		clusterList.revalidate();
+
+		scroll.setPreferredSize(null);
+		scroll.setPreferredSize(new Dimension(Math.min(guiControler.getViewerWidth() / 7,
+				scroll.getPreferredSize().width), scroll.getPreferredSize().height));
+		scroll.revalidate();
+		scroll.repaint();
 	}
+
+	public static DoubleNameElement AllClusters = new DoubleNameElement()
+	{
+		@Override
+		public String getFirstName()
+		{
+			return "All clusters";
+		}
+
+		@Override
+		public String getSecondName()
+		{
+			return null;
+		}
+	};
 
 	private void buildLayout()
 	{
@@ -265,21 +321,20 @@ public class ClusterListPanel extends JPanel
 		clusterList.setFocusable(false);
 		clusterList.setOpaque(false);
 
-		clusterListRenderer = new DefaultListCellRenderer()
+		listRenderer = new DoubleNameListCellRenderer(listModel)
 		{
 			public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected,
 					boolean cellHasFocus)
 			{
-				Cluster c = (Cluster) value;
-				int i = clustering.indexOf(c);
-				if (value == null)
-					value = "All clusters";
-				else
-					value = c.toString();
 				super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+
+				int i = -1;
+				if (value != AllClusters)
+					i = clustering.indexOf((Cluster) value);
 				setOpaque(isSelected || i == clustering.getClusterActive().getSelected());
 
 				setForeground(ComponentFactory.FOREGROUND);
+
 				if (i == clustering.getClusterActive().getSelected())
 				{
 					setBackground(ComponentFactory.LIST_ACTIVE_BACKGROUND);
@@ -290,10 +345,18 @@ public class ClusterListPanel extends JPanel
 					setBackground(ComponentFactory.LIST_WATCH_BACKGROUND);
 					setForeground(ComponentFactory.LIST_SELECTION_FOREGROUND);
 				}
+				else if (i != -1 && ((Cluster) value).getHighlightColor() != null
+						&& ((Cluster) value).getHighlightColor() != CompoundPropertyUtil.getNullValueColor())
+				{
+					setForegroundLabel2(((Cluster) value).getHighlightColor());
+				}
+
 				return this;
 			}
+
 		};
-		clusterList.setCellRenderer(clusterListRenderer);
+		listRenderer.setFontLabel2(listRenderer.getFontLabel2().deriveFont(Font.ITALIC));
+		clusterList.setCellRenderer(listRenderer);
 
 		compoundListPanel = new CompoundListPanel(clustering, viewControler, guiControler)
 		{
