@@ -65,6 +65,8 @@ public interface ViewControler
 
 	public void setHighlighter(Highlighter highlighter);
 
+	public void setHighlighter(Highlighter highlighter, boolean showMessage);
+
 	public void setHighlighter(CompoundProperty prop);
 
 	public void setHighlighter(SubstructureSmartsType type);
@@ -91,6 +93,7 @@ public interface ViewControler
 	public static final String PROPERTY_HIDE_UNSELECT_CHANGED = "propertyHideUnselectChanged";
 	public static final String PROPERTY_SPIN_CHANGED = "propertySpinChanged";
 	public static final String PROPERTY_BACKGROUND_CHANGED = "propertyBackgroundChanged";
+	public static final String PROPERTY_FONT_SIZE_CHANGED = "propertyFontSizeChanged";
 	public static final String PROPERTY_MATCH_COLOR_CHANGED = "propertyMatchColorChanged";
 	public static final String PROPERTY_COMPOUND_DESCRIPTOR_CHANGED = "propertyCompoundDescriptorChanged";
 	public static final String PROPERTY_HIGHLIGHT_MODE_CHANGED = "propertyHighlightModeChanged";
@@ -117,6 +120,8 @@ public interface ViewControler
 	public boolean isBlackgroundBlack();
 
 	public void setBackgroundBlack(boolean backgroudBlack);
+
+	public void increaseFontSize(boolean increase);
 
 	public void setMatchColor(Color color);
 

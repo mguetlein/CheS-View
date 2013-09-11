@@ -52,7 +52,7 @@ public class CheSViewer implements GUIControler
 	boolean undecorated = false;
 	Dimension oldSize;
 	Point oldLocation;
-
+	boolean messagesBlocked;
 	List<PropertyChangeListener> listeners = new ArrayList<PropertyChangeListener>();
 
 	private static CheSViewer instance;
@@ -71,7 +71,7 @@ public class CheSViewer implements GUIControler
 
 	private CheSViewer(ClusteringData clusteredDataset)
 	{
-		oldSize = ScreenSetup.SETUP.getViewerSize();
+		oldSize = ScreenSetup.INSTANCE.getViewerSize();
 		if (oldSize == null)
 			throw new Error();
 		oldLocation = null;
@@ -107,7 +107,7 @@ public class CheSViewer implements GUIControler
 			{
 				oldSize = frame.getSize();
 				oldLocation = frame.getLocation();
-				show(b, ScreenSetup.SETUP.getFullScreenSize(), new Point(0, 0));
+				show(b, ScreenSetup.INSTANCE.getFullScreenSize(), new Point(0, 0));
 			}
 			else
 			{
@@ -148,7 +148,7 @@ public class CheSViewer implements GUIControler
 		{
 			public void componentMoved(ComponentEvent e)
 			{
-				ScreenSetup.SETUP.setScreen(ScreenUtil.getScreen(frame));
+				ScreenSetup.INSTANCE.setScreen(ScreenUtil.getScreen(frame));
 			}
 
 			public void componentResized(ComponentEvent e)
@@ -164,7 +164,7 @@ public class CheSViewer implements GUIControler
 
 		frame.setSize(size);
 		if (location == null)
-			ScreenSetup.SETUP.centerOnScreen(frame);
+			ScreenSetup.INSTANCE.centerOnScreen(frame);
 		else
 			frame.setLocation(location);
 
@@ -208,7 +208,7 @@ public class CheSViewer implements GUIControler
 			msg = "Press 'ALT+ENTER' to leave fullscreen mode";
 		else
 			msg = "Press 'ALT+ENTER' for fullscreen mode";
-		clusterPanel.showMessage(msg);
+		showMessage(msg);
 
 		SwingUtilities.invokeLater(new Runnable()
 		{
@@ -218,6 +218,13 @@ public class CheSViewer implements GUIControler
 				frame.toFront();
 			}
 		});
+	}
+
+	public void showMessage(String msg)
+	{
+		if (!messagesBlocked && clusterPanel != null && clusterPanel.isVisible())
+			clusterPanel.showMessage(msg);
+		Settings.LOGGER.debug(msg);
 	}
 
 	@Override
@@ -267,21 +274,33 @@ public class CheSViewer implements GUIControler
 	}
 
 	@Override
-	public int getViewerWidth()
+	public int getComponentMaxWidth(double pct)
 	{
+		int w;
 		if (frame != null)
-			return frame.getWidth();
+			w = frame.getWidth();
 		else
-			return oldSize.width;
+			w = oldSize.width;
+		return getComponentMaxSize(w, pct);
 	}
 
 	@Override
-	public int getViewerHeight()
+	public int getComponentMaxHeight(double pct)
 	{
+		int h;
 		if (frame != null)
-			return frame.getHeight();
+			h = frame.getHeight();
 		else
-			return oldSize.height;
+			h = oldSize.height;
+		return getComponentMaxSize(h, pct);
+	}
+
+	private int getComponentMaxSize(int size, double pct)
+	{
+		int s = (int) (size * pct);
+		if (ScreenSetup.INSTANCE.isFontSizeLarge())
+			s = (int) Math.min(size, s * 1.1); // allow a bit larger components when font size is large
+		return s;
 	}
 
 	public static JFrame getFrame()
@@ -298,5 +317,17 @@ public class CheSViewer implements GUIControler
 			return null;
 		else
 			return instance.clustering;
+	}
+
+	@Override
+	public void blockMessages()
+	{
+		messagesBlocked = true;
+	}
+
+	@Override
+	public void unblockMessages()
+	{
+		messagesBlocked = false;
 	}
 }

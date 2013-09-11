@@ -17,14 +17,12 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Set;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.SwingUtilities;
 
 import main.ScreenSetup;
 import util.ArrayUtil;
@@ -69,8 +67,9 @@ public class ChartPanel extends TransparentViewPanel
 	private JLabel featureMappingLabel = ComponentFactory.createViewLabel("");
 	private JLabel featureMissingLabel = ComponentFactory.createViewLabel("");
 
-	Set<String> cardContents = new HashSet<String>();
+	HashMap<String, AbstractFreeChartPanel> cardContents = new HashMap<String, AbstractFreeChartPanel>();
 	JPanel cardPanel;
+	AbstractFreeChartPanel currentChartPanel;
 
 	SequentialWorkerThread workerThread = new SequentialWorkerThread();
 
@@ -135,6 +134,20 @@ public class ChartPanel extends TransparentViewPanel
 				if (evt.getPropertyName().equals(ViewControler.PROPERTY_HIGHLIGHT_CHANGED))
 				{
 					update(false);
+				}
+				else if (evt.getPropertyName().equals(ViewControler.PROPERTY_HIGHLIGHT_CHANGED))
+				{
+					update(false);
+				}
+				else if (evt.getPropertyName().equals(ViewControler.PROPERTY_BACKGROUND_CHANGED))
+				{
+					if (currentChartPanel != null)
+						currentChartPanel.setForegroundColor(ComponentFactory.FOREGROUND);
+				}
+				else if (evt.getPropertyName().equals(ViewControler.PROPERTY_FONT_SIZE_CHANGED))
+				{
+					if (currentChartPanel != null)
+						currentChartPanel.setFontSize(ScreenSetup.INSTANCE.getFontSize());
 				}
 			}
 		});
@@ -552,27 +565,10 @@ public class ChartPanel extends TransparentViewPanel
 
 		chartPanel.setOpaqueFalse();
 		chartPanel.setForegroundColor(ComponentFactory.FOREGROUND);
-		final AbstractFreeChartPanel finalP = chartPanel;
 		chartPanel.setShadowVisible(false);
 		chartPanel.setIntegerTickUnits();
 		chartPanel.setBarWidthLimited();
-		chartPanel.setFontSize(ScreenSetup.SETUP.getFontSize());
-		SwingUtilities.invokeLater(new Runnable()
-		{
-			@Override
-			public void run()
-			{
-				viewControler.addViewListener(new PropertyChangeListener()
-				{
-					@Override
-					public void propertyChange(PropertyChangeEvent evt)
-					{
-						if (evt.getPropertyName().equals(ViewControler.PROPERTY_BACKGROUND_CHANGED))
-							finalP.setForegroundColor(ComponentFactory.FOREGROUND);
-					}
-				});
-			}
-		});
+		chartPanel.setFontSize(ScreenSetup.INSTANCE.getFontSize());
 	}
 
 	private void update(final boolean force)
@@ -634,9 +630,9 @@ public class ChartPanel extends TransparentViewPanel
 						//						System.out.println("updating chart");
 
 						String plotKey = getKey(fCluster, fProperty, fCompounds);
-						if (force && cardContents.contains(plotKey))
+						if (force && cardContents.containsKey(plotKey))
 							cardContents.remove(plotKey);
-						if (!cardContents.contains(plotKey))
+						if (!cardContents.containsKey(plotKey))
 						{
 							//							System.out.println("create new plot");
 							CompoundProperty.Type type = fProperty.getType();
@@ -647,7 +643,7 @@ public class ChartPanel extends TransparentViewPanel
 								d = new NumericPlotData(fCluster, fProperty, fCompounds);
 							if (d != null)
 							{
-								cardContents.add(plotKey);
+								cardContents.put(plotKey, d.getPlot());
 								cardPanel.add(d.getPlot(), plotKey);
 							}
 						}
@@ -675,9 +671,11 @@ public class ChartPanel extends TransparentViewPanel
 										: "NOT used for clustering and/or embedding."));
 						featureMissingLabel.setText(clustering.numMissingValues(fProperty) + "");
 
-						if (cardContents.contains(plotKey))
+						if (cardContents.containsKey(plotKey))
 						{
 							cardPanel.setVisible(true);
+							currentChartPanel = cardContents.get(plotKey);
+							currentChartPanel.setFontSize(ScreenSetup.INSTANCE.getFontSize());
 							((CardLayout) cardPanel.getLayout()).show(cardPanel, plotKey);
 						}
 						else
@@ -695,8 +693,8 @@ public class ChartPanel extends TransparentViewPanel
 	public Dimension getPreferredSize()
 	{
 		Dimension dim = super.getPreferredSize();
-		dim.width = Math.min(guiControler.getViewerWidth() / 3, dim.width);
-		dim.height = (int) (dim.width * 0.55);
+		dim.width = Math.min(dim.width, guiControler.getComponentMaxWidth(0.33));
+		dim.height = Math.min(dim.height, Math.min(guiControler.getComponentMaxHeight(0.33), dim.width));
 		return dim;
 	}
 }

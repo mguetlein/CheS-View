@@ -18,6 +18,7 @@ import javax.swing.JPopupMenu;
 import javax.swing.JRadioButtonMenuItem;
 import javax.swing.ToolTipManager;
 
+import main.ScreenSetup;
 import main.Settings;
 import cluster.Clustering;
 
@@ -181,12 +182,37 @@ public class MenuBar extends JMenuBar
 	{
 		JMenuItem m;
 		if (a.getValue("is-radio-buttion") != null && (Boolean) a.getValue("is-radio-buttion"))
-			m = new JRadioButtonMenuItem(a);
+			m = new JRadioButtonMenuItem(a)
+			{
+				@Override
+				public void updateUI()
+				{
+					super.updateUI();
+					setFont(getFont().deriveFont((float) ScreenSetup.INSTANCE.getFontSize()));
+				}
+			};
 		else if (a.getValue(Action.SELECTED_KEY) instanceof Boolean)
-			m = new JCheckBoxMenuItem(a);
+			m = new JCheckBoxMenuItem(a)
+			{
+				@Override
+				public void updateUI()
+				{
+					super.updateUI();
+					setFont(getFont().deriveFont((float) ScreenSetup.INSTANCE.getFontSize()));
+				}
+			};
 		else
-			m = new JMenuItem(a);
+			m = new JMenuItem(a)
+			{
+				@Override
+				public void updateUI()
+				{
+					super.updateUI();
+					setFont(getFont().deriveFont((float) ScreenSetup.INSTANCE.getFontSize()));
+				}
+			};
 		m.setToolTipText((String) a.getValue(Actions.TOOLTIP));
+		m.setFont(m.getFont().deriveFont((float) ScreenSetup.INSTANCE.getFontSize()));
 		ToolTipManager.sharedInstance().setDismissDelay(10000);
 		ToolTipManager.sharedInstance().registerComponent(m);
 		return m;
@@ -213,14 +239,30 @@ public class MenuBar extends JMenuBar
 	{
 		for (MyMenu m : menuBar.menus)
 		{
-			JMenu menu = new JMenu(m.name);
+			JMenu menu = new JMenu(m.name)
+			{
+				@Override
+				public void updateUI()
+				{
+					super.updateUI();
+					setFont(getFont().deriveFont((float) ScreenSetup.INSTANCE.getFontSize()));
+				}
+			};
 			for (MyMenuItem i : m.items)
 			{
 				if (!i.isMenu())
 					menu.add(createItemFromAction(i.getAction()));
 				else if (i instanceof MyMenu)
 				{
-					JMenu mm = new JMenu(((MyMenu) i).name);
+					JMenu mm = new JMenu(((MyMenu) i).name)
+					{
+						@Override
+						public void updateUI()
+						{
+							super.updateUI();
+							setFont(getFont().deriveFont((float) ScreenSetup.INSTANCE.getFontSize()));
+						}
+					};
 					ButtonGroup group = new ButtonGroup();
 					for (MyMenuItem ii : ((MyMenu) i).items)
 					{
@@ -239,7 +281,16 @@ public class MenuBar extends JMenuBar
 
 	public JPopupMenu getPopup()
 	{
-		JPopupMenu p = new JPopupMenu();
+		final List<JMenuItem> items = new ArrayList<JMenuItem>();
+		JPopupMenu p = new JPopupMenu()
+		{
+			public void updateUI()
+			{
+				super.updateUI();
+				for (JMenuItem m : items)
+					m.updateUI();
+			}
+		};
 		boolean first = true;
 		for (MyMenu m : menuBar.menus)
 		{
@@ -250,12 +301,30 @@ public class MenuBar extends JMenuBar
 			for (MyMenuItem i : m.items)
 			{
 				if (!i.isMenu())
-					p.add(createItemFromAction(i.getAction()));
+				{
+					JMenuItem item = createItemFromAction(i.getAction());
+					items.add(item);
+					p.add(item);
+				}
 				else
 				{
-					JMenu mm = new JMenu(((MyMenu) i).name);
+					JMenu mm = new JMenu(((MyMenu) i).name)
+					{
+						@Override
+						public void updateUI()
+						{
+							super.updateUI();
+							setFont(getFont().deriveFont((float) ScreenSetup.INSTANCE.getFontSize()));
+						}
+					};
+					items.add(mm);
+					mm.setFont(mm.getFont().deriveFont((float) ScreenSetup.INSTANCE.getFontSize()));
 					for (MyMenuItem ii : ((MyMenu) i).items)
-						mm.add(createItemFromAction(ii.getAction()));
+					{
+						JMenuItem item = createItemFromAction(ii.getAction());
+						items.add(item);
+						mm.add(item);
+					}
 					createMenuListener(mm);
 					p.add(mm);
 				}

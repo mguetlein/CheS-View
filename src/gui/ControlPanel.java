@@ -87,8 +87,17 @@ public class ControlPanel extends TransparentViewPanel
 		}
 
 		buttonPlus = ComponentFactory.createViewButton("+", new Insets(1, 3, 1, 3));
-		buttonMinus = ComponentFactory.createViewButton("-", new Insets(1, 3, 1, 3));
-		buttonMinus.setPreferredSize(buttonPlus.getPreferredSize());
+		buttonMinus = ComponentFactory.createViewButton("-", new Insets(1, 3, 1, 3),
+				new ComponentFactory.PreferredSizeProvider()
+				{
+
+					@Override
+					public Dimension getPreferredSize()
+					{
+						return buttonPlus.getPreferredSize();
+					}
+				});
+		//		buttonMinus.setPreferredSize(buttonPlus.getPreferredSize());
 
 		slider = ComponentFactory.createViewSlider(0, viewControler.getCompoundSizeMax(),
 				viewControler.getCompoundSize());
@@ -286,6 +295,8 @@ public class ControlPanel extends TransparentViewPanel
 					slider.setValue(viewControler.getCompoundSize());
 					selfUpdate = false;
 				}
+				else if (evt.getPropertyName().equals(ViewControler.PROPERTY_FONT_SIZE_CHANGED))
+					updateComboSize();
 			}
 		});
 
@@ -342,7 +353,7 @@ public class ControlPanel extends TransparentViewPanel
 	{
 		highlightCombobox.setPreferredSize(null);
 		Dimension dim = highlightCombobox.getPreferredSize();
-		int width = Math.min(dim.width, guiControler.getViewerWidth() / 3);
+		int width = Math.min(dim.width, guiControler.getComponentMaxWidth(0.33));
 		//		System.out.println(width);
 		highlightCombobox.setPreferredSize(new Dimension(width, dim.height));
 		highlightCombobox.revalidate();

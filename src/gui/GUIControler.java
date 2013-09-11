@@ -16,6 +16,8 @@ public interface GUIControler extends Blockable
 
 	public JPopupMenu getPopup();
 
+	public void showMessage(String msg);
+
 	//	public void handleKeyEvent(KeyEvent e);
 
 	public static final String PROPERTY_FULLSCREEN_CHANGED = "PROPERTY_FULLSCREEN_CHANGED";
@@ -23,8 +25,12 @@ public interface GUIControler extends Blockable
 
 	public void addPropertyChangeListener(PropertyChangeListener l);
 
-	public int getViewerWidth();
+	public int getComponentMaxWidth(double pct);
 
-	public int getViewerHeight();
+	public int getComponentMaxHeight(double pct);
+
+	public void blockMessages();
+
+	public void unblockMessages();
 
 }

@@ -38,7 +38,6 @@ public class View
 	ViewControler viewControler;
 	private Clustering clustering;
 
-	public static int FONT_SIZE = 10;
 	public boolean antialiasOn = false;
 
 	private static Zoomable zoomedTo;

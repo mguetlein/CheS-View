@@ -15,7 +15,9 @@ import javax.swing.OverlayLayout;
 import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
 
-import main.Settings;
+import main.ScreenSetup;
+import util.StringUtil;
+import util.ThreadUtil;
 import cluster.Clustering;
 
 import com.jgoodies.forms.layout.CellConstraints;
@@ -47,7 +49,6 @@ public class ClusterPanel extends JPanel
 		messageLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		messageLabel.setOpaque(true);
 		//		messageLabel.setBackground(Settings.TRANSPARENT_BACKGROUND);
-		messageLabel.setFont(messageLabel.getFont().deriveFont(24f));
 		CellConstraints cc = new CellConstraints();
 		messagePanel.add(messageLabel, cc.xy(1, 1));
 		messagePanel.setVisible(false);
@@ -134,17 +135,15 @@ public class ClusterPanel extends JPanel
 			@Override
 			public void run()
 			{
+				messageLabel.setFont(messageLabel.getFont().deriveFont(ScreenSetup.INSTANCE.getFontSize() + 4f));
 				messageLabel.setText(msg);
+				messageLabel.setPreferredSize(null);
 				messagePanel.setVisible(true);
-				try
-				{
-					Thread.sleep(2000);
-				}
-				catch (InterruptedException e)
-				{
-					Settings.LOGGER.error(e);
-				}
-				messagePanel.setVisible(false);
+				// show message between 2 and 6 seconds depending on the number of words (<=3 words 2s, 7 words 4.5s, >=9 words 6000)
+				long sleep = Math.max(2000, Math.min(6000, StringUtil.numOccurences(msg, " ") * 750));
+				ThreadUtil.sleep(sleep);
+				if (msg.equals(messageLabel.getText()))
+					messagePanel.setVisible(false);
 			}
 		});
 		th.start();

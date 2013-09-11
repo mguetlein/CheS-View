@@ -162,6 +162,20 @@ public class InfoPanel extends JPanel
 					updateCluster();
 					updateCompound();
 				}
+				else if (evt.getPropertyName().equals(ViewControler.PROPERTY_FONT_SIZE_CHANGED))
+				{
+					updateDatasetPanelSize();
+					if (selectedCompound != null)
+					{
+						compoundPanelMinWidth = 0;
+						updateCompound();
+					}
+					else if (selectedCluster != null)
+					{
+						clusterPanelMinWidth = 0;
+						updateCluster();
+					}
+				}
 			}
 		});
 
@@ -277,15 +291,14 @@ public class InfoPanel extends JPanel
 			{
 				if (selectedCompound == null && selectedCluster == null)
 					return new Dimension(0, 0);
-
 				Dimension dim = super.getPreferredSize();
 				int panelWidth;
 				if (selectedCompound != null)
 					panelWidth = compoundPanelMinWidth; //Math.max(compoundPanelMinWidth, compoundNameLabel.getPreferredSize().width);
 				else
 					panelWidth = clusterPanelMinWidth; //Math.max(clusterPanelMinWidth, clusterNameLabel.getPreferredSize().width);
-				int fraction = interactive ? 4 : 6;
-				dim.width = Math.min(guiControler.getViewerWidth() / fraction, panelWidth);
+				dim.width = Math.min(dim.width,
+						Math.min(guiControler.getComponentMaxWidth(interactive ? 1 / 4.0 : 1 / 6.0), panelWidth));
 				//				dim.height = Math.min(dim.width, 180);
 				return dim;
 			}
@@ -427,10 +440,10 @@ public class InfoPanel extends JPanel
 				model.addRow(o);
 			}
 
-			int width = ComponentFactory.packColumn(table, 0, 2, interactive ? guiControler.getViewerWidth() / 6
-					: guiControler.getViewerWidth() / 12);
+			int width = ComponentFactory.packColumn(table, 0, 2,
+					guiControler.getComponentMaxWidth(interactive ? 1 / 6.0 : 1 / 12.0));
 			width += ComponentFactory.packColumn(table, 1, 2,
-					interactive ? Integer.MAX_VALUE : guiControler.getViewerWidth() / 12);
+					guiControler.getComponentMaxWidth(interactive ? 1 : 1 / 12.0));
 			compoundPanelMinWidth = Math.max(compoundPanelMinWidth, width);
 
 			if (selectedP != null && props.indexOf(selectedP) != -1)
@@ -464,6 +477,7 @@ public class InfoPanel extends JPanel
 				}
 			});
 			th.start();
+			clusterCompoundPanel.setPreferredSize(null);
 			clusterCompoundPanel.setIgnoreRepaint(false);
 			clusterCompoundPanel.setVisible(true);
 		}
@@ -562,10 +576,10 @@ public class InfoPanel extends JPanel
 				o[1] = selectedCluster.getSummaryStringValue(p, false);
 				model.addRow(o);
 			}
-			int width = ComponentFactory.packColumn(table, 0, 2, interactive ? guiControler.getViewerWidth() / 6
-					: guiControler.getViewerWidth() / 12);
+			int width = ComponentFactory.packColumn(table, 0, 2,
+					guiControler.getComponentMaxWidth(interactive ? 1 / 6.0 : 1 / 12.0));
 			width += ComponentFactory.packColumn(table, 1, 2,
-					interactive ? Integer.MAX_VALUE : guiControler.getViewerWidth() / 12);
+					guiControler.getComponentMaxWidth(interactive ? 1 : 1 / 12.0));
 			clusterPanelMinWidth = Math.max(clusterPanelMinWidth, width);
 
 			CompoundProperty selectedP = null;
@@ -589,7 +603,7 @@ public class InfoPanel extends JPanel
 			{
 				table.scrollRectToVisible(new Rectangle(table.getCellRect(0, 0, true)));
 			}
-
+			clusterCompoundPanel.setPreferredSize(null);
 			clusterCompoundPanel.setIgnoreRepaint(true);
 			clusterCompoundPanel.setVisible(true);
 		}
@@ -602,11 +616,10 @@ public class InfoPanel extends JPanel
 		{
 			datasetPanel.setPreferredSize(null);
 			Dimension d = datasetPanel.getPreferredSize();
-			datasetPanel
-					.setPreferredSize(new Dimension(Math.min(d.width, guiControler.getViewerWidth() / 5), d.height));
+			datasetPanel.setPreferredSize(new Dimension(Math.min(d.width, guiControler.getComponentMaxWidth(0.33)),
+					d.height));
 		}
 		datasetPanel.setIgnoreRepaint(false);
 		datasetPanel.revalidate();
 	}
-
 }

@@ -25,6 +25,7 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
+import main.ScreenSetup;
 import cluster.Cluster;
 import cluster.Clustering;
 import cluster.Compound;
@@ -209,6 +210,9 @@ public class ClusterListPanel extends JPanel
 					updateList();
 					selfBlock = false;
 				}
+				else if (evt.getPropertyName().equals(ViewControler.PROPERTY_FONT_SIZE_CHANGED))
+					updateListSize();
+
 			}
 		});
 
@@ -287,12 +291,12 @@ public class ClusterListPanel extends JPanel
 	private void updateListSize()
 	{
 		//		System.err.println("row height " + listRenderer.getRowHeight());
-		int rowCount = (guiControler.getViewerHeight() / listRenderer.getRowHeight()) / 3;
+		int rowCount = (guiControler.getComponentMaxHeight(1) / listRenderer.getRowHeight()) / 3;
 		//		System.err.println("row count " + rowCount);
 		clusterList.setVisibleRowCount(rowCount);
 
 		scroll.setPreferredSize(null);
-		scroll.setPreferredSize(new Dimension(Math.min(guiControler.getViewerWidth() / 7,
+		scroll.setPreferredSize(new Dimension(Math.min(guiControler.getComponentMaxWidth(1 / 7.0),
 				scroll.getPreferredSize().width), scroll.getPreferredSize().height));
 		scroll.revalidate();
 		scroll.repaint();
@@ -323,6 +327,19 @@ public class ClusterListPanel extends JPanel
 
 		listRenderer = new DoubleNameListCellRenderer(listModel)
 		{
+			@Override
+			public void updateUI()
+			{
+				super.updateUI();
+				if (getFontLabel1() != null)
+				{
+					setFontLabel1(getFontLabel1().deriveFont((float) ScreenSetup.INSTANCE.getFontSize()));
+					setFontLabel2(getFontLabel2().deriveFont((float) ScreenSetup.INSTANCE.getFontSize()));
+					clusterList.setFixedCellHeight(getRowHeight());
+					//					clusterList.setPreferredSize(null);
+				}
+			}
+
 			public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected,
 					boolean cellHasFocus)
 			{
@@ -358,16 +375,17 @@ public class ClusterListPanel extends JPanel
 		listRenderer.setFontLabel2(listRenderer.getFontLabel2().deriveFont(Font.ITALIC));
 		clusterList.setCellRenderer(listRenderer);
 
-		compoundListPanel = new CompoundListPanel(clustering, viewControler, guiControler)
-		{
-			public Dimension getPreferredSize()
-			{
-				Dimension dim = super.getPreferredSize();
-				if (dim.width > 0)
-					dim.width = Math.max(dim.width, clusterPanel.getPreferredSize().width);
-				return dim;
-			}
-		};
+		compoundListPanel = new CompoundListPanel(clustering, viewControler, guiControler);
+		//		{
+		//			public Dimension getPreferredSize()
+		//			{
+		//				Dimension dim = super.getPreferredSize();
+		//				if (dim.width > 0)
+		//					dim.width = Math.max(dim.width, clusterPanel.getPreferredSize().width);
+		//				return dim;
+
+		//			}
+		//		};
 
 		setLayout(new BorderLayout(10, 10));
 		FormLayout layout = new FormLayout("pref,10,pref", "fill:pref");

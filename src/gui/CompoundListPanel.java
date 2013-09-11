@@ -24,6 +24,7 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
+import main.ScreenSetup;
 import util.SelectionModel;
 import cluster.Cluster;
 import cluster.Clustering;
@@ -237,6 +238,8 @@ public class CompoundListPanel extends TransparentViewPanel
 				{
 					update(clusterActive.getSelected(), false);
 				}
+				else if (evt.getPropertyName().equals(ViewControler.PROPERTY_FONT_SIZE_CHANGED))
+					updateListSize();
 			}
 		});
 
@@ -288,6 +291,18 @@ public class CompoundListPanel extends TransparentViewPanel
 
 		listRenderer = new DoubleNameListCellRenderer(listModel)
 		{
+			@Override
+			public void updateUI()
+			{
+				super.updateUI();
+				if (getFontLabel1() != null)
+				{
+					setFontLabel1(getFontLabel1().deriveFont((float) ScreenSetup.INSTANCE.getFontSize()));
+					setFontLabel2(getFontLabel2().deriveFont((float) ScreenSetup.INSTANCE.getFontSize()));
+					list.setFixedCellHeight(getRowHeight());
+				}
+			}
+
 			public Component getListCellRendererComponent(JList list, Object value, int i, boolean isSelected,
 					boolean cellHasFocus)
 			{
@@ -424,12 +439,12 @@ public class CompoundListPanel extends TransparentViewPanel
 	private void updateListSize()
 	{
 		//		System.err.println("row height " + listRenderer.getRowHeight());
-		int rowCount = (guiControler.getViewerHeight() / listRenderer.getRowHeight()) / 3;
+		int rowCount = (guiControler.getComponentMaxHeight(1) / listRenderer.getRowHeight()) / 3;
 		//		System.err.println("row count " + rowCount);
 		list.setVisibleRowCount(rowCount);
 
 		listScrollPane.setPreferredSize(null);
-		listScrollPane.setPreferredSize(new Dimension(Math.min(guiControler.getViewerWidth() / 5,
+		listScrollPane.setPreferredSize(new Dimension(Math.min(guiControler.getComponentMaxWidth(0.2),
 				listScrollPane.getPreferredSize().width), listScrollPane.getPreferredSize().height));
 		listScrollPane.revalidate();
 		listScrollPane.repaint();

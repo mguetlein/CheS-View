@@ -42,6 +42,7 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 
+import main.ScreenSetup;
 import main.Settings;
 import util.SwingUtil;
 
@@ -92,6 +93,12 @@ public class ComponentFactory
 			LIST_ACTIVE_BACKGROUND = LIST_ACTIVE_BACKGROUND_WHITE;
 			LIST_WATCH_BACKGROUND = LIST_WATCH_BACKGROUND_WHITE;
 		}
+
+		updateComponents();
+	}
+
+	public static void updateComponents()
+	{
 		if (Settings.TOP_LEVEL_FRAME != null)
 			SwingUtilities.updateComponentTreeUI(Settings.TOP_LEVEL_FRAME);
 	}
@@ -140,6 +147,8 @@ public class ComponentFactory
 			{
 				super.updateUI();
 				setForeground(FOREGROUND);
+				setFont(getFont().deriveFont((float) ScreenSetup.INSTANCE.getFontSize()));
+				setBorder(null);
 			}
 
 			@Override
@@ -174,6 +183,7 @@ public class ComponentFactory
 			{
 				super.updateUI();
 				setForeground(FOREGROUND);
+				setFont(getFont().deriveFont((float) ScreenSetup.INSTANCE.getFontSize()));
 			}
 
 			@Override
@@ -215,6 +225,7 @@ public class ComponentFactory
 			{
 				super.updateUI();
 				setForeground(FOREGROUND);
+				setFont(getFont().deriveFont((float) ScreenSetup.INSTANCE.getFontSize()));
 			}
 		};
 		c.setFocusable(false);
@@ -248,6 +259,7 @@ public class ComponentFactory
 		{
 			super.updateUI();
 			setForeground(FOREGROUND);
+			setFont(getFont().deriveFont((float) ScreenSetup.INSTANCE.getFontSize()));
 		}
 	}
 
@@ -269,7 +281,7 @@ public class ComponentFactory
 				list.setSelectionForeground(LIST_SELECTION_FOREGROUND);
 				list.setForeground(FOREGROUND);
 				list.setBackground(BACKGROUND);
-				list.setFont(f);
+				list.setFont(f.deriveFont((float) ScreenSetup.INSTANCE.getFontSize()));
 				return super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
 			}
 		};
@@ -285,6 +297,7 @@ public class ComponentFactory
 						JButton button = new BasicArrowButton(BasicArrowButton.SOUTH, BACKGROUND,
 								BORDER_FOREGROUND.darker(), BORDER_FOREGROUND.darker().darker(), BORDER_FOREGROUND);
 						button.setName("ComboBox.arrowButton");
+						button.setFont(f.deriveFont((float) ScreenSetup.INSTANCE.getFontSize()));
 						return button;
 					}
 
@@ -319,6 +332,7 @@ public class ComponentFactory
 				setForeground(FOREGROUND);
 				setBackground(BACKGROUND);
 				setBorder(new EtchedBorder(BORDER_FOREGROUND, BORDER_FOREGROUND.darker()));
+				setFont(f.deriveFont((float) ScreenSetup.INSTANCE.getFontSize()));
 				if (getRenderer() instanceof DescriptionListCellRenderer)
 					((DescriptionListCellRenderer) getRenderer())
 							.setDescriptionForeground(FOREGROUND.darker().darker());
@@ -329,7 +343,7 @@ public class ComponentFactory
 		c.setOpaque(false);
 		c.setForeground(FOREGROUND);
 		c.setBackground(BACKGROUND);
-		c.setFont(f);
+		c.setFont(f.deriveFont((float) ScreenSetup.INSTANCE.getFontSize()));
 		r.setDescriptionForeground(FOREGROUND.darker().darker());
 		c.setRenderer(r);
 		c.setFocusable(false);
@@ -385,17 +399,24 @@ public class ComponentFactory
 				return false;
 			}
 		};
-		JTable t = new JTable(m);
+		JTable t = new JTable(m)
+		{
+			public void updateUI()
+			{
+				super.updateUI();
+				setFont(getFont().deriveFont((float) ScreenSetup.INSTANCE.getFontSize()));
+				setRowHeight((int) (ScreenSetup.INSTANCE.getFontSize() * 1.5));
+			}
+		};
 		t.setBorder(null);
 		t.getTableHeader().setVisible(false);
 		t.getTableHeader().setPreferredSize(new Dimension(-1, 0));
 		t.setGridColor(new Color(0, 0, 0, 0));
 		t.setOpaque(false);
 		t.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-		t.setRowHeight(t.getRowHeight() + 1);
 		t.setDefaultRenderer(Object.class, new FactoryTableCellRenderer(halfTransparent));
 		t.setFocusable(false);
-
+		t.updateUI();
 		return t;
 	}
 
@@ -498,12 +519,22 @@ public class ComponentFactory
 		return p;
 	}
 
+	public static interface PreferredSizeProvider
+	{
+		public Dimension getPreferredSize();
+	}
+
 	public static JButton createViewButton(String string)
 	{
 		return createViewButton(string, new Insets(5, 5, 5, 5));
 	}
 
 	public static JButton createViewButton(String string, final Insets insets)
+	{
+		return createViewButton(string, insets, null);
+	}
+
+	public static JButton createViewButton(String string, final Insets insets, final PreferredSizeProvider prov)
 	{
 		JButton c = new JButton(string)
 		{
@@ -513,11 +544,21 @@ public class ComponentFactory
 				setForeground(FOREGROUND);
 				setBackground(BACKGROUND);
 				setBorder(new CompoundBorder(new LineBorder(FOREGROUND, 1), new EmptyBorder(insets)));
+				setFont(getFont().deriveFont((float) ScreenSetup.INSTANCE.getFontSize()));
+			}
+
+			@Override
+			public Dimension getPreferredSize()
+			{
+				if (prov == null)
+					return super.getPreferredSize();
+				else
+					return prov.getPreferredSize();
 			}
 		};
 		c.setOpaque(false);
 		c.setFocusable(false);
-		c.setFont(new JLabel().getFont());
+		c.setFont(new JLabel().getFont().deriveFont((float) ScreenSetup.INSTANCE.getFontSize()));
 		c.setFocusable(false);
 		return c;
 	}
@@ -530,6 +571,7 @@ public class ComponentFactory
 			{
 				super.updateUI();
 				setForeground(FOREGROUND);
+				setFont(getFont().deriveFont((float) ScreenSetup.INSTANCE.getFontSize()));
 			}
 		};
 		//infoTextArea.setFont(infoTextArea.getFont().deriveFont(Font.BOLD));

@@ -1,8 +1,6 @@
 package gui;
 
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 import java.util.Locale;
 import java.util.Properties;
 
@@ -28,16 +26,13 @@ import task.Task;
 import task.TaskDialog;
 import util.ArrayUtil;
 import util.FileUtil;
-import util.ListUtil;
 import util.StringLineAdder;
 import util.SwingUtil;
 import util.ThreadUtil;
 import workflow.MappingWorkflow;
 import workflow.MappingWorkflow.DescriptorSelection;
-import alg.Algorithm;
 import alg.build3d.AbstractReal3DBuilder;
 import alg.build3d.OpenBabel3DBuilder;
-import alg.cluster.DatasetClusterer;
 import cluster.ExportData;
 import data.CDKCompoundIcon;
 import data.ClusteringData;
@@ -56,12 +51,13 @@ public class LaunchCheSMapper
 		if (initialized)
 			throw new IllegalStateException("init only once!");
 
+		ScreenSetup.INSTANCE = screenSetup;
+
 		Settings.LOGGER.info("Starting CheS-Mapper at " + new Date());
 		Settings.LOGGER.info("OS is '" + System.getProperty("os.name") + "'");
 		Settings.LOGGER.info("Java runtime version is '" + System.getProperty("java.runtime.version") + "'");
 
 		Locale.setDefault(Locale.US);
-		ScreenSetup.SETUP = screenSetup;
 
 		PropHandler.init(loadProps);
 		BinHandler.init();
@@ -112,8 +108,9 @@ public class LaunchCheSMapper
 			//							.split("-x -d /home/martin/data/test.csv -f integrated -i cas,cluster -a cluster -c \"Manual Cluster Assignment\" -q \"property-Cluster feature=cluster\" -o /tmp/delme.ches",
 			//									' ')); // cannot use .split(" ") to respect quotes
 			//args = "-e -d data/dataY.sdf -f cdk,ob -o features/dataY_PC2.sdf".split(" ");
-			args = "-w /home/martin/data/presentation/demo-ob-descriptors.ches".split(" ");
-
+			//args = "-w /home/martin/data/presentation/demo-ob-descriptors.ches".split(" ");
+			//args = "-e  -d data/dataR.sdf -f obFP3 -o features/dataR_FP3.csv".split(" ");
+			args = "-e  -d data/dataR.sdf -f fminer -n 20 -o features/dataR_fminer.csv".split(" ");
 			//		args = "-h".split(" ");
 		}
 
@@ -166,11 +163,12 @@ public class LaunchCheSMapper
 		options.addOption(paramOption('a', "nominal-features",
 				"comma seperated list of integrated feature-names that should be interpreted as nominal",
 				"nominal-features"));
-		List<String> clusterNames = new ArrayList<String>();
-		for (Algorithm a : DatasetClusterer.CLUSTERERS)
-			clusterNames.add(a.getName());
-		options.addOption(paramOption('c', "cluster-algorithm",
-				"specify cluster algorithm: " + ListUtil.toString(clusterNames, ", "), "cluster-algorithm"));
+		//		List<String> clusterNames = new ArrayList<String>();
+		//		for (Algorithm a : DatasetClusterer.CLUSTERERS)
+		//			clusterNames.add(a.getName());
+		//		options.addOption(paramOption('c', "cluster-algorithm",
+		//				"specify cluster algorithm: " + ListUtil.toString(clusterNames, ", "), "cluster-algorithm"));
+		options.addOption(paramOption('c', "cluster-algorithm", "specify cluster algorithm", "cluster-algorithm"));
 
 		options.addOption(paramOption('t', "fix-3d-sdf-file",
 				"replaces corrupt structures with structures from input-file -d, saves to outfile -o",
@@ -193,7 +191,7 @@ public class LaunchCheSMapper
 				System.exit(0);
 			}
 
-			ScreenSetup screenSetup = ScreenSetup.DEFAULT;
+			ScreenSetup screenSetup;
 			if (cmd.hasOption('y'))
 			{
 				if (cmd.getOptionValue('y').equals("screenshot"))
@@ -202,9 +200,15 @@ public class LaunchCheSMapper
 					screenSetup = ScreenSetup.VIDEO;
 				else if (cmd.getOptionValue('y').equals("small_screen"))
 					screenSetup = ScreenSetup.SMALL_SCREEN;
-				else if (!cmd.getOptionValue('y').equals("default"))
+				else if (cmd.getOptionValue('y').equals("sxga+"))
+					screenSetup = ScreenSetup.SXGA_PLUS;
+				else if (cmd.getOptionValue('y').equals("default"))
+					screenSetup = ScreenSetup.DEFAULT;
+				else
 					throw new Error("illegal screen setup-arg: " + cmd.getOptionValue('y'));
 			}
+			else
+				screenSetup = ScreenSetup.DEFAULT;
 
 			boolean loadProperties = true;
 			if (cmd.hasOption('p'))

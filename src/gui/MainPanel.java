@@ -39,6 +39,7 @@ import org.jmol.api.JmolSimpleViewer;
 import util.ArrayUtil;
 import util.ColorUtil;
 import util.ObjectUtil;
+import util.StringUtil;
 import util.ThreadUtil;
 import cluster.Cluster;
 import cluster.Clustering;
@@ -71,16 +72,32 @@ public class MainPanel extends JPanel implements ViewControler
 
 	private String getStyleString()
 	{
-		switch (style)
+		if (ScreenSetup.INSTANCE.isFontSizeLarge())
 		{
-			case wireframe:
-				return "spacefill 0; wireframe 0.02";
-			case ballsAndSticks:
-				return "wireframe 25; spacefill 15%";
-			case dots:
-				return "spacefill 55%";
+			switch (style)
+			{
+				case wireframe:
+					return "spacefill 0; wireframe 0.08";
+				case ballsAndSticks:
+					return "wireframe 35; spacefill 21%";
+				case dots:
+					return "spacefill 65%";
+			}
+			throw new IllegalStateException("WTF");
 		}
-		throw new IllegalStateException("WTF");
+		else
+		{
+			switch (style)
+			{
+				case wireframe:
+					return "spacefill 0; wireframe 0.02";
+				case ballsAndSticks:
+					return "wireframe 25; spacefill 15%";
+				case dots:
+					return "spacefill 55%";
+			}
+			throw new IllegalStateException("WTF");
+		}
 	}
 
 	public Color getHighlightColor(CompoundPropertyOwner m, Highlighter h, CompoundProperty p)
@@ -170,7 +187,7 @@ public class MainPanel extends JPanel implements ViewControler
 	HighlightSorting highlightSorting = HighlightSorting.Median;
 	HighlightAutomatic highlightAutomatic;
 	HighlightMode highlightMode = HighlightMode.ColorCompounds;
-	boolean antialiasEnabled = ScreenSetup.SETUP.isAntialiasOn();
+	boolean antialiasEnabled = ScreenSetup.INSTANCE.isAntialiasOn();
 	boolean highlightLastFeatureEnabled = false;
 
 	public Clustering getClustering()
@@ -197,6 +214,7 @@ public class MainPanel extends JPanel implements ViewControler
 			this.spinEnabled = spinEnabled;
 			view.setSpinEnabled(spinEnabled, spinSpeed);
 			fireViewChange(PROPERTY_SPIN_CHANGED);
+			guiControler.showMessage((spinEnabled ? "Enable" : "Disable") + " spinning.");
 		}
 	}
 
@@ -210,6 +228,7 @@ public class MainPanel extends JPanel implements ViewControler
 			else
 				spinSpeed--;
 			view.setSpinEnabled(spinEnabled, spinSpeed);
+			guiControler.showMessage((increase ? "Increase" : "Decrease") + " spin speed to " + spinSpeed + ".");
 		}
 	}
 
@@ -288,6 +307,8 @@ public class MainPanel extends JPanel implements ViewControler
 				{
 					if (popup == null)
 						popup = MainPanel.this.guiControler.getPopup();
+					else
+						popup.updateUI();
 					popup.show(e.getComponent(), e.getX(), e.getY());
 				}
 			}
@@ -392,6 +413,12 @@ public class MainPanel extends JPanel implements ViewControler
 			this.style = style;
 			updateAllClustersAndCompounds(false);
 			fireViewChange(PROPERTY_STYLE_CHANGED);
+			if (style == Style.ballsAndSticks)
+				guiControler.showMessage("Draw compounds with balls (atoms) and sticks (bonds).");
+			else if (style == Style.wireframe)
+				guiControler.showMessage("Draw compounds with wireframes (shows only bonds).");
+			else if (style == Style.dots)
+				guiControler.showMessage("Draw compounds as dots.");
 			guiControler.unblock("changing style");
 		}
 	}
@@ -409,7 +436,13 @@ public class MainPanel extends JPanel implements ViewControler
 	}
 
 	@Override
-	public void setHighlighter(final Highlighter highlighter)
+	public void setHighlighter(Highlighter highlighter)
+	{
+		setHighlighter(highlighter, true);
+	}
+
+	@Override
+	public void setHighlighter(Highlighter highlighter, boolean showMessage)
 	{
 		if (this.selectedHighlighter != highlighter)
 		{
@@ -423,6 +456,24 @@ public class MainPanel extends JPanel implements ViewControler
 
 			updateAllClustersAndCompounds(false);
 			fireViewChange(PROPERTY_HIGHLIGHT_CHANGED);
+			if (showMessage)
+			{
+				String lastMsg = ".";
+				if (highlightLastFeatureEnabled && lastSelectedHighlighter != null
+						&& lastSelectedHighlighter != Highlighter.DEFAULT_HIGHLIGHTER)
+				{
+					if (lastSelectedHighlighter == Highlighter.CLUSTER_HIGHLIGHTER)
+						lastMsg = " (flat sphere highlights cluster assignement).";
+					else if (lastSelectedHighlighter instanceof CompoundPropertyHighlighter)
+						lastMsg = " (flat sphere highlights '" + lastSelectedHighlighter + "').";
+				}
+				if (highlighter == Highlighter.DEFAULT_HIGHLIGHTER)
+					guiControler.showMessage("Disable highlighting" + lastMsg);
+				else if (highlighter == Highlighter.CLUSTER_HIGHLIGHTER)
+					guiControler.showMessage("Highlight cluster assignement" + lastMsg);
+				else if (highlighter instanceof CompoundPropertyHighlighter)
+					guiControler.showMessage("Highlight feature values of '" + highlighter + "'" + lastMsg);
+			}
 			guiControler.unblock("set highlighter");
 		}
 	}
@@ -493,6 +544,10 @@ public class MainPanel extends JPanel implements ViewControler
 			highlighterLabelsVisible = selected;
 			updateAllClustersAndCompounds(false);
 			fireViewChange(PROPERTY_HIGHLIGHT_CHANGED);
+			if (selected)
+				guiControler.showMessage("Show label for each compound feature value.");
+			else
+				guiControler.showMessage("Do not show label for each compound feature value.");
 		}
 	}
 
@@ -504,6 +559,15 @@ public class MainPanel extends JPanel implements ViewControler
 			highlightSorting = sorting;
 			updateAllClustersAndCompounds(false);
 			fireViewChange(PROPERTY_HIGHLIGHT_CHANGED);
+			if (sorting == HighlightSorting.Max)
+				guiControler
+						.showMessage("Highlight superimposed cluster using the compound with the maximum feature value.");
+			else if (sorting == HighlightSorting.Median)
+				guiControler
+						.showMessage("Highlight superimposed cluster using the compound with the median feature value.");
+			else if (sorting == HighlightSorting.Min)
+				guiControler
+						.showMessage("Highlight superimposed cluster using the compound with the minimum feature value.");
 		}
 	}
 
@@ -541,6 +605,7 @@ public class MainPanel extends JPanel implements ViewControler
 				view.select(c.getBitSet());
 				view.scriptWait("boundbox { selected }");
 				view.scriptWait("boundbox off");
+				//				view.scriptWait("font bb" + clusterIndex + " " + View.FONT_SIZE);
 				view.scriptWait("draw ID bb" + clusterIndex + " BOUNDBOX color "
 						+ ColorUtil.toJMolString(ComponentFactory.LIST_WATCH_BACKGROUND) + " translucent "
 						+ boxTranslucency + " MESH NOFILL \"" + c.toStringWithValue() + "\"");
@@ -872,9 +937,11 @@ public class MainPanel extends JPanel implements ViewControler
 				else
 					view.scriptWait("boundbox { selected }");
 				view.scriptWait("boundbox off");
+				//				view.scriptWait("font bb" + m.getCompoundIndex() + "h " + View.FONT_SIZE);
 				view.scriptWait("draw ID bb" + m.getCompoundIndex() + "h BOUNDBOX color "
 						+ ColorUtil.toJMolString(ComponentFactory.LIST_WATCH_BACKGROUND) + " translucent "
 						+ boxTranslucency + " MESH NOFILL \"" + m.toStringWithValue() + "\"");
+
 				//				jmolPanel.repaint(); // HACK to avoid label display errors
 			}
 			else
@@ -890,9 +957,11 @@ public class MainPanel extends JPanel implements ViewControler
 				else
 					view.scriptWait("boundbox { selected }");
 				view.scriptWait("boundbox off");
+				//				view.scriptWait("font bb" + m.getCompoundIndex() + "a " + View.FONT_SIZE);
 				view.scriptWait("draw ID bb" + m.getCompoundIndex() + "a BOUNDBOX color "
 						+ ColorUtil.toJMolString(ComponentFactory.LIST_ACTIVE_BACKGROUND) + " translucent "
 						+ boxTranslucency + " MESH NOFILL");
+
 				//				jmolPanel.repaint(); // HACK to avoid label display errors
 			}
 			else
@@ -959,7 +1028,7 @@ public class MainPanel extends JPanel implements ViewControler
 
 				if (showLabel)
 				{
-					view.scriptWait("set fontSize " + View.FONT_SIZE);
+					view.scriptWait("set fontSize " + ScreenSetup.INSTANCE.getFontSize());
 					view.scriptWait("label \"" + labelString + "\"");
 				}
 				else
@@ -1095,9 +1164,9 @@ public class MainPanel extends JPanel implements ViewControler
 	private void initHighlighter()
 	{
 		if (clustering.getNumClusters() == 1)
-			setHighlighter(Highlighter.DEFAULT_HIGHLIGHTER);
+			setHighlighter(Highlighter.DEFAULT_HIGHLIGHTER, false);
 		else
-			setHighlighter(Highlighter.CLUSTER_HIGHLIGHTER);
+			setHighlighter(Highlighter.CLUSTER_HIGHLIGHTER, false);
 		highlightAutomatic.init();
 	}
 
@@ -1150,12 +1219,17 @@ public class MainPanel extends JPanel implements ViewControler
 				{
 					final Compound m = clustering.getCompoundWithCompoundIndex(mIndex[0]);
 					view.zoomTo(m, AnimationSpeed.SLOW);
+					guiControler.showMessage("Zoom to compound '" + m + "'.");
 				}
 			}
 			else if (mIndex.length == 0 && mIndexOld.length > 0 && activeCluster != -1)
 			{
 				final Cluster c = getClustering().getClusterForCompoundIndex(mIndexOld[0]);
 				view.zoomTo(c, AnimationSpeed.SLOW);
+				if (clustering.getNumClusters() == 1)
+					guiControler.showMessage("Zoom out to show all compounds.");
+				else
+					guiControler.showMessage("Zoom to cluster '" + c + "'.");
 			}
 		}
 	}
@@ -1181,7 +1255,15 @@ public class MainPanel extends JPanel implements ViewControler
 
 		updateAllClustersAndCompounds(false);
 		if (activeClusterChanged)
+		{
 			updateSuperimpose(false);
+			if (cIndex == -1)
+				guiControler.showMessage("Zoom out to show all clusters.");
+			else if (clustering.getNumClusters() == 1)
+				guiControler.showMessage("Zoom out to show all compounds.");
+			else
+				guiControler.showMessage("Zoom to cluster '" + clustering.getCluster(cIndex) + "'.");
+		}
 
 		view.afterAnimation(new Runnable()
 		{
@@ -1242,6 +1324,10 @@ public class MainPanel extends JPanel implements ViewControler
 		{
 			clustering.setSuperimposed(superimpose);
 			updateSuperimpose(true);
+			if (superimpose)
+				guiControler.showMessage("Move compounds to cluster center.");
+			else
+				guiControler.showMessage("Move compounds to compound positions.");
 		}
 	}
 
@@ -1276,6 +1362,7 @@ public class MainPanel extends JPanel implements ViewControler
 			this.antialiasEnabled = b;
 			View.instance.setAntialiasOn(antialiasEnabled);
 			fireViewChange(PROPERTY_ANTIALIAS_CHANGED);
+			guiControler.showMessage((b ? "Enable" : "Disable") + " antialiasing.");
 		}
 	}
 
@@ -1423,12 +1510,12 @@ public class MainPanel extends JPanel implements ViewControler
 		if (larger && ClusteringUtil.COMPOUND_SIZE < ClusteringUtil.COMPOUND_SIZE_MAX)
 		{
 			ClusteringUtil.COMPOUND_SIZE++;
-			updateDensitiy();
+			updateDensitiy(true);
 		}
 		else if (!larger && ClusteringUtil.COMPOUND_SIZE > 0)
 		{
 			ClusteringUtil.COMPOUND_SIZE--;
-			updateDensitiy();
+			updateDensitiy(false);
 		}
 	}
 
@@ -1437,8 +1524,9 @@ public class MainPanel extends JPanel implements ViewControler
 	{
 		if (ClusteringUtil.COMPOUND_SIZE != compoundSize)
 		{
+			boolean increased = ClusteringUtil.COMPOUND_SIZE < compoundSize;
 			ClusteringUtil.COMPOUND_SIZE = compoundSize;
-			updateDensitiy();
+			updateDensitiy(increased);
 		}
 	}
 
@@ -1457,6 +1545,10 @@ public class MainPanel extends JPanel implements ViewControler
 			if (selectedHighlighter != Highlighter.DEFAULT_HIGHLIGHTER)
 				updateAllClustersAndCompounds(true);
 			fireViewChange(PROPERTY_HIGHLIGHT_MODE_CHANGED);
+			if (mode == HighlightMode.Spheres)
+				guiControler.showMessage("Highlight compound feature values with spheres.");
+			else if (mode == HighlightMode.ColorCompounds)
+				guiControler.showMessage("Highlight compound feature values by changing atom and bond colors.");
 		}
 	}
 
@@ -1475,6 +1567,16 @@ public class MainPanel extends JPanel implements ViewControler
 			if (highlightMode == HighlightMode.Spheres && selectedHighlighter != Highlighter.DEFAULT_HIGHLIGHTER)
 				updateAllClustersAndCompounds(true);
 			fireViewChange(PROPERTY_HIGHLIGHT_LAST_FEATURE);
+			String lastMsg = ".";
+			if (highlightLastFeatureEnabled && lastSelectedHighlighter != null
+					&& lastSelectedHighlighter != Highlighter.DEFAULT_HIGHLIGHTER)
+			{
+				if (lastSelectedHighlighter == Highlighter.CLUSTER_HIGHLIGHTER)
+					lastMsg = " (flat sphere highlights cluster assignement).";
+				else if (lastSelectedHighlighter instanceof CompoundPropertyHighlighter)
+					lastMsg = " (flat sphere highlights '" + lastSelectedHighlighter + "').";
+			}
+			guiControler.showMessage((b ? "Enable" : "Disable") + " highlighting of last selected feature" + lastMsg);
 		}
 	}
 
@@ -1483,9 +1585,12 @@ public class MainPanel extends JPanel implements ViewControler
 	{
 		if (view.sphereSize != size)
 		{
+			boolean increase = view.sphereSize < size;
 			view.sphereSize = size;
 			if (highlightMode == HighlightMode.Spheres && selectedHighlighter != Highlighter.DEFAULT_HIGHLIGHTER)
 				updateAllClustersAndCompounds(true);
+			guiControler.showMessage((increase ? "Increase" : "Descrease") + " sphere size to "
+					+ StringUtil.formatDouble(size) + ".");
 		}
 	}
 
@@ -1494,9 +1599,12 @@ public class MainPanel extends JPanel implements ViewControler
 	{
 		if (view.sphereTranslucency != translucency)
 		{
+			boolean increase = view.sphereTranslucency < translucency;
 			view.sphereTranslucency = translucency;
 			if (highlightMode == HighlightMode.Spheres && selectedHighlighter != Highlighter.DEFAULT_HIGHLIGHTER)
 				updateAllClustersAndCompounds(true);
+			guiControler.showMessage((increase ? "Increase" : "Descrease") + " sphere translucency to "
+					+ StringUtil.formatDouble(translucency) + ".");
 		}
 	}
 
@@ -1512,7 +1620,7 @@ public class MainPanel extends JPanel implements ViewControler
 		return ClusteringUtil.COMPOUND_SIZE;
 	}
 
-	private void updateDensitiy()
+	private void updateDensitiy(boolean increased)
 	{
 		Cluster activeCluster = clustering.getCluster(clustering.getClusterActive().getSelected());
 		if (activeCluster != null && clustering.isSuperimposed())
@@ -1547,6 +1655,8 @@ public class MainPanel extends JPanel implements ViewControler
 		view.proceedAnimation("change density");
 
 		fireViewChange(PROPERTY_DENSITY_CHANGED);
+		guiControler.showMessage((increased ? "Increase" : "Descrease") + " compound size to "
+				+ ClusteringUtil.COMPOUND_SIZE + ".");
 	}
 
 	@Override
@@ -1563,6 +1673,14 @@ public class MainPanel extends JPanel implements ViewControler
 			hideCompounds = hide;
 			updateAllClustersAndCompounds(false);
 			fireViewChange(PROPERTY_HIDE_UNSELECT_CHANGED);
+			if (hide == HideCompounds.none)
+				guiControler.showMessage("Never draw un-selected compounds translucent.");
+			else if (hide == HideCompounds.nonActive)
+				guiControler
+						.showMessage("Draw un-selected compounds translucent when another compound is selected (with mouse click).");
+			else if (hide == HideCompounds.nonWatched)
+				guiControler
+						.showMessage("Draw un-selected compounds translucent when another compound is focused (with mouse over).");
 		}
 	}
 
@@ -1577,6 +1695,10 @@ public class MainPanel extends JPanel implements ViewControler
 	{
 		this.hideHydrogens = b;
 		view.hideHydrogens(b);
+		if (b)
+			guiControler.showMessage("Hide hydrogens.");
+		else
+			guiControler.showMessage("Draw hydrogens (if available).");
 	}
 
 	@Override
@@ -1599,7 +1721,21 @@ public class MainPanel extends JPanel implements ViewControler
 			view.setBackground(ComponentFactory.BACKGROUND);
 			updateAllClustersAndCompounds(false);
 			fireViewChange(PROPERTY_BACKGROUND_CHANGED);
+			guiControler.showMessage("Background color set to " + (backgroundBlack ? "black." : "white."));
 		}
+	}
+
+	@Override
+	public void increaseFontSize(boolean increase)
+	{
+		boolean wasLarge = ScreenSetup.INSTANCE.isFontSizeLarge();
+		ScreenSetup.INSTANCE.setFontSize(ScreenSetup.INSTANCE.getFontSize() + (increase ? 1 : -1));
+		if (wasLarge != ScreenSetup.INSTANCE.isFontSizeLarge())
+			updateAllClustersAndCompounds(true);
+		ComponentFactory.updateComponents();
+		fireViewChange(PROPERTY_FONT_SIZE_CHANGED);
+		guiControler.showMessage((increase ? "Increase" : "Descrease") + " font size to "
+				+ ScreenSetup.INSTANCE.getFontSize() + ".");
 	}
 
 	@Override
@@ -1610,6 +1746,7 @@ public class MainPanel extends JPanel implements ViewControler
 			this.matchColor = color;
 			updateAllClustersAndCompounds(true);
 			fireViewChange(PROPERTY_MATCH_COLOR_CHANGED);
+			guiControler.showMessage("Change color to highlight substructure matches.");
 		}
 	}
 
@@ -1670,6 +1807,7 @@ public class MainPanel extends JPanel implements ViewControler
 			for (Compound m : clustering.getCompounds(true))
 				m.setDescriptor(compoundDescriptorProperty);
 			fireViewChange(PROPERTY_COMPOUND_DESCRIPTOR_CHANGED);
+			guiControler.showMessage("Set compound identifier to feature value of '" + prop + "'.");
 		}
 	}
 
@@ -1720,6 +1858,7 @@ public class MainPanel extends JPanel implements ViewControler
 		{
 			updateAllClustersAndCompounds(true);
 			fireViewChange(PROPERTY_HIGHLIGHT_COLORS_CHANGED);
+			guiControler.showMessage("Change color gradient or log transformation for highlighting.");
 		}
 	}
 }

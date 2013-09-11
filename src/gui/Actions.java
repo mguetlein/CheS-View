@@ -123,9 +123,12 @@ public class Actions
 	private final static String HIDDEN_ENABLE_JMOL_POPUP = "enable-jmol-popup";
 	private final static String HIDDEN_INCR_SPIN_SPEED = "incr-spin-speed";
 	private final static String HIDDEN_DECR_SPIN_SPEED = "decr-spin-speed";
+	private final static String HIDDEN_INCR_FONT_SIZE = "incr-font-size";
+	private final static String HIDDEN_DECR_FONT_SIZE = "decr-font-size";
 	private final static String[] HIDDEN_ACTIONS = { HIDDEN_UPDATE_MOUSE_SELECTION_PRESSED,
 			HIDDEN_UPDATE_MOUSE_SELECTION_RELEASED, HIDDEN_DECR_COMPOUND_SIZE, HIDDEN_INCR_COMPOUND_SIZE,
-			HIDDEN_ENABLE_JMOL_POPUP, HIDDEN_INCR_SPIN_SPEED, HIDDEN_DECR_SPIN_SPEED };
+			HIDDEN_ENABLE_JMOL_POPUP, HIDDEN_INCR_SPIN_SPEED, HIDDEN_DECR_SPIN_SPEED, HIDDEN_INCR_FONT_SIZE,
+			HIDDEN_DECR_FONT_SIZE };
 
 	private HashMap<String, Action> actions = new LinkedHashMap<String, Action>();
 
@@ -167,10 +170,10 @@ public class Actions
 				KeyStroke.getKeyStroke(KeyEvent.VK_MINUS, ActionEvent.CTRL_MASK | ActionEvent.ALT_MASK));
 		keys.put(HIGHLIGHT_DECR_SPHERE_TRANSLUCENCY,
 				KeyStroke.getKeyStroke(KeyEvent.VK_PLUS, ActionEvent.CTRL_MASK | ActionEvent.ALT_MASK));
-		keys.put(HIDDEN_INCR_SPIN_SPEED,
-				KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, ActionEvent.CTRL_MASK | ActionEvent.ALT_MASK));
-		keys.put(HIDDEN_DECR_SPIN_SPEED,
-				KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, ActionEvent.CTRL_MASK | ActionEvent.ALT_MASK));
+		keys.put(HIDDEN_INCR_SPIN_SPEED, KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, ActionEvent.CTRL_MASK));// | ActionEvent.ALT_MASK));
+		keys.put(HIDDEN_DECR_SPIN_SPEED, KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, ActionEvent.CTRL_MASK));// | ActionEvent.ALT_MASK));
+		keys.put(HIDDEN_INCR_FONT_SIZE, KeyStroke.getKeyStroke(KeyEvent.VK_UP, ActionEvent.CTRL_MASK));// | ActionEvent.ALT_MASK));
+		keys.put(HIDDEN_DECR_FONT_SIZE, KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, ActionEvent.CTRL_MASK));// | ActionEvent.ALT_MASK));
 	}
 
 	private Actions(GUIControler guiControler, ViewControler viewControler, Clustering clustering)
@@ -930,6 +933,22 @@ public class Actions
 				viewControler.increaseSpinSpeed(false);
 			}
 		};
+		new ActionCreator(HIDDEN_INCR_FONT_SIZE)
+		{
+			@Override
+			public void action()
+			{
+				viewControler.increaseFontSize(true);
+			}
+		};
+		new ActionCreator(HIDDEN_DECR_FONT_SIZE)
+		{
+			@Override
+			public void action()
+			{
+				viewControler.increaseFontSize(false);
+			}
+		};
 
 	}
 
@@ -954,6 +973,7 @@ public class Actions
 					if (wwd.getReturnValue() == CheSMapperWizard.RETURN_VALUE_FINISH)
 					{
 						View.instance.suspendAnimation("remap");
+						guiControler.blockMessages();
 						clustering.clear();
 						Task task = TaskProvider.initTask("Chemical space mapping");
 						new TaskDialog(task, Settings.TOP_LEVEL_FRAME);
@@ -970,6 +990,7 @@ public class Actions
 				}
 				finally
 				{
+					guiControler.unblockMessages();
 					guiControler.unblock("new clustering");
 				}
 			}

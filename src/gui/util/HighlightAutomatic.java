@@ -51,7 +51,7 @@ public class HighlightAutomatic
 		if (automatic && controler.getHighlighter() == Highlighter.DEFAULT_HIGHLIGHTER && activeClusterChanged
 				&& clustering.getNumClusters() > 1 && !clustering.isClusterActive())
 		{
-			controler.setHighlighter(Highlighter.CLUSTER_HIGHLIGHTER);
+			controler.setHighlighter(Highlighter.CLUSTER_HIGHLIGHTER, false);
 			automatic = true;
 		}
 	}
@@ -61,7 +61,7 @@ public class HighlightAutomatic
 		if (automatic && controler.getHighlighter() == Highlighter.CLUSTER_HIGHLIGHTER && activeClusterChanged
 				&& clustering.getNumClusters() > 1 && clustering.isClusterActive())
 		{
-			controler.setHighlighter(Highlighter.DEFAULT_HIGHLIGHTER);
+			controler.setHighlighter(Highlighter.DEFAULT_HIGHLIGHTER, false);
 			automatic = true;
 		}
 	}
