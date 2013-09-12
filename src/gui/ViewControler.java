@@ -123,6 +123,8 @@ public interface ViewControler
 
 	public void increaseFontSize(boolean increase);
 
+	public void setFontSize(int fontsize);
+
 	public void setMatchColor(Color color);
 
 	public Color getMatchColor();

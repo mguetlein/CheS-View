@@ -23,6 +23,8 @@ import org.jmol.util.DefaultLogger;
 import org.jmol.util.Logger;
 
 import util.ScreenUtil;
+import util.SwingUtil;
+import util.ThreadUtil;
 import cluster.Clustering;
 import data.ClusteringData;
 
@@ -57,7 +59,12 @@ public class CheSViewer implements GUIControler
 
 	private static CheSViewer instance;
 
-	public static void show(ClusteringData clusteringData)
+	public static interface PostStartModifier
+	{
+		public void modify(GUIControler gui, ViewControler view);
+	}
+
+	public static void show(ClusteringData clusteringData, final PostStartModifier mod)
 	{
 		if (instance == null)
 			instance = new CheSViewer(clusteringData);
@@ -66,6 +73,20 @@ public class CheSViewer implements GUIControler
 			instance.clusterPanel.init(clusteringData);
 			if (!instance.isFullScreen() && !instance.frame.isVisible())
 				instance.frame.setVisible(true);
+		}
+		if (mod != null)
+		{
+			Thread th = new Thread(new Runnable()
+			{
+				@Override
+				public void run()
+				{
+					SwingUtil.waitForAWTEventThread();
+					ThreadUtil.sleep(2000);
+					mod.modify(instance, instance.clusterPanel.getViewControler());
+				}
+			});
+			th.start();
 		}
 	}
 

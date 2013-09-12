@@ -1726,16 +1726,26 @@ public class MainPanel extends JPanel implements ViewControler
 	}
 
 	@Override
+	public void setFontSize(int font)
+	{
+		if (font != ScreenSetup.INSTANCE.getFontSize())
+		{
+			boolean wasLarge = ScreenSetup.INSTANCE.isFontSizeLarge();
+			boolean increase = ScreenSetup.INSTANCE.getFontSize() < font;
+			ScreenSetup.INSTANCE.setFontSize(font);
+			if (wasLarge != ScreenSetup.INSTANCE.isFontSizeLarge())
+				updateAllClustersAndCompounds(true);
+			ComponentFactory.updateComponents();
+			fireViewChange(PROPERTY_FONT_SIZE_CHANGED);
+			guiControler.showMessage((increase ? "Increase" : "Descrease") + " font size to "
+					+ ScreenSetup.INSTANCE.getFontSize() + ".");
+		}
+	}
+
+	@Override
 	public void increaseFontSize(boolean increase)
 	{
-		boolean wasLarge = ScreenSetup.INSTANCE.isFontSizeLarge();
-		ScreenSetup.INSTANCE.setFontSize(ScreenSetup.INSTANCE.getFontSize() + (increase ? 1 : -1));
-		if (wasLarge != ScreenSetup.INSTANCE.isFontSizeLarge())
-			updateAllClustersAndCompounds(true);
-		ComponentFactory.updateComponents();
-		fireViewChange(PROPERTY_FONT_SIZE_CHANGED);
-		guiControler.showMessage((increase ? "Increase" : "Descrease") + " font size to "
-				+ ScreenSetup.INSTANCE.getFontSize() + ".");
+		setFontSize(ScreenSetup.INSTANCE.getFontSize() + (increase ? 1 : -1));
 	}
 
 	@Override

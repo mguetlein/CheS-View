@@ -1,10 +1,20 @@
 package gui;
 
+import gui.CheSViewer.PostStartModifier;
+import gui.ViewControler.HideCompounds;
+import gui.ViewControler.HighlightMode;
+import gui.ViewControler.Style;
+import gui.property.ColorGradient;
+import gui.util.CompoundPropertyHighlighter;
+import gui.util.Highlighter;
+
+import java.awt.Color;
 import java.util.Date;
 import java.util.Locale;
 import java.util.Properties;
 
 import javax.swing.JFrame;
+import javax.swing.SwingUtilities;
 
 import main.BinHandler;
 import main.CheSMapping;
@@ -26,6 +36,7 @@ import task.Task;
 import task.TaskDialog;
 import util.ArrayUtil;
 import util.FileUtil;
+import util.IntegerUtil;
 import util.StringLineAdder;
 import util.SwingUtil;
 import util.ThreadUtil;
@@ -36,6 +47,8 @@ import alg.build3d.OpenBabel3DBuilder;
 import cluster.ExportData;
 import data.CDKCompoundIcon;
 import data.ClusteringData;
+import dataInterface.CompoundProperty;
+import dataInterface.CompoundPropertyUtil;
 
 public class LaunchCheSMapper
 {
@@ -78,6 +91,13 @@ public class LaunchCheSMapper
 				.create(charOpt);
 	}
 
+	@SuppressWarnings("static-access")
+	private static Option longParamOption(String longOpt, String description, String paramName)
+	{
+		return OptionBuilder.withLongOpt(longOpt).withDescription(description).hasArgs(1).withArgName(paramName)
+				.create();
+	}
+
 	public static void main(String args[])
 	{
 		if (args != null && args.length == 1 && args[0].equals("debug"))
@@ -110,7 +130,12 @@ public class LaunchCheSMapper
 			//args = "-e -d data/dataY.sdf -f cdk,ob -o features/dataY_PC2.sdf".split(" ");
 			//args = "-w /home/martin/data/presentation/demo-ob-descriptors.ches".split(" ");
 			//args = "-e  -d data/dataR.sdf -f obFP3 -o features/dataR_FP3.csv".split(" ");
-			args = "-e  -d data/dataR.sdf -f fminer -n 20 -o features/dataR_fminer.csv".split(" ");
+			//			args = "-e  -d data/dataR.sdf -f fminer -n 20 -o features/dataR_fminer.csv".split(" ");
+			//			args = "-y sxga+ -w /home/martin/data/presentation/demo-ob-descriptors.ches --font-size 20 --compound-style ballsAndSticks --compound-size 35 --highlight-mode Spheres --hide-compounds none"
+			//					.split(" ");
+			args = "-y sxga+ -w /home/martin/data/presentation/demo-ob-descriptors.ches".split(" ");
+			//			args = "-y sxga+ -w /home/martin/data/presentation/cox2-clustered-aligned.ches --font-size 20 --compound-style ballsAndSticks --compound-size 15 --endpoint-highlight IC50_uM"
+			//					.split(" ");
 			//		args = "-h".split(" ");
 		}
 
@@ -178,10 +203,77 @@ public class LaunchCheSMapper
 		options.addOption(option('k', "depict-2d", "depicts 2d images for each compound in dataset file -d"));
 		//		options.addOption(option('n', "compute-inchi", "computes inchi for dataset file -d, saves to outfile -o"));
 
+		options.addOption(longParamOption("font-size", "change initial font size", "font-size"));
+		options.addOption(longParamOption("compound-style", "change initial style", "compound-style"));
+		options.addOption(longParamOption("compound-size", "change initial compound size", "compound-size"));
+		options.addOption(longParamOption("highlight-mode", "change initial highlight mode", "highlight-mode"));
+		options.addOption(longParamOption("hide-compounds", "change initial hide-compounds mode", "hide compounds"));
+		options.addOption(longParamOption("endpoint-highlight",
+				"enable endpoint-highlighting (log + reverse) for a feature", "endpoint-highlight feature"));
+
 		CommandLineParser parser = new BasicParser();
 		try
 		{
-			CommandLine cmd = parser.parse(options, args);
+			final CommandLine cmd = parser.parse(options, args);
+
+			PostStartModifier mod = new PostStartModifier()
+			{
+				@Override
+				public void modify(GUIControler gui, final ViewControler view)
+				{
+					if (cmd.hasOption("font-size"))
+					{
+						final Integer font = IntegerUtil.parseInteger(cmd.getOptionValue("font-size"));
+						SwingUtilities.invokeLater(new Runnable()
+						{
+							public void run()
+							{
+								view.setFontSize(font);
+							}
+						});
+						ThreadUtil.sleep(2000);
+					}
+					if (cmd.hasOption("compound-style"))
+					{
+						Style style = Style.valueOf(cmd.getOptionValue("compound-style"));
+						view.setStyle(style);
+						ThreadUtil.sleep(2000);
+					}
+					if (cmd.hasOption("compound-size"))
+					{
+						Integer size = IntegerUtil.parseInteger(cmd.getOptionValue("compound-size"));
+						view.setCompoundSize(size);
+						ThreadUtil.sleep(2000);
+					}
+					if (cmd.hasOption("highlight-mode"))
+					{
+						HighlightMode mode = HighlightMode.valueOf(cmd.getOptionValue("highlight-mode"));
+						view.setHighlightMode(mode);
+						ThreadUtil.sleep(2000);
+					}
+					if (cmd.hasOption("hide-compounds"))
+					{
+						HideCompounds mode = HideCompounds.valueOf(cmd.getOptionValue("hide-compounds"));
+						view.setHideCompounds(mode);
+						ThreadUtil.sleep(2000);
+					}
+					if (cmd.hasOption("endpoint-highlight"))
+					{
+						CompoundProperty p = null;
+						for (Highlighter h[] : view.getHighlighters().values())
+							for (Highlighter hi : h)
+								if (hi instanceof CompoundPropertyHighlighter)
+									if (((CompoundPropertyHighlighter) hi).getProperty().toString()
+											.equals(cmd.getOptionValue("endpoint-highlight")))
+										p = ((CompoundPropertyHighlighter) hi).getProperty();
+						if (p == null)
+							throw new Error("feature not found: " + cmd.getOptionValue("endpoint-highlight"));
+						view.setHighlightColors(new ColorGradient(new Color(100, 255, 100), Color.WHITE,
+								CompoundPropertyUtil.getHighValueColor()), true, new CompoundProperty[] { p });
+						ThreadUtil.sleep(2000);
+					}
+				}
+			};
 
 			if (cmd.hasOption('h'))
 			{
@@ -254,7 +346,7 @@ public class LaunchCheSMapper
 			else if (cmd.hasOption('w'))
 			{
 				CheSMapping mapping = MappingWorkflow.createMappingFromMappingWorkflow(cmd.getOptionValue('w'));
-				start(mapping);
+				start(mapping, mod);
 			}
 			else if (cmd.hasOption('s')) // direct start
 			{
@@ -266,7 +358,7 @@ public class LaunchCheSMapper
 						cmd.getOptionValue('i'), cmd.getOptionValue('a'));
 				Properties workflow = MappingWorkflow.createMappingWorkflow(infile, features);
 				CheSMapping mapping = MappingWorkflow.createMappingFromMappingWorkflow(workflow);
-				start(mapping);
+				start(mapping, mod);
 			}
 			else if (cmd.hasOption('t'))
 			{
@@ -321,7 +413,7 @@ public class LaunchCheSMapper
 			//				FileUtil.writeStringToFile(outfile, ArrayUtil.toString(inichi, "\n", "", "", "") + "\n");
 			//			}
 			else
-				start();
+				start(null, mod);
 		}
 		catch (ParseException e)
 		{
@@ -365,6 +457,11 @@ public class LaunchCheSMapper
 
 	public static void start(CheSMapping mapping)
 	{
+		start(mapping, null);
+	}
+
+	public static void start(CheSMapping mapping, PostStartModifier mod)
+	{
 		if (!initialized)
 			throw new IllegalStateException("not initialized!");
 
@@ -397,7 +494,7 @@ public class LaunchCheSMapper
 
 		try
 		{ // starting Viewer
-			CheSViewer.show(clusteringData);
+			CheSViewer.show(clusteringData, mod);
 			while (!CheSViewer.getFrame().isShowing())
 				ThreadUtil.sleep(100);
 			waitingDialog.setWarningDialogOwner(CheSViewer.getFrame());
