@@ -1051,7 +1051,7 @@ public class MainPanel extends JPanel implements ViewControler
 		clustering.newClustering(clusteredDataset);
 		clustering.computeSpecifities();
 
-		clustering.getClusterActive().addListener(new PropertyChangeListener()
+		clustering.getClusterActive().addListenerFirst(new PropertyChangeListener()
 		{
 			@Override
 			public void propertyChange(PropertyChangeEvent e)
@@ -1061,7 +1061,7 @@ public class MainPanel extends JPanel implements ViewControler
 				updateClusterSelection(clustering.getClusterActive().getSelected(), cIndexOld, true);
 			}
 		});
-		clustering.getClusterWatched().addListener(new PropertyChangeListener()
+		clustering.getClusterWatched().addListenerFirst(new PropertyChangeListener()
 		{
 			@Override
 			public void propertyChange(PropertyChangeEvent e)
@@ -1071,7 +1071,7 @@ public class MainPanel extends JPanel implements ViewControler
 				updateClusterSelection(clustering.getClusterWatched().getSelected(), cIndexOld, false);
 			}
 		});
-		clustering.getCompoundActive().addListener(new PropertyChangeListener()
+		clustering.getCompoundActive().addListenerFirst(new PropertyChangeListener()
 		{
 			@Override
 			public void propertyChange(PropertyChangeEvent e)
@@ -1080,7 +1080,7 @@ public class MainPanel extends JPanel implements ViewControler
 						.getCompoundActive().isExclusiveSelection());
 			}
 		});
-		clustering.getCompoundWatched().addListener(new PropertyChangeListener()
+		clustering.getCompoundWatched().addListenerFirst(new PropertyChangeListener()
 		{
 			@Override
 			public void propertyChange(PropertyChangeEvent e)
@@ -1104,6 +1104,7 @@ public class MainPanel extends JPanel implements ViewControler
 			}
 		});
 		updateClusteringNew();
+
 	}
 
 	private void updateClusteringNew()
@@ -1739,6 +1740,22 @@ public class MainPanel extends JPanel implements ViewControler
 			fireViewChange(PROPERTY_FONT_SIZE_CHANGED);
 			guiControler.showMessage((increase ? "Increase" : "Descrease") + " font size to "
 					+ ScreenSetup.INSTANCE.getFontSize() + ".");
+
+			//			System.out.println(ArrayUtil.toCSVString(new String[] { "name", "description1/smarts", "description2",
+			//					"link" }));
+			//			for (CompoundProperty p : clustering.getFeatures())
+			//			{
+			//				String desc[] = ArrayUtil.trim(p.getCompoundPropertySet().getDescription().trim().split("\n"));
+			//				String link = "";
+			//				if (desc[desc.length - 1].startsWith("API: http"))
+			//				{
+			//					link = desc[desc.length - 1].replaceAll("API: ", "");
+			//					desc = Arrays.copyOfRange(desc, 0, desc.length - 1);
+			//				}
+			//				System.out.println(ArrayUtil.toCSVString(new String[] { ExportData.propToExportString(p),
+			//						p.isSmartsProperty() ? p.getSmarts() : p.getDescription(),
+			//						ArrayUtil.toString(desc, ",", "", "", " "), link }));
+			//			}
 		}
 	}
 

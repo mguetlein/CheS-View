@@ -90,7 +90,7 @@ public class ExportData
 		}
 	}
 
-	private static String propToExportString(CompoundProperty p)
+	public static String propToExportString(CompoundProperty p)
 	{
 		if (p instanceof CDKProperty)
 			return "CDK:" + p.toString();

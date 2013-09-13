@@ -133,7 +133,10 @@ public class LaunchCheSMapper
 			//			args = "-e  -d data/dataR.sdf -f fminer -n 20 -o features/dataR_fminer.csv".split(" ");
 			//			args = "-y sxga+ -w /home/martin/data/presentation/demo-ob-descriptors.ches --font-size 20 --compound-style ballsAndSticks --compound-size 35 --highlight-mode Spheres --hide-compounds none"
 			//					.split(" ");
-			args = "-y sxga+ -w /home/martin/data/presentation/demo-ob-descriptors.ches".split(" ");
+			//args = "-y sxga+ -w /home/martin/data/presentation/demo-ob-descriptors.ches".split(" ");
+			args = "-e -m -u -d predictions/068df623e8c42c1f01d9d04b93aebb4a.sdf -f cdk,ob,obFP3,obFP4,obMACCS -o predictions/068df623e8c42c1f01d9d04b93aebb4a_PCFP1.csv"
+					.split(" ");
+
 			//			args = "-y sxga+ -w /home/martin/data/presentation/cox2-clustered-aligned.ches --font-size 20 --compound-style ballsAndSticks --compound-size 15 --endpoint-highlight IC50_uM"
 			//					.split(" ");
 			//		args = "-h".split(" ");
@@ -310,6 +313,8 @@ public class LaunchCheSMapper
 
 			if (cmd.hasOption('e'))
 			{
+				Settings.CDK_SKIP_SOME_DESCRIPTORS = false;
+
 				String infile = cmd.getOptionValue('d');
 				String outfile = cmd.getOptionValue('o');
 				String featureNames = cmd.getOptionValue('f');
