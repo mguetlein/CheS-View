@@ -1416,12 +1416,13 @@ public class MainPanel extends JPanel implements ViewControler
 				view.zoomTo(activeCluster, AnimationSpeed.SLOW, false);
 		}
 
-		for (Compound compound : clustering.getCompounds(true))
-			if (compound.isSphereVisible())
-			{
-				compound.setSphereVisible(false);
-				view.hideSphere(compound);
-			}
+		if (animateSuperimpose) // for superimposition or un-superimposition, hide shperes manually before moving compounds
+			for (Compound compound : clustering.getCompounds(true))
+				if (compound.isSphereVisible())
+				{
+					compound.setSphereVisible(false);
+					view.hideSphere(compound);
+				}
 
 		if (c.size() > 0)
 		{
