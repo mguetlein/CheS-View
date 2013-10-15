@@ -164,6 +164,8 @@ public class LaunchCheSMapper
 				"exports features (from dataset -d and features -f to outfile -o)"));
 		options.addOption(option('m', "match-fingerprints",
 				"sets min-freq to 1 and mines omnipresent fingerprint features (eclusive with min frequency)"));
+		options.addOption(option('r', "enable-mixture-handling",
+				"enableds mixture handling for physico-chemical descriptors"));
 		options.addOption(paramOption('n', "fp-min-frequency",
 				"sets min-frequency for fingerprints (eclusive with match-fingerprints)", "fp-min-frequency"));
 		options.addOption(option('u', "uniform-values",
@@ -330,9 +332,9 @@ public class LaunchCheSMapper
 					features.setFingerprintSettings(1, false);
 				}
 				else if (cmd.hasOption('n'))
-				{
 					features.setFingerprintSettings(Integer.parseInt(cmd.getOptionValue('n')), true);
-				}
+				if (cmd.hasOption('r'))
+					Settings.DESC_MIXTURE_HANDLING = true;
 				ExportData.scriptExport(infile, features, outfile, cmd.hasOption('u'));
 			}
 			else if (cmd.hasOption('x')) // export workflow
