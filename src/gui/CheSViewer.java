@@ -1,9 +1,12 @@
 package gui;
 
 import java.awt.Dimension;
+import java.awt.KeyEventDispatcher;
+import java.awt.KeyboardFocusManager;
 import java.awt.Point;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeEvent;
@@ -14,6 +17,7 @@ import java.util.List;
 
 import javax.swing.JFrame;
 import javax.swing.JPopupMenu;
+import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 
 import main.ScreenSetup;
@@ -105,6 +109,19 @@ public class CheSViewer implements GUIControler
 		clusterPanel.init(clusteredDataset);
 		clustering = clusterPanel.getClustering();
 		menuBar = new MenuBar(this, clusterPanel.getViewControler(), clustering);
+
+		KeyboardFocusManager kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+		kfm.addKeyEventDispatcher(new KeyEventDispatcher()
+		{
+			@Override
+			public boolean dispatchKeyEvent(KeyEvent e)
+			{
+				KeyStroke keyStroke = KeyStroke.getKeyStrokeForEvent(e);
+				return Actions.getInstance(CheSViewer.this, clusterPanel.getViewControler(), clustering).performAction(
+						e.getSource(), keyStroke, !frame.isUndecorated());
+			}
+		});
+
 		setFullScreen(false, true);
 	}
 

@@ -4,13 +4,9 @@ import gui.swing.ComponentFactory;
 
 import java.awt.BorderLayout;
 import java.awt.LayoutManager;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.KeyStroke;
 import javax.swing.OverlayLayout;
 import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
@@ -31,7 +27,6 @@ public class ClusterPanel extends JPanel
 	JPanel messagePanel;
 	JLabel messageLabel;
 	private MainPanel mainPanel;
-	private ClusterListPanel clusterListPanel;
 
 	public ClusterPanel(GUIControler guiControler)
 	{
@@ -56,7 +51,7 @@ public class ClusterPanel extends JPanel
 
 		JPanel allPanelsContainer = new JPanel(new BorderLayout());
 		allPanelsContainer.setOpaque(false);
-		clusterListPanel = new ClusterListPanel(mainPanel.getClustering(), mainPanel, guiControler);
+		ClusterListPanel clusterListPanel = new ClusterListPanel(mainPanel.getClustering(), mainPanel, guiControler);
 		allPanelsContainer.add(clusterListPanel, BorderLayout.WEST);
 		add(allPanelsContainer, BorderLayout.WEST);
 
@@ -88,7 +83,6 @@ public class ClusterPanel extends JPanel
 
 		add(mainPanel);
 		setOpaque(false);
-		installListeners();
 	}
 
 	public void init(ClusteringData clusteredDataset)
@@ -99,33 +93,6 @@ public class ClusterPanel extends JPanel
 	public Clustering getClustering()
 	{
 		return mainPanel.getClustering();
-	}
-
-	private void installListeners()
-	{
-		KeyListener listener = new KeyAdapter()
-		{
-			@Override
-			public void keyPressed(KeyEvent e)
-			{
-				Actions.getInstance(guiControler, mainPanel, mainPanel.getClustering()).performActions(e.getSource(),
-						KeyStroke.getKeyStrokeForEvent(e));
-				//				guiControler.handleKeyEvent(e);
-			}
-
-			@Override
-			public void keyReleased(KeyEvent e)
-			{
-				Actions.getInstance(guiControler, mainPanel, mainPanel.getClustering()).performActions(e.getSource(),
-						KeyStroke.getKeyStrokeForEvent(e));
-			}
-		};
-		addKeyListener(listener);
-		mainPanel.addKeyListener(listener);
-		mainPanel.jmolPanel.addKeyListener(listener);
-		clusterListPanel.controlPanel.highlightCombobox.addKeyListener(listener);
-		clusterListPanel.controlPanel.labelCheckbox.addKeyListener(listener);
-		clusterListPanel.controlPanel.highlightMinMaxCombobox.addKeyListener(listener);
 	}
 
 	public void showMessage(final String msg)

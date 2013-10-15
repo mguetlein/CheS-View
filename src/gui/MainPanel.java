@@ -189,6 +189,7 @@ public class MainPanel extends JPanel implements ViewControler
 	HighlightMode highlightMode = HighlightMode.ColorCompounds;
 	boolean antialiasEnabled = ScreenSetup.INSTANCE.isAntialiasOn();
 	boolean highlightLastFeatureEnabled = false;
+	FeatureFilter featureFilter = FeatureFilter.None;
 
 	public Clustering getClustering()
 	{
@@ -1888,5 +1889,28 @@ public class MainPanel extends JPanel implements ViewControler
 			fireViewChange(PROPERTY_HIGHLIGHT_COLORS_CHANGED);
 			guiControler.showMessage("Change color gradient or log transformation for highlighting.");
 		}
+	}
+
+	@Override
+	public FeatureFilter getFeatureFilter()
+	{
+		return featureFilter;
+	}
+
+	@Override
+	public void setFeatureFilter(FeatureFilter filter)
+	{
+		if (featureFilter != filter)
+		{
+			this.featureFilter = filter;
+			fireViewChange(PROPERTY_FEATURE_FILTER_CHANGED);
+			if (featureFilter == FeatureFilter.None)
+				guiControler.showMessage("Show all features in feature list.");
+			else if (featureFilter == FeatureFilter.NotUsedByEmbedding)
+				guiControler.showMessage("Show only features that are NOT used by mapping in feature list.");
+			else if (featureFilter == FeatureFilter.UsedByEmbedding)
+				guiControler.showMessage("Show only features that are used by mapping in feature list.");
+		}
+
 	}
 }

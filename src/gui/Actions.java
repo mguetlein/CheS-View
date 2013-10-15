@@ -1,5 +1,6 @@
 package gui;
 
+import gui.ViewControler.FeatureFilter;
 import gui.ViewControler.HideCompounds;
 import gui.ViewControler.HighlightMode;
 import gui.property.ColorGradient;
@@ -30,12 +31,14 @@ import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
 
 import main.Settings;
 import main.TaskProvider;
 import task.Task;
 import task.TaskDialog;
 import util.ArrayUtil;
+import util.CollectionUtil;
 import util.ListUtil;
 import util.SwingUtil;
 import workflow.MappingWorkflow;
@@ -125,10 +128,11 @@ public class Actions
 	private final static String HIDDEN_DECR_SPIN_SPEED = "decr-spin-speed";
 	private final static String HIDDEN_INCR_FONT_SIZE = "incr-font-size";
 	private final static String HIDDEN_DECR_FONT_SIZE = "decr-font-size";
+	private final static String HIDDEN_FILTER_FEATURES = "filter-features";
 	private final static String[] HIDDEN_ACTIONS = { HIDDEN_UPDATE_MOUSE_SELECTION_PRESSED,
 			HIDDEN_UPDATE_MOUSE_SELECTION_RELEASED, HIDDEN_DECR_COMPOUND_SIZE, HIDDEN_INCR_COMPOUND_SIZE,
 			HIDDEN_ENABLE_JMOL_POPUP, HIDDEN_INCR_SPIN_SPEED, HIDDEN_DECR_SPIN_SPEED, HIDDEN_INCR_FONT_SIZE,
-			HIDDEN_DECR_FONT_SIZE };
+			HIDDEN_DECR_FONT_SIZE, HIDDEN_FILTER_FEATURES };
 
 	private HashMap<String, Action> actions = new LinkedHashMap<String, Action>();
 
@@ -174,6 +178,7 @@ public class Actions
 		keys.put(HIDDEN_DECR_SPIN_SPEED, KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, ActionEvent.CTRL_MASK));// | ActionEvent.ALT_MASK));
 		keys.put(HIDDEN_INCR_FONT_SIZE, KeyStroke.getKeyStroke(KeyEvent.VK_UP, ActionEvent.CTRL_MASK));// | ActionEvent.ALT_MASK));
 		keys.put(HIDDEN_DECR_FONT_SIZE, KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, ActionEvent.CTRL_MASK));// | ActionEvent.ALT_MASK));
+		keys.put(HIDDEN_FILTER_FEATURES, KeyStroke.getKeyStroke(KeyEvent.VK_M, ActionEvent.ALT_MASK));
 	}
 
 	private Actions(GUIControler guiControler, ViewControler viewControler, Clustering clustering)
@@ -343,14 +348,14 @@ public class Actions
 					|| (enabledProperty != null && enabledProperty.length > 0))
 			{
 				if (valueProperty != null && valueProperty.length > 0)
-					action.putValue(Action.SELECTED_KEY, getValueFromGUI());
+					action.putValue(Action.SELECTED_KEY, isSelected());
 				PropertyChangeListener l = new PropertyChangeListener()
 				{
 					@Override
 					public void propertyChange(PropertyChangeEvent evt)
 					{
 						if (ArrayUtil.indexOf(valueProperty, evt.getPropertyName()) != -1)
-							action.putValue(Action.SELECTED_KEY, getValueFromGUI());
+							action.putValue(Action.SELECTED_KEY, isSelected());
 						if (ArrayUtil.indexOf(enabledProperty, evt.getPropertyName()) != -1)
 							action.setEnabled(isEnabled());
 					}
@@ -374,14 +379,9 @@ public class Actions
 			return true;
 		}
 
-		public Object getValueFromGUI()
+		public Boolean isSelected()
 		{
 			return null;
-		}
-
-		public Object getActionValue()
-		{
-			return action.getValue(Action.SELECTED_KEY);
 		}
 	}
 
@@ -537,11 +537,11 @@ public class Actions
 			@Override
 			public void action()
 			{
-				guiControler.setFullScreen((Boolean) getActionValue());
+				guiControler.setFullScreen(!guiControler.isFullScreen());
 			}
 
 			@Override
-			public Object getValueFromGUI()
+			public Boolean isSelected()
 			{
 				return guiControler.isFullScreen();
 			}
@@ -551,11 +551,11 @@ public class Actions
 			@Override
 			public void action()
 			{
-				viewControler.setHideHydrogens(!((Boolean) getActionValue()));
+				viewControler.setHideHydrogens(!viewControler.isHideHydrogens());
 			}
 
 			@Override
-			public Object getValueFromGUI()
+			public Boolean isSelected()
 			{
 				return !viewControler.isHideHydrogens();
 			}
@@ -570,7 +570,7 @@ public class Actions
 			}
 
 			@Override
-			public Object getValueFromGUI()
+			public Boolean isSelected()
 			{
 				return viewControler.getHideCompounds() == HideCompounds.none;
 			}
@@ -584,7 +584,7 @@ public class Actions
 			}
 
 			@Override
-			public Object getValueFromGUI()
+			public Boolean isSelected()
 			{
 				return viewControler.getHideCompounds() == HideCompounds.nonWatched;
 			}
@@ -598,7 +598,7 @@ public class Actions
 			}
 
 			@Override
-			public Object getValueFromGUI()
+			public Boolean isSelected()
 			{
 				return viewControler.getHideCompounds() == HideCompounds.nonActive;
 			}
@@ -609,11 +609,11 @@ public class Actions
 			@Override
 			public void action()
 			{
-				viewControler.setSpinEnabled((Boolean) getActionValue());
+				viewControler.setSpinEnabled(!viewControler.isSpinEnabled());
 			}
 
 			@Override
-			public Object getValueFromGUI()
+			public Boolean isSelected()
 			{
 				return viewControler.isSpinEnabled();
 			}
@@ -623,11 +623,11 @@ public class Actions
 			@Override
 			public void action()
 			{
-				viewControler.setBackgroundBlack((Boolean) getActionValue());
+				viewControler.setBackgroundBlack(!viewControler.isBlackgroundBlack());
 			}
 
 			@Override
-			public Object getValueFromGUI()
+			public Boolean isSelected()
 			{
 				return viewControler.isBlackgroundBlack();
 			}
@@ -637,11 +637,11 @@ public class Actions
 			@Override
 			public void action()
 			{
-				viewControler.setAntialiasEnabled((Boolean) getActionValue());
+				viewControler.setAntialiasEnabled(!viewControler.isAntialiasEnabled());
 			}
 
 			@Override
-			public Object getValueFromGUI()
+			public Boolean isSelected()
 			{
 				return viewControler.isAntialiasEnabled();
 			}
@@ -736,19 +736,10 @@ public class Actions
 			@Override
 			public void action()
 			{
-				Color col = JColorChooser
-						.showDialog(Settings.TOP_LEVEL_FRAME, "Select Color", (Color) getActionValue());
+				Color col = JColorChooser.showDialog(Settings.TOP_LEVEL_FRAME, "Select Color",
+						viewControler.getMatchColor());
 				if (col != null)
-				{
-					//					tActionColorMatch.putValue("matchcolor", col);
 					viewControler.setMatchColor(col);
-				}
-			}
-
-			@Override
-			public Object getValueFromGUI()
-			{
-				return viewControler.getMatchColor();
 			}
 		};
 		new ActionCreator(HIGHLIGHT_COLORS, null, ViewControler.PROPERTY_HIGHLIGHT_CHANGED)
@@ -804,11 +795,11 @@ public class Actions
 			@Override
 			public void action()
 			{
-				viewControler.setHighlightLastFeatureEnabled((Boolean) getActionValue());
+				viewControler.setHighlightLastFeatureEnabled(!viewControler.isHighlightLastFeatureEnabled());
 			}
 
 			@Override
-			public Object getValueFromGUI()
+			public Boolean isSelected()
 			{
 				return viewControler.isHighlightLastFeatureEnabled();
 			}
@@ -833,12 +824,13 @@ public class Actions
 			@Override
 			public void action()
 			{
-				viewControler.setHighlightMode(((Boolean) getActionValue()) ? MainPanel.HighlightMode.Spheres
-						: MainPanel.HighlightMode.ColorCompounds);
+				viewControler
+						.setHighlightMode((viewControler.getHighlightMode() != HighlightMode.Spheres) ? MainPanel.HighlightMode.Spheres
+								: MainPanel.HighlightMode.ColorCompounds);
 			}
 
 			@Override
-			public Object getValueFromGUI()
+			public Boolean isSelected()
 			{
 				return viewControler.getHighlightMode() == MainPanel.HighlightMode.Spheres;
 			}
@@ -947,6 +939,19 @@ public class Actions
 			public void action()
 			{
 				viewControler.increaseFontSize(false);
+			}
+		};
+		new ActionCreator(HIDDEN_FILTER_FEATURES)
+		{
+			@Override
+			public void action()
+			{
+				int idx = ArrayUtil.indexOf(FeatureFilter.values(), viewControler.getFeatureFilter());
+				if (idx < FeatureFilter.values().length - 1)
+					idx++;
+				else
+					idx = 0;
+				viewControler.setFeatureFilter(FeatureFilter.values()[idx]);
 			}
 		};
 
@@ -1067,22 +1072,25 @@ public class Actions
 		return getActions(HIDDEN_ACTIONS);
 	}
 
-	public void performActions(Object source, KeyStroke k)
+	public boolean performAction(final Object source, KeyStroke k, boolean onlyHidden)
 	{
-		//		System.out.println("\nlook for actions: " + k);
-		for (String a : HIDDEN_ACTIONS)
+		for (final String a : (onlyHidden ? HIDDEN_ACTIONS : CollectionUtil.toArray(keys.keySet())))
 		{
 			KeyStroke keyStroke = keys.get(a);
-			if (actions.get(a).isEnabled() && keyStroke != null)
+			if (keyStroke != null && keyStroke.equals(k) && actions.get(a).isEnabled())
 			{
-				//				System.out.println("? " + a + " : " + keyStroke);
-				if (keyStroke.equals(k))
+				SwingUtilities.invokeLater(new Runnable()
 				{
-					//					System.out.println("! " + a);
-					actions.get(a).actionPerformed(new ActionEvent(source, -1, ""));
-				}
+					@Override
+					public void run()
+					{
+						actions.get(a).actionPerformed(new ActionEvent(source, -1, ""));
+					}
+				});
+				return true;
 			}
 		}
+		return false;
 	}
 
 	public static void main(String args[])

@@ -1,5 +1,6 @@
 package gui;
 
+import gui.ViewControler.FeatureFilter;
 import gui.swing.ComponentFactory;
 import gui.util.CompoundPropertyHighlighter;
 import gui.util.Highlighter;
@@ -175,6 +176,13 @@ public class InfoPanel extends JPanel
 						clusterPanelMinWidth = 0;
 						updateCluster();
 					}
+				}
+				else if (evt.getPropertyName().equals(ViewControler.PROPERTY_FEATURE_FILTER_CHANGED))
+				{
+					if (selectedCompound != null)
+						updateCompound();
+					else if (selectedCluster != null)
+						updateCluster();
 				}
 			}
 		});
@@ -357,6 +365,25 @@ public class InfoPanel extends JPanel
 	}
 
 	@SuppressWarnings("unchecked")
+	private List<CompoundProperty> getPropList()
+	{
+		List<CompoundProperty> props = null;
+		if (viewControler.getFeatureFilter() == FeatureFilter.UsedByEmbedding)
+			props = new ArrayList<CompoundProperty>(clustering.getFeatures());
+		else
+		{
+			props = new ArrayList<CompoundProperty>();
+			for (CompoundProperty p : clustering.getProperties())
+				if (!p.isSmiles())
+					props.add(p);
+			// if (viewControler.getFeatureFilter() == FeatureFilter.NotUsedByEmbedding) do nothing
+			if (viewControler.getFeatureFilter() == FeatureFilter.None)
+				props = ListUtil.concat(props, clustering.getFeatures());
+		}
+		return props;
+	}
+
+	@SuppressWarnings("unchecked")
 	private synchronized void updateCompound()
 	{
 		selfUpdate = true;
@@ -417,11 +444,8 @@ public class InfoPanel extends JPanel
 			model.addRow(new String[] { "Compound", selectedCompound.toString() });
 			model.addRow(new String[] { "Smiles", selectedCompound.getSmiles() });
 			//model.addRow(new String[] { "Accented by:", clustering.getAccent(m) });
-			List<CompoundProperty> props = new ArrayList<CompoundProperty>();
-			for (CompoundProperty p : clustering.getProperties())
-				if (!p.isSmiles())
-					props.add(p);
-			props = ListUtil.concat(props, clustering.getFeatures());
+
+			List<CompoundProperty> props = getPropList();
 			Collections.sort(props, new Comparator<CompoundProperty>()
 			{
 				@Override
@@ -554,11 +578,7 @@ public class InfoPanel extends JPanel
 					break;
 				}
 			}
-			List<CompoundProperty> props = new ArrayList<CompoundProperty>();
-			for (CompoundProperty p : clustering.getProperties())
-				if (!p.isSmiles())
-					props.add(p);
-			props = ListUtil.concat(props, clustering.getFeatures());
+			List<CompoundProperty> props = getPropList();
 			Collections.sort(props, new Comparator<CompoundProperty>()
 			{
 				@Override

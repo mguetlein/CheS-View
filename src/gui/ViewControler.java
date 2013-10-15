@@ -101,6 +101,7 @@ public interface ViewControler
 	public static final String PROPERTY_ANTIALIAS_CHANGED = "propertyAntialiasChanged";
 	public static final String PROPERTY_HIGHLIGHT_LAST_FEATURE = "propertyHighlightLastFeature";
 	public static final String PROPERTY_STYLE_CHANGED = "propertyStyleChanged";
+	public static final String PROPERTY_FEATURE_FILTER_CHANGED = "propertyFeatureFilterChanged";
 
 	public boolean isHighlighterLabelsVisible();
 
@@ -171,5 +172,14 @@ public interface ViewControler
 	public boolean isHighlightLastFeatureEnabled();
 
 	public void increaseSpinSpeed(boolean increase);
+
+	public static enum FeatureFilter
+	{
+		None, NotUsedByEmbedding, UsedByEmbedding
+	}
+
+	public void setFeatureFilter(FeatureFilter filter);
+
+	public FeatureFilter getFeatureFilter();
 
 }
