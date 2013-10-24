@@ -129,10 +129,11 @@ public class Actions
 	private final static String HIDDEN_INCR_FONT_SIZE = "incr-font-size";
 	private final static String HIDDEN_DECR_FONT_SIZE = "decr-font-size";
 	private final static String HIDDEN_FILTER_FEATURES = "filter-features";
+	private final static String HIDDEN_TOGGLE_SORTING = "toggle-sorting";
 	private final static String[] HIDDEN_ACTIONS = { HIDDEN_UPDATE_MOUSE_SELECTION_PRESSED,
 			HIDDEN_UPDATE_MOUSE_SELECTION_RELEASED, HIDDEN_DECR_COMPOUND_SIZE, HIDDEN_INCR_COMPOUND_SIZE,
 			HIDDEN_ENABLE_JMOL_POPUP, HIDDEN_INCR_SPIN_SPEED, HIDDEN_DECR_SPIN_SPEED, HIDDEN_INCR_FONT_SIZE,
-			HIDDEN_DECR_FONT_SIZE, HIDDEN_FILTER_FEATURES };
+			HIDDEN_DECR_FONT_SIZE, HIDDEN_FILTER_FEATURES, HIDDEN_TOGGLE_SORTING };
 
 	private HashMap<String, Action> actions = new LinkedHashMap<String, Action>();
 
@@ -179,6 +180,7 @@ public class Actions
 		keys.put(HIDDEN_INCR_FONT_SIZE, KeyStroke.getKeyStroke(KeyEvent.VK_UP, ActionEvent.CTRL_MASK));// | ActionEvent.ALT_MASK));
 		keys.put(HIDDEN_DECR_FONT_SIZE, KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, ActionEvent.CTRL_MASK));// | ActionEvent.ALT_MASK));
 		keys.put(HIDDEN_FILTER_FEATURES, KeyStroke.getKeyStroke(KeyEvent.VK_M, ActionEvent.ALT_MASK));
+		keys.put(HIDDEN_TOGGLE_SORTING, KeyStroke.getKeyStroke(KeyEvent.VK_O, ActionEvent.ALT_MASK));
 	}
 
 	private Actions(GUIControler guiControler, ViewControler viewControler, Clustering clustering)
@@ -954,6 +956,14 @@ public class Actions
 				viewControler.setFeatureFilter(FeatureFilter.values()[idx]);
 			}
 		};
+		new ActionCreator(HIDDEN_TOGGLE_SORTING)
+		{
+			@Override
+			public void action()
+			{
+				viewControler.setFeatureSortingEnabled(!viewControler.isFeatureSortingEnabled());
+			}
+		};
 
 	}
 
@@ -986,7 +996,7 @@ public class Actions
 						if (d != null)
 						{
 							clustering.newClustering(d);
-							clustering.computeSpecifities();
+							clustering.initFeatureNormalization();
 							task.finish();
 						}
 						TaskProvider.removeTask();

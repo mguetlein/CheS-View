@@ -177,7 +177,8 @@ public class InfoPanel extends JPanel
 						updateCluster();
 					}
 				}
-				else if (evt.getPropertyName().equals(ViewControler.PROPERTY_FEATURE_FILTER_CHANGED))
+				else if (evt.getPropertyName().equals(ViewControler.PROPERTY_FEATURE_FILTER_CHANGED)
+						|| evt.getPropertyName().equals(ViewControler.PROPERTY_FEATURE_SORTING_CHANGED))
 				{
 					if (selectedCompound != null)
 						updateCompound();
@@ -446,15 +447,16 @@ public class InfoPanel extends JPanel
 			//model.addRow(new String[] { "Accented by:", clustering.getAccent(m) });
 
 			List<CompoundProperty> props = getPropList();
-			Collections.sort(props, new Comparator<CompoundProperty>()
-			{
-				@Override
-				public int compare(CompoundProperty o1, CompoundProperty o2)
+			if (viewControler.isFeatureSortingEnabled())
+				Collections.sort(props, new Comparator<CompoundProperty>()
 				{
-					return Double.compare(clustering.getSpecificity(selectedCompound, o1),
-							clustering.getSpecificity(selectedCompound, o2));
-				}
-			});
+					@Override
+					public int compare(CompoundProperty o1, CompoundProperty o2)
+					{
+						return Double.compare(clustering.getSpecificity(selectedCompound, o1),
+								clustering.getSpecificity(selectedCompound, o2));
+					}
+				});
 			int rowOffset = model.getRowCount();
 			for (CompoundProperty p : props)
 			{
@@ -579,15 +581,16 @@ public class InfoPanel extends JPanel
 				}
 			}
 			List<CompoundProperty> props = getPropList();
-			Collections.sort(props, new Comparator<CompoundProperty>()
-			{
-				@Override
-				public int compare(CompoundProperty o1, CompoundProperty o2)
+			if (viewControler.isFeatureSortingEnabled())
+				Collections.sort(props, new Comparator<CompoundProperty>()
 				{
-					return Double.compare(clustering.getSpecificity(selectedCluster, o1),
-							clustering.getSpecificity(selectedCluster, o2));
-				}
-			});
+					@Override
+					public int compare(CompoundProperty o1, CompoundProperty o2)
+					{
+						return Double.compare(clustering.getSpecificity(selectedCluster, o1),
+								clustering.getSpecificity(selectedCluster, o2));
+					}
+				});
 			int pOffset = model.getRowCount();
 			for (CompoundProperty p : props)
 			{

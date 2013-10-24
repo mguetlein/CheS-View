@@ -24,6 +24,7 @@ import util.ArrayUtil;
 import util.DoubleKeyHashMap;
 import util.FileUtil;
 import util.ListUtil;
+import util.ObjectUtil;
 import util.StringUtil;
 import workflow.MappingWorkflow;
 import workflow.MappingWorkflow.DescriptorSelection;
@@ -79,14 +80,14 @@ public class ExportData
 		String dest;
 		boolean allFeatures;
 		public boolean skipEqualValues;
-		public boolean skipNullValues;
+		public double skipNullValueRatio;
 
-		public Script(String dest, boolean allFeatures, boolean skipEqualValues, boolean skipNullValues)
+		public Script(String dest, boolean allFeatures, boolean skipEqualValues, double skipNullValueRatio)
 		{
 			this.dest = dest;
 			this.allFeatures = allFeatures;
 			this.skipEqualValues = skipEqualValues;
-			this.skipNullValues = skipNullValues;
+			this.skipNullValueRatio = skipNullValueRatio;
 		}
 	}
 
@@ -245,13 +246,14 @@ public class ExportData
 			for (Object prop : featureValues.keySet2(compoundOrigIndices[0]))
 			{
 				boolean uniform = true;
-				boolean nullValues = false;
+				int nullValueCount = 0;
 				boolean first = true;
 				Object val = null;
 				for (Integer j : compoundOrigIndices)
 				{
 					Object newVal = featureValues.get(j, prop);
-					nullValues |= (newVal == null || new Double(Double.NaN).equals(newVal));
+					if ((newVal == null || newVal.equals("") || new Double(Double.NaN).equals(newVal)))
+						nullValueCount++;
 					if (first)
 					{
 						first = false;
@@ -259,14 +261,25 @@ public class ExportData
 					}
 					else
 					{
-						if (val != newVal)
+						if (!ObjectUtil.equals(val, newVal))
 							uniform = false;
 					}
 				}
 				if (uniform && compoundOrigIndices.length > 1)
 					skipUniform.add(prop);
-				if (nullValues)
-					skipNull.add(prop);
+				if (nullValueCount > 0)
+				{
+					double ratio = 0;
+					if (compoundOrigIndices.length > 1)
+						ratio = nullValueCount / (double) compoundOrigIndices.length;
+					if (script == null || ratio > script.skipNullValueRatio)
+					{
+						if (script != null)
+							Settings.LOGGER.info("null value ratio " + ratio + " > " + script.skipNullValueRatio
+									+ ", skipping from export: " + prop + " ");
+						skipNull.add(prop);
+					}
+				}
 			}
 		if (skipUniform.size() > 0)
 		{
@@ -292,7 +305,7 @@ public class ExportData
 		if (skipNull.size() > 0)
 		{
 			boolean doSkip;
-			if (script != null && script.skipNullValues)
+			if (script != null)
 				doSkip = true;
 			else
 			{
@@ -304,7 +317,8 @@ public class ExportData
 			if (doSkip)
 				for (Object p : skipNull)
 				{
-					Settings.LOGGER.info("uniform values, skipping from export: " + p + " ");
+					if (script == null)
+						Settings.LOGGER.info("null values, skipping from export: " + p + " ");
 					skip.add(p);
 				}
 		}
@@ -403,7 +417,7 @@ public class ExportData
 	}
 
 	public static void scriptExport(String datasetFile, DescriptorSelection features, String outfile,
-			boolean keepUniform)
+			boolean keepUniform, double missingRatio)
 	{
 		Properties props = MappingWorkflow.createMappingWorkflow(datasetFile, features, null, null);
 		CheSMapping mapping = MappingWorkflow.createMappingFromMappingWorkflow(props, "");
@@ -417,7 +431,7 @@ public class ExportData
 		//			ThreadUtil.sleep(100);
 		//		ExportData.exportAll(CheSViewer.getClustering(), null, new Script(outfile, true, true, true));
 
-		ExportData.exportAll(clustering, null, new Script(outfile, true, !keepUniform, true));
+		ExportData.exportAll(clustering, null, new Script(outfile, true, !keepUniform, missingRatio));
 		//LaunchCheSMapper.exit(CheSViewer.getFrame());
 		LaunchCheSMapper.exit(null);
 	}
@@ -428,7 +442,7 @@ public class ExportData
 
 		//String input = "/home/martin/data/valium.csv";
 		String input = "/home/martin/data/caco2.sdf";
-		scriptExport(input, new DescriptorSelection("integrated"), "/tmp/data.csv", false);
+		scriptExport(input, new DescriptorSelection("integrated"), "/tmp/data.csv", false, 0.1);
 
 	}
 

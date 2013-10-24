@@ -356,6 +356,9 @@ public class ControlPanel extends TransparentViewPanel
 		int width = Math.min(dim.width, guiControler.getComponentMaxWidth(0.33));
 		//		System.out.println(width);
 		highlightCombobox.setPreferredSize(new Dimension(width, dim.height));
+
+		highlightCombobox.setMaximumRowCount(Math.min(highlightCombobox.getItemCount(), 12));
+
 		highlightCombobox.revalidate();
 	}
 

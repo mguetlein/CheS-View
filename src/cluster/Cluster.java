@@ -74,6 +74,7 @@ public class Cluster implements Zoomable, CompoundPropertyOwner, DoubleNameEleme
 			compounds.add(new Compound(i, clusterData.getCompounds().get(mCount++)));
 
 		displayName.name = getName() + " (#" + size() + ")";
+		displayName.compareIndex = clusterData.getOrigIndex();
 
 		if (View.instance != null) // for export without graphics
 			update();
@@ -152,10 +153,10 @@ public class Cluster implements Zoomable, CompoundPropertyOwner, DoubleNameEleme
 	@Override
 	public String getSecondName()
 	{
-		if (ObjectUtil.equals(displayName.val, displayName.name))
+		if (ObjectUtil.equals(displayName.valDisplay, displayName.name))
 			return null;
 		else
-			return displayName.val;
+			return displayName.valDisplay;
 	}
 
 	public String getSummaryStringValue(CompoundProperty property, boolean html)
@@ -417,13 +418,25 @@ public class Cluster implements Zoomable, CompoundPropertyOwner, DoubleNameEleme
 
 	public void setHighlighProperty(CompoundProperty highlightProp, Color highlightColor)
 	{
-		displayName.val = null;
-		displayName.valD = null;
+		displayName.valDisplay = null;
+		displayName.valCompare = null;
 		if (highlightProp != null)
 		{
 			if (highlightProp.getType() == Type.NUMERIC)
-				displayName.valD = getDoubleValue(highlightProp);
-			displayName.val = getFormattedValue(highlightProp);
+				displayName.valCompare = new Double[] { getDoubleValue(highlightProp) };
+			else
+			{
+				/**
+				 * Clusters with nominal feature values should be sorted as follows:
+				 * 1. according to the mode (the most common feature value)
+				 * 2. within equal modes, according to how pure the cluster is with respect to the mode (ratio of compounds with this feature value)
+				 * 3. within equal ratios, according to size (and therefore according to number of compounds with this feature value)
+				 * 4. within equal size, according to cluster index   
+				 */
+				displayName.valCompare = new Comparable[] { getNominalSummary(highlightProp).getMode(),
+						-1 * (getNominalSummary(highlightProp).getMaxCount() / (double) size()), -1 * size() };
+			}
+			displayName.valDisplay = getFormattedValue(highlightProp);
 		}
 		this.highlightProp = highlightProp;
 		this.highlightColor = highlightColor;

@@ -2,6 +2,7 @@ package gui;
 
 import gui.swing.ComponentFactory;
 import gui.swing.TransparentViewPanel;
+import gui.util.CompoundPropertyHighlighter;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
@@ -56,13 +57,13 @@ public class CompoundListPanel extends TransparentViewPanel
 	boolean selfBlock = false;
 
 	Clustering clustering;
-	ViewControler controler;
+	ViewControler viewControler;
 	GUIControler guiControler;
 
 	public CompoundListPanel(Clustering clustering, ViewControler controler, GUIControler guiControler)
 	{
 		this.clustering = clustering;
-		this.controler = controler;
+		this.viewControler = controler;
 		this.guiControler = guiControler;
 
 		this.clusterActive = clustering.getClusterActive();
@@ -234,7 +235,8 @@ public class CompoundListPanel extends TransparentViewPanel
 			public void propertyChange(PropertyChangeEvent evt)
 			{
 				if (evt.getPropertyName().equals(ViewControler.PROPERTY_COMPOUND_DESCRIPTOR_CHANGED)
-						|| evt.getPropertyName().equals(ViewControler.PROPERTY_HIGHLIGHT_CHANGED))
+						|| evt.getPropertyName().equals(ViewControler.PROPERTY_HIGHLIGHT_CHANGED)
+						|| evt.getPropertyName().equals(ViewControler.PROPERTY_FEATURE_SORTING_CHANGED))
 				{
 					update(clusterActive.getSelected(), false);
 				}
@@ -423,13 +425,13 @@ public class CompoundListPanel extends TransparentViewPanel
 				int i = 0;
 				for (Compound mod : c.getCompounds())
 					m[i++] = mod;
-				Arrays.sort(m);
+				if (viewControler.isFeatureSortingEnabled())
+					Arrays.sort(m);
 				for (Compound compound : m)
 					listModel.addElement(compound);
 				updateActiveCompoundSelection();
 				updateListSize();
 				listScrollPane.setVisible(true);
-
 			}
 		}
 		setIgnoreRepaint(false);
@@ -440,8 +442,28 @@ public class CompoundListPanel extends TransparentViewPanel
 	{
 		//		System.err.println("row height " + listRenderer.getRowHeight());
 		int rowCount = (guiControler.getComponentMaxHeight(1) / listRenderer.getRowHeight()) / 3;
+
+		double ratioVisible = rowCount / (double) listModel.getSize();
+		if (ratioVisible <= 0.5)
+		{
+			// if less then 50% of elements is visible increase by up to 50%
+			double ratioIncrease = 0.5 - ratioVisible;
+			rowCount += (int) (ratioIncrease * rowCount);
+		}
+
 		//		System.err.println("row count " + rowCount);
 		list.setVisibleRowCount(rowCount);
+
+		if (viewControler.getHighlighter() instanceof CompoundPropertyHighlighter)
+		{
+			// features values are shown on the right, restrict long compound names to show feature values without scroll pane
+			listRenderer.setMaxl1Width(guiControler.getComponentMaxWidth(0.15));
+		}
+		else
+		{
+			// no features values are shown on the right -> long names can be written out, scroll-pane will show up
+			listRenderer.setMaxl1Width(Integer.MAX_VALUE);
+		}
 
 		listScrollPane.setPreferredSize(null);
 		listScrollPane.setPreferredSize(new Dimension(Math.min(guiControler.getComponentMaxWidth(0.2),

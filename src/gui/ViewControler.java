@@ -102,6 +102,7 @@ public interface ViewControler
 	public static final String PROPERTY_HIGHLIGHT_LAST_FEATURE = "propertyHighlightLastFeature";
 	public static final String PROPERTY_STYLE_CHANGED = "propertyStyleChanged";
 	public static final String PROPERTY_FEATURE_FILTER_CHANGED = "propertyFeatureFilterChanged";
+	public static final String PROPERTY_FEATURE_SORTING_CHANGED = "propertyFeatureSortingChanged";
 
 	public boolean isHighlighterLabelsVisible();
 
@@ -181,5 +182,9 @@ public interface ViewControler
 	public void setFeatureFilter(FeatureFilter filter);
 
 	public FeatureFilter getFeatureFilter();
+
+	public boolean isFeatureSortingEnabled();
+
+	public void setFeatureSortingEnabled(boolean b);
 
 }

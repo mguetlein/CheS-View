@@ -204,7 +204,8 @@ public class ClusterListPanel extends JPanel
 			public void propertyChange(PropertyChangeEvent evt)
 			{
 				if (evt.getPropertyName().equals(ViewControler.PROPERTY_COMPOUND_DESCRIPTOR_CHANGED)
-						|| evt.getPropertyName().equals(ViewControler.PROPERTY_HIGHLIGHT_CHANGED))
+						|| evt.getPropertyName().equals(ViewControler.PROPERTY_HIGHLIGHT_CHANGED)
+						|| evt.getPropertyName().equals(ViewControler.PROPERTY_FEATURE_SORTING_CHANGED))
 				{
 					selfBlock = true;
 					updateList();
@@ -258,7 +259,8 @@ public class ClusterListPanel extends JPanel
 
 		Cluster clusters[] = new Cluster[clustering.numClusters()];
 		clustering.getClusters().toArray(clusters);
-		if (viewControler.getHighlighter() instanceof CompoundPropertyHighlighter)
+		if (viewControler.isFeatureSortingEnabled()
+				&& viewControler.getHighlighter() instanceof CompoundPropertyHighlighter)
 			Arrays.sort(clusters);
 		for (Cluster c : clusters)
 			listModel.addElement(c);
@@ -279,6 +281,9 @@ public class ClusterListPanel extends JPanel
 
 		updateListSize();
 		revalidate();
+
+		if (clustering.getClusterActive().getSelected() != -1)
+			updateCluster(clustering.getClusterActive().getSelected());
 	}
 
 	//	private void updateListSize()
@@ -293,6 +298,15 @@ public class ClusterListPanel extends JPanel
 		//		System.err.println("row height " + listRenderer.getRowHeight());
 		int rowCount = (guiControler.getComponentMaxHeight(1) / listRenderer.getRowHeight()) / 3;
 		//		System.err.println("row count " + rowCount);
+
+		double ratioVisible = rowCount / (double) listModel.getSize();
+		if (ratioVisible <= 0.5)
+		{
+			// if less then 50% of elements is visible increase by up to 50%
+			double ratioIncrease = 0.5 - ratioVisible;
+			rowCount += (int) (ratioIncrease * rowCount);
+		}
+
 		clusterList.setVisibleRowCount(rowCount);
 
 		scroll.setPreferredSize(null);

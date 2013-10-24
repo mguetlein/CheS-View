@@ -190,6 +190,7 @@ public class MainPanel extends JPanel implements ViewControler
 	boolean antialiasEnabled = ScreenSetup.INSTANCE.isAntialiasOn();
 	boolean highlightLastFeatureEnabled = false;
 	FeatureFilter featureFilter = FeatureFilter.None;
+	boolean featureSortingEnabled = true;
 
 	public Clustering getClustering()
 	{
@@ -1050,7 +1051,7 @@ public class MainPanel extends JPanel implements ViewControler
 			View.instance.proceedAnimation("clearing");
 		}
 		clustering.newClustering(clusteredDataset);
-		clustering.computeSpecifities();
+		clustering.initFeatureNormalization();
 
 		clustering.getClusterActive().addListenerFirst(new PropertyChangeListener()
 		{
@@ -1911,6 +1912,22 @@ public class MainPanel extends JPanel implements ViewControler
 			else if (featureFilter == FeatureFilter.UsedByEmbedding)
 				guiControler.showMessage("Show only features that are used by mapping in feature list.");
 		}
+	}
 
+	@Override
+	public boolean isFeatureSortingEnabled()
+	{
+		return featureSortingEnabled;
+	}
+
+	@Override
+	public void setFeatureSortingEnabled(boolean b)
+	{
+		if (featureSortingEnabled != b)
+		{
+			featureSortingEnabled = b;
+			fireViewChange(PROPERTY_FEATURE_SORTING_CHANGED);
+			guiControler.showMessage((b ? "Enable" : "Disable") + " feature sorting.");
+		}
 	}
 }

@@ -19,9 +19,7 @@ import main.Settings;
 import org.apache.commons.lang.StringEscapeUtils;
 
 import util.ColorUtil;
-import util.DoubleUtil;
 import util.ObjectUtil;
-import util.StringUtil;
 import dataInterface.CompoundData;
 import dataInterface.CompoundProperty;
 import dataInterface.CompoundProperty.Type;
@@ -114,8 +112,9 @@ public class Compound implements Zoomable, Comparable<Compound>, DoubleNameEleme
 
 	public static class DisplayName implements Comparable<DisplayName>
 	{
-		String val;
-		Double valD;
+		String valDisplay;
+		@SuppressWarnings("rawtypes")
+		Comparable valCompare[];
 		Integer compareIndex;
 		String name;
 
@@ -126,7 +125,7 @@ public class Compound implements Zoomable, Comparable<Compound>, DoubleNameEleme
 				b.append(StringEscapeUtils.escapeHtml(name));
 			else
 				b.append(name);
-			if (val != null && !val.equals(name))
+			if (valDisplay != null && !valDisplay.equals(name))
 			{
 				if (html)
 				{
@@ -134,7 +133,7 @@ public class Compound implements Zoomable, Comparable<Compound>, DoubleNameEleme
 					if (highlightColor != null)
 						b.append("<font color='" + ColorUtil.toHtml(highlightColor) + "'>");
 					b.append("<i>");
-					b.append(StringEscapeUtils.escapeHtml(val));
+					b.append(StringEscapeUtils.escapeHtml(valDisplay));
 					b.append("</i>");
 					if (highlightColor != null)
 						b.append("</font>");
@@ -142,7 +141,7 @@ public class Compound implements Zoomable, Comparable<Compound>, DoubleNameEleme
 				else
 				{
 					b.append(": ");
-					b.append(val);
+					b.append(valDisplay);
 				}
 			}
 			return b.toString();
@@ -151,20 +150,16 @@ public class Compound implements Zoomable, Comparable<Compound>, DoubleNameEleme
 		@Override
 		public int compareTo(DisplayName d)
 		{
-			if (valD != null || d.valD != null)
-			{
-				int i = DoubleUtil.compare(valD, d.valD);
-				if (i != 0)
-					return i;
-			}
-			else if (val != null || d.val != null)
-			{
-				int i = StringUtil.compare(val, d.val);
-				if (i != 0)
-					return i;
-			}
+			if (valCompare != null)
+				for (int j = 0; j < valCompare.length; j++)
+				{
+					int i = ObjectUtil.compare(valCompare[j], d.valCompare[j]);
+					if (i != 0)
+						return i;
+				}
 			if (compareIndex != null)
 				return compareIndex.compareTo(d.compareIndex);
+			// if nothing is selected, compound should be sorted according to identifier
 			return name.compareTo(d.name);
 		}
 	}
@@ -191,10 +186,10 @@ public class Compound implements Zoomable, Comparable<Compound>, DoubleNameEleme
 	@Override
 	public String getSecondName()
 	{
-		if (ObjectUtil.equals(displayName.val, displayName.name))
+		if (ObjectUtil.equals(displayName.valDisplay, displayName.name))
 			return null;
 		else
-			return displayName.val;
+			return displayName.valDisplay;
 	}
 
 	@Override
@@ -350,13 +345,15 @@ public class Compound implements Zoomable, Comparable<Compound>, DoubleNameEleme
 	{
 		if (this.highlightCompoundProperty != highlightCompoundProperty)
 		{
-			displayName.val = null;
-			displayName.valD = null;
+			displayName.valDisplay = null;
+			displayName.valCompare = null;
 			if (highlightCompoundProperty != null)
 			{
 				if (highlightCompoundProperty.getType() == Type.NUMERIC)
-					displayName.valD = getDoubleValue(highlightCompoundProperty);
-				displayName.val = getFormattedValue(highlightCompoundProperty);
+					displayName.valCompare = new Double[] { getDoubleValue(highlightCompoundProperty) };
+				else
+					displayName.valCompare = new String[] { getStringValue(highlightCompoundProperty) };
+				displayName.valDisplay = getFormattedValue(highlightCompoundProperty);
 			}
 			this.highlightCompoundProperty = highlightCompoundProperty;
 		}
