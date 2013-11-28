@@ -33,4 +33,5 @@ public interface GUIControler extends Blockable
 
 	public void unblockMessages();
 
+	public boolean isVisible();
 }

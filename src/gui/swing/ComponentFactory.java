@@ -207,9 +207,26 @@ public class ComponentFactory
 	//		return new LineBorder(FOREGROUND, thickness);
 	//	}
 
-	public static LinkButton createLinkButton(String text)
+	public static LinkButton createViewLinkButton(String text)
 	{
-		LinkButton l = new LinkButton(text);
+		LinkButton l = new LinkButton(text)
+		{
+			public void updateUI()
+			{
+				super.updateUI();
+				setForegroundColor(FOREGROUND);
+				setSelectedForegroundColor(LIST_SELECTION_FOREGROUND);
+				setFont(getFont().deriveFont((float) ScreenSetup.INSTANCE.getFontSize()));
+				setSelectedForegroundFont(getFont().deriveFont((float) ScreenSetup.INSTANCE.getFontSize()));
+			}
+
+			@Override
+			public void setText(String text)
+			{
+				super.setText(text);
+				setToolTipText(text);
+			}
+		};
 		l.setForegroundColor(FOREGROUND);
 		l.setSelectedForegroundColor(LIST_SELECTION_FOREGROUND);
 		l.setSelectedForegroundFont(l.getFont());
@@ -427,6 +444,11 @@ public class ComponentFactory
 
 	public static int packColumn(JTable table, int vColIndex, int margin, int max)
 	{
+		return packColumn(table, vColIndex, margin, max, false);
+	}
+
+	public static int packColumn(JTable table, int vColIndex, int margin, int max, boolean fixMaxWidth)
+	{
 		DefaultTableColumnModel colModel = (DefaultTableColumnModel) table.getColumnModel();
 		TableColumn col = colModel.getColumn(vColIndex);
 		int width = 0;
@@ -456,8 +478,11 @@ public class ComponentFactory
 
 		// Set the width
 		col.setPreferredWidth(width);
-		//		col.setMinWidth(width);
-		//		col.setMaxWidth(width);
+		if (fixMaxWidth)
+		{
+			col.setMinWidth(width);
+			col.setMaxWidth(width);
+		}
 		return width;
 	}
 
@@ -486,6 +511,12 @@ public class ComponentFactory
 			trackColor = BACKGROUND;
 			trackHighlightColor = BACKGROUND;
 		}
+	}
+
+	public static void setViewScrollPaneBorder(JComponent component)
+	{
+		component.setBorder(new CompoundBorder(new EtchedBorder(BORDER_FOREGROUND, BORDER_FOREGROUND.darker()),
+				new EmptyBorder(5, 5, 5, 5)));
 	}
 
 	public static JScrollPane createViewScrollpane(JComponent table)

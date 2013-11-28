@@ -22,6 +22,7 @@ import javax.swing.table.TableRowSorter;
 import util.CountedSet;
 import util.DoubleArraySummary;
 import util.StringUtil;
+import cluster.ClusterController;
 import cluster.Clustering;
 import dataInterface.CompoundProperty;
 
@@ -29,9 +30,9 @@ public class FeatureTable extends DataTable
 {
 	List<Highlighter> highlighters;
 
-	public FeatureTable(final ViewControler viewControler, Clustering clustering)
+	public FeatureTable(ViewControler viewControler, ClusterController clusterControler, Clustering clustering)
 	{
-		super(viewControler, clustering);
+		super(viewControler, clusterControler, clustering);
 	}
 
 	protected JTable createTable()

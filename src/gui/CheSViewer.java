@@ -70,6 +70,9 @@ public class CheSViewer implements GUIControler
 
 	public static void show(ClusteringData clusteringData, final PostStartModifier mod)
 	{
+		if (!SwingUtilities.isEventDispatchThread())
+			throw new IllegalStateException("GUI updates only in event dispatch thread plz");
+
 		if (instance == null)
 			instance = new CheSViewer(clusteringData);
 		else
@@ -108,7 +111,7 @@ public class CheSViewer implements GUIControler
 
 		clusterPanel.init(clusteredDataset);
 		clustering = clusterPanel.getClustering();
-		menuBar = new MenuBar(this, clusterPanel.getViewControler(), clustering);
+		menuBar = new MenuBar(this, clusterPanel.getViewControler(), clusterPanel.getClusterControler(), clustering);
 
 		KeyboardFocusManager kfm = KeyboardFocusManager.getCurrentKeyboardFocusManager();
 		kfm.addKeyEventDispatcher(new KeyEventDispatcher()
@@ -117,8 +120,9 @@ public class CheSViewer implements GUIControler
 			public boolean dispatchKeyEvent(KeyEvent e)
 			{
 				KeyStroke keyStroke = KeyStroke.getKeyStrokeForEvent(e);
-				return Actions.getInstance(CheSViewer.this, clusterPanel.getViewControler(), clustering).performAction(
-						e.getSource(), keyStroke, !frame.isUndecorated());
+				return Actions.getInstance(CheSViewer.this, clusterPanel.getViewControler(),
+						clusterPanel.getClusterControler(), clustering).performAction(e.getSource(), keyStroke,
+						!frame.isUndecorated());
 			}
 		});
 
@@ -178,7 +182,7 @@ public class CheSViewer implements GUIControler
 		if (clustering == null)
 			throw new Error("clustering is null");
 
-		frame = new BlockableFrame();
+		frame = new BlockableFrame(true);
 		updateTitle(clustering);
 		Settings.TOP_LEVEL_FRAME = frame;
 
@@ -300,6 +304,12 @@ public class CheSViewer implements GUIControler
 	public boolean isBlocked()
 	{
 		return frame.isBlocked();
+	}
+
+	@Override
+	public boolean isVisible()
+	{
+		return frame != null && frame.isVisible();
 	}
 
 	@Override

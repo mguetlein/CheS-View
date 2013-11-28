@@ -8,6 +8,7 @@ import gui.util.CompoundPropertyHighlighter;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
@@ -18,17 +19,21 @@ import java.util.Arrays;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JCheckBox;
+import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
 import main.ScreenSetup;
 import cluster.Cluster;
+import cluster.ClusterController;
 import cluster.Clustering;
-import cluster.Compound;
+import cluster.Clustering.SelectionListener;
+import cluster.ClusteringImpl;
 
 import com.jgoodies.forms.layout.CellConstraints;
 import com.jgoodies.forms.layout.FormLayout;
@@ -52,6 +57,7 @@ public class ClusterListPanel extends JPanel
 	CompoundListPanel compoundListPanel;
 
 	Clustering clustering;
+	ClusterController clusterControler;
 	ViewControler viewControler;
 	GUIControler guiControler;
 
@@ -59,11 +65,15 @@ public class ClusterListPanel extends JPanel
 
 	JCheckBox superimposeCheckBox;
 
-	//	private DefaultListCellRenderer clusterListRenderer;
+	JPanel filterPanel;
+	JLabel filterLabel;
+	LinkButton filterRemoveButton;
 
-	public ClusterListPanel(Clustering clustering, ViewControler viewControler, GUIControler guiControler)
+	public ClusterListPanel(Clustering clustering, ClusterController clusterControler, ViewControler viewControler,
+			GUIControler guiControler)
 	{
 		this.clustering = clustering;
+		this.clusterControler = clusterControler;
 		this.viewControler = viewControler;
 		this.guiControler = guiControler;
 
@@ -73,20 +83,19 @@ public class ClusterListPanel extends JPanel
 
 	private void installListeners()
 	{
-		clustering.getClusterActive().addListener(new PropertyChangeListener()
+		clustering.addSelectionListener(new SelectionListener()
 		{
 			@Override
-			public void propertyChange(PropertyChangeEvent evt)
+			public void clusterWatchedChanged(Cluster c)
 			{
-				updateCluster(clustering.getClusterActive().getSelected());
+				updateCluster(c);
 			}
-		});
-		clustering.getClusterWatched().addListener(new PropertyChangeListener()
-		{
+
 			@Override
-			public void propertyChange(PropertyChangeEvent evt)
+			public void clusterActiveChanged(Cluster c)
 			{
-				updateCluster(clustering.getClusterWatched().getSelected());
+				updateCluster(c);
+				updateSuperimposeCheckBox();
 			}
 		});
 
@@ -103,7 +112,6 @@ public class ClusterListPanel extends JPanel
 
 		viewControler.addViewListener(new PropertyChangeListener()
 		{
-
 			@Override
 			public void propertyChange(PropertyChangeEvent evt)
 			{
@@ -111,15 +119,10 @@ public class ClusterListPanel extends JPanel
 				{
 					updateSuperimposeCheckBox();
 				}
-			}
-		});
-
-		clustering.getClusterActive().addListener(new PropertyChangeListener()
-		{
-			@Override
-			public void propertyChange(PropertyChangeEvent evt)
-			{
-				updateSuperimposeCheckBox();
+				else if (evt.getPropertyName().equals(ViewControler.PROPERTY_COMPOUND_FILTER_CHANGED))
+				{
+					updateFilter();
+				}
 			}
 		});
 
@@ -136,11 +139,10 @@ public class ClusterListPanel extends JPanel
 				{
 					// clear only if home selected
 					if (e.getFirstIndex() == 0)
-						clustering.getClusterWatched().clearSelection();
+						clusterControler.clearClusterWatched();
 				}
 				else
-					clustering.getClusterWatched().setSelected(
-							clustering.indexOf((Cluster) clusterList.getSelectedValue()));
+					clusterControler.setClusterWatched((Cluster) clusterList.getSelectedValue());
 
 				selfBlock = false;
 			}
@@ -152,32 +154,26 @@ public class ClusterListPanel extends JPanel
 				if (selfBlock)
 					return;
 				selfBlock = true;
-
-				if (clusterList.getSelectedValue() == AllClusters)
+				Thread th = new Thread(new Runnable()
 				{
-					View.instance.suspendAnimation("clear cluster selection");
-					clustering.getCompoundWatched().clearSelection();
-					if (View.instance.getZoomTarget() instanceof Compound)
-						clustering.getCompoundActive().clearSelection();
-					View.instance.proceedAnimation("clear cluster selection");
-					clustering.getClusterActive().clearSelection();
-				}
-				else
-				{
-					int cIndex = clustering.indexOf((Cluster) clusterList.getSelectedValue());
-					clustering.getCompoundWatched().clearSelection();
-					boolean suspendAnim = clustering.getClusterActive().getSelected() != cIndex;
-					if (suspendAnim)
-						View.instance.suspendAnimation("change cluster selection");
-					if (View.instance.getZoomTarget() instanceof Compound)
-						clustering.getCompoundActive().clearSelection();
-					if (suspendAnim)
-						View.instance.proceedAnimation("change cluster selection");
-					clustering.getClusterActive().setSelected(cIndex);
-				}
-				clustering.getClusterWatched().clearSelection();
-
-				selfBlock = false;
+					public void run()
+					{
+						if (clusterList.getSelectedValue() == AllClusters)
+						{
+							clusterControler.clearClusterActive(true, true);
+						}
+						else
+						{
+							Cluster c = (Cluster) clusterList.getSelectedValue();
+							if (c == clustering.getActiveCluster())
+								clusterControler.clearCompoundActive(true);
+							else
+								clusterControler.setClusterActive(c, true, true);
+						}
+						selfBlock = false;
+					}
+				});
+				th.start();
 			}
 		});
 
@@ -186,11 +182,9 @@ public class ClusterListPanel extends JPanel
 			@Override
 			public void propertyChange(PropertyChangeEvent evt)
 			{
-				if (evt.getPropertyName().equals(Clustering.CLUSTER_ADDED)
-						|| evt.getPropertyName().equals(Clustering.CLUSTER_REMOVED))
+				if (evt.getPropertyName().equals(ClusteringImpl.CLUSTER_ADDED)
+						|| evt.getPropertyName().equals(ClusteringImpl.CLUSTER_REMOVED))
 				{
-					// if (selfBlock)
-					// return;
 					selfBlock = true;
 					updateList();
 					selfBlock = false;
@@ -205,13 +199,15 @@ public class ClusterListPanel extends JPanel
 			{
 				if (evt.getPropertyName().equals(ViewControler.PROPERTY_COMPOUND_DESCRIPTOR_CHANGED)
 						|| evt.getPropertyName().equals(ViewControler.PROPERTY_HIGHLIGHT_CHANGED)
-						|| evt.getPropertyName().equals(ViewControler.PROPERTY_FEATURE_SORTING_CHANGED))
+						|| evt.getPropertyName().equals(ViewControler.PROPERTY_FEATURE_SORTING_CHANGED)
+						|| evt.getPropertyName().equals(ViewControler.PROPERTY_COMPOUND_FILTER_CHANGED))
 				{
 					selfBlock = true;
 					updateList();
 					selfBlock = false;
 				}
-				else if (evt.getPropertyName().equals(ViewControler.PROPERTY_FONT_SIZE_CHANGED))
+				else if (evt.getPropertyName().equals(ViewControler.PROPERTY_FONT_SIZE_CHANGED)
+						|| evt.getPropertyName().equals(ViewControler.PROPERTY_COMPOUND_FILTER_CHANGED))
 					updateListSize();
 
 			}
@@ -243,17 +239,17 @@ public class ClusterListPanel extends JPanel
 
 	private void updateList()
 	{
-		//		if (listModel.size() == 0)
-		//			datasetNameLabel.setVisible(false);
-		//		else
-		//		{
-		//			datasetNameLabel.setVisible(true);
-		//			datasetNameLabel.setText("<html><b>Dataset: </b>" + clustering.getName() + " (#"
-		//					+ clustering.getNumCompounds() + ")</html>");
-		//		}
-		//				+ " some endless long name just to make really really really really sure");
+		if (!SwingUtilities.isEventDispatchThread())
+			throw new IllegalStateException("GUI updates only in event dispatch thread plz");
 
 		listModel.clear();
+
+		if (clustering.getNumClusters() == 0)
+		{
+			scroll.setVisible(false);
+			return;
+		}
+
 		if (clustering.getNumClusters() > 1)
 			listModel.addElement(AllClusters);
 
@@ -263,7 +259,8 @@ public class ClusterListPanel extends JPanel
 				&& viewControler.getHighlighter() instanceof CompoundPropertyHighlighter)
 			Arrays.sort(clusters);
 		for (Cluster c : clusters)
-			listModel.addElement(c);
+			if (c.size() > 0)
+				listModel.addElement(c);
 
 		updateListSize();
 		scroll.setVisible(listModel.size() > 1);
@@ -282,16 +279,9 @@ public class ClusterListPanel extends JPanel
 		updateListSize();
 		revalidate();
 
-		if (clustering.getClusterActive().getSelected() != -1)
-			updateCluster(clustering.getClusterActive().getSelected());
+		if (clustering.isClusterActive())
+			updateCluster(clustering.getActiveCluster());
 	}
-
-	//	private void updateListSize()
-	//	{
-	//		int rowCount = (guiControler.getViewerHeight() / listRenderer.getPreferredSize().height) / 3;
-	//		clusterList.setVisibleRowCount(rowCount);
-	//		clusterList.revalidate();
-	//	}
 
 	private void updateListSize()
 	{
@@ -359,14 +349,14 @@ public class ClusterListPanel extends JPanel
 			{
 				super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
 
-				int i = -1;
+				Cluster c = null;
 				if (value != AllClusters)
-					i = clustering.indexOf((Cluster) value);
-				setOpaque(isSelected || i == clustering.getClusterActive().getSelected());
+					c = (Cluster) value;
+				setOpaque(isSelected || c == clustering.getActiveCluster());
 
 				setForeground(ComponentFactory.FOREGROUND);
 
-				if (i == clustering.getClusterActive().getSelected())
+				if (c == clustering.getActiveCluster())
 				{
 					setBackground(ComponentFactory.LIST_ACTIVE_BACKGROUND);
 					setForeground(ComponentFactory.LIST_SELECTION_FOREGROUND);
@@ -376,10 +366,10 @@ public class ClusterListPanel extends JPanel
 					setBackground(ComponentFactory.LIST_WATCH_BACKGROUND);
 					setForeground(ComponentFactory.LIST_SELECTION_FOREGROUND);
 				}
-				else if (i != -1 && ((Cluster) value).getHighlightColor() != null
-						&& ((Cluster) value).getHighlightColor() != CompoundPropertyUtil.getNullValueColor())
+				else if (c != null && c.getHighlightColor() != null
+						&& c.getHighlightColor() != CompoundPropertyUtil.getNullValueColor())
 				{
-					setForegroundLabel2(((Cluster) value).getHighlightColor());
+					setForegroundLabel2(c.getHighlightColor());
 				}
 
 				return this;
@@ -389,19 +379,9 @@ public class ClusterListPanel extends JPanel
 		listRenderer.setFontLabel2(listRenderer.getFontLabel2().deriveFont(Font.ITALIC));
 		clusterList.setCellRenderer(listRenderer);
 
-		compoundListPanel = new CompoundListPanel(clustering, viewControler, guiControler);
-		//		{
-		//			public Dimension getPreferredSize()
-		//			{
-		//				Dimension dim = super.getPreferredSize();
-		//				if (dim.width > 0)
-		//					dim.width = Math.max(dim.width, clusterPanel.getPreferredSize().width);
-		//				return dim;
+		compoundListPanel = new CompoundListPanel(clustering, clusterControler, viewControler, guiControler);
 
-		//			}
-		//		};
-
-		setLayout(new BorderLayout(10, 10));
+		setLayout(new BorderLayout(0, 0));
 		FormLayout layout = new FormLayout("pref,10,pref", "fill:pref");
 		JPanel panel = new JPanel();
 		panel.setOpaque(false);
@@ -417,23 +397,62 @@ public class ClusterListPanel extends JPanel
 		panel.add(clusterPanel, cc.xy(1, 1));
 		panel.add(compoundListPanel, cc.xy(3, 1));
 		add(panel, BorderLayout.WEST);
-		controlPanel = new ControlPanel(viewControler, clustering, guiControler);
+		controlPanel = new ControlPanel(viewControler, clusterControler, clustering, guiControler);
 		add(controlPanel, BorderLayout.SOUTH);
+
+		filterLabel = ComponentFactory.createViewLabel("Filter applied:");
+		filterRemoveButton = ComponentFactory.createViewLinkButton("remove");
+		filterRemoveButton.addActionListener(new ActionListener()
+		{
+			@Override
+			public void actionPerformed(ActionEvent e)
+			{
+				Thread th = new Thread(new Runnable()
+				{
+					public void run()
+					{
+						clusterControler.setCompoundFilter(null, true);
+					}
+				});
+				th.start();
+			}
+		});
+		filterPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));//new BorderLayout());
+		filterPanel.setOpaque(false);
+		filterPanel.add(filterLabel);//, BorderLayout.WEST);
+		filterPanel.add(filterRemoveButton);//, BorderLayout.EAST);
+		filterPanel.setVisible(false);
+		add(filterPanel, BorderLayout.NORTH);
 
 		setBorder(new EmptyBorder(25, 25, 25, 25));
 		setOpaque(false);
 	}
 
-	private void updateCluster(int index)
+	private void updateFilter()
+	{
+		if (clusterControler.getCompoundFilter() == null)
+		{
+			filterPanel.setVisible(false);
+		}
+		else
+		{
+			filterPanel.setIgnoreRepaint(true);
+			filterLabel.setText("Compound Filter: " + clusterControler.getCompoundFilter());
+			filterPanel.setIgnoreRepaint(false);
+			filterPanel.setVisible(true);
+		}
+	}
+
+	private void updateCluster(Cluster c)
 	{
 		if (selfBlock)
 			return;
 		selfBlock = true;
 
-		if (index == -1)
+		if (c == null)
 			clusterList.clearSelection();
 		else
-			clusterList.setSelectedValue(clustering.getCluster(index), true);
+			clusterList.setSelectedValue(c, true);
 
 		selfBlock = false;
 	}

@@ -16,13 +16,16 @@ import java.awt.Dimension;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 
 import main.ScreenSetup;
 import util.ArrayUtil;
@@ -31,10 +34,15 @@ import util.CountedSet;
 import util.DefaultComparator;
 import util.ObjectUtil;
 import util.SequentialWorkerThread;
+import util.StringUtil;
 import util.ToStringComparator;
 import cluster.Cluster;
+import cluster.ClusterController;
 import cluster.Clustering;
+import cluster.Clustering.SelectionListener;
+import cluster.ClusteringImpl;
 import cluster.Compound;
+import cluster.CompoundFilter;
 
 import com.jgoodies.forms.builder.DefaultFormBuilder;
 import com.jgoodies.forms.layout.FormLayout;
@@ -48,12 +56,14 @@ import dataInterface.CompoundPropertyUtil;
 public class ChartPanel extends TransparentViewPanel
 {
 	Clustering clustering;
+	ClusterController clusterControler;
 	ViewControler viewControler;
 	GUIControler guiControler;
 
 	Cluster cluster;
-	List<Compound> compounds;
+	Compound compounds[];
 	CompoundProperty property;
+	CompoundFilter filter;
 
 	private JPanel featurePanel;
 	private JLabel featureNameLabel = ComponentFactory.createViewLabel("");
@@ -73,8 +83,10 @@ public class ChartPanel extends TransparentViewPanel
 
 	SequentialWorkerThread workerThread = new SequentialWorkerThread();
 
-	public ChartPanel(Clustering clustering, ViewControler viewControler, GUIControler guiControler)
+	public ChartPanel(Clustering clustering, ViewControler viewControler, ClusterController clusterControler,
+			GUIControler guiControler)
 	{
+		this.clusterControler = clusterControler;
 		this.clustering = clustering;
 		this.viewControler = viewControler;
 		this.guiControler = guiControler;
@@ -131,11 +143,9 @@ public class ChartPanel extends TransparentViewPanel
 			@Override
 			public void propertyChange(PropertyChangeEvent evt)
 			{
-				if (evt.getPropertyName().equals(ViewControler.PROPERTY_HIGHLIGHT_CHANGED))
-				{
-					update(false);
-				}
-				else if (evt.getPropertyName().equals(ViewControler.PROPERTY_HIGHLIGHT_CHANGED))
+				if (evt.getPropertyName().equals(ViewControler.PROPERTY_HIGHLIGHT_CHANGED)
+						|| evt.getPropertyName().equals(ViewControler.PROPERTY_HIGHLIGHT_CHANGED)
+						|| evt.getPropertyName().equals(ViewControler.PROPERTY_COMPOUND_FILTER_CHANGED))
 				{
 					update(false);
 				}
@@ -156,69 +166,63 @@ public class ChartPanel extends TransparentViewPanel
 			@Override
 			public void propertyChange(PropertyChangeEvent evt)
 			{
-				if (evt.getPropertyName().equals(Clustering.CLUSTER_MODIFIED))
+				if (evt.getPropertyName().equals(ClusteringImpl.CLUSTER_MODIFIED))
 				{
 					update(true);
 				}
-				else if (evt.getPropertyName().equals(Clustering.CLUSTER_REMOVED))
-				{
-					cardPanel.removeAll();
-					cardContents.clear();
-					update(true);
-				}
-				else if (evt.getPropertyName().equals(Clustering.CLUSTER_ADDED))
+				else if (evt.getPropertyName().equals(ClusteringImpl.CLUSTER_REMOVED))
 				{
 					cardPanel.removeAll();
 					cardContents.clear();
 					update(true);
 				}
+				else if (evt.getPropertyName().equals(ClusteringImpl.CLUSTER_ADDED))
+				{
+					cardPanel.removeAll();
+					cardContents.clear();
+					update(true);
+				}
 			}
 		});
-		clustering.getClusterActive().addListener(new PropertyChangeListener()
+		clustering.addSelectionListener(new SelectionListener()
 		{
 			@Override
-			public void propertyChange(PropertyChangeEvent evt)
+			public void compoundWatchedChanged(Compound[] c)
 			{
 				update(false);
 			}
-		});
-		clustering.getClusterWatched().addListener(new PropertyChangeListener()
-		{
-			@Override
-			public void propertyChange(PropertyChangeEvent evt)
-			{
-				update(false);
-			}
-		});
-		clustering.getCompoundActive().addListener(new PropertyChangeListener()
-		{
-			@Override
-			public void propertyChange(PropertyChangeEvent evt)
-			{
-				update(false);
-			}
-		});
-		clustering.getCompoundWatched().addListener(new PropertyChangeListener()
-		{
-			@Override
-			public void propertyChange(PropertyChangeEvent evt)
-			{
-				update(false);
-			}
-		});
 
+			@Override
+			public void compoundActiveChanged(Compound[] c)
+			{
+				update(false);
+			}
+
+			@Override
+			public void clusterWatchedChanged(Cluster c)
+			{
+				update(false);
+			}
+
+			@Override
+			public void clusterActiveChanged(Cluster c)
+			{
+				update(false);
+			}
+		});
 	}
 
-	private static String getKey(Cluster c, CompoundProperty p, List<Compound> m)
+	private static String getKey(Cluster c, CompoundProperty p, Compound m[], CompoundFilter f)
 	{
 		String mString = "";
 		for (Compound compound : m)
 			mString = mString.concat(compound.toString());
-		return (c == null ? "null" : c.getName()) + "_" + p.toString() + "_" + mString;
+		return (c == null ? "null" : c.getName()) + "_" + p.toString() + "_" + mString.hashCode() + "_"
+				+ (f == null ? "" : f.hashCode());
 	}
 
-	boolean selfUpdate = false;
-	List<Integer> selfUpdateCompounds = null;
+	static boolean selfUpdate = false;
+	HashSet<Compound> selfUpdateCompounds = null;
 
 	private abstract class CompoundSelector implements ChartMouseSelectionListener
 	{
@@ -226,81 +230,110 @@ public class ChartPanel extends TransparentViewPanel
 
 		protected abstract void updateSelectionCriterion();
 
+		protected abstract String selectionCriterionToString(CompoundProperty p);
+
 		protected abstract boolean isSelected(Compound m, CompoundProperty p);
 
 		@Override
 		public void hoverEvent()
 		{
-			handleEvent(true, false);
+			handleEvent(true, false, false);
 		}
 
 		@Override
-		public void clickEvent(boolean ctrlDown)
+		public void clickEvent(boolean ctrlDown, boolean doubleClick)
 		{
-			handleEvent(false, ctrlDown);
+			handleEvent(false, ctrlDown, doubleClick);
 		}
 
-		private void handleEvent(boolean hover, boolean ctrlDown)
+		private void handleEvent(final boolean hover, final boolean ctrlDown, final boolean doubleClick)
 		{
-			//			System.err.println();
 			if (selfUpdate)
 			{
-				//				System.err.println("self update");
 				return;
 			}
 			selfUpdate = true;
-			try
+			Thread th = new Thread(new Runnable()
 			{
-				if (!hasSelectionCriterionChanged() && hover)
+				public void run()
 				{
-					//					System.err.println("selection criterion has not changed");
-					return;
-				}
-				updateSelectionCriterion();
-				//				if (this instanceof NumericCompoundSelector)
-				//					System.err.println("interval : " + ((NumericCompoundSelector) this).hist.getSelectedMin() + " "
-				//							+ ((NumericCompoundSelector) this).hist.getSelectedMax());
+					clusterControler.clearClusterWatched();
+					try
+					{
+						if (!hasSelectionCriterionChanged() && hover)
+							return;
+						updateSelectionCriterion();
 
-				//				if (clustering.isClusterActive())
-				//				{
-				Highlighter h = viewControler.getHighlighter();
-				CompoundProperty prop = null;
-				if (h instanceof CompoundPropertyHighlighter)
-					prop = ((CompoundPropertyHighlighter) h).getProperty();
+						Highlighter h = viewControler.getHighlighter();
+						CompoundProperty prop = null;
+						if (h instanceof CompoundPropertyHighlighter)
+							prop = ((CompoundPropertyHighlighter) h).getProperty();
 
-				final List<Integer> m = new ArrayList<Integer>();
-				Iterable<Compound> compounds;
-				if (clustering.isClusterActive())
-					compounds = clustering.getCluster(clustering.getClusterActive().getSelected()).getCompounds();
-				else
-					compounds = clustering.getCompounds(false);
-				for (Compound compound : compounds)
-					if (isSelected(compound, prop))
-						m.add(compound.getCompoundIndex());
+						final HashSet<Compound> comps = new HashSet<Compound>();
+						Iterable<Compound> compounds;
+						if (clustering.isClusterActive())
+							compounds = clustering.getActiveCluster().getCompounds();
+						else
+							compounds = clustering.getCompounds(false);
+						for (Compound compound : compounds)
+							if (isSelected(compound, prop))
+								comps.add(compound);
 
-				if (hover)
-				{
-					if (ObjectUtil.equals(selfUpdateCompounds, m))
-						return;
-					selfUpdateCompounds = m;
-					//					System.err.println("updating via chart panel " + m);
-					clustering.getCompoundWatched().setSelectedIndices(ArrayUtil.toPrimitiveIntArray(m));
+						if (hover)
+						{
+							if (ObjectUtil.equals(selfUpdateCompounds, comps))
+								return;
+							selfUpdateCompounds = comps;
+
+							if (comps.size() == 0)
+								clusterControler.clearCompoundWatched();
+							else
+								clusterControler.setCompoundWatched(ArrayUtil.toArray(comps));
+						}
+						else
+						{
+							if (comps.size() == 0)
+								clusterControler.clearCompoundActive(true);
+							else
+							{
+								if (ctrlDown)
+								{
+									for (Compound compound : clustering.getActiveCompounds())
+										if (comps.contains(compound))
+											comps.remove(compound);
+										else
+											comps.add(compound);
+									if (comps.size() == 0)
+										clusterControler.clearCompoundActive(true);
+									else
+										clusterControler.setCompoundActive(ArrayUtil.toArray(comps), true);
+								}
+								else
+								{
+									for (Compound compound : clustering.getActiveCompounds())
+										comps.add(compound);
+
+									CompoundFilter compoundFilter = new CompoundFilter(
+											selectionCriterionToString(prop), new ArrayList<Compound>(comps));
+									clusterControler.setCompoundFilter(compoundFilter, true);
+								}
+							}
+						}
+					}
+					finally
+					{
+						workerThread.addJob(new Runnable()
+						{
+							@Override
+							public void run()
+							{
+								selfUpdate = false;
+							}
+						}, "selfUpdate false after chart was created!");
+					}
 				}
-				else
-				{
-					//					System.err.println("before: "
-					//							+ ArrayUtil.toString(clustering.getCompoundActive().getSelectedIndices()));
-					//					System.err.println("select " + (!ctrlDown) + " " + m);
-					clustering.getCompoundActive().setSelectedIndices(ArrayUtil.toPrimitiveIntArray(m), !ctrlDown);
-					//					System.err.println("after: "
-					//							+ ArrayUtil.toString(clustering.getCompoundActive().getSelectedIndices()));
-					//					System.err.println();
-				}
-			}
-			finally
-			{
-				selfUpdate = false;
-			}
+			});
+			th.start();
 		}
 	}
 
@@ -317,6 +350,12 @@ public class ChartPanel extends TransparentViewPanel
 		}
 
 		@Override
+		public String toString()
+		{
+			return "selector " + hist.hashCode();
+		}
+
+		@Override
 		protected boolean hasSelectionCriterionChanged()
 		{
 			return selectedMin != hist.getSelectedMin() || selectedMax != hist.getSelectedMax();
@@ -327,6 +366,12 @@ public class ChartPanel extends TransparentViewPanel
 		{
 			selectedMin = hist.getSelectedMin();
 			selectedMax = hist.getSelectedMax();
+		}
+
+		@Override
+		protected String selectionCriterionToString(CompoundProperty p)
+		{
+			return StringUtil.formatDouble(selectedMin) + " <= " + p + " <= " + StringUtil.formatDouble(selectedMax);
 		}
 
 		@Override
@@ -352,7 +397,7 @@ public class ChartPanel extends TransparentViewPanel
 		List<String> captions;
 		List<double[]> vals;
 
-		public NumericPlotData(Cluster c, CompoundProperty p, List<Compound> m)
+		public NumericPlotData(Cluster c, CompoundProperty p, Compound m[])
 		{
 			Double v[] = clustering.getDoubleValues(p);
 			captions = new ArrayList<String>();
@@ -365,25 +410,32 @@ public class ChartPanel extends TransparentViewPanel
 				vals.add(ArrayUtil.toPrimitiveDoubleArray(ArrayUtil.removeNullValues(c.getDoubleValues(p))));
 			}
 
-			Double mVals[] = new Double[m.size()];
+			Double mVals[] = new Double[m.length];
 			boolean notNull = false;
 			for (int i = 0; i < mVals.length; i++)
 			{
-				mVals[i] = m.get(i).getDoubleValue(p);
+				mVals[i] = m[i].getDoubleValue(p);
 				notNull |= mVals[i] != null;
 			}
-			if (m.size() > 0 && notNull)
+			if (m.length > 0 && notNull)
 			{
-				if (m.size() == 1)
-					captions.add(m.get(0).toString());
+				if (m.length == 1)
+					captions.add(m[0].toString());
 				else
 					captions.add("Selected compounds");
 				vals.add(ArrayUtil.toPrimitiveDoubleArray(ArrayUtil.removeNullValues(mVals)));
 			}
 
 			plot = new HistogramPanel(null, null, null, "#compounds", captions, vals, 20);
-			plot.addSelectionListener(new NumericCompoundSelector((HistogramPanel) plot));
 			configurePlotColors(plot, c, m, p);
+			SwingUtilities.invokeLater(new Runnable()// wait to add listerner, so that chart has finished painting 
+					{
+						@Override
+						public void run()
+						{
+							plot.addSelectionListener(new NumericCompoundSelector((HistogramPanel) plot));
+						}
+					});
 		}
 	}
 
@@ -399,6 +451,12 @@ public class ChartPanel extends TransparentViewPanel
 		}
 
 		@Override
+		public String toString()
+		{
+			return "selector " + bar.hashCode();
+		}
+
+		@Override
 		protected boolean hasSelectionCriterionChanged()
 		{
 			return !ObjectUtil.equals(selectedCategory, bar.getSelectedCategory());
@@ -408,6 +466,12 @@ public class ChartPanel extends TransparentViewPanel
 		protected void updateSelectionCriterion()
 		{
 			selectedCategory = bar.getSelectedCategory();
+		}
+
+		@Override
+		protected String selectionCriterionToString(CompoundProperty p)
+		{
+			return p + " = " + selectedCategory;
 		}
 
 		@Override
@@ -423,9 +487,9 @@ public class ChartPanel extends TransparentViewPanel
 		LinkedHashMap<String, List<Double>> data;
 		String vals[];
 
-		public NominalPlotData(Cluster c, CompoundProperty p, List<Compound> ms)
+		public NominalPlotData(Cluster c, CompoundProperty p, Compound ms[])
 		{
-			Compound m = ms.size() > 0 ? ms.get(0) : null;
+			Compound m = ms.length > 0 ? ms[0] : null;
 
 			String v[] = clustering.getStringValues(p, m);
 			CountedSet<String> datasetSet = CountedSet.fromArray(v);
@@ -489,12 +553,20 @@ public class ChartPanel extends TransparentViewPanel
 					vals[i] = AbstractFragmentProperty.getFormattedSmartsValue(vals[i]);
 
 			plot = new StackedBarPlot(null, null, "#compounds", StackedBarPlot.convertTotalToAdditive(data), vals);
-			plot.addSelectionListener(new NominalCompoundSelector((StackedBarPlot) plot));
 			configurePlotColors(plot, c, ms, p);
+			SwingUtilities.invokeLater(new Runnable() // wait to add listerner, so that chart has finished painting 
+					{
+						@Override
+						public void run()
+						{
+							plot.addSelectionListener(new NominalCompoundSelector((StackedBarPlot) plot));
+						}
+					});
+
 		}
 	}
 
-	private void configurePlotColors(AbstractFreeChartPanel chartPanel, Cluster cluster, List<Compound> compounds,
+	private void configurePlotColors(AbstractFreeChartPanel chartPanel, Cluster cluster, Compound[] compounds,
 			CompoundProperty property)
 	{
 		int dIndex = -1;
@@ -503,7 +575,7 @@ public class ChartPanel extends TransparentViewPanel
 
 		if (cluster == null)
 		{
-			if (compounds.size() == 0)
+			if (compounds.length == 0)
 				dIndex = 0;
 			else
 			{
@@ -513,7 +585,7 @@ public class ChartPanel extends TransparentViewPanel
 		}
 		else
 		{
-			if (compounds.size() == 0)
+			if (compounds.length == 0)
 			{
 				cIndex = 0;
 				dIndex = 1;
@@ -573,6 +645,9 @@ public class ChartPanel extends TransparentViewPanel
 
 	private void update(final boolean force)
 	{
+		if (!SwingUtilities.isEventDispatchThread())
+			throw new IllegalStateException("GUI updates only in event dispatch thread plz");
+
 		if (clustering.getNumClusters() == 0)
 		{
 			setVisible(false);
@@ -584,33 +659,29 @@ public class ChartPanel extends TransparentViewPanel
 		if (h instanceof CompoundPropertyHighlighter)
 			prop = ((CompoundPropertyHighlighter) h).getProperty();
 
-		int cIndex = clustering.getClusterActive().getSelected();
-		if (cIndex == -1)
-			cIndex = clustering.getClusterWatched().getSelected();
-		Cluster c = clustering.getCluster(cIndex);
+		Cluster c = clustering.getActiveCluster();
+		if (c == null)
+			c = clustering.getWatchedCluster();
 		if (clustering.getNumClusters() == 1)
 			c = null;
 
-		int mIndex[] = clustering.getCompoundActive().getSelectedIndices();
-		if (mIndex.length == 0)
-			mIndex = clustering.getCompoundWatched().getSelectedIndices();
+		Compound comps[] = clustering.getActiveCompounds();
+		if (comps.length == 0)
+			comps = clustering.getWatchedCompounds();
 
-		List<Compound> ms = new ArrayList<Compound>();
-		for (int i : mIndex)
-			ms.add(clustering.getCompoundWithCompoundIndex(i));
 		if (prop != null && prop.getType() == Type.NOMINAL)
 		{
 			//does NOT help much in terms of visualisation (color code should be enough), difficult to realize in terms of color brightness
-			ms.clear();
+			comps = new Compound[0];
 		}
 
-		//		System.err.println("update " + ms);
-
-		if (force || cluster != c || property != prop || !compounds.equals(ms))
+		if (force || cluster != c || property != prop || !Arrays.equals(compounds, comps)
+				|| filter != clusterControler.getCompoundFilter())
 		{
 			cluster = c;
 			property = prop;
-			compounds = ms;
+			compounds = comps;
+			filter = clusterControler.getCompoundFilter();
 
 			if (property == null)
 				setVisible(false);
@@ -618,7 +689,8 @@ public class ChartPanel extends TransparentViewPanel
 			{
 				final Cluster fCluster = this.cluster;
 				final CompoundProperty fProperty = this.property;
-				final List<Compound> fCompounds = this.compounds;
+				final Compound fCompounds[] = this.compounds;
+				final CompoundFilter fFilter = filter;
 
 				workerThread.addJob(new Runnable()
 				{
@@ -627,14 +699,11 @@ public class ChartPanel extends TransparentViewPanel
 						if (fCluster != cluster || fProperty != property || fCompounds != compounds)
 							return;
 
-						//						System.out.println("updating chart");
-
-						String plotKey = getKey(fCluster, fProperty, fCompounds);
+						String plotKey = getKey(fCluster, fProperty, fCompounds, fFilter);
 						if (force && cardContents.containsKey(plotKey))
 							cardContents.remove(plotKey);
 						if (!cardContents.containsKey(plotKey))
 						{
-							//							System.out.println("create new plot");
 							CompoundProperty.Type type = fProperty.getType();
 							PlotData d = null;
 							if (type == Type.NOMINAL)
@@ -647,8 +716,6 @@ public class ChartPanel extends TransparentViewPanel
 								cardPanel.add(d.getPlot(), plotKey);
 							}
 						}
-						//						else
-						//							System.out.println("plot was cached");
 
 						if (fCluster != cluster || fProperty != property || fCompounds != compounds)
 							return;

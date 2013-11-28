@@ -3,7 +3,6 @@ package cluster;
 import gui.DoubleNameListCellRenderer.DoubleNameElement;
 import gui.View;
 import gui.ViewControler.HighlightSorting;
-import gui.Zoomable;
 
 import java.awt.Color;
 import java.util.ArrayList;
@@ -12,7 +11,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Vector;
 
 import javax.vecmath.Vector3f;
 
@@ -22,62 +20,47 @@ import util.ObjectUtil;
 import util.Vector3fUtil;
 import cluster.Compound.DisplayName;
 import dataInterface.ClusterData;
+import dataInterface.CompoundData;
 import dataInterface.CompoundProperty;
 import dataInterface.CompoundProperty.Type;
 import dataInterface.CompoundPropertyOwner;
 import dataInterface.SubstructureSmartsType;
 
-public class Cluster implements Zoomable, CompoundPropertyOwner, DoubleNameElement, Comparable<Cluster>
+public class Cluster extends CompoundGroup implements CompoundPropertyOwner, DoubleNameElement, Comparable<Cluster>
 {
-	private Vector<Compound> compounds;
 	private ClusterData clusterData;
-
-	private BitSet bitSet;
-	private BitSet dotModeDisplayBitSet;
-
-	private boolean superimposed = true;
-	private float superimposeDiameter;
-	private float nonSuperimposeDiameter;
-	private Vector3f superimposeCenter;
-	private Vector3f nonSuperimposeCenter;
-	private boolean allCompoundsHaveSamePosition = false;
 
 	HashMap<String, List<Compound>> compoundsOrderedByPropterty = new HashMap<String, List<Compound>>();
 
 	private boolean watched;
-	private boolean visible;
 	private CompoundProperty highlightProp;
 	private HighlightSorting highlightSorting;
-	private boolean someCompoundsHidden;
 	private boolean showLabel = false;
 
-	public Cluster(dataInterface.ClusterData clusterData, int begin, int endExcl) //boolean firstCluster, 
+	public Cluster(dataInterface.ClusterData clusterData)
 	{
 		this.clusterData = clusterData;
-
-		//		int before = firstCluster ? 0 : View.instance.getCompoundCount();
-		//		View.instance.loadCompoundFromFile(null, clusterData.getFilename(), null, null, !firstCluster, null, null, 0);
-		//		int after = View.instance.getCompoundCount();
-
-		//		if ((after - before) != clusterData.getSize())
-		//			throw new IllegalStateException("compounds in file: " + (after - before) + " != compound props passed: "
-		//					+ clusterData.getSize());
-
-		if ((endExcl - begin) != clusterData.getSize())
-			throw new IllegalStateException("should be: " + (endExcl - begin) + " != compound props passed: "
-					+ clusterData.getSize());
-
-		compounds = new Vector<Compound>();
-		int mCount = 0;
-		//for (int i = before; i < after; i++)
-		for (int i = begin; i < endExcl; i++)
-			compounds.add(new Compound(i, clusterData.getCompounds().get(mCount++)));
+		List<Compound> c = new ArrayList<Compound>();
+		int count = 0;
+		for (CompoundData d : clusterData.getCompounds())
+			c.add(new Compound(clusterData.getCompoundClusterIndices().get(count++), d));
+		setCompounds(c);
 
 		displayName.name = getName() + " (#" + size() + ")";
 		displayName.compareIndex = clusterData.getOrigIndex();
 
 		if (View.instance != null) // for export without graphics
 			update();
+	}
+
+	public void setFilter(CompoundFilter filter)
+	{
+		super.setFilter(filter);
+		List<Integer> origIndices = new ArrayList<Integer>();
+		for (Compound c : getCompounds())
+			origIndices.add(c.getOrigIndex());
+		clusterData.setFilter(origIndices);
+		updateDisplayName();
 	}
 
 	boolean alignedCompoundsCalibrated = false;
@@ -94,7 +77,7 @@ public class Cluster implements Zoomable, CompoundPropertyOwner, DoubleNameEleme
 		{
 			// the compounds have not been aligned
 			// the compounds may have a center != 0, calibrate to 0
-			for (Compound m : compounds)
+			for (Compound m : getCompounds())
 				m.moveTo(new Vector3f(0f, 0f, 0f));
 		}
 		else
@@ -103,15 +86,15 @@ public class Cluster implements Zoomable, CompoundPropertyOwner, DoubleNameEleme
 			// however, the compound center may have an offset, calculate and remove
 			if (!alignedCompoundsCalibrated)
 			{
-				Vector3f[] origCenters = new Vector3f[compounds.size()];
+				Vector3f[] origCenters = new Vector3f[getCompounds().size()];
 				for (int i = 0; i < origCenters.length; i++)
-					origCenters[i] = compounds.get(i).origCenter;
+					origCenters[i] = getCompounds().get(i).origCenter;
 				Vector3f center = Vector3fUtil.center(origCenters);
 				for (int i = 0; i < origCenters.length; i++)
-					compounds.get(i).origCenter.sub(center);
+					getCompounds().get(i).origCenter.sub(center);
 				alignedCompoundsCalibrated = true;
 			}
-			for (Compound m : compounds)
+			for (Compound m : getCompounds())
 				m.moveTo(m.origCenter);
 		}
 
@@ -121,12 +104,6 @@ public class Cluster implements Zoomable, CompoundPropertyOwner, DoubleNameEleme
 
 	private DisplayName displayName = new DisplayName();
 	private Color highlightColor;
-
-	//	public String toString()
-	//	{
-	//		return getName() + " (#" + size() + ")";
-	//	}
-	//	
 
 	public String getName()
 	{
@@ -174,87 +151,13 @@ public class Cluster implements Zoomable, CompoundPropertyOwner, DoubleNameEleme
 		return clusterData.getAlignAlgorithm();
 	}
 
-	private void update()
+	protected void update()
 	{
-		displayName.name = getName() + " (#" + size() + ")";
-
-		bitSet = new BitSet();
-		for (Compound m : compounds)
-			bitSet.or(m.getBitSet());
-
-		dotModeDisplayBitSet = new BitSet();
-		for (Compound m : compounds)
-			dotModeDisplayBitSet.or(m.getDotModeDisplayBitSet());
-
-		// updating (unscaled!) cluster position
-		// this is only needed in case a compound was removed
-		Vector3f[] positions = ClusteringUtil.getCompoundPositions(this);
-		superimposeCenter = Vector3fUtil.center(positions);
-		nonSuperimposeCenter = Vector3fUtil.centerConvexHull(positions);
-
-		superimposeDiameter = -1;
-		for (Compound m : compounds)
-			superimposeDiameter = Math.max(superimposeDiameter, m.getDiameter());
-
-		// recompute diameter, depends on the scaling
-		positions = ClusteringUtil.getCompoundPositions(this);
-		float maxCompoundDist = Vector3fUtil.maxDist(positions);
-		allCompoundsHaveSamePosition = maxCompoundDist == 0;
-
-		// nonSuperimposeDiameter ignores size of compounds, just uses the compound positions
-		// for very small diameter: should be at least as big as superimposed one
-		nonSuperimposeDiameter = Math.max(superimposeDiameter, maxCompoundDist);
-	}
-
-	public Compound getCompoundWithCompoundIndex(int compoundIndex)
-	{
-		for (Compound m : compounds)
-			if (m.getCompoundIndex() == compoundIndex)
-				return m;
-		return null;
-	}
-
-	public int getIndex(Compound compound)
-	{
-		return compounds.indexOf(compound);
-	}
-
-	public Compound getCompound(int index)
-	{
-		return compounds.get(index);
-	}
-
-	public int size()
-	{
-		return compounds.size();
-	}
-
-	public boolean contains(Compound compound)
-	{
-		return compounds.contains(compound);
-	}
-
-	public BitSet getBitSet()
-	{
-		return bitSet;
-	}
-
-	public BitSet getDotModeDisplayBitSet()
-	{
-		return dotModeDisplayBitSet;
-	}
-
-	public boolean containsCompoundIndex(int compoundIndex)
-	{
-		for (Compound m : compounds)
-			if (m.getCompoundIndex() == compoundIndex)
-				return true;
-		return false;
-	}
-
-	public List<Compound> getCompounds()
-	{
-		return compounds;
+		if (getOrigSize() != size())
+			displayName.name = getName() + " (#" + size() + "/" + getOrigSize() + ")";
+		else
+			displayName.name = getName() + " (#" + size() + ")";
+		super.update();
 	}
 
 	public List<Compound> getCompoundsInOrder(final CompoundProperty property, HighlightSorting sorting)
@@ -263,7 +166,7 @@ public class Cluster implements Zoomable, CompoundPropertyOwner, DoubleNameEleme
 		if (!compoundsOrderedByPropterty.containsKey(key))
 		{
 			List<Compound> c = new ArrayList<Compound>();
-			for (Compound compound : compounds)
+			for (Compound compound : getCompounds())
 				c.add(compound);
 			final HighlightSorting finalSorting;
 			if (sorting == HighlightSorting.Median)
@@ -370,16 +273,16 @@ public class Cluster implements Zoomable, CompoundPropertyOwner, DoubleNameEleme
 		return clusterData.getSubstructureSmarts(type);
 	}
 
-	public void remove(int[] compoundIndices)
+	public void removeWithJmolIndices(int[] compoundJmolIndices)
 	{
-		System.out.println("to remove from cluster: " + ArrayUtil.toString(compoundIndices));
+		System.out.println("to remove from cluster: " + ArrayUtil.toString(compoundJmolIndices));
 		List<Compound> toDel = new ArrayList<Compound>();
-		int[] toDelIndex = new int[compoundIndices.length];
+		int[] toDelIndex = new int[compoundJmolIndices.length];
 
 		int count = 0;
-		for (int i : compoundIndices)
+		for (int i : compoundJmolIndices)
 		{
-			Compound c = getCompoundWithCompoundIndex(i);
+			Compound c = getCompoundWithJmolIndex(i);
 			toDel.add(c);
 			toDelIndex[count++] = getIndex(c);
 		}
@@ -387,7 +290,7 @@ public class Cluster implements Zoomable, CompoundPropertyOwner, DoubleNameEleme
 		for (Compound m : toDel)
 		{
 			bs.or(m.getBitSet());
-			compounds.remove(m);
+			getCompounds().remove(m);
 		}
 		View.instance.hide(bs);
 
@@ -406,17 +309,14 @@ public class Cluster implements Zoomable, CompoundPropertyOwner, DoubleNameEleme
 		this.watched = watched;
 	}
 
-	public boolean isVisible()
-	{
-		return visible;
-	}
-
-	public void setVisible(boolean visible)
-	{
-		this.visible = visible;
-	}
-
 	public void setHighlighProperty(CompoundProperty highlightProp, Color highlightColor)
+	{
+		this.highlightProp = highlightProp;
+		this.highlightColor = highlightColor;
+		updateDisplayName();
+	}
+
+	private void updateDisplayName()
 	{
 		displayName.valDisplay = null;
 		displayName.valCompare = null;
@@ -433,13 +333,14 @@ public class Cluster implements Zoomable, CompoundPropertyOwner, DoubleNameEleme
 				 * 3. within equal ratios, according to size (and therefore according to number of compounds with this feature value)
 				 * 4. within equal size, according to cluster index   
 				 */
-				displayName.valCompare = new Comparable[] { getNominalSummary(highlightProp).getMode(),
-						-1 * (getNominalSummary(highlightProp).getMaxCount() / (double) size()), -1 * size() };
+				displayName.valCompare = new Comparable[] {
+						getNominalSummary(highlightProp).getMode(false),
+						-1
+								* (getNominalSummary(highlightProp).getMaxCount(false) / (double) (getNominalSummary(highlightProp)
+										.getSum(false))), -1 * getNominalSummary(highlightProp).getSum(false) };
 			}
 			displayName.valDisplay = getFormattedValue(highlightProp);
 		}
-		this.highlightProp = highlightProp;
-		this.highlightColor = highlightColor;
 	}
 
 	public CompoundProperty getHighlightProperty()
@@ -457,16 +358,6 @@ public class Cluster implements Zoomable, CompoundPropertyOwner, DoubleNameEleme
 		return highlightSorting;
 	}
 
-	public void setSomeCompoundsHidden(boolean someCompoundsHidden)
-	{
-		this.someCompoundsHidden = someCompoundsHidden;
-	}
-
-	public boolean someCompoundsHidden()
-	{
-		return someCompoundsHidden;
-	}
-
 	public String[] getStringValues(CompoundProperty property, Compound excludeCompound)
 	{
 		return getStringValues(property, excludeCompound, false);
@@ -475,7 +366,7 @@ public class Cluster implements Zoomable, CompoundPropertyOwner, DoubleNameEleme
 	public String[] getStringValues(CompoundProperty property, Compound excludeCompound, boolean formatted)
 	{
 		List<String> l = new ArrayList<String>();
-		for (Compound c : compounds)
+		for (Compound c : getCompounds())
 			if (c != excludeCompound && c.getStringValue(property) != null)
 				l.add(formatted ? c.getFormattedValue(property) : c.getStringValue(property));
 		String v[] = new String[l.size()];
@@ -484,9 +375,9 @@ public class Cluster implements Zoomable, CompoundPropertyOwner, DoubleNameEleme
 
 	public Double[] getDoubleValues(CompoundProperty property)
 	{
-		Double v[] = new Double[compounds.size()];
+		Double v[] = new Double[getCompounds().size()];
 		for (int i = 0; i < v.length; i++)
-			v[i] = compounds.get(i).getDoubleValue(property);
+			v[i] = getCompounds().get(i).getDoubleValue(property);
 		return v;
 	}
 
@@ -498,39 +389,6 @@ public class Cluster implements Zoomable, CompoundPropertyOwner, DoubleNameEleme
 	public boolean isShowLabel()
 	{
 		return showLabel;
-	}
-
-	public boolean isSuperimposed()
-	{
-		return superimposed;
-	}
-
-	public boolean isSpreadable()
-	{
-		return !allCompoundsHaveSamePosition;
-	}
-
-	@Override
-	public Vector3f getCenter(boolean superimposed)
-	{
-		if (superimposed)
-			return superimposeCenter;
-		else
-			return nonSuperimposeCenter;
-	}
-
-	@Override
-	public float getDiameter(boolean superimposed)
-	{
-		if (superimposed)
-			return superimposeDiameter;
-		else
-			return nonSuperimposeDiameter;
-	}
-
-	public void setSuperimposed(boolean superimposed)
-	{
-		this.superimposed = superimposed;
 	}
 
 	public int numMissingValues(CompoundProperty p)
@@ -558,7 +416,7 @@ public class Cluster implements Zoomable, CompoundPropertyOwner, DoubleNameEleme
 	@Override
 	public String getStringValue(CompoundProperty p)
 	{
-		return getNominalSummary(p).getMode();
+		return clusterData.getStringValue(p);
 	}
 
 	public Color getHighlightColor()
@@ -571,4 +429,5 @@ public class Cluster implements Zoomable, CompoundPropertyOwner, DoubleNameEleme
 	{
 		return displayName.compareTo(m.displayName);
 	}
+
 }

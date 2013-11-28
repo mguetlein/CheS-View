@@ -29,21 +29,26 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableRowSorter;
 
 import main.Settings;
+import cluster.ClusterController;
 import cluster.Clustering;
 
 public abstract class DataTable extends BlockableFrame
 {
 	protected ViewControler viewControler;
+	protected ClusterController clusterControler;
 	protected Clustering clustering;
+
 	protected JTable table;
 	protected DefaultTableModel tableModel;
 	protected TableRowSorter<DefaultTableModel> sorter;
 	protected boolean selfUpdate;
 
-	public DataTable(ViewControler viewControler, Clustering clustering)
+	public DataTable(ViewControler viewControler, ClusterController clusterControler, Clustering clustering)
 	{
+		super(true);
 		this.viewControler = viewControler;
 		this.clustering = clustering;
+		this.clusterControler = clusterControler;
 
 		addListeners();
 
@@ -130,13 +135,9 @@ public abstract class DataTable extends BlockableFrame
 				if (!isVisible())
 					return;
 				if (BlockableFrame.BLOCKED.equals(evt.getPropertyName()))
-				{
 					block(evt.getNewValue().toString());
-				}
 				else if (BlockableFrame.UN_BLOCKED.equals(evt.getPropertyName()))
-				{
 					unblock(evt.getNewValue().toString());
-				}
 			}
 		});
 		Settings.TOP_LEVEL_FRAME.addWindowListener(new WindowAdapter()

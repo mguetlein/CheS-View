@@ -21,7 +21,7 @@ public interface ViewControler
 		wireframe, ballsAndSticks, dots
 	}
 
-	public enum HideCompounds
+	public enum TranslucentCompounds
 	{
 		none, nonWatched, nonActive
 	}
@@ -31,9 +31,9 @@ public interface ViewControler
 		ColorCompounds, Spheres;
 	}
 
-	public HideCompounds getHideCompounds();
+	public TranslucentCompounds getTranslucentCompounds();
 
-	public void setHideCompounds(HideCompounds hide);
+	public void setTranslucentCompounds(TranslucentCompounds hide);
 
 	public boolean isSpinEnabled();
 
@@ -73,6 +73,10 @@ public interface ViewControler
 
 	public Highlighter getHighlighter();
 
+	public Highlighter getHighlighter(SubstructureSmartsType type);
+
+	public Highlighter getHighlighter(CompoundProperty p);
+
 	public void setSuperimpose(boolean superimpose);
 
 	public boolean isSuperimpose();
@@ -103,6 +107,7 @@ public interface ViewControler
 	public static final String PROPERTY_STYLE_CHANGED = "propertyStyleChanged";
 	public static final String PROPERTY_FEATURE_FILTER_CHANGED = "propertyFeatureFilterChanged";
 	public static final String PROPERTY_FEATURE_SORTING_CHANGED = "propertyFeatureSortingChanged";
+	public static final String PROPERTY_COMPOUND_FILTER_CHANGED = "propertyCompoundFilterChanged";
 
 	public boolean isHighlighterLabelsVisible();
 
@@ -176,7 +181,7 @@ public interface ViewControler
 
 	public static enum FeatureFilter
 	{
-		None, NotUsedByEmbedding, UsedByEmbedding
+		None, NotUsedByEmbedding, UsedByEmbedding, Filled, Real, Endpoints
 	}
 
 	public void setFeatureFilter(FeatureFilter filter);
@@ -187,4 +192,15 @@ public interface ViewControler
 
 	public void setFeatureSortingEnabled(boolean b);
 
+	public boolean isShowClusteringPropsEnabled();
+
+	// to remove
+
+	//	public void setZoomToSingleActiveCompounds(boolean b);
+
+	//	public void setCompoundFilter(CompoundFilter filter, boolean animate);
+	//
+	//	public void useSelectedCompoundsAsFilter(String filterDescription, boolean animate);
+	//
+	//	public CompoundFilter getCompoundFilter();
 }

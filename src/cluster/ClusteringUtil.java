@@ -1,35 +1,37 @@
 package cluster;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import javax.vecmath.Vector3f;
 
 import util.Vector3fUtil;
 
 public class ClusteringUtil
 {
-	public static Vector3f[] getClusterPositions(Clustering c)
+	public static List<Vector3f> getClusterPositions(ClusteringImpl c)
 	{
-		Vector3f list[] = new Vector3f[c.getNumClusters()];
-		int i = 0;
+		List<Vector3f> list = new ArrayList<Vector3f>();
 		for (Cluster cc : c.getClusters())
-			list[i++] = cc.getCenter(true);
+			if (cc.size() > 0)
+				list.add(cc.getCenter(true));
 		return list;
 	}
 
-	public static Vector3f[] getCompoundPositions(Cluster c)
+	public static List<Vector3f> getCompoundPositions(CompoundGroup c)
 	{
-		Vector3f list[] = new Vector3f[c.size()];
-		int i = 0;
+		List<Vector3f> list = new ArrayList<Vector3f>();
 		for (Compound m : c.getCompounds())
-			list[i++] = m.getPosition();
+			list.add(m.getPosition());
 		return list;
 	}
 
-	public static Vector3f[] getCompoundPositions(Clustering c)
+	public static Vector3f[] getCompoundPositions(ClusteringImpl c)
 	{
 		return getCompoundPositions(c, true);
 	}
 
-	private static Vector3f[] getCompoundPositions(Clustering c, boolean scale)
+	private static Vector3f[] getCompoundPositions(ClusteringImpl c, boolean scale)
 	{
 		Vector3f list[] = new Vector3f[c.getNumCompounds(true)];
 		int i = 0;
@@ -48,7 +50,7 @@ public class ClusteringUtil
 	 * @param v
 	 * @return
 	 */
-	public static void updateScaleFactor(Clustering c)
+	public static void updateScaleFactor(ClusteringImpl c)
 	{
 		Vector3f[] v = ClusteringUtil.getCompoundPositions(c, false);
 

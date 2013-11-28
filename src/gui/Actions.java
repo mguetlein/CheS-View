@@ -1,13 +1,14 @@
 package gui;
 
 import gui.ViewControler.FeatureFilter;
-import gui.ViewControler.HideCompounds;
 import gui.ViewControler.HighlightMode;
+import gui.ViewControler.TranslucentCompounds;
 import gui.property.ColorGradient;
 import gui.property.ColorGradientChooser;
 import gui.table.ClusterTable;
 import gui.table.CompoundTable;
 import gui.table.FeatureTable;
+import gui.table.TreeView;
 import gui.util.CompoundPropertyHighlighter;
 
 import java.awt.BorderLayout;
@@ -34,17 +35,17 @@ import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 
 import main.Settings;
-import main.TaskProvider;
-import task.Task;
-import task.TaskDialog;
 import util.ArrayUtil;
 import util.CollectionUtil;
 import util.ListUtil;
 import util.SwingUtil;
 import workflow.MappingWorkflow;
+import cluster.Cluster;
+import cluster.ClusterController;
 import cluster.Clustering;
+import cluster.Clustering.SelectionListener;
+import cluster.Compound;
 import cluster.ExportData;
-import data.ClusteringData;
 import dataInterface.CompoundProperty;
 import dataInterface.CompoundProperty.Type;
 
@@ -54,16 +55,18 @@ public class Actions
 
 	private static Actions instance;
 
-	public static Actions getInstance(GUIControler guiControler, ViewControler viewControler, Clustering clustering)
+	public static Actions getInstance(GUIControler guiControler, ViewControler viewControler,
+			ClusterController clusterControler, Clustering clustering)
 	{
 		if (instance == null)
-			instance = new Actions(guiControler, viewControler, clustering);
+			instance = new Actions(guiControler, viewControler, clusterControler, clustering);
 		return instance;
 	}
 
 	private GUIControler guiControler;
 	private ViewControler viewControler;
 	private Clustering clustering;
+	private ClusterController clusterControler;
 
 	private final static String DATA_CLUSTER_TABLE = "file-cluster-table";
 	private final static String DATA_COMPOUND_TABLE = "file-compound-table";
@@ -74,18 +77,21 @@ public class Actions
 	private final static String FILE_EXIT = "file-exit";
 	private final static String[] FILE_ACTIONS = { FILE_NEW, FILE_EXIT };
 
-	private final static String REMOVE_CURRENT = "remove-current";
+	private final static String REMOVE_SELECTED = "remove-selected";
+	private final static String REMOVE_UNSELECTED = "remove-unselected";
 	private final static String REMOVE_CLUSTERS = "remove-clusters";
 	private final static String REMOVE_COMPOUNDS = "remove-compounds";
-	private final static String[] REMOVE_ACTIONS = { REMOVE_CURRENT, REMOVE_CLUSTERS, REMOVE_COMPOUNDS };
+	private final static String[] REMOVE_ACTIONS = { REMOVE_SELECTED, REMOVE_UNSELECTED, REMOVE_CLUSTERS,
+			REMOVE_COMPOUNDS };
 
-	private final static String EXPORT_CURRENT = "export-current";
+	private final static String EXPORT_SELECTED = "export-selected";
+	private final static String EXPORT_UNSELECTED = "export-unselected";
 	private final static String EXPORT_CLUSTERS = "export-clusters";
 	private final static String EXPORT_COMPOUNDS = "export-compounds";
 	private final static String EXPORT_IMAGE = "export-image";
 	private final static String EXPORT_WORKFLOW = "export-workflow";
-	private final static String[] EXPORT_ACTIONS = { EXPORT_CURRENT, EXPORT_CLUSTERS, EXPORT_COMPOUNDS, EXPORT_IMAGE,
-			EXPORT_WORKFLOW };
+	private final static String[] EXPORT_ACTIONS = { EXPORT_SELECTED, EXPORT_UNSELECTED, EXPORT_CLUSTERS,
+			EXPORT_COMPOUNDS, EXPORT_IMAGE, EXPORT_WORKFLOW };
 
 	private final static String VIEW_HIDE_NONE = "view-hide-none";
 	private final static String VIEW_HIDE_NON_WATCHED = "view-hide-non-watched";
@@ -130,10 +136,11 @@ public class Actions
 	private final static String HIDDEN_DECR_FONT_SIZE = "decr-font-size";
 	private final static String HIDDEN_FILTER_FEATURES = "filter-features";
 	private final static String HIDDEN_TOGGLE_SORTING = "toggle-sorting";
+	private final static String HIDDEN_TREE = "tree";
 	private final static String[] HIDDEN_ACTIONS = { HIDDEN_UPDATE_MOUSE_SELECTION_PRESSED,
 			HIDDEN_UPDATE_MOUSE_SELECTION_RELEASED, HIDDEN_DECR_COMPOUND_SIZE, HIDDEN_INCR_COMPOUND_SIZE,
 			HIDDEN_ENABLE_JMOL_POPUP, HIDDEN_INCR_SPIN_SPEED, HIDDEN_DECR_SPIN_SPEED, HIDDEN_INCR_FONT_SIZE,
-			HIDDEN_DECR_FONT_SIZE, HIDDEN_FILTER_FEATURES, HIDDEN_TOGGLE_SORTING };
+			HIDDEN_DECR_FONT_SIZE, HIDDEN_FILTER_FEATURES, HIDDEN_TOGGLE_SORTING, HIDDEN_TREE };
 
 	private HashMap<String, Action> actions = new LinkedHashMap<String, Action>();
 
@@ -146,7 +153,7 @@ public class Actions
 		keys.put(DATA_FEATURE_TABLE, KeyStroke.getKeyStroke(KeyEvent.VK_3, ActionEvent.ALT_MASK));
 		keys.put(FILE_NEW, KeyStroke.getKeyStroke(KeyEvent.VK_N, ActionEvent.ALT_MASK));
 		keys.put(FILE_EXIT, KeyStroke.getKeyStroke(KeyEvent.VK_F4, ActionEvent.ALT_MASK));
-		keys.put(REMOVE_CURRENT, KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, ActionEvent.ALT_MASK));
+		keys.put(REMOVE_SELECTED, KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, ActionEvent.ALT_MASK));
 		keys.put(EXPORT_IMAGE, KeyStroke.getKeyStroke(KeyEvent.VK_I, ActionEvent.ALT_MASK));
 		keys.put(EXPORT_WORKFLOW, KeyStroke.getKeyStroke(KeyEvent.VK_W, ActionEvent.ALT_MASK));
 		keys.put(VIEW_FULL_SCREEN, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, ActionEvent.ALT_MASK));
@@ -181,13 +188,16 @@ public class Actions
 		keys.put(HIDDEN_DECR_FONT_SIZE, KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, ActionEvent.CTRL_MASK));// | ActionEvent.ALT_MASK));
 		keys.put(HIDDEN_FILTER_FEATURES, KeyStroke.getKeyStroke(KeyEvent.VK_M, ActionEvent.ALT_MASK));
 		keys.put(HIDDEN_TOGGLE_SORTING, KeyStroke.getKeyStroke(KeyEvent.VK_O, ActionEvent.ALT_MASK));
+		keys.put(HIDDEN_TREE, KeyStroke.getKeyStroke(KeyEvent.VK_4, ActionEvent.ALT_MASK));
 	}
 
-	private Actions(GUIControler guiControler, ViewControler viewControler, Clustering clustering)
+	private Actions(GUIControler guiControler, ViewControler viewControler, ClusterController clusterControler,
+			Clustering clustering)
 	{
 		this.guiControler = guiControler;
 		this.viewControler = viewControler;
 		this.clustering = clustering;
+		this.clusterControler = clusterControler;
 
 		buildActions();
 		setAccelerators();
@@ -197,34 +207,28 @@ public class Actions
 
 	private void installListeners()
 	{
-		clustering.getClusterActive().addListener(new PropertyChangeListener()
+		clustering.addSelectionListener(new SelectionListener()
 		{
 			@Override
-			public void propertyChange(PropertyChangeEvent evt)
+			public void compoundWatchedChanged(Compound[] c)
 			{
 				update();
 			}
-		});
-		clustering.getClusterWatched().addListener(new PropertyChangeListener()
-		{
+
 			@Override
-			public void propertyChange(PropertyChangeEvent evt)
+			public void compoundActiveChanged(Compound[] c)
 			{
 				update();
 			}
-		});
-		clustering.getCompoundWatched().addListener(new PropertyChangeListener()
-		{
+
 			@Override
-			public void propertyChange(PropertyChangeEvent evt)
+			public void clusterWatchedChanged(Cluster c)
 			{
 				update();
 			}
-		});
-		clustering.getCompoundActive().addListener(new PropertyChangeListener()
-		{
+
 			@Override
-			public void propertyChange(PropertyChangeEvent evt)
+			public void clusterActiveChanged(Cluster c)
 			{
 				update();
 			}
@@ -241,56 +245,111 @@ public class Actions
 
 	private void update()
 	{
-		int m[] = new int[0];
-		Integer c = null;
+		Compound selectedCompounds[] = new Compound[0];
+		if (clustering.isCompoundActive())
+			selectedCompounds = clustering.getActiveCompounds();
+		if (clustering.isCompoundWatched())
+			selectedCompounds = ArrayUtil.removeDuplicates(Compound.class,
+					ArrayUtil.concat(Compound.class, selectedCompounds, clustering.getWatchedCompounds()));
 
-		if (!clustering.isClusterActive() && clustering.isClusterWatched())
-			c = clustering.getClusterWatched().getSelected();
+		Cluster selectedClusters[] = new Cluster[0];
+		if (clustering.numClusters() > 1 && clustering.isClusterWatched())
+			selectedClusters = new Cluster[] { clustering.getWatchedCluster() };
+		else if (clustering.numClusters() > 1 && clustering.isClusterActive())
+			selectedClusters = new Cluster[] { clustering.getActiveCluster() };
+
+		List<Cluster> unselectedClustersList = new ArrayList<Cluster>(clustering.getClusters());
+		for (Cluster cluster : selectedClusters)
+			unselectedClustersList.remove(cluster);
+		Cluster unselectedClusters[] = ArrayUtil.toArray(Cluster.class, unselectedClustersList);
+		List<Compound> unselectedCompoundsList = new ArrayList<Compound>(clustering.getCompounds(true));
+		for (Compound compound : selectedCompounds)
+			unselectedCompoundsList.remove(compound);
+		Compound unselectedCompounds[] = ArrayUtil.toArray(Compound.class, unselectedCompoundsList);
+
+		String actionsX[] = new String[] { REMOVE_SELECTED, REMOVE_UNSELECTED, EXPORT_SELECTED, EXPORT_UNSELECTED };
+		String actionStrings[] = new String[] { "Remove", "Remove", "Export", "Export" };
+		boolean selectedX[] = new boolean[] { true, false, true, false };
+
+		for (int i = 0; i < selectedX.length; i++)
+		{
+			AbstractAction action = (AbstractAction) actions.get(actionsX[i]);
+			boolean selected = selectedX[i];
+			String actionString = actionStrings[i] + " " + (selected ? "selected" : "un-selected");
+			Cluster clusters[] = selected ? selectedClusters : unselectedClusters;
+			Compound compounds[] = selected ? selectedCompounds : unselectedCompounds;
+			action.putValue("Compound", new Compound[0]);
+			action.putValue("Cluster", new Cluster[0]);
+
+			if (selectedCompounds.length > 0 || selectedClusters.length > 0)
+			{
+				if (selectedCompounds.length > 0)
+				{
+					action.putValue("Compound", compounds);
+					if (compounds.length == 1)
+						action.putValue(Action.NAME, actionString + " " + compounds[0]);
+					else if (compounds.length > 1)
+						action.putValue(Action.NAME, actionString + " " + compounds.length + " compounds");
+					else
+						throw new IllegalStateException();
+				}
+				else if (selectedClusters.length > 0)
+				{
+					action.putValue("Cluster", clusters);
+					if (clusters.length == 1)
+						action.putValue(Action.NAME, actionString + " " + clusters[0].getName());
+					else if (clusters.length > 1)
+						action.putValue(Action.NAME, actionString + " " + clusters.length + " clusters");
+					else
+						throw new IllegalStateException();
+				}
+				else
+					throw new IllegalStateException();
+				action.setEnabled(true);
+			}
+			else
+			{
+				action.putValue(Action.NAME, actionString + " cluster/compound");
+				action.setEnabled(false);
+			}
+		}
+	}
+
+	private void removeOrExport(boolean remove, AbstractAction action)
+	{
+		final Compound comps[] = (Compound[]) action.getValue("Compound");
+		final Cluster c[] = (Cluster[]) action.getValue("Cluster");
+		if (remove)
+		{
+			Thread th = new Thread(new Runnable()
+			{
+				public void run()
+				{
+					if (comps.length > 0)
+						clusterControler.removeCompounds(comps);
+					else if (c.length > 0)
+						clusterControler.removeCluster(c);
+				}
+			});
+			th.start();
+		}
 		else
 		{
-			if (clustering.isCompoundActive())
-				m = ArrayUtil.concat(m, clustering.getCompoundActive().getSelectedIndices());
-			if (clustering.isCompoundWatched()
-					&& ArrayUtil.indexOf(m, clustering.getCompoundWatched().getSelected()) == -1)
-				m = ArrayUtil.concat(m, new int[] { clustering.getCompoundWatched().getSelected() });
-		}
-
-		actions.get(REMOVE_CURRENT).putValue("Cluster", c);
-		actions.get(REMOVE_CURRENT).putValue("Compound", m);
-
-		if (m.length > 0 || c != null)
-		{
-			if (m.length == 1)
+			if (comps.length > 0)
 			{
-				((AbstractAction) actions.get(REMOVE_CURRENT)).putValue(Action.NAME,
-						"Remove " + clustering.getCompoundWithCompoundIndex(m[0]));
-				((AbstractAction) actions.get(EXPORT_CURRENT)).putValue(Action.NAME,
-						"Export " + clustering.getCompoundWithCompoundIndex(m[0]));
+				int[] compoundOrigIndices = new int[comps.length];
+				for (int i = 0; i < compoundOrigIndices.length; i++)
+					compoundOrigIndices[i] = comps[i].getOrigIndex();
+				ExportData.exportCompoundsWithOrigIndices(clustering, compoundOrigIndices,
+						viewControler.getCompoundDescriptor());
 			}
-			else if (m.length > 1)
+			else if (c.length > 0)
 			{
-				((AbstractAction) actions.get(REMOVE_CURRENT)).putValue(Action.NAME, "Remove " + m.length
-						+ " Compounds");
-				((AbstractAction) actions.get(EXPORT_CURRENT)).putValue(Action.NAME, "Export " + m.length
-						+ " Compounds");
+				int[] clusterIndices = new int[c.length];
+				for (int i = 0; i < clusterIndices.length; i++)
+					clusterIndices[i] = clustering.indexOf(c[i]);
+				ExportData.exportClusters(clustering, clusterIndices, viewControler.getCompoundDescriptor());
 			}
-			else if (c != -1)
-			{
-				((AbstractAction) actions.get(REMOVE_CURRENT)).putValue(Action.NAME,
-						"Remove " + clustering.getCluster(c).getName());
-				((AbstractAction) actions.get(EXPORT_CURRENT)).putValue(Action.NAME,
-						"Export " + clustering.getCluster(c).getName());
-			}
-			actions.get(REMOVE_CURRENT).setEnabled(true);
-			actions.get(EXPORT_CURRENT).setEnabled(true);
-		}
-		else
-		{
-			((AbstractAction) actions.get(REMOVE_CURRENT)).putValue(Action.NAME, "Remove Selected Cluster/Compound");
-			actions.get(REMOVE_CURRENT).setEnabled(false);
-
-			((AbstractAction) actions.get(EXPORT_CURRENT)).putValue(Action.NAME, "Export Selected Cluster/Compound");
-			actions.get(EXPORT_CURRENT).setEnabled(false);
 		}
 	}
 
@@ -412,7 +471,7 @@ public class Actions
 			@Override
 			public void action()
 			{
-				newClustering(0);
+				newClustering();
 			}
 		};
 		new ActionCreator(DATA_CLUSTER_TABLE)
@@ -420,7 +479,7 @@ public class Actions
 			@Override
 			public void action()
 			{
-				new ClusterTable(viewControler, clustering);
+				new ClusterTable(viewControler, clusterControler, clustering);
 			}
 		};
 		new ActionCreator(DATA_COMPOUND_TABLE)
@@ -428,7 +487,7 @@ public class Actions
 			@Override
 			public void action()
 			{
-				new CompoundTable(viewControler, clustering);
+				new CompoundTable(viewControler, clusterControler, clustering);
 			}
 		};
 		new ActionCreator(DATA_FEATURE_TABLE)
@@ -436,7 +495,7 @@ public class Actions
 			@Override
 			public void action()
 			{
-				new FeatureTable(viewControler, clustering);
+				new FeatureTable(viewControler, clusterControler, clustering);
 			}
 		};
 		new ActionCreator(FILE_EXIT)
@@ -454,19 +513,20 @@ public class Actions
 				LaunchCheSMapper.exit(f);
 			}
 		};
-		new ActionCreator(REMOVE_CURRENT)
+		new ActionCreator(REMOVE_SELECTED)
 		{
 			@Override
 			public void action()
 			{
-				int[] m = (int[]) ((AbstractAction) actions.get(REMOVE_CURRENT)).getValue("Compound");
-				Integer c = (Integer) ((AbstractAction) actions.get(REMOVE_CURRENT)).getValue("Cluster");
-				View.instance.suspendAnimation("remove selected");
-				if (m.length > 0)
-					clustering.removeCompounds(m);
-				else if (c != null)
-					clustering.removeCluster(c);
-				View.instance.proceedAnimation("remove selected");
+				removeOrExport(true, (AbstractAction) actions.get(REMOVE_SELECTED));
+			}
+		};
+		new ActionCreator(REMOVE_UNSELECTED)
+		{
+			@Override
+			public void action()
+			{
+				removeOrExport(true, (AbstractAction) actions.get(REMOVE_UNSELECTED));
 			}
 		};
 		new ActionCreator(REMOVE_CLUSTERS)
@@ -474,9 +534,7 @@ public class Actions
 			@Override
 			public void action()
 			{
-				View.instance.suspendAnimation("remove clusters");
-				clustering.chooseClustersToRemove();
-				View.instance.proceedAnimation("remove clusters");
+				clusterControler.chooseClustersToRemove();
 			}
 		};
 		new ActionCreator(REMOVE_COMPOUNDS)
@@ -484,22 +542,23 @@ public class Actions
 			@Override
 			public void action()
 			{
-				View.instance.suspendAnimation("remove compounds");
-				clustering.chooseCompoundsToRemove();
-				View.instance.proceedAnimation("remove compounds");
+				clusterControler.chooseCompoundsToRemove();
 			}
 		};
-		new ActionCreator(EXPORT_CURRENT)
+		new ActionCreator(EXPORT_SELECTED)
 		{
 			@Override
 			public void action()
 			{
-				int[] m = (int[]) ((AbstractAction) actions.get(REMOVE_CURRENT)).getValue("Compound");
-				Integer c = (Integer) ((AbstractAction) actions.get(REMOVE_CURRENT)).getValue("Cluster");
-				if (m.length > 0)
-					ExportData.exportCompounds(clustering, m, viewControler.getCompoundDescriptor());
-				else if (c != null)
-					ExportData.exportClusters(clustering, new int[] { c }, viewControler.getCompoundDescriptor());
+				removeOrExport(false, (AbstractAction) actions.get(EXPORT_SELECTED));
+			}
+		};
+		new ActionCreator(EXPORT_UNSELECTED)
+		{
+			@Override
+			public void action()
+			{
+				removeOrExport(false, (AbstractAction) actions.get(EXPORT_UNSELECTED));
 			}
 		};
 		new ActionCreator(EXPORT_CLUSTERS)
@@ -568,13 +627,13 @@ public class Actions
 			@Override
 			public void action()
 			{
-				viewControler.setHideCompounds(HideCompounds.none);
+				viewControler.setTranslucentCompounds(TranslucentCompounds.none);
 			}
 
 			@Override
 			public Boolean isSelected()
 			{
-				return viewControler.getHideCompounds() == HideCompounds.none;
+				return viewControler.getTranslucentCompounds() == TranslucentCompounds.none;
 			}
 		};
 		new RadioActionCreator(VIEW_HIDE_NON_WATCHED, ViewControler.PROPERTY_HIDE_UNSELECT_CHANGED)
@@ -582,13 +641,13 @@ public class Actions
 			@Override
 			public void action()
 			{
-				viewControler.setHideCompounds(HideCompounds.nonWatched);
+				viewControler.setTranslucentCompounds(TranslucentCompounds.nonWatched);
 			}
 
 			@Override
 			public Boolean isSelected()
 			{
-				return viewControler.getHideCompounds() == HideCompounds.nonWatched;
+				return viewControler.getTranslucentCompounds() == TranslucentCompounds.nonWatched;
 			}
 		};
 		new RadioActionCreator(VIEW_HIDE_NON_ACTIVE, ViewControler.PROPERTY_HIDE_UNSELECT_CHANGED)
@@ -596,13 +655,13 @@ public class Actions
 			@Override
 			public void action()
 			{
-				viewControler.setHideCompounds(HideCompounds.nonActive);
+				viewControler.setTranslucentCompounds(TranslucentCompounds.nonActive);
 			}
 
 			@Override
 			public Boolean isSelected()
 			{
-				return viewControler.getHideCompounds() == HideCompounds.nonActive;
+				return viewControler.getTranslucentCompounds() == TranslucentCompounds.nonActive;
 			}
 		};
 
@@ -964,53 +1023,20 @@ public class Actions
 				viewControler.setFeatureSortingEnabled(!viewControler.isFeatureSortingEnabled());
 			}
 		};
+		new ActionCreator(HIDDEN_TREE)
+		{
+			@Override
+			public void action()
+			{
+				new TreeView(viewControler, clusterControler, clustering, guiControler);
+			}
+		};
 
 	}
 
-	private void newClustering(final int startPanel)
+	private void newClustering()
 	{
-		guiControler.block("new clustering");
-		Thread noAWTThread = new Thread(new Runnable()
-		{
-			public void run()
-			{
-				try
-				{
-					JFrame top = Settings.TOP_LEVEL_FRAME;
-					CheSMapperWizard wwd = null;
-					while (wwd == null || wwd.getReturnValue() == CheSMapperWizard.RETURN_VALUE_IMPORT)
-					{
-						wwd = new CheSMapperWizard(top, startPanel);
-						wwd.setCloseButtonText("Cancel");
-						Settings.TOP_LEVEL_FRAME = top;
-						SwingUtil.waitWhileVisible(wwd);
-					}
-					if (wwd.getReturnValue() == CheSMapperWizard.RETURN_VALUE_FINISH)
-					{
-						View.instance.suspendAnimation("remap");
-						guiControler.blockMessages();
-						clustering.clear();
-						Task task = TaskProvider.initTask("Chemical space mapping");
-						new TaskDialog(task, Settings.TOP_LEVEL_FRAME);
-						ClusteringData d = wwd.getChesMapping().doMapping();
-						if (d != null)
-						{
-							clustering.newClustering(d);
-							clustering.initFeatureNormalization();
-							task.finish();
-						}
-						TaskProvider.removeTask();
-						View.instance.proceedAnimation("remap");
-					}
-				}
-				finally
-				{
-					guiControler.unblockMessages();
-					guiControler.unblock("new clustering");
-				}
-			}
-		});
-		noAWTThread.start();
+		clusterControler.newClustering();
 	}
 
 	public static void showAboutDialog()

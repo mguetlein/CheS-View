@@ -25,9 +25,9 @@ import org.jmol.viewer.Viewer;
 
 import util.DoubleArraySummary;
 import util.FileUtil;
-import util.SequentialWorkerThread;
+import util.SwingUtil;
 import util.Vector3fUtil;
-import cluster.Clustering;
+import cluster.ClusteringImpl;
 import cluster.Compound;
 
 public class View
@@ -36,7 +36,7 @@ public class View
 	GUIControler guiControler;
 	public static View instance;
 	ViewControler viewControler;
-	private Clustering clustering;
+	private ClusteringImpl clustering;
 
 	public boolean antialiasOn = false;
 
@@ -47,7 +47,7 @@ public class View
 		SLOW, FAST
 	}
 
-	private View(Viewer viewer, GUIControler guiControler, ViewControler viewControler, final Clustering clustering)
+	private View(Viewer viewer, GUIControler guiControler, ViewControler viewControler, final ClusteringImpl clustering)
 	{
 		this.viewer = viewer;
 		this.guiControler = guiControler;
@@ -59,9 +59,9 @@ public class View
 			@Override
 			public void propertyChange(PropertyChangeEvent evt)
 			{
-				if (evt.getPropertyName().equals(Clustering.CLUSTER_REMOVED)
-						|| evt.getPropertyName().equals(Clustering.CLUSTER_MODIFIED)
-						|| evt.getPropertyName().equals(Clustering.CLUSTER_CLEAR))
+				if (evt.getPropertyName().equals(ClusteringImpl.CLUSTER_REMOVED)
+						|| evt.getPropertyName().equals(ClusteringImpl.CLUSTER_MODIFIED)
+						|| evt.getPropertyName().equals(ClusteringImpl.CLUSTER_CLEAR))
 				{
 					medianDiameter = null;
 					for (Compound m : spheresForCompound)
@@ -78,10 +78,11 @@ public class View
 		hideHydrogens(viewControler.isHideHydrogens());
 	}
 
-	public static void init(JmolPanel jmolPanel, GUIControler guiControler, ViewControler viewControler,
-			Clustering clustering)
+	public static View init(JmolPanel jmolPanel, GUIControler guiControler, ViewControler viewControler,
+			ClusteringImpl clustering)
 	{
 		instance = new View((Viewer) jmolPanel.getViewer(), guiControler, viewControler, clustering);
+		return instance;
 	}
 
 	public synchronized void setAntialiasOn(boolean antialias)
@@ -119,6 +120,13 @@ public class View
 		zoomTo(zoomable, speed, null);
 	}
 
+	private void checkNoAWT()
+	{
+		SwingUtil.checkNoAWTEventThread();
+		if (guiControler.isVisible() && !guiControler.isBlocked())
+			throw new IllegalStateException("animation running, gui should be blocked");
+	}
+
 	public synchronized void zoomTo(final Zoomable zoomable, final AnimationSpeed speed, Boolean superimposed)
 	{
 		if (superimposed == null)
@@ -138,28 +146,21 @@ public class View
 
 		if (isAnimated())
 		{
-			guiControler.block("zoom to " + Vector3fUtil.toString(center));
+			checkNoAWT();
 			final int finalZoom = zoom;
-			sequentially(new Runnable()
+			boolean setAntialiasBackOn = false;
+			if (viewControler.isAntialiasEnabled() && antialiasOn)
 			{
-				@Override
-				public void run()
-				{
-					boolean setAntialiasBackOn = false;
-					if (viewControler.isAntialiasEnabled() && antialiasOn)
-					{
-						setAntialiasBackOn = true;
-						setAntialiasOn(false);
-					}
-					String cmd = "zoomto " + (speed == AnimationSpeed.SLOW ? 0.66 : 0.33) + " "
-							+ Vector3fUtil.toString(center) + " " + finalZoom;
-					viewer.scriptWait(cmd);
-					if (setAntialiasBackOn)
-						setAntialiasOn(true);
-					zoomedTo = zoomable;
-					guiControler.unblock("zoom to " + Vector3fUtil.toString(center));
-				}
-			}, "zoom to " + zoomable);
+				setAntialiasBackOn = true;
+				setAntialiasOn(false);
+			}
+			String cmd = "zoomto " + (speed == AnimationSpeed.SLOW ? 0.66 : 0.33) + " " + Vector3fUtil.toString(center)
+					+ " " + finalZoom;
+			//					Settings.LOGGER.warn("XX zoom> " + cmd);
+			viewer.scriptWait(cmd);
+			if (setAntialiasBackOn)
+				setAntialiasOn(true);
+			zoomedTo = zoomable;
 		}
 		else
 		{
@@ -221,15 +222,8 @@ public class View
 	public synchronized void scriptWait(String script)
 	{
 		evalScript(script);
-		//		Settings.LOGGER.warn("XX> " + script);
+		//		Settings.LOGGER.warn("XX wait> " + script);
 		viewer.scriptWait(script);
-	}
-
-	public synchronized void evalString(String script)
-	{
-		evalScript(script);
-		//		Settings.LOGGER.warn("XX> " + script);
-		viewer.evalString(script);
 	}
 
 	public synchronized void selectAll()
@@ -280,7 +274,7 @@ public class View
 	{
 		if (spheresForCompound.contains(m))
 		{
-			String id = "sphere" + m.getCompoundIndex();
+			String id = "sphere" + m.getJmolIndex();
 			scriptWait("ellipsoid ID " + id + " color translucent 1.0");
 			scriptWait("ellipsoid ID " + id + "_2 color translucent 1.0");
 		}
@@ -304,7 +298,7 @@ public class View
 	{
 		if (spheresForCompound.contains(m))
 		{
-			String id = "sphere" + m.getCompoundIndex();
+			String id = "sphere" + m.getJmolIndex();
 
 			//			BoxInfo info = viewer.getBoxInfo(m.getBitSet(), 1.0F);
 			//				Point3f center = info.getBoundBoxCenter();
@@ -334,7 +328,7 @@ public class View
 
 	public synchronized void showSphere(Compound m, boolean showLastHighlightColor, boolean updateSizeAndPos)
 	{
-		String id = "sphere" + m.getCompoundIndex();
+		String id = "sphere" + m.getJmolIndex();
 		if (!spheresForCompound.contains(m) || updateSizeAndPos)
 		{
 			spheresForCompound.add(m);
@@ -387,26 +381,18 @@ public class View
 	{
 		if (isAnimated() && c.size() > 1)
 		{
-			guiControler.block("spread cluster " + c);
-			sequentially(new Runnable()
+			checkNoAWT();
+			int n = (overlapAnim == AnimationSpeed.SLOW) ? 24 : 10;
+			for (int i = 0; i < n; i++)
 			{
-				@Override
-				public void run()
+				for (int j = 0; j < bitSet.size(); j++)
 				{
-					int n = (overlapAnim == AnimationSpeed.SLOW) ? 24 : 10;
-					for (int i = 0; i < n; i++)
-					{
-						for (int j = 0; j < bitSet.size(); j++)
-						{
-							Vector3f v = new Vector3f(c.get(j));
-							v.scale(1 / (float) n);
-							viewer.setAtomCoordRelative(v, bitSet.get(j));
-						}
-						viewer.scriptWait("delay 0.01");
-					}
-					guiControler.unblock("spread cluster " + c);
+					Vector3f v = new Vector3f(c.get(j));
+					v.scale(1 / (float) n);
+					viewer.setAtomCoordRelative(v, bitSet.get(j));
 				}
-			}, "move bitsets");
+				viewer.scriptWait("delay 0.01");
+			}
 		}
 		else
 		{
@@ -456,25 +442,7 @@ public class View
 
 	public synchronized boolean isAnimated()
 	{
-		return animSuspend.size() == 0;
-	}
-
-	SequentialWorkerThread swt = new SequentialWorkerThread();
-
-	private void sequentially(final Runnable r, final String name)
-	{
-		if (swt.runningInThread())
-			r.run();
-		else
-			swt.addJob(r, name);
-	}
-
-	public void afterAnimation(final Runnable r, final String name)
-	{
-		if (isAnimated())
-			swt.addJob(r, name);
-		else
-			r.run();
+		return guiControler.isVisible() && animSuspend.size() == 0;
 	}
 
 	public synchronized void hideHydrogens(boolean b)

@@ -20,17 +20,18 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableRowSorter;
 
-import util.SelectionModel;
 import util.StringUtil;
 import cluster.Cluster;
+import cluster.ClusterController;
 import cluster.Clustering;
+import cluster.Clustering.SelectionListener;
 import dataInterface.CompoundProperty;
 
 public class ClusterTable extends CCDataTable
 {
-	public ClusterTable(final ViewControler viewControler, final Clustering clustering)
+	public ClusterTable(ViewControler viewControler, ClusterController clusterControler, Clustering clustering)
 	{
-		super(viewControler, clustering);
+		super(viewControler, clusterControler, clustering);
 	}
 
 	@Override
@@ -72,24 +73,22 @@ public class ClusterTable extends CCDataTable
 			tableModel.addRow(o);
 		}
 
-		clustering.getClusterActive().addListener(new PropertyChangeListener()
+		clustering.addSelectionListener(new SelectionListener()
 		{
 			@Override
-			public void propertyChange(PropertyChangeEvent evt)
+			public void clusterWatchedChanged(Cluster c)
 			{
 				if (!isVisible())
 					return;
-				updateTableFromSelection(clustering.getClusterActive(), null, table.getClickSelectionModel());
+				updateTableFromSelection(false, clustering.getWatchedClusterIdx());
 			}
-		});
-		clustering.getClusterWatched().addListener(new PropertyChangeListener()
-		{
+
 			@Override
-			public void propertyChange(PropertyChangeEvent evt)
+			public void clusterActiveChanged(Cluster c)
 			{
 				if (!isVisible())
 					return;
-				updateTableFromSelection(clustering.getClusterWatched(), table.getSelectionModel(), null);
+				updateTableFromSelection(true, clustering.getActiveClusterIdx());
 			}
 		});
 
@@ -111,7 +110,7 @@ public class ClusterTable extends CCDataTable
 			@Override
 			public void propertyChange(PropertyChangeEvent e)
 			{
-				updateClusterFromTable(table.getClickSelectionModel().getSelected(), clustering.getClusterActive());
+				updateClusterFromTable(table.getClickSelectionModel().getSelected(), true);
 			}
 		});
 
@@ -122,7 +121,7 @@ public class ClusterTable extends CCDataTable
 			{
 				if (e.getValueIsAdjusting())
 					return;
-				updateClusterFromTable(table.getSelectedRow(), clustering.getClusterWatched());
+				updateClusterFromTable(table.getSelectedRow(), false);
 			}
 		});
 		ClickMouseOverRenderer renderer = new ClickMouseOverTable.ClickMouseOverRenderer(table)
@@ -174,8 +173,8 @@ public class ClusterTable extends CCDataTable
 		table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 		table.setGridColor(ComponentFactory.BACKGROUND);
 
-		updateTableFromSelection(clustering.getClusterWatched(), table.getSelectionModel(), null);
-		updateTableFromSelection(clustering.getClusterActive(), null, table.getClickSelectionModel());
+		updateTableFromSelection(true, clustering.getActiveClusterIdx());
+		updateTableFromSelection(false, clustering.getWatchedClusterIdx());
 		updateFeatureSelection();
 
 		return table;
@@ -211,53 +210,38 @@ public class ClusterTable extends CCDataTable
 		return "cluster-table";
 	}
 
-	private void updateClusterFromTable(int tableSelection, SelectionModel modelSelection)
+	private void updateClusterFromTable(int tableSelection, final boolean active)
 	{
 		if (selfUpdate)
 			return;
 		selfUpdate = true;
-		final int row = tableSelection;
-		if (row == -1)
-			modelSelection.clearSelection();
+		int row = tableSelection;
+		final Cluster c;
+		if (row != -1)
+			c = clustering.getCluster(sorter.convertRowIndexToModel(row));
 		else
-			//if (row.length == 1)
-			modelSelection.setSelected(sorter.convertRowIndexToModel(row));
-		//		else
-		//		{
-		//			View.instance.suspendAnimation("manual zooming out");
-		//			block("waiting for anim");
-		//			for (int i = 0; i < row.length; i++)
-		//				row[i] = sorter.convertRowIndexToModel(row[i]);
-		//			modelSelection.setSelectedIndices(row);
-		//			Thread th = new Thread(new Runnable()
-		//			{
-		//				public void run()
-		//				{
-		//					ThreadUtil.sleep(300);
-		//					View.instance.afterAnimation(new Runnable()
-		//					{
-		//						@Override
-		//						public void run()
-		//						{
-		//							View.instance.proceedAnimation("manual zooming out");
-		//							if (View.instance.getZoomTarget() != clustering)
-		//								View.instance.zoomTo(clustering, AnimationSpeed.SLOW, false);
-		//							View.instance.afterAnimation(new Runnable()
-		//							{
-		//
-		//								@Override
-		//								public void run()
-		//								{
-		//									unblock("waiting for anim");
-		//								}
-		//							}, "wait for anim");
-		//						}
-		//					}, "manual zooming out");
-		//				}
-		//			});
-		//			th.start();
-		//		}
-		selfUpdate = false;
+			c = null;
+		Thread th = new Thread(new Runnable()
+		{
+			public void run()
+			{
+				if (active)
+				{
+					if (c == null)
+						clusterControler.clearClusterActive(true, true);
+					else
+						clusterControler.setClusterActive(c, true, true);
+				}
+				else
+				{
+					if (c == null)
+						clusterControler.clearClusterWatched();
+					else
+						clusterControler.setClusterWatched(c);
+				}
+				selfUpdate = false;
+			}
+		});
+		th.start();
 	}
-
 }

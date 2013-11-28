@@ -43,8 +43,8 @@ public class ExportData
 	{
 		List<Integer> l = new ArrayList<Integer>();
 		for (Compound m : clustering.getCompounds(false))
-			l.add(m.getCompoundOrigIndex());
-		exportCompounds(clustering, l, compoundDescriptorFeature, script);
+			l.add(m.getOrigIndex());
+		exportCompoundsWithOrigIndices(clustering, l, compoundDescriptorFeature, script);
 	}
 
 	public static void exportClusters(Clustering clustering, int clusterIndices[],
@@ -53,26 +53,28 @@ public class ExportData
 		List<Integer> l = new ArrayList<Integer>();
 		for (int i = 0; i < clusterIndices.length; i++)
 			for (Compound m : clustering.getCluster(clusterIndices[i]).getCompounds())
-				l.add(m.getCompoundOrigIndex());
-		exportCompounds(clustering, l, compoundDescriptorFeature, null);
+				l.add(m.getOrigIndex());
+		exportCompoundsWithOrigIndices(clustering, l, compoundDescriptorFeature, null);
 	}
 
-	public static void exportCompounds(Clustering clustering, List<Integer> compoundIndices,
+	public static void exportCompoundsWithOrigIndices(Clustering clustering, List<Integer> compoundOrigIndices,
 			CompoundProperty compoundDescriptorFeature)
 	{
-		exportCompounds(clustering, ArrayUtil.toPrimitiveIntArray(compoundIndices), compoundDescriptorFeature, null);
+		exportCompoundsWithOrigIndices(clustering, ArrayUtil.toPrimitiveIntArray(compoundOrigIndices),
+				compoundDescriptorFeature, null);
 	}
 
-	public static void exportCompounds(Clustering clustering, List<Integer> compoundIndices,
+	public static void exportCompoundsWithOrigIndices(Clustering clustering, List<Integer> compoundOrigIndices,
 			CompoundProperty compoundDescriptorFeature, Script script)
 	{
-		exportCompounds(clustering, ArrayUtil.toPrimitiveIntArray(compoundIndices), compoundDescriptorFeature, script);
+		exportCompoundsWithOrigIndices(clustering, ArrayUtil.toPrimitiveIntArray(compoundOrigIndices),
+				compoundDescriptorFeature, script);
 	}
 
-	public static void exportCompounds(Clustering clustering, int compoundOrigIndices[],
+	public static void exportCompoundsWithOrigIndices(Clustering clustering, int compoundOrigIndices[],
 			CompoundProperty compoundDescriptorFeature)
 	{
-		exportCompounds(clustering, compoundOrigIndices, compoundDescriptorFeature, null);
+		exportCompoundsWithOrigIndices(clustering, compoundOrigIndices, compoundDescriptorFeature, null);
 	}
 
 	public static class Script
@@ -102,7 +104,7 @@ public class ExportData
 		return p.toString();
 	}
 
-	public static void exportCompounds(Clustering clustering, int compoundOrigIndices[],
+	public static void exportCompoundsWithOrigIndices(Clustering clustering, int compoundOrigIndices[],
 			CompoundProperty compoundDescriptorFeature, Script script)
 	{
 		String dest;
@@ -133,7 +135,7 @@ public class ExportData
 		boolean csvExport = FileUtil.getFilenamExtension(dest).matches("(?i)csv");
 
 		// file may be overwritten, and then reloaded -> clear
-		DatasetFile.clearFilesWith3DSDF(dest);
+		DatasetFile.clearFiles(dest);
 
 		CompoundProperty selectedProps[];
 		List<CompoundProperty> availableProps = new ArrayList<CompoundProperty>();
@@ -186,7 +188,7 @@ public class ExportData
 					Compound m = null;
 					for (Cluster c : clustering.getClusters())
 						for (Compound mm : c.getCompounds())
-							if (mm.getCompoundOrigIndex() == j)
+							if (mm.getOrigIndex() == j)
 							{
 								m = mm;
 								break;
@@ -202,7 +204,7 @@ public class ExportData
 						{
 							Compound m = null;
 							for (Compound mm : c.getCompounds())
-								if (mm.getCompoundOrigIndex() == j)
+								if (mm.getOrigIndex() == j)
 								{
 									m = mm;
 									break;
@@ -405,7 +407,7 @@ public class ExportData
 					newTitle.put(j, val);
 				}
 			}
-			SDFUtil.filter(clustering.getOrigSdfFile(), dest, compoundOrigIndices, featureValues, true, newTitle);
+			SDFUtil.filter(clustering.getOrigSDFile(), dest, compoundOrigIndices, featureValues, true, newTitle);
 		}
 
 		String msg = "Successfully exported " + compoundOrigIndices.length + " compounds to\n" + dest;
@@ -423,7 +425,7 @@ public class ExportData
 		CheSMapping mapping = MappingWorkflow.createMappingFromMappingWorkflow(props, "");
 
 		ClusteringData clusteringData = mapping.doMapping();
-		Clustering clustering = new Clustering();
+		ClusteringImpl clustering = new ClusteringImpl();
 		clustering.newClustering(clusteringData);
 
 		//		LaunchCheSMapper.start(mapping);

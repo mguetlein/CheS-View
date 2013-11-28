@@ -27,11 +27,11 @@ import dataInterface.CompoundPropertyOwner;
 
 public class Compound implements Zoomable, Comparable<Compound>, DoubleNameElement, CompoundPropertyOwner
 {
-	private int compoundIndex;
 	private BitSet bitSet;
 	private BitSet dotModeHideBitSet;
 	private BitSet dotModeDisplayBitSet;
 
+	private int jmolIndex;
 	private CompoundData compoundData;
 
 	private Translucency translucency = Translucency.None;
@@ -51,19 +51,20 @@ public class Compound implements Zoomable, Comparable<Compound>, DoubleNameEleme
 	private CompoundProperty descriptorProperty = null;
 	private boolean sphereVisible;
 	private boolean lastFeatureSphereVisible;
+	private boolean visible = true;
 
 	private float diameter = -1;
 
 	public final Vector3f origCenter;
 	public final Vector3f origDotPosition;
 
-	public Compound(int compoundIndex, CompoundData compoundData)
+	public Compound(int jmolIndex, CompoundData compoundData)
 	{
-		this.compoundIndex = compoundIndex;
+		this.jmolIndex = jmolIndex;
 		this.compoundData = compoundData;
 		if (View.instance != null)
 		{
-			bitSet = View.instance.getCompoundBitSet(compoundIndex);
+			bitSet = View.instance.getCompoundBitSet(getJmolIndex());
 			dotModeHideBitSet = View.instance.getDotModeHideBitSet(bitSet);
 			dotModeDisplayBitSet = View.instance.getDotModeDisplayBitSet(bitSet);
 			origCenter = new Vector3f(View.instance.getAtomSetCenter(bitSet));
@@ -94,20 +95,14 @@ public class Compound implements Zoomable, Comparable<Compound>, DoubleNameEleme
 		return compoundData.getDoubleValue(property);
 	}
 
-	/**
-	 * index in jmol
-	 */
-	public int getCompoundIndex()
+	public int getJmolIndex()
 	{
-		return compoundIndex;
+		return jmolIndex;
 	}
 
-	/**
-	 * index in original data file
-	 */
-	public int getCompoundOrigIndex()
+	public int getOrigIndex()
 	{
-		return compoundData.getIndex();
+		return compoundData.getOrigIndex();
 	}
 
 	public static class DisplayName implements Comparable<DisplayName>
@@ -151,12 +146,14 @@ public class Compound implements Zoomable, Comparable<Compound>, DoubleNameEleme
 		public int compareTo(DisplayName d)
 		{
 			if (valCompare != null)
+			{
 				for (int j = 0; j < valCompare.length; j++)
 				{
 					int i = ObjectUtil.compare(valCompare[j], d.valCompare[j]);
 					if (i != 0)
 						return i;
 				}
+			}
 			if (compareIndex != null)
 				return compareIndex.compareTo(d.compareIndex);
 			// if nothing is selected, compound should be sorted according to identifier
@@ -201,11 +198,6 @@ public class Compound implements Zoomable, Comparable<Compound>, DoubleNameEleme
 	public String getSmiles()
 	{
 		return compoundData.getSmiles();
-	}
-
-	public void compoundIndexOffset(int offset)
-	{
-		compoundIndex += offset;
 	}
 
 	public Translucency getTranslucency()
@@ -286,12 +278,6 @@ public class Compound implements Zoomable, Comparable<Compound>, DoubleNameEleme
 		{
 			Settings.LOGGER.info("smarts-matching smarts: " + smarts + " smiles: " + getSmiles());
 			smartsMatches.put(smarts, View.instance.getSmartsMatch(smarts, bitSet));
-			//			if (smartsMatches.get(smarts).cardinality() == 0)
-			//			{
-			////				Settings.LOGGER.flush();
-			////				Settings.LOGGER.warn("could not match smarts!");
-			////				Settings.LOGGER.flush();
-			//			}
 		}
 		return smartsMatches.get(smarts);
 	}
@@ -357,19 +343,6 @@ public class Compound implements Zoomable, Comparable<Compound>, DoubleNameEleme
 			}
 			this.highlightCompoundProperty = highlightCompoundProperty;
 		}
-
-		//		if (highlightCompoundProperty != null && this.highlightCompoundProperty.getType() == Type.NUMERIC)
-		//		{
-		//			// string properties do have a normalized double value as well
-		//			// values are normalize between 0-1, fixed temp scheme from jmol expects values between 0-100 => multiply with 100
-		//			Double d = compoundData.getNormalizedValue(highlightCompoundProperty);
-		//			if (d != null)
-		//			{
-		//				double v = compoundData.getNormalizedValue(highlightCompoundProperty) * 100.0;
-		//				//			Settings.LOGGER.warn(getCompoundOrigIndex() + " " + highlightCompoundProperty + " " + v);
-		//				View.instance.setAtomProperty(bitSet, Token.temperature, (int) v, (float) v, v + "", null, null);
-		//			}
-		//		}
 	}
 
 	public Object getHighlightCompoundProperty()
@@ -412,9 +385,9 @@ public class Compound implements Zoomable, Comparable<Compound>, DoubleNameEleme
 		return false;
 	}
 
-	public ImageIcon getIcon(boolean backgroundBlack)
+	public ImageIcon getIcon(boolean backgroundBlack, int width, int height)
 	{
-		return compoundData.getIcon(backgroundBlack);
+		return compoundData.getIcon(backgroundBlack, width, height);
 	}
 
 	public void setDescriptor(CompoundProperty descriptorProperty)
@@ -424,8 +397,8 @@ public class Compound implements Zoomable, Comparable<Compound>, DoubleNameEleme
 			displayName.compareIndex = null;
 			if (descriptorProperty == ViewControler.COMPOUND_INDEX_PROPERTY)
 			{
-				displayName.compareIndex = getCompoundOrigIndex();
-				displayName.name = "Compound " + (getCompoundOrigIndex() + 1);
+				displayName.compareIndex = getOrigIndex();
+				displayName.name = "Compound " + (getOrigIndex() + 1);
 			}
 			else if (descriptorProperty == ViewControler.COMPOUND_SMILES_PROPERTY)
 				displayName.name = getSmiles();
@@ -470,4 +443,18 @@ public class Compound implements Zoomable, Comparable<Compound>, DoubleNameEleme
 		return dotModeDisplayBitSet;
 	}
 
+	public DisplayName getDisplayName()
+	{
+		return displayName;
+	}
+
+	public boolean isVisible()
+	{
+		return visible;
+	}
+
+	public void setVisible(boolean visible)
+	{
+		this.visible = visible;
+	}
 }

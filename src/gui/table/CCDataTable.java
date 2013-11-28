@@ -8,12 +8,11 @@ import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.swing.ListSelectionModel;
 import javax.swing.RowSorter;
 import javax.swing.SortOrder;
 import javax.swing.table.DefaultTableModel;
 
-import util.SelectionModel;
+import cluster.ClusterController;
 import cluster.Clustering;
 import cluster.Compound;
 import dataInterface.CompoundProperty;
@@ -25,9 +24,9 @@ public abstract class CCDataTable extends DataTable
 	protected ClickMouseOverTable table;
 	protected int sortColumn = 1;
 
-	public CCDataTable(ViewControler viewControler, Clustering clustering)
+	public CCDataTable(ViewControler viewControler, ClusterController clusterControler, Clustering clustering)
 	{
-		super(viewControler, clustering);
+		super(viewControler, clusterControler, clustering);
 	}
 
 	public abstract String getExtraColumn();
@@ -97,30 +96,30 @@ public abstract class CCDataTable extends DataTable
 		return model;
 	}
 
-	protected void updateTableFromSelection(SelectionModel compoundSelection, ListSelectionModel tableSelectionA,
-			SelectionModel tableSelectionB)
+	protected void updateTableFromSelection(boolean active, int... selected)
 	{
 		if (selfUpdate)
 			return;
 		selfUpdate = true;
 
-		if (tableSelectionA != null)
-			tableSelectionA.clearSelection();
+		if (active)
+			table.getClickSelectionModel().clearSelection();
 		else
-			tableSelectionB.clearSelection();
-		int sel[] = compoundSelection.getSelectedIndices();
+			table.getSelectionModel().clearSelection();
 
-		if (sel != null && sel.length > 0)
-			for (int i = 0; i < sel.length; i++)
+		if (selected.length > 1 || (selected.length == 1 && selected[0] != -1))
+		{
+			int idx = -1;
+			for (int i : selected)
 			{
-				int idx = sorter.convertRowIndexToView(sel[i]);
-				if (tableSelectionA != null)
-					tableSelectionA.addSelectionInterval(idx, idx);
+				idx = sorter.convertRowIndexToView(i);
+				if (active)
+					table.getClickSelectionModel().setSelected(idx, false);
 				else
-					tableSelectionB.setSelected(idx, false);
-				if (i == sel.length - 1)
-					table.scrollRectToVisible(new Rectangle(table.getCellRect(idx, 0, true)));
+					table.getSelectionModel().addSelectionInterval(idx, idx);
 			}
+			table.scrollRectToVisible(new Rectangle(table.getCellRect(idx, 0, true)));
+		}
 		selfUpdate = false;
 	}
 }

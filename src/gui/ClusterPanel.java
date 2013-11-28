@@ -14,6 +14,7 @@ import javax.swing.border.EmptyBorder;
 import main.ScreenSetup;
 import util.StringUtil;
 import util.ThreadUtil;
+import cluster.ClusterController;
 import cluster.Clustering;
 
 import com.jgoodies.forms.layout.CellConstraints;
@@ -51,15 +52,16 @@ public class ClusterPanel extends JPanel
 
 		JPanel allPanelsContainer = new JPanel(new BorderLayout());
 		allPanelsContainer.setOpaque(false);
-		ClusterListPanel clusterListPanel = new ClusterListPanel(mainPanel.getClustering(), mainPanel, guiControler);
+		ClusterListPanel clusterListPanel = new ClusterListPanel(mainPanel.getClustering(), mainPanel, mainPanel,
+				guiControler);
 		allPanelsContainer.add(clusterListPanel, BorderLayout.WEST);
 		add(allPanelsContainer, BorderLayout.WEST);
 
 		JPanel infoAndChartContainer = new JPanel(new BorderLayout(0, 20));
 		infoAndChartContainer.setOpaque(false);
 
-		InfoPanel infoPanel = new InfoPanel(mainPanel, mainPanel.getClustering(), guiControler);
-		ChartPanel chartPanel = new ChartPanel(mainPanel.getClustering(), mainPanel, guiControler);
+		InfoPanel infoPanel = new InfoPanel(mainPanel, mainPanel, mainPanel.getClustering(), guiControler);
+		ChartPanel chartPanel = new ChartPanel(mainPanel.getClustering(), mainPanel, mainPanel, guiControler);
 		chartPanel.setBorder(new EmptyBorder(0, 0, 0, 0));
 		infoAndChartContainer.add(infoPanel, BorderLayout.EAST);
 
@@ -117,6 +119,11 @@ public class ClusterPanel extends JPanel
 	}
 
 	public ViewControler getViewControler()
+	{
+		return mainPanel;
+	}
+
+	public ClusterController getClusterControler()
 	{
 		return mainPanel;
 	}

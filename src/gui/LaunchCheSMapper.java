@@ -1,14 +1,16 @@
 package gui;
 
 import gui.CheSViewer.PostStartModifier;
-import gui.ViewControler.HideCompounds;
 import gui.ViewControler.HighlightMode;
 import gui.ViewControler.Style;
+import gui.ViewControler.TranslucentCompounds;
 import gui.property.ColorGradient;
 import gui.util.CompoundPropertyHighlighter;
 import gui.util.Highlighter;
 
 import java.awt.Color;
+import java.io.File;
+import java.io.IOException;
 import java.util.Date;
 import java.util.Locale;
 import java.util.Properties;
@@ -38,7 +40,6 @@ import util.ArrayUtil;
 import util.FileUtil;
 import util.IntegerUtil;
 import util.StringLineAdder;
-import util.StringUtil;
 import util.SwingUtil;
 import util.ThreadUtil;
 import workflow.MappingWorkflow;
@@ -158,10 +159,33 @@ public class LaunchCheSMapper
 			//		args = "-h".split(" ");
 			//args = "-z -d /home/martin/data/cor/test.smi -o /home/martin/data/cor/test.ches3d.sdf".split(" ");
 
-			args = ArrayUtil
-					.toArray(StringUtil
-							.split("-x -d /home/martin/workspace/BMBF-MLC/pct/clusters_VarianceReduction/dataC_noV_Ca15-20c20_FP1.data.csv -o /home/martin/workspace/BMBF-MLC/pct/clusters_VarianceReduction/dataC_noV_Ca15-20c20_FP1.data.ches -f integrated -b \"OB-MACCS:N,OB-MACCS:OCO,OB-MACCS:O=A>1,OB-MACCS:CH3 > 2  (&...),OB-FP3:alkylaryl ether,OB-FP3:carboxylic acid,OB-FP4:Heteroaromatic,OB-MACCS:ACH2AACH2A,OB-FP4:1,3-Tautomerizable,OB-MACCS:Onot%A%A,OB-FP3:aldehyde or ketone,OB-MACCS:A$A!N,OB-FP4:Rotatable_bond,OB-MACCS:ACH2AAACH2A,OB-FP3:aryl,OB-FP4:Amine,OB-MACCS:C=O,OB-FP4:Hetero_N_basic_no_H,OB-FP3:HBD,OB-MACCS:AA(A)(A)A,OB-MACCS:NN,OB-MACCS:X!A$A,OB-MACCS:QA(Q)Q,OB-MACCS:S,OB-MACCS:NA(A)A,OB-MACCS:ACH2N,OB-MACCS:NAAO,OB-MACCS:O > 3 (&...),OB-MACCS:QAAAAA@1,OB-MACCS:N > 1,OB-FP4:Vinylogous_carbonyl_or_carboxyl_derivative,OB-MACCS:XA(A)A,OB-FP4:Primary_carbon,OB-FP4:Imidoylhalide_cyclic,OB-MACCS:NH2,OB-MACCS:Anot%A%Anot%A,OB-MACCS:NC(N)N,OB-FP4:Heterocyclic,OB-MACCS:QH > 1,OB-FP4:1,5-Tautomerizable,OB-MACCS:O > 2,OB-MACCS:CH3,OB-FP3:aniline,OB-FP3:nitro,OB-FP3:Ring,OB-MACCS:ACH2CH2A > 1,OB-MACCS:QO,OB-FP4:Alkylchloride,OB-MACCS:C=C,OB-FP4:Quaternary_carbon,OB-MACCS:C=C(C)C,OB-FP4:Vinylogous_ester,OB-MACCS:CH3AAACH2A,OB-MACCS:CH3AACH2A,OB-MACCS:S=A,OB-FP3:cation,OB-MACCS:8M Ring or larger. This only handles up to ring sizes of 14,OB-MACCS:BR,OB-MACCS:F,OB-MACCS:A!CH2!A,OB-MACCS:CH3CH2A,OB-MACCS:A$A!O > 1 (&...),OB-MACCS:OC(C)C,OB-FP4:Conjugated_double_bond,OB-FP4:Hetero_O,OB-MACCS:A!A$A!A,OB-FP4:Alkene,OB-MACCS:3M Ring,OB-FP4:Aldehyde,OB-MACCS:QCH2A>1 (&...),OB-MACCS:CH3ACH2A,OB-MACCS:ACH2O,OB-MACCS:CL\" -a leaf,level1,level2,level3,level4,level5,level6,level7,level8,level9,level10,level11,level12,level13,level14,level15,level16,level17,level18 -c \"Manual Cluster Assignment\" -q \"property-Cluster feature=leaf\"",
-									' '));
+			//			args = ArrayUtil
+			//					.toArray(StringUtil
+			//							.split("-x -d /home/martin/workspace/BMBF-MLC/pct/clusters_VarianceReduction/dataC_noV_Ca15-20c20_FP1.data.csv -o /home/martin/workspace/BMBF-MLC/pct/clusters_VarianceReduction/dataC_noV_Ca15-20c20_FP1.data.ches -f integrated -b \"OB-MACCS:N,OB-MACCS:OCO,OB-MACCS:O=A>1,OB-MACCS:CH3 > 2  (&...),OB-FP3:alkylaryl ether,OB-FP3:carboxylic acid,OB-FP4:Heteroaromatic,OB-MACCS:ACH2AACH2A,OB-FP4:1,3-Tautomerizable,OB-MACCS:Onot%A%A,OB-FP3:aldehyde or ketone,OB-MACCS:A$A!N,OB-FP4:Rotatable_bond,OB-MACCS:ACH2AAACH2A,OB-FP3:aryl,OB-FP4:Amine,OB-MACCS:C=O,OB-FP4:Hetero_N_basic_no_H,OB-FP3:HBD,OB-MACCS:AA(A)(A)A,OB-MACCS:NN,OB-MACCS:X!A$A,OB-MACCS:QA(Q)Q,OB-MACCS:S,OB-MACCS:NA(A)A,OB-MACCS:ACH2N,OB-MACCS:NAAO,OB-MACCS:O > 3 (&...),OB-MACCS:QAAAAA@1,OB-MACCS:N > 1,OB-FP4:Vinylogous_carbonyl_or_carboxyl_derivative,OB-MACCS:XA(A)A,OB-FP4:Primary_carbon,OB-FP4:Imidoylhalide_cyclic,OB-MACCS:NH2,OB-MACCS:Anot%A%Anot%A,OB-MACCS:NC(N)N,OB-FP4:Heterocyclic,OB-MACCS:QH > 1,OB-FP4:1,5-Tautomerizable,OB-MACCS:O > 2,OB-MACCS:CH3,OB-FP3:aniline,OB-FP3:nitro,OB-FP3:Ring,OB-MACCS:ACH2CH2A > 1,OB-MACCS:QO,OB-FP4:Alkylchloride,OB-MACCS:C=C,OB-FP4:Quaternary_carbon,OB-MACCS:C=C(C)C,OB-FP4:Vinylogous_ester,OB-MACCS:CH3AAACH2A,OB-MACCS:CH3AACH2A,OB-MACCS:S=A,OB-FP3:cation,OB-MACCS:8M Ring or larger. This only handles up to ring sizes of 14,OB-MACCS:BR,OB-MACCS:F,OB-MACCS:A!CH2!A,OB-MACCS:CH3CH2A,OB-MACCS:A$A!O > 1 (&...),OB-MACCS:OC(C)C,OB-FP4:Conjugated_double_bond,OB-FP4:Hetero_O,OB-MACCS:A!A$A!A,OB-FP4:Alkene,OB-MACCS:3M Ring,OB-FP4:Aldehyde,OB-MACCS:QCH2A>1 (&...),OB-MACCS:CH3ACH2A,OB-MACCS:ACH2O,OB-MACCS:CL\" -a leaf,level1,level2,level3,level4,level5,level6,level7,level8,level9,level10,level11,level12,level13,level14,level15,level16,level17,level18 -c \"Manual Cluster Assignment\" -q \"property-Cluster feature=leaf\"",
+			//									' '));
+
+			try
+			{
+				File f = File.createTempFile("test", "bla");
+				FileUtil.writeStringToFile(f.getAbsolutePath(), "test");
+				System.out.println("created tmp: " + f);
+				File f2 = new File(System.getProperty("user.home") + File.separator + ".ches-mapper" + File.separator
+						+ "cache" + File.separator + "delme");
+				System.out.println("rename to: " + f2);
+				if (!FileUtil.robustRenameTo(f.getAbsolutePath(), f2.getAbsolutePath()))
+					throw new Error("failed!");
+				if (f.exists() || !f2.exists())
+					throw new Error("failed2!");
+				System.out.println("great, deleting: " + f2);
+				f2.delete();
+				System.out.println("done");
+				System.exit(0);
+			}
+			catch (IOException e)
+			{
+				e.printStackTrace();
+			}
+
 		}
 
 		StringLineAdder examples = new StringLineAdder();
@@ -252,8 +276,6 @@ public class LaunchCheSMapper
 		options.addOption(longParamOption("endpoint-highlight",
 				"enable endpoint-highlighting (log + reverse) for a feature", "endpoint-highlight feature"));
 
-		options.addOption(longParamOption("cluster-tree", "show cluster tree", "cluster-tree csv file"));
-
 		CommandLineParser parser = new BasicParser();
 		try
 		{
@@ -296,8 +318,8 @@ public class LaunchCheSMapper
 					}
 					if (cmd.hasOption("hide-compounds"))
 					{
-						HideCompounds mode = HideCompounds.valueOf(cmd.getOptionValue("hide-compounds"));
-						view.setHideCompounds(mode);
+						TranslucentCompounds mode = TranslucentCompounds.valueOf(cmd.getOptionValue("hide-compounds"));
+						view.setTranslucentCompounds(mode);
 						ThreadUtil.sleep(2000);
 					}
 					if (cmd.hasOption("endpoint-highlight"))
@@ -444,7 +466,7 @@ public class LaunchCheSMapper
 				OpenBabel3DBuilder builder = OpenBabel3DBuilder.INSTANCE;
 				builder.disableAutocorrect();
 				builder.build3D(p.getDatasetFile());
-				if (!FileUtil.copy(builder.get3DSDFFile(), outfile))
+				if (!FileUtil.copy(builder.get3DSDFile(), outfile))
 					throw new Error("Could not copy 3D-File to outfile " + outfile);
 			}
 			else if (cmd.hasOption('k'))
@@ -457,11 +479,6 @@ public class LaunchCheSMapper
 				if (p.getDatasetFile() == null)
 					throw new Error("Could not load dataset file " + infile);
 				CDKCompoundIcon.createIcons(p.getDatasetFile(), FileUtil.getParent(infile));
-			}
-			else if (cmd.hasOption("cluster-tree"))
-			{
-				CSVtoTree.show(cmd.getOptionValue("cluster-tree"));
-				System.exit(0);
 			}
 			//			else if (cmd.hasOption('n'))
 			//			{
@@ -525,11 +542,12 @@ public class LaunchCheSMapper
 		start(mapping, null);
 	}
 
-	public static void start(CheSMapping mapping, PostStartModifier mod)
+	public static void start(final CheSMapping preMapping, final PostStartModifier mod)
 	{
 		if (!initialized)
 			throw new IllegalStateException("not initialized!");
 
+		CheSMapping mapping = preMapping;
 		if (mapping == null)
 		{
 			CheSMapperWizard wwd = null;
@@ -549,7 +567,7 @@ public class LaunchCheSMapper
 
 		Task task = TaskProvider.initTask("Chemical space mapping");
 		TaskDialog waitingDialog = new TaskDialog(task, null);
-		ClusteringData clusteringData = mapping.doMapping();
+		final ClusteringData clusteringData = mapping.doMapping();
 		if (clusteringData == null) //mapping failed
 		{
 			TaskProvider.removeTask();
@@ -559,7 +577,14 @@ public class LaunchCheSMapper
 
 		try
 		{ // starting Viewer
-			CheSViewer.show(clusteringData, mod);
+			SwingUtil.invokeAndWait(new Runnable()
+			{
+				@Override
+				public void run()
+				{
+					CheSViewer.show(clusteringData, mod);
+				}
+			});
 			while (!CheSViewer.getFrame().isShowing())
 				ThreadUtil.sleep(100);
 			waitingDialog.setWarningDialogOwner(CheSViewer.getFrame());
@@ -577,5 +602,4 @@ public class LaunchCheSMapper
 			TaskProvider.removeTask();
 		}
 	}
-
 }

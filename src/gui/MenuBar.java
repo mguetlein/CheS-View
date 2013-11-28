@@ -20,6 +20,7 @@ import javax.swing.ToolTipManager;
 
 import main.ScreenSetup;
 import main.Settings;
+import cluster.ClusterController;
 import cluster.Clustering;
 
 public class MenuBar extends JMenuBar
@@ -155,13 +156,14 @@ public class MenuBar extends JMenuBar
 	private final static String VIEW_HIDE_MENU = Settings.text("action.view-hide.settings");
 	private final static String DATA_MENU = "Dataset properties";
 
-	public MenuBar(GUIControler guiControler, ViewControler viewControler, Clustering clustering)
+	public MenuBar(GUIControler guiControler, ViewControler viewControler, ClusterController clusterControler,
+			Clustering clustering)
 	{
 		this.guiControler = guiControler;
 		this.viewControler = viewControler;
 		this.clustering = clustering;
 
-		Actions a = Actions.getInstance(guiControler, viewControler, clustering);
+		Actions a = Actions.getInstance(guiControler, viewControler, clusterControler, clustering);
 
 		MyMenu dataMenu = new MyMenu(DATA_MENU, a.getDataActions());
 		MyMenu fileMenu = new MyMenu("File", a.getFileActions(), new MyMenu[] { dataMenu }, new int[] { 1 });

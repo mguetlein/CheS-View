@@ -21,14 +21,17 @@ import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
 import main.ScreenSetup;
-import util.SelectionModel;
 import cluster.Cluster;
+import cluster.ClusterController;
 import cluster.Clustering;
+import cluster.Clustering.SelectionListener;
+import cluster.ClusteringImpl;
 import cluster.Compound;
 
 import com.jgoodies.forms.builder.DefaultFormBuilder;
@@ -41,13 +44,8 @@ import dataInterface.CompoundPropertyUtil;
 
 public class CompoundListPanel extends TransparentViewPanel
 {
-	SelectionModel clusterActive;
-	SelectionModel clusterWatched;
-	SelectionModel compoundActive;
-	SelectionModel compoundWatched;
 	JLabel clusterNameVal;
 	JLabel clusterNumVal;
-	//	JCheckBox hideUnselectedCheckBox;
 
 	JScrollPane listScrollPane;
 	MouseOverList list;
@@ -57,156 +55,107 @@ public class CompoundListPanel extends TransparentViewPanel
 	boolean selfBlock = false;
 
 	Clustering clustering;
+	ClusterController clusterControler;
 	ViewControler viewControler;
 	GUIControler guiControler;
 
-	public CompoundListPanel(Clustering clustering, ViewControler controler, GUIControler guiControler)
+	public CompoundListPanel(Clustering clustering, ClusterController clusterControler, ViewControler controler,
+			GUIControler guiControler)
 	{
 		this.clustering = clustering;
+		this.clusterControler = clusterControler;
 		this.viewControler = controler;
 		this.guiControler = guiControler;
 
-		this.clusterActive = clustering.getClusterActive();
-		this.clusterWatched = clustering.getClusterWatched();
-		this.compoundActive = clustering.getCompoundActive();
-		this.compoundWatched = clustering.getCompoundWatched();
-
 		buildLayout();
 
-		update(-1, false);
+		update(null, false);
 		installListeners(controler);
 	}
 
 	private void installListeners(final ViewControler controler)
 	{
-		//		controler.addViewListener(new PropertyChangeListener()
-		//		{
-		//			@Override
-		//			public void propertyChange(PropertyChangeEvent evt)
-		//			{
-		//				if (evt.equals(ViewControler.PROPERTY_SUPERIMPOSE_CHANGED))
-		//				{
-		//					selfBlock = true;
-		//					hideUnselectedCheckBox.setSelected(controler.isHideUnselected());
-		//					selfBlock = false;
-		//				}
-		//			}
-		//		});
-
 		clustering.addListener(new PropertyChangeListener()
 		{
 			@Override
 			public void propertyChange(PropertyChangeEvent evt)
 			{
-				if (evt.getPropertyName().equals(Clustering.CLUSTER_MODIFIED))
+				if (evt.getPropertyName().equals(ClusteringImpl.CLUSTER_MODIFIED))
 				{
-					update(clusterActive.getSelected(), false);
+					update(clustering.getActiveCluster(), false);
 				}
 			}
 		});
 
-		clusterActive.addListener(new PropertyChangeListener()
+		clustering.addSelectionListener(new SelectionListener()
 		{
-			@Override
-			public void propertyChange(PropertyChangeEvent e)
-			{
-				updateCluster(clusterActive.getSelected(), true);
-			}
-		});
 
-		clusterWatched.addListener(new PropertyChangeListener()
-		{
 			@Override
-			public void propertyChange(PropertyChangeEvent e)
-			{
-				updateCluster(clusterWatched.getSelected(), false);
-			}
-		});
-
-		compoundActive.addListener(new PropertyChangeListener()
-		{
-			@Override
-			public void propertyChange(PropertyChangeEvent e)
+			public void compoundWatchedChanged(Compound[] c)
 			{
 				if (selfBlock)
 					return;
 				selfBlock = true;
-
-				//updateCheckboxSelection();
-				updateActiveCompoundSelection();
-				selfBlock = false;
-
-			}
-		});
-		compoundWatched.addListener(new PropertyChangeListener()
-		{
-			@Override
-			public void propertyChange(PropertyChangeEvent e)
-			{
-				if (selfBlock)
-					return;
-				selfBlock = true;
-				if (compoundWatched.getSelected() == -1)
+				if (c.length == 0)
 					list.clearSelection();
 				else
-					list.setSelectedValue(clustering.getCompoundWithCompoundIndex(compoundWatched.getSelected()), true);
+					list.setSelectedValue(c[0], true);
 				selfBlock = false;
 			}
-		});
 
-		//		hideUnselectedCheckBox.addActionListener(new ActionListener()
-		//		{
-		//			@Override
-		//			public void actionPerformed(ActionEvent e)
-		//			{
-		//				if (selfBlock)
-		//					return;
-		//				controler.setHideUnselected(hideUnselectedCheckBox.isSelected());
-		//			}
-		//		});
+			@Override
+			public void compoundActiveChanged(Compound[] c)
+			{
+				if (selfBlock)
+					return;
+				selfBlock = true;
+
+				updateActiveCompoundSelection();
+				selfBlock = false;
+			}
+
+			@Override
+			public void clusterWatchedChanged(Cluster c)
+			{
+				updateCluster(c, false);
+			}
+
+			@Override
+			public void clusterActiveChanged(Cluster c)
+			{
+				updateCluster(c, true);
+			}
+		});
 
 		list.addMouseListener(new MouseAdapter()
 		{
-			public void mouseClicked(MouseEvent e)
+			public void mouseClicked(final MouseEvent e)
 			{
 				if (selfBlock)
 					return;
 				selfBlock = true;
 
-				int idx = list.getLastSelectedIndex();
-				Compound m = (Compound) listModel.elementAt(idx);
-
-				if (m == null)
-					throw new IllegalStateException();
-				if (e.isControlDown())
-					compoundActive.setSelectedInverted(m.getCompoundIndex());
-				else if (e.isShiftDown() && compoundActive.getSelected() != -1 && compoundActive.getSelected() != idx)
+				Thread th = new Thread(new Runnable()
 				{
-					int minSel, maxSel;
-					if (compoundActive.getSelected() < idx)
+					public void run()
 					{
-						minSel = compoundActive.getSelected() + 1;
-						maxSel = idx;
+						int idx = list.getLastSelectedIndex();
+						Compound m = (Compound) listModel.elementAt(idx);
+						if (m == null)
+							throw new IllegalStateException();
+						if (e.isControlDown())
+							clusterControler.toggleCompoundActive(m);
+						else
+						{
+							if (clustering.isCompoundActive(m))
+								clusterControler.clearCompoundActive(true);
+							else
+								clusterControler.setCompoundActive(m, true);
+						}
+						selfBlock = false;
 					}
-					else
-					{
-						minSel = idx;
-						maxSel = compoundActive.getSelected() - 1;
-					}
-					int newSel[] = new int[1 + maxSel - minSel];
-					for (int i = 0; i < newSel.length; i++)
-						newSel[i] = minSel + i;
-					compoundActive.setSelectedIndices(newSel, false);
-				}
-				else
-				{
-					if (compoundActive.isSelected(m.getCompoundIndex()))
-						compoundActive.clearSelection();
-					else
-						compoundActive.setSelected(m.getCompoundIndex());
-				}
-				compoundWatched.clearSelection();
-				selfBlock = false;
+				});
+				th.start();
 			}
 		});
 
@@ -224,7 +173,7 @@ public class CompoundListPanel extends TransparentViewPanel
 					//compoundWatched.clearSelection();
 				}
 				else
-					compoundWatched.setSelected(((Compound) listModel.elementAt(index)).getCompoundIndex());
+					clusterControler.setCompoundWatched((Compound) listModel.elementAt(index));
 				selfBlock = false;
 			}
 		});
@@ -236,9 +185,10 @@ public class CompoundListPanel extends TransparentViewPanel
 			{
 				if (evt.getPropertyName().equals(ViewControler.PROPERTY_COMPOUND_DESCRIPTOR_CHANGED)
 						|| evt.getPropertyName().equals(ViewControler.PROPERTY_HIGHLIGHT_CHANGED)
-						|| evt.getPropertyName().equals(ViewControler.PROPERTY_FEATURE_SORTING_CHANGED))
+						|| evt.getPropertyName().equals(ViewControler.PROPERTY_FEATURE_SORTING_CHANGED)
+						|| evt.getPropertyName().equals(ViewControler.PROPERTY_COMPOUND_FILTER_CHANGED))
 				{
-					update(clusterActive.getSelected(), false);
+					update(clustering.getActiveCluster(), false);
 				}
 				else if (evt.getPropertyName().equals(ViewControler.PROPERTY_FONT_SIZE_CHANGED))
 					updateListSize();
@@ -258,20 +208,20 @@ public class CompoundListPanel extends TransparentViewPanel
 
 	}
 
-	private void updateCluster(int index, boolean active)
+	private void updateCluster(Cluster c, boolean active)
 	{
 		selfBlock = true;
 
 		if (active)
 		{
-			update(index, false);
+			update(c, false);
 			//			hideUnselectedCheckBox.setSelected(controler.isHideUnselected());
 		}
 		else
 		{
 			// only cluster watch updates if no cluster is active
-			if (clusterActive.getSelected() == -1)
-				update(index, true);
+			if (!clustering.isClusterActive())
+				update(c, true);
 		}
 		selfBlock = false;
 	}
@@ -310,11 +260,11 @@ public class CompoundListPanel extends TransparentViewPanel
 			{
 				super.getListCellRendererComponent(list, value, i, isSelected, cellHasFocus);
 
-				int compoundIndex = ((Compound) value).getCompoundIndex();
-				setOpaque(isSelected || compoundActive.isSelected(compoundIndex));
+				Compound c = (Compound) value;
+				setOpaque(isSelected || clustering.isCompoundActive(c));
 
 				setForeground(ComponentFactory.FOREGROUND);
-				if (compoundActive.isSelected(compoundIndex))
+				if (clustering.isCompoundActive(c))
 				{
 					setBackground(ComponentFactory.LIST_ACTIVE_BACKGROUND);
 					setForeground(ComponentFactory.LIST_SELECTION_FOREGROUND);
@@ -324,10 +274,10 @@ public class CompoundListPanel extends TransparentViewPanel
 					setBackground(ComponentFactory.LIST_WATCH_BACKGROUND);
 					setForeground(ComponentFactory.LIST_SELECTION_FOREGROUND);
 				}
-				else if (((Compound) value).getHighlightColorString() != null
-						&& ((Compound) value).getHighlightColor() != CompoundPropertyUtil.getNullValueColor())
+				else if (c.getHighlightColorString() != null
+						&& c.getHighlightColor() != CompoundPropertyUtil.getNullValueColor())
 				{
-					setForegroundLabel2(((Compound) value).getHighlightColor());
+					setForegroundLabel2(c.getHighlightColor());
 				}
 				return this;
 			}
@@ -344,13 +294,8 @@ public class CompoundListPanel extends TransparentViewPanel
 		p.setOpaque(false);
 		CellConstraints cc = new CellConstraints();
 
-		//builder.append(listPanel, 3);
 		listScrollPane = ComponentFactory.createViewScrollpane(list);
 		p.add(listScrollPane, cc.xy(1, 1));
-
-		//		hideUnselectedCheckBox = ComponentFactory.createCheckBox("Hide not-selected");
-		//		hideUnselectedCheckBox.setOpaque(false);
-		//		p.add(hideUnselectedCheckBox, cc.xy(1, 3));
 
 		checkBoxContainer = new JPanel(new BorderLayout());
 		checkBoxContainer.setOpaque(false);
@@ -372,9 +317,8 @@ public class CompoundListPanel extends TransparentViewPanel
 		});
 		p.add(checkBoxContainer, cc.xy(1, 2));//4));
 		setLayout(new BorderLayout());
+
 		add(p);
-		//setOpaque(false);
-		//		setBackground(Settings.TRANSPARENT_BACKGROUND);
 	}
 
 	JPanel checkBoxContainer;
@@ -386,21 +330,24 @@ public class CompoundListPanel extends TransparentViewPanel
 
 	private void updateActiveCompoundSelection()
 	{
-		list.setSelectedValue(clustering.getCompoundWithCompoundIndex(compoundActive.getSelected()), true);
+		if (clustering.isCompoundActive())
+			list.setSelectedValue(clustering.getActiveCompounds()[0], true);
+		else
+			list.clearSelection();
 	}
 
-	private void update(int index, boolean noList)
+	private void update(Cluster c, boolean noList)
 	{
-		// setVisible(index != -1);
+		if (!SwingUtilities.isEventDispatchThread())
+			throw new IllegalStateException("GUI updates only in event dispatch thread plz");
+
 		setVisible(true);
 
 		setIgnoreRepaint(true);
-		if (index == -1)
+		if (c == null)
 		{
 			clusterNameVal.setText(" ");
 			clusterNumVal.setText(" ");
-			//			hideUnselectedCheckBox.setVisible(false);
-
 			listScrollPane.setVisible(false);
 		}
 		else
@@ -413,18 +360,18 @@ public class CompoundListPanel extends TransparentViewPanel
 			}
 			else
 			{
-				Cluster c = clustering.getCluster(index);
 				clusterNameVal.setText(c.toString());
 				clusterNumVal.setText(" ");
-
-				//				hideUnselectedCheckBox.setVisible(true);
-
 				listScrollPane.setPreferredSize(null);
 
 				Compound m[] = new Compound[c.getCompounds().size()];
 				int i = 0;
 				for (Compound mod : c.getCompounds())
+				{
 					m[i++] = mod;
+					if (mod.getDisplayName() == null)
+						throw new IllegalStateException("display name for compound is nil, check order of listeners");
+				}
 				if (viewControler.isFeatureSortingEnabled())
 					Arrays.sort(m);
 				for (Compound compound : m)
@@ -440,7 +387,6 @@ public class CompoundListPanel extends TransparentViewPanel
 
 	private void updateListSize()
 	{
-		//		System.err.println("row height " + listRenderer.getRowHeight());
 		int rowCount = (guiControler.getComponentMaxHeight(1) / listRenderer.getRowHeight()) / 3;
 
 		double ratioVisible = rowCount / (double) listModel.getSize();
@@ -451,7 +397,6 @@ public class CompoundListPanel extends TransparentViewPanel
 			rowCount += (int) (ratioIncrease * rowCount);
 		}
 
-		//		System.err.println("row count " + rowCount);
 		list.setVisibleRowCount(rowCount);
 
 		if (viewControler.getHighlighter() instanceof CompoundPropertyHighlighter)

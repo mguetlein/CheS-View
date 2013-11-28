@@ -3,8 +3,6 @@ package gui.table;
 import gui.ClickMouseOverTable;
 import gui.ClickMouseOverTable.ClickMouseOverRenderer;
 import gui.MainPanel;
-import gui.View;
-import gui.View.AnimationSpeed;
 import gui.ViewControler;
 import gui.swing.ComponentFactory;
 
@@ -22,19 +20,19 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableRowSorter;
 
-import util.SelectionModel;
 import util.StringUtil;
-import util.ThreadUtil;
+import cluster.ClusterController;
 import cluster.Clustering;
+import cluster.Clustering.SelectionListener;
 import cluster.Compound;
 import dataInterface.CompoundProperty;
 
 public class CompoundTable extends CCDataTable
 {
 
-	public CompoundTable(final ViewControler viewControler, final Clustering clustering)
+	public CompoundTable(ViewControler viewControler, ClusterController clusterControler, Clustering clustering)
 	{
-		super(viewControler, clustering);
+		super(viewControler, clusterControler, clustering);
 	}
 
 	@Override
@@ -76,24 +74,22 @@ public class CompoundTable extends CCDataTable
 			tableModel.addRow(o);
 		}
 
-		clustering.getCompoundActive().addListener(new PropertyChangeListener()
+		clustering.addSelectionListener(new SelectionListener()
 		{
 			@Override
-			public void propertyChange(PropertyChangeEvent evt)
+			public void compoundActiveChanged(Compound[] c)
 			{
 				if (!isVisible())
 					return;
-				updateTableFromSelection(clustering.getCompoundActive(), null, table.getClickSelectionModel());
+				updateTableFromSelection(true, clustering.getActiveCompoundsJmolIdx());
 			}
-		});
-		clustering.getCompoundWatched().addListener(new PropertyChangeListener()
-		{
+
 			@Override
-			public void propertyChange(PropertyChangeEvent evt)
+			public void compoundWatchedChanged(Compound[] c)
 			{
 				if (!isVisible())
 					return;
-				updateTableFromSelection(clustering.getCompoundWatched(), table.getSelectionModel(), null);
+				updateTableFromSelection(false, clustering.getWatchedCompoundsJmolIdx());
 			}
 		});
 
@@ -115,8 +111,7 @@ public class CompoundTable extends CCDataTable
 			@Override
 			public void propertyChange(PropertyChangeEvent e)
 			{
-				updateCompoundFromTable(table.getClickSelectionModel().getSelectedIndices(),
-						clustering.getCompoundActive());
+				updateCompoundFromTable(table.getClickSelectionModel().getSelectedIndices(), true);
 			}
 		});
 
@@ -127,7 +122,7 @@ public class CompoundTable extends CCDataTable
 			{
 				if (e.getValueIsAdjusting())
 					return;
-				updateCompoundFromTable(table.getSelectedRows(), clustering.getCompoundWatched());
+				updateCompoundFromTable(table.getSelectedRows(), false);
 			}
 		});
 		ClickMouseOverRenderer renderer = new ClickMouseOverTable.ClickMouseOverRenderer(table)
@@ -179,8 +174,8 @@ public class CompoundTable extends CCDataTable
 		table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 		table.setGridColor(ComponentFactory.BACKGROUND);
 
-		updateTableFromSelection(clustering.getCompoundWatched(), table.getSelectionModel(), null);
-		updateTableFromSelection(clustering.getCompoundActive(), null, table.getClickSelectionModel());
+		updateTableFromSelection(true, clustering.getActiveCompoundsJmolIdx());
+		updateTableFromSelection(false, clustering.getWatchedCompoundsJmolIdx());
 		updateFeatureSelection();
 
 		return table;
@@ -216,52 +211,39 @@ public class CompoundTable extends CCDataTable
 		return "compound-table";
 	}
 
-	private void updateCompoundFromTable(int tableSelection[], SelectionModel modelSelection)
+	private void updateCompoundFromTable(int tableSelection[], final boolean active)
 	{
 		if (selfUpdate)
 			return;
 		selfUpdate = true;
+
+		if (tableSelection == null)
+			tableSelection = new int[0];
 		final int row[] = tableSelection;
-		if (row == null || row.length == 0)
-			modelSelection.clearSelection();
-		else if (row.length == 1)
-			modelSelection.setSelected(sorter.convertRowIndexToModel(row[0]));
-		else
+		final Compound[] comps = new Compound[row.length];
+		for (int i = 0; i < comps.length; i++)
+			comps[i] = clustering.getCompoundWithJmolIndex(sorter.convertRowIndexToModel(row[i]));
+		Thread th = new Thread(new Runnable()
 		{
-			View.instance.suspendAnimation("manual zooming out");
-			block("waiting for anim");
-			for (int i = 0; i < row.length; i++)
-				row[i] = sorter.convertRowIndexToModel(row[i]);
-			modelSelection.setSelectedIndices(row);
-			Thread th = new Thread(new Runnable()
+			public void run()
 			{
-				public void run()
+				if (active)
 				{
-					ThreadUtil.sleep(300);
-					View.instance.afterAnimation(new Runnable()
-					{
-						@Override
-						public void run()
-						{
-							View.instance.proceedAnimation("manual zooming out");
-							if (View.instance.getZoomTarget() != clustering)
-								View.instance.zoomTo(clustering, AnimationSpeed.SLOW, false);
-							View.instance.afterAnimation(new Runnable()
-							{
-
-								@Override
-								public void run()
-								{
-									unblock("waiting for anim");
-								}
-							}, "wait for anim");
-						}
-					}, "manual zooming out");
+					if (row.length == 0)
+						clusterControler.clearCompoundActive(true);
+					else
+						clusterControler.setCompoundActive(comps, true);
 				}
-			});
-			th.start();
-		}
-		selfUpdate = false;
+				else
+				{
+					if (row.length == 0)
+						clusterControler.clearCompoundWatched();
+					else
+						clusterControler.setCompoundWatched(comps);
+				}
+				selfUpdate = false;
+			}
+		});
+		th.start();
 	}
-
 }

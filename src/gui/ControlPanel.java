@@ -30,7 +30,10 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import cluster.ClusterController;
 import cluster.Clustering;
+import cluster.Clustering.SelectionListener;
+import cluster.Compound;
 
 public class ControlPanel extends TransparentViewPanel
 {
@@ -54,10 +57,13 @@ public class ControlPanel extends TransparentViewPanel
 	ViewControler viewControler;
 	Clustering clustering;
 	GUIControler guiControler;
+	ClusterController clusterControler;
 
-	public ControlPanel(ViewControler viewControler, Clustering clustering, GUIControler guiControler)
+	public ControlPanel(ViewControler viewControler, ClusterController clusterControler, Clustering clustering,
+			GUIControler guiControler)
 	{
 		this.viewControler = viewControler;
+		this.clusterControler = clusterControler;
 		this.clustering = clustering;
 		this.guiControler = guiControler;
 
@@ -258,11 +264,10 @@ public class ControlPanel extends TransparentViewPanel
 			}
 		});
 
-		clustering.getClusterActive().addListener(new PropertyChangeListener()
+		clustering.addSelectionListener(new SelectionListener()
 		{
-
 			@Override
-			public void propertyChange(PropertyChangeEvent evt)
+			public void compoundActiveChanged(Compound[] c)
 			{
 				updateComboStuff();
 			}
@@ -315,6 +320,9 @@ public class ControlPanel extends TransparentViewPanel
 
 	private void updateComboStuff()
 	{
+		if (!SwingUtilities.isEventDispatchThread())
+			throw new IllegalStateException("GUI updates only in event dispatch thread plz");
+
 		selfUpdate = true;
 		highlightCombobox.setSelectedItem(viewControler.getHighlighter());
 		labelCheckbox.setSelected(viewControler.isHighlighterLabelsVisible());
@@ -356,9 +364,7 @@ public class ControlPanel extends TransparentViewPanel
 		int width = Math.min(dim.width, guiControler.getComponentMaxWidth(0.33));
 		//		System.out.println(width);
 		highlightCombobox.setPreferredSize(new Dimension(width, dim.height));
-
-		highlightCombobox.setMaximumRowCount(Math.min(highlightCombobox.getItemCount(), 12));
-
+		highlightCombobox.setMaximumRowCount(Math.min(highlightCombobox.getItemCount(), 15));
 		highlightCombobox.revalidate();
 	}
 

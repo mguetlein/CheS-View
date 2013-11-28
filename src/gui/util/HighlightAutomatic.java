@@ -5,15 +5,15 @@ import gui.ViewControler;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
-import cluster.Clustering;
+import cluster.ClusteringImpl;
 
 public class HighlightAutomatic
 {
 	boolean automatic = false;
 	ViewControler controler;
-	Clustering clustering;
+	ClusteringImpl clustering;
 
-	public HighlightAutomatic(ViewControler controler, Clustering clustering)
+	public HighlightAutomatic(ViewControler controler, ClusteringImpl clustering)
 	{
 		this.controler = controler;
 		this.clustering = clustering;
@@ -46,24 +46,28 @@ public class HighlightAutomatic
 			automatic = false;
 	}
 
-	public void resetClusterHighlighter(boolean activeClusterChanged)
+	public boolean resetClusterHighlighter(boolean activeClusterChanged)
 	{
 		if (automatic && controler.getHighlighter() == Highlighter.DEFAULT_HIGHLIGHTER && activeClusterChanged
 				&& clustering.getNumClusters() > 1 && !clustering.isClusterActive())
 		{
 			controler.setHighlighter(Highlighter.CLUSTER_HIGHLIGHTER, false);
 			automatic = true;
+			return true;
 		}
+		return false;
 	}
 
-	public void resetDefaultHighlighter(boolean activeClusterChanged)
+	public boolean resetDefaultHighlighter(boolean activeClusterChanged)
 	{
 		if (automatic && controler.getHighlighter() == Highlighter.CLUSTER_HIGHLIGHTER && activeClusterChanged
 				&& clustering.getNumClusters() > 1 && clustering.isClusterActive())
 		{
 			controler.setHighlighter(Highlighter.DEFAULT_HIGHLIGHTER, false);
 			automatic = true;
+			return true;
 		}
+		return false;
 	}
 
 }
