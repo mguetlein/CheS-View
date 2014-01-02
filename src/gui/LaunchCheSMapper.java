@@ -3,7 +3,6 @@ package gui;
 import gui.CheSViewer.PostStartModifier;
 import gui.ViewControler.HighlightMode;
 import gui.ViewControler.Style;
-import gui.ViewControler.TranslucentCompounds;
 import gui.property.ColorGradient;
 import gui.util.CompoundPropertyHighlighter;
 import gui.util.Highlighter;
@@ -297,7 +296,7 @@ public class LaunchCheSMapper
 		options.addOption(longParamOption("compound-style", "change initial style", "compound-style"));
 		options.addOption(longParamOption("compound-size", "change initial compound size", "compound-size"));
 		options.addOption(longParamOption("highlight-mode", "change initial highlight mode", "highlight-mode"));
-		options.addOption(longParamOption("hide-compounds", "change initial hide-compounds mode", "hide compounds"));
+		//		options.addOption(longParamOption("hide-compounds", "change initial hide-compounds mode", "hide compounds"));
 		options.addOption(longParamOption("endpoint-highlight",
 				"enable endpoint-highlighting (log + reverse) for a feature", "endpoint-highlight feature"));
 		options.addOption(longParamOption("select-compounds", "pre select compound/s (comma seperated compound index)",
@@ -362,12 +361,12 @@ public class LaunchCheSMapper
 						});
 						ThreadUtil.sleep(2000);
 					}
-					if (cmd.hasOption("hide-compounds"))
-					{
-						TranslucentCompounds mode = TranslucentCompounds.valueOf(cmd.getOptionValue("hide-compounds"));
-						view.setTranslucentCompounds(mode);
-						ThreadUtil.sleep(2000);
-					}
+					//					if (cmd.hasOption("hide-compounds"))
+					//					{
+					//						DisguiseMode mode = DisguiseMode.valueOf(cmd.getOptionValue("hide-compounds"));
+					//						view.setTranslucentCompounds(mode);
+					//						ThreadUtil.sleep(2000);
+					//					}
 					if (cmd.hasOption("select-compounds"))
 					{
 						List<Compound> compounds = new ArrayList<Compound>();
@@ -444,16 +443,15 @@ public class LaunchCheSMapper
 			//				screenSetup.setViewerSize(dim);
 			//				screenSetup.setFullScreenSize(fullScreenSize);
 			//			}
-			if (cmd.hasOption("display-no"))
-			{
-				screenSetup.setScreen(Integer.parseInt(cmd.getOptionValue("display-no")));
-			}
 
 			boolean loadProperties = true;
 			if (cmd.hasOption('p'))
 				loadProperties = false;
 
 			init(Locale.US, screenSetup, loadProperties);
+
+			if (cmd.hasOption("display-no"))
+				Settings.TOP_LEVEL_FRAME_SCREEN = Integer.parseInt(cmd.getOptionValue("display-no"));
 
 			if (cmd.hasOption('r'))
 				Settings.DESC_MIXTURE_HANDLING = true;

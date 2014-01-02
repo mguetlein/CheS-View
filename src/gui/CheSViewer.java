@@ -193,7 +193,7 @@ public class CheSViewer implements GUIControler
 		{
 			public void componentMoved(ComponentEvent e)
 			{
-				ScreenSetup.INSTANCE.setScreen(ScreenUtil.getScreen(frame));
+				Settings.TOP_LEVEL_FRAME_SCREEN = ScreenUtil.getScreen(frame);
 			}
 
 			public void componentResized(ComponentEvent e)

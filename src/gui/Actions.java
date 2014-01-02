@@ -1,8 +1,8 @@
 package gui;
 
+import gui.ViewControler.DisguiseMode;
 import gui.ViewControler.FeatureFilter;
 import gui.ViewControler.HighlightMode;
-import gui.ViewControler.TranslucentCompounds;
 import gui.property.ColorGradient;
 import gui.property.ColorGradientChooser;
 import gui.table.ClusterTable;
@@ -93,10 +93,11 @@ public class Actions
 	private final static String[] EXPORT_ACTIONS = { EXPORT_SELECTED, EXPORT_UNSELECTED, EXPORT_CLUSTERS,
 			EXPORT_COMPOUNDS, EXPORT_IMAGE, EXPORT_WORKFLOW };
 
-	private final static String VIEW_HIDE_NONE = "view-hide-none";
-	private final static String VIEW_HIDE_NON_WATCHED = "view-hide-non-watched";
-	private final static String VIEW_HIDE_NON_ACTIVE = "view-hide-non-active";
-	private final static String[] VIEW_HIDE_ACTIONS = { VIEW_HIDE_NONE, VIEW_HIDE_NON_ACTIVE, VIEW_HIDE_NON_WATCHED };
+	private final static String VIEW_NON_ZOOMED_SOLID = "view-non-zoomed-solid";
+	private final static String VIEW_NON_ZOOMED_TRANSLUCENT = "view-non-zoomed-translucent";
+	private final static String VIEW_NON_ZOOMED_INVISIBLE = "view-non-zoomed-invisible";
+	private final static String[] VIEW_HIDE_NON_ZOOMED_ACTIONS = { VIEW_NON_ZOOMED_SOLID, VIEW_NON_ZOOMED_TRANSLUCENT,
+			VIEW_NON_ZOOMED_INVISIBLE };
 
 	private final static String VIEW_FULL_SCREEN = "view-full-screen";
 	private final static String VIEW_DRAW_HYDROGENS = "view-draw-hydrogens";
@@ -105,8 +106,9 @@ public class Actions
 	private final static String VIEW_ANTIALIAS = "view-antialias";
 	private final static String VIEW_COMPOUND_DESCRIPTOR = "view-compound-descriptor";
 	private final static String VIEW_SELECT_LAST_FEATURE = "view-select-last-feature";
+	private final static String VIEW_DISGUISE_NON_HOVERED = "view-disguise-non-hovered";
 	private final static String[] VIEW_ACTIONS = { VIEW_FULL_SCREEN, VIEW_DRAW_HYDROGENS, VIEW_SPIN, VIEW_BLACK_WHITE,
-			VIEW_ANTIALIAS, VIEW_COMPOUND_DESCRIPTOR, VIEW_SELECT_LAST_FEATURE };
+			VIEW_ANTIALIAS, VIEW_COMPOUND_DESCRIPTOR, VIEW_SELECT_LAST_FEATURE, VIEW_DISGUISE_NON_HOVERED };
 
 	private final static String HIGHLIGHT_COLORS = "highlight-colors";
 	private final static String HIGHLIGHT_COLOR_MATCH = "highlight-color-match";
@@ -621,47 +623,63 @@ public class Actions
 				return !viewControler.isHideHydrogens();
 			}
 		};
-
-		new RadioActionCreator(VIEW_HIDE_NONE, ViewControler.PROPERTY_HIDE_UNSELECT_CHANGED)
+		new ActionCreator(VIEW_DISGUISE_NON_HOVERED, ViewControler.PROPERTY_DISGUISE_CHANGED)
 		{
 			@Override
 			public void action()
 			{
-				viewControler.setTranslucentCompounds(TranslucentCompounds.none);
+				viewControler
+						.setDisguiseUnHovered(viewControler.getDisguiseUnHovered() != DisguiseMode.solid ? DisguiseMode.solid
+								: DisguiseMode.translucent);
 			}
 
 			@Override
 			public Boolean isSelected()
 			{
-				return viewControler.getTranslucentCompounds() == TranslucentCompounds.none;
+				return viewControler.getDisguiseUnHovered() != DisguiseMode.solid;
 			}
 		};
-		new RadioActionCreator(VIEW_HIDE_NON_WATCHED, ViewControler.PROPERTY_HIDE_UNSELECT_CHANGED)
+
+		new RadioActionCreator(VIEW_NON_ZOOMED_SOLID, ViewControler.PROPERTY_DISGUISE_CHANGED)
 		{
 			@Override
 			public void action()
 			{
-				viewControler.setTranslucentCompounds(TranslucentCompounds.nonWatched);
+				viewControler.setDisguiseUnZoomed(DisguiseMode.solid);
 			}
 
 			@Override
 			public Boolean isSelected()
 			{
-				return viewControler.getTranslucentCompounds() == TranslucentCompounds.nonWatched;
+				return viewControler.getDisguiseUnZoomed() == DisguiseMode.solid;
 			}
 		};
-		new RadioActionCreator(VIEW_HIDE_NON_ACTIVE, ViewControler.PROPERTY_HIDE_UNSELECT_CHANGED)
+		new RadioActionCreator(VIEW_NON_ZOOMED_TRANSLUCENT, ViewControler.PROPERTY_DISGUISE_CHANGED)
 		{
 			@Override
 			public void action()
 			{
-				viewControler.setTranslucentCompounds(TranslucentCompounds.nonActive);
+				viewControler.setDisguiseUnZoomed(DisguiseMode.translucent);
 			}
 
 			@Override
 			public Boolean isSelected()
 			{
-				return viewControler.getTranslucentCompounds() == TranslucentCompounds.nonActive;
+				return viewControler.getDisguiseUnZoomed() == DisguiseMode.translucent;
+			}
+		};
+		new RadioActionCreator(VIEW_NON_ZOOMED_INVISIBLE, ViewControler.PROPERTY_DISGUISE_CHANGED)
+		{
+			@Override
+			public void action()
+			{
+				viewControler.setDisguiseUnZoomed(DisguiseMode.invisible);
+			}
+
+			@Override
+			public Boolean isSelected()
+			{
+				return viewControler.getDisguiseUnZoomed() == DisguiseMode.invisible;
 			}
 		};
 
@@ -1090,9 +1108,9 @@ public class Actions
 		return getActions(REMOVE_ACTIONS);
 	}
 
-	public Action[] getViewHideActions()
+	public Action[] getViewHideNonZoomedActions()
 	{
-		return getActions(VIEW_HIDE_ACTIONS);
+		return getActions(VIEW_HIDE_NON_ZOOMED_ACTIONS);
 	}
 
 	public Action[] getViewActions()

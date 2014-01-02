@@ -70,7 +70,9 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 	private boolean hideHydrogens = true;
 	private Style style = Style.wireframe;
 
-	TranslucentCompounds translucentCompounds = TranslucentCompounds.nonActive;
+	DisguiseMode disguiseUnHovered = DisguiseMode.solid;
+	DisguiseMode disguiseUnZoomed = DisguiseMode.translucent;
+
 	Color matchColor = Color.ORANGE;
 	CompoundProperty compoundDescriptorProperty = null;
 	List<JComponent> ignoreMouseMovementPanels = new ArrayList<JComponent>();
@@ -654,8 +656,10 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 							|| clustering.getCompoundWatched().isSelected(m.getJmolIndex()))
 						visible = true;
 					else if (clustering.getCompoundActive().getNumSelected() == 1 && zoomToSingleSelectedCompound)
+					{
 						// a single different compound is selected
-						visible = false;
+						visible = disguiseUnZoomed != DisguiseMode.invisible;
+					}
 					else
 						visible = true;
 				}
@@ -702,7 +706,7 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 	}
 
 	/**
-	 * udpates single compound
+	 * updates single compound
 	 * forceUpdate = true -> everything is reset (independent of compound is part of active cluster or if single props have changed)
 	 * 
 	 * shows/hides box around compound
@@ -731,15 +735,15 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 		// inside the active cluster
 		if (clus == activeCluster)
 		{
-			if (translucentCompounds == TranslucentCompounds.nonActive)
+			if (disguiseUnZoomed == DisguiseMode.translucent)
 			{
 				if (clustering.isCompoundActiveFromCluster(clus)
 						&& !clustering.getCompoundWatched().isSelected(compoundJmolIndex)
 						&& !clustering.getCompoundActive().isSelected(compoundJmolIndex))
 					translucent = true;
 			}
-			if (translucentCompounds == TranslucentCompounds.nonWatched
-					|| (c.isSuperimposed() && translucentCompounds == TranslucentCompounds.nonActive))
+			if (disguiseUnHovered == DisguiseMode.translucent
+					|| (c.isSuperimposed() && disguiseUnZoomed == DisguiseMode.translucent))
 			{
 				if ((clustering.isCompoundWatchedFromCluster(clus) || clustering.isCompoundActiveFromCluster(clus))
 						&& !clustering.getCompoundWatched().isSelected(compoundJmolIndex)
@@ -770,7 +774,7 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 
 			if (clustering.isSuperimposed())
 				translucent = (compounds.indexOf(m) > 0);
-			else if (translucentCompounds != TranslucentCompounds.none)
+			else if (disguiseUnHovered == DisguiseMode.translucent)
 			{
 				if (clustering.isCompoundWatched() || clustering.isCompoundActive())
 				{
@@ -1703,27 +1707,51 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 	}
 
 	@Override
-	public TranslucentCompounds getTranslucentCompounds()
+	public DisguiseMode getDisguiseUnHovered()
 	{
-		return translucentCompounds;
+		return disguiseUnHovered;
 	}
 
 	@Override
-	public void setTranslucentCompounds(TranslucentCompounds hide)
+	public DisguiseMode getDisguiseUnZoomed()
 	{
-		if (this.translucentCompounds != hide)
+		return disguiseUnZoomed;
+	}
+
+	@Override
+	public void setDisguiseUnHovered(DisguiseMode disguiseUnHovered)
+	{
+		if (this.disguiseUnHovered != disguiseUnHovered)
 		{
-			translucentCompounds = hide;
+			if (disguiseUnHovered == DisguiseMode.invisible)
+				throw new IllegalArgumentException();
+			this.disguiseUnHovered = disguiseUnHovered;
 			updateAllClustersAndCompounds(false);
-			fireViewChange(PROPERTY_HIDE_UNSELECT_CHANGED);
-			if (hide == TranslucentCompounds.none)
-				guiControler.showMessage("Never draw un-selected compounds translucent.");
-			else if (hide == TranslucentCompounds.nonActive)
+			fireViewChange(PROPERTY_DISGUISE_CHANGED);
+			if (disguiseUnHovered == DisguiseMode.translucent)
 				guiControler
-						.showMessage("Draw un-selected compounds translucent when another compound is selected (with mouse click).");
-			else if (hide == TranslucentCompounds.nonWatched)
-				guiControler
-						.showMessage("Draw un-selected compounds translucent when another compound is focused (with mouse over).");
+						.showMessage("When a compound (or cluster) is selected via mouse-over, draw other compounds translucent.");
+			else
+				guiControler.showMessage("Ignore mouse-over selection, draw un-selected compounds solid.");
+		}
+	}
+
+	@Override
+	public void setDisguiseUnZoomed(DisguiseMode disguiseUnZoomed)
+	{
+		if (this.disguiseUnZoomed != disguiseUnZoomed)
+		{
+			this.disguiseUnZoomed = disguiseUnZoomed;
+			updateAllClustersAndCompounds(false);
+			fireViewChange(PROPERTY_DISGUISE_CHANGED);
+			String msg = "When the view has zoomed in to a single compound, ";
+			if (disguiseUnZoomed == DisguiseMode.solid)
+				msg += "draw other compounds solid.";
+			else if (disguiseUnZoomed == DisguiseMode.translucent)
+				msg += "draw other compounds translucent.";
+			else if (disguiseUnZoomed == DisguiseMode.invisible)
+				msg += "do not draw other compounds.";
+			guiControler.showMessage(msg);
 		}
 	}
 

@@ -153,7 +153,7 @@ public class MenuBar extends JMenuBar
 	MyMenuBar menuBar;
 
 	private final static String SPHERE_SETTINGS_MENU = Settings.text("action.highlight-sphere.settings");
-	private final static String VIEW_HIDE_MENU = Settings.text("action.view-hide.settings");
+	private final static String VIEW_HIDE_MENU = Settings.text("action.view-non-zoomed.settings");
 	private final static String DATA_MENU = "Dataset properties";
 
 	public MenuBar(GUIControler guiControler, ViewControler viewControler, ClusterController clusterControler,
@@ -170,7 +170,7 @@ public class MenuBar extends JMenuBar
 		MyMenu removeMenu = new MyMenu("Remove", a.getRemoveActions());
 		MyMenu exportMenu = new MyMenu("Export", a.getExportActions());
 		MyMenu editMenu = new MyMenu("Edit", removeMenu, exportMenu);
-		MyMenu viewHideMenu = new MyMenu(VIEW_HIDE_MENU, a.getViewHideActions());
+		MyMenu viewHideMenu = new MyMenu(VIEW_HIDE_MENU, a.getViewHideNonZoomedActions());
 		MyMenu viewMenu = new MyMenu("View", a.getViewActions(), viewHideMenu);
 		MyMenu highlightSphereMenu = new MyMenu(SPHERE_SETTINGS_MENU, a.getHighlightSphereActions());
 		MyMenu highlightMenu = new MyMenu("Highlighting", a.getHighlightActions(), highlightSphereMenu);

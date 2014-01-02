@@ -21,9 +21,9 @@ public interface ViewControler
 		wireframe, ballsAndSticks, dots
 	}
 
-	public enum TranslucentCompounds
+	public enum DisguiseMode
 	{
-		none, nonWatched, nonActive
+		solid, translucent, invisible
 	}
 
 	public static enum HighlightMode
@@ -31,9 +31,13 @@ public interface ViewControler
 		ColorCompounds, Spheres;
 	}
 
-	public TranslucentCompounds getTranslucentCompounds();
+	public DisguiseMode getDisguiseUnHovered();
 
-	public void setTranslucentCompounds(TranslucentCompounds hide);
+	public DisguiseMode getDisguiseUnZoomed();
+
+	public void setDisguiseUnHovered(DisguiseMode hide);
+
+	public void setDisguiseUnZoomed(DisguiseMode hide);
 
 	public boolean isSpinEnabled();
 
@@ -94,7 +98,7 @@ public interface ViewControler
 	public static final String PROPERTY_NEW_HIGHLIGHTERS = "propertyNewHighlighters";
 	public static final String PROPERTY_DENSITY_CHANGED = "propertyDensityChanged";
 	public static final String PROPERTY_SUPERIMPOSE_CHANGED = "propertySuperimposeChanged";
-	public static final String PROPERTY_HIDE_UNSELECT_CHANGED = "propertyHideUnselectChanged";
+	public static final String PROPERTY_DISGUISE_CHANGED = "propertyDisguiseChanged";
 	public static final String PROPERTY_SPIN_CHANGED = "propertySpinChanged";
 	public static final String PROPERTY_BACKGROUND_CHANGED = "propertyBackgroundChanged";
 	public static final String PROPERTY_FONT_SIZE_CHANGED = "propertyFontSizeChanged";
