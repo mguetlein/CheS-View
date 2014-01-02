@@ -482,7 +482,7 @@ public class InfoPanel extends JPanel
 											&& cardToPanel.get(currentCard).selected == fCompound)
 									{
 										int size = guiControler.getComponentMaxWidth(ICON_SIZE);
-										icon = fCompound.getIcon(viewControler.isBlackgroundBlack(), size, size);
+										icon = fCompound.getIcon(viewControler.isBlackgroundBlack(), size, size, true);
 									}
 									if (currentCard == CARD_COMPOUND
 											&& cardToPanel.get(currentCard).selected == fCompound) // after icon is loaded

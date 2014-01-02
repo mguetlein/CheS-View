@@ -29,6 +29,7 @@ import org.jmol.util.Logger;
 import util.ScreenUtil;
 import util.SwingUtil;
 import util.ThreadUtil;
+import cluster.ClusterController;
 import cluster.Clustering;
 import data.ClusteringData;
 
@@ -65,7 +66,8 @@ public class CheSViewer implements GUIControler
 
 	public static interface PostStartModifier
 	{
-		public void modify(GUIControler gui, ViewControler view);
+		public void modify(GUIControler gui, ViewControler view, ClusterController clusterControler,
+				Clustering clustering);
 	}
 
 	public static void show(ClusteringData clusteringData, final PostStartModifier mod)
@@ -90,7 +92,8 @@ public class CheSViewer implements GUIControler
 				{
 					SwingUtil.waitForAWTEventThread();
 					ThreadUtil.sleep(2000);
-					mod.modify(instance, instance.clusterPanel.getViewControler());
+					mod.modify(instance, instance.clusterPanel.getViewControler(),
+							instance.clusterPanel.getClusterControler(), CheSViewer.getClustering());
 				}
 			});
 			th.start();

@@ -372,8 +372,9 @@ public class CompoundListPanel extends TransparentViewPanel
 					if (mod.getDisplayName() == null)
 						throw new IllegalStateException("display name for compound is nil, check order of listeners");
 				}
-				if (viewControler.isFeatureSortingEnabled())
-					Arrays.sort(m);
+				for (Compound comp : c.getCompounds())
+					comp.setFeatureSortingEnabled(viewControler.isFeatureSortingEnabled());
+				Arrays.sort(m);
 				for (Compound compound : m)
 					listModel.addElement(compound);
 				updateActiveCompoundSelection();

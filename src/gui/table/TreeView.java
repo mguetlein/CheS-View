@@ -42,7 +42,13 @@ import cluster.Clustering;
 import cluster.Clustering.SelectionListener;
 import cluster.Compound;
 import cluster.CompoundFilter;
+import data.DistanceUtil;
+import dataInterface.CompoundData;
 import dataInterface.CompoundProperty;
+import dist.NonNullSimilartiy;
+import dist.SimilarityMeasure;
+import dist.SimpleMatchingSimilartiy;
+import dist.TanimotoSimilartiy;
 
 public class TreeView extends BlockableFrame
 {
@@ -65,6 +71,8 @@ public class TreeView extends BlockableFrame
 		size, uniform, activity, nullRatio;
 	}
 
+	//	static HashMap<Cluster, Double> weightedTox = new HashMap<>();
+
 	public class MyNode extends DefaultMutableTreeNode
 	{
 		Cluster cluster;
@@ -77,17 +85,20 @@ public class TreeView extends BlockableFrame
 		Double uniformity;
 		Double activity;
 		Double nullRatio;
+		int numAllNull = -1;
+		String feature;
 
-		public MyNode(Object o)
+		public MyNode(Object o, String feature)
 		{
 			super(o);
 			if (o instanceof Compound)
 				map.put((Compound) o, this);
+			this.feature = feature;
 		}
 
-		public MyNode(String s, CompoundProperty p)
+		public MyNode(String s, String feature, CompoundProperty p)
 		{
-			super(s);
+			this(s, feature);
 			this.compoundProperty = p;
 		}
 
@@ -118,59 +129,106 @@ public class TreeView extends BlockableFrame
 			return leafs;
 		}
 
-		HashSet<String> propNames = new HashSet<String>();
+		TanimotoSimilartiy tanimotoSim = new TanimotoSimilartiy();
+		SimpleMatchingSimilartiy simpleMatchingSim = new SimpleMatchingSimilartiy();
+		NonNullSimilartiy nonNullSim = new NonNullSimilartiy();
 
-		public double getUniformtiy()
+		public Double getStructuralSimilarity()
+		{
+			return getSimilarity(clustering.getFeatures(), tanimotoSim);
+		}
+
+		public Double getToxSimilarity()
+		{
+			return getSimilarity(activityProps, simpleMatchingSim);
+		}
+
+		public Double getWeightedTox()
+		{
+			//			if (!weightedTox.containsKey(cluster))
+			//			{
+			//				List<Double> toxWeight = new ArrayList<Double>();
+			//				for (Cluster c : clustering.getClusters())
+			//					toxWeight.add(mapCluster.get(c).getToxNonMissing());
+			//				if (toxWeight.contains(null))
+			//					throw new IllegalStateException();
+			//				Double normalizedToxWeight[] = ArrayUtil.normalize(ArrayUtil.toArray(toxWeight), false);
+			//
+			//				int i = 0;
+			//				for (Cluster c : clustering.getClusters())
+			//					if (mapCluster.get(c).getToxSimilarity() == null)
+			//						weightedTox.put(c, null);
+			//					else
+			//						weightedTox.put(c, normalizedToxWeight[i++] * mapCluster.get(c).getToxSimilarity());
+			//			}
+			//			return weightedTox.get(cluster);
+			if (getToxSimilarity() == null)
+				return null;
+			else
+				return getToxSimilarity() * getToxNonMissing();
+		}
+
+		public Double getToxNonMissing()
+		{
+			return getSimilarity(activityProps, nonNullSim);
+		}
+
+		private Double getSimilarity(List<CompoundProperty> props, SimilarityMeasure<Boolean> sim)
+		{
+			List<CompoundData> cd = new ArrayList<CompoundData>();
+			for (Compound c : getLeafs())
+				cd.add(c.getCompoundData());
+			return DistanceUtil.similarity(cd, props, sim);
+		}
+
+		public double getUniformity()
 		{
 			if (uniformity == null)
 			{
 				double sumU = 0;
 				double sumA = 0;
 				int count = 0;
-				int sumNull = 0;
+				int sumInclNull = 0;
 				int countNull = 0;
+				numAllNull = 0;
 
-				if (propNames.size() == 0)
-					for (CompoundProperty p : clustering.getPropertiesAndFeatures())
-						propNames.add(p.toString());
-				for (CompoundProperty p : clustering.getPropertiesAndFeatures())
+				for (CompoundProperty p : activityProps)
 				{
 					//if (p.toString().endsWith("_filled"))
-					if (propNames.contains(p.toString() + "_real"))
+					CountedSet<String> set = new CountedSet<String>();
+					for (Compound comp : getLeafs())
+						set.add(comp.getStringValue(p));
+					if (set.getNumValues() != 3 && set.getNumValues() != 2 && set.getNumValues() != 1)
+						throw new Error(set.toString());
+					countNull += set.getNullCount();
+					sumInclNull += set.getSum(true);
+					set.remove(null);
+					if (set.getNumValues() > 0)
 					{
-						CountedSet<String> set = new CountedSet<String>();
-						for (Compound comp : getLeafs())
-							set.add(comp.getStringValue(p));
-						if (set.getNumValues() != 3 && set.getNumValues() != 2 && set.getNumValues() != 1)
-							throw new Error(set.toString());
-						countNull += set.getNullCount();
-						sumNull += set.getSum(true);
-						set.remove(null);
-						if (set.getNumValues() > 0)
-						{
-							//						double variance;
-							//						if (set.size() == 1)
-							//							variance = 0;
-							//						else
-							//						{
-							//							Variance v = new Variance();
-							//							variance = v.evaluate(new double[] { set.getCount(set.values().get(0)),
-							//									set.getCount(set.values().get(1)) });
-							//						}
-							double uniformity = set.getMaxCount(true) / (double) set.sum();
-							sumU += uniformity;
+						//						double variance;
+						//						if (set.size() == 1)
+						//							variance = 0;
+						//						else
+						//						{
+						//							Variance v = new Variance();
+						//							variance = v.evaluate(new double[] { set.getCount(set.values().get(0)),
+						//									set.getCount(set.values().get(1)) });
+						//						}
+						double uniformity = set.getMaxCount(true) / (double) set.sum();
+						sumU += uniformity;
 
-							if (set.values().get(0).equals("1"))
-								sumA += uniformity;
-							else if (set.values().get(0).equals("0"))
-								sumA += 1 - uniformity;
-							else
-								throw new Error();
-							count++;
-						}
+						if (set.values().get(0).equals("1"))
+							sumA += uniformity;
+						else if (set.values().get(0).equals("0"))
+							sumA += 1 - uniformity;
+						else
+							throw new Error();
+						count++;
 					}
+					else
+						numAllNull++;
 				}
-				nullRatio = countNull / (double) sumNull;
+				nullRatio = countNull / (double) sumInclNull;
 				uniformity = sumU / (double) count;
 				activity = sumA / (double) count;
 			}
@@ -235,7 +293,7 @@ public class TreeView extends BlockableFrame
 							d[i] = n.getCluster().size();
 							break;
 						case uniform:
-							d[i] = n.getUniformtiy();
+							d[i] = n.getUniformity();
 						case activity:
 							d[i] = n.getActivity();
 						case nullRatio:
@@ -251,15 +309,22 @@ public class TreeView extends BlockableFrame
 		public double getActivity()
 		{
 			if (activity == null)
-				getUniformtiy();
+				getUniformity();
 			return activity;
 		}
 
 		public double getNullRatio()
 		{
 			if (nullRatio == null)
-				getUniformtiy();
+				getUniformity();
 			return nullRatio;
+		}
+
+		public int getNumAllNull()
+		{
+			if (numAllNull == -1)
+				getUniformity();
+			return numAllNull;
 		}
 
 		public int getNumOffspring()
@@ -277,6 +342,31 @@ public class TreeView extends BlockableFrame
 			return super.toString();
 		}
 
+		List<String> features;
+
+		public List<String> getFeatures()
+		{
+			if (features != null)
+				return features;
+
+			List<String> f;
+			if (isRoot())
+				f = new ArrayList<String>();
+			else if (isLeaf())
+				f = ((MyNode) getParent()).getFeatures();
+
+			else
+			{
+				f = ((MyNode) getParent()).getFeatures();
+				if (feature == null)
+					throw new IllegalStateException();
+				f.add(feature);
+			}
+			if (getCluster() != null)
+				features = f;
+			return f;
+		}
+
 		@Override
 		public String toString()
 		{
@@ -284,21 +374,21 @@ public class TreeView extends BlockableFrame
 				return super.toString();
 			else
 			{
-				if (this == getRoot())
-				{
-					for (Integer cSize : new Integer[] { null, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 })
-					{
-						System.out.print(cSize + ",");
-						System.out.print(getAvg(Crit.size, cSize) + ",");
-						System.out.print(getClusterNodes(cSize).size() + ",");
-						System.out.print(getAvg(Crit.activity, cSize) + ",");
-						System.out.print(getAvg(Crit.uniform, cSize) + ",");
-						System.out.print(getAvg(Crit.nullRatio, cSize));
-						System.out.println();
-					}
-					System.out.println();
-
-				}
+				//				if (this == getRoot())
+				//				{
+				//					for (Integer cSize : new Integer[] { null, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12 })
+				//					{
+				//						System.out.print(cSize + ",");
+				//						System.out.print(getAvg(Crit.size, cSize) + ",");
+				//						System.out.print(getClusterNodes(cSize).size() + ",");
+				//						System.out.print(getAvg(Crit.activity, cSize) + ",");
+				//						System.out.print(getAvg(Crit.uniform, cSize) + ",");
+				//						System.out.print(getAvg(Crit.nullRatio, cSize));
+				//						System.out.println();
+				//					}
+				//					System.out.println();
+				//
+				//				}
 				return "<html>"
 						+ super.toString()
 						+ " "
@@ -307,16 +397,23 @@ public class TreeView extends BlockableFrame
 						+ getNumOffspring()
 						+ ") active:"
 						+ StringUtil.formatDouble(getActivity())
-						+ " uniform:"
-						+ StringUtil.formatDouble(getUniformtiy())
-						+ " null:"
+						//+ " uniform:"+ StringUtil.formatDouble(getUniformity())
+						+ " missing:"
 						+ StringUtil.formatDouble(getNullRatio())
-						+ (getClusterNodes().size() > 0 ? (" num:" + getClusterNodes().size() + " avg-act:"
-								+ getAvg(Crit.activity) + " avg-unif:" + getAvg(Crit.uniform) + " avg-null:"
-								+ getAvg(Crit.nullRatio) + " avg-size:" + getAvg(Crit.size)) : "") + "</html>";
+						//						+ " #all-missing:"
+						//						+ getNumAllNull()
+						+ (getCluster() != null ? (" simStruct:" + StringUtil.formatDouble(getStructuralSimilarity()))
+								: "")
+						+ (getCluster() != null ? (" simTox:" + StringUtil.formatDouble(getToxSimilarity())) : "")
+						+ (getCluster() != null ? (" wTox:" + StringUtil.formatDouble(getWeightedTox())) : "");
+				//						+ (getClusterNodes().size() > 0 ? (" num:" + getClusterNodes().size() + " avg-act:"
+				//								+ getAvg(Crit.activity) + " avg-unif:" + getAvg(Crit.uniform) + " avg-null:"
+				//								+ getAvg(Crit.nullRatio) + " avg-size:" + getAvg(Crit.size)) : "") + "</html>";
 			}
 		}
 	}
+
+	private List<CompoundProperty> activityProps;
 
 	public TreeView(ViewControler viewControler, ClusterController clusterControler, Clustering clustering,
 			GUIControler guiControler)
@@ -326,6 +423,15 @@ public class TreeView extends BlockableFrame
 		this.clusterControler = clusterControler;
 		this.clustering = clustering;
 		this.guiControler = guiControler;
+
+		HashSet<String> propNames = new HashSet<String>();
+		if (propNames.size() == 0)
+			for (CompoundProperty p : clustering.getPropertiesAndFeatures())
+				propNames.add(p.toString());
+		activityProps = new ArrayList<CompoundProperty>();
+		for (CompoundProperty p : clustering.getPropertiesAndFeatures())
+			if (propNames.contains(p.toString() + "_real"))
+				activityProps.add(p);
 
 		buildTree();
 		addListener();
@@ -483,7 +589,7 @@ public class TreeView extends BlockableFrame
 
 	private void buildTree()
 	{
-		MyNode root = new MyNode("Root");
+		MyNode root = new MyNode("Root", null);
 
 		List<CompoundProperty> levels = new ArrayList<CompoundProperty>();
 		for (CompoundProperty p : clustering.getPropertiesAndFeatures())
@@ -509,7 +615,7 @@ public class TreeView extends BlockableFrame
 					Compound comp = ((Compound) ((MyNode) value).getUserObject());
 					c.setText("<html>" + comp.getDisplayName().toString(true, comp.getHighlightColor()) + "</html>");
 					int size = guiControler.getComponentMaxWidth(InfoPanel.ICON_SIZE);
-					Icon icon = comp.getIcon(false, size, size);
+					Icon icon = comp.getIcon(false, size, size, false);
 					if (icon == null)
 						icon = NO_STRUCTURE;
 					setIcon(icon);
@@ -523,6 +629,28 @@ public class TreeView extends BlockableFrame
 		for (MyNode n : map.values())
 			tree.expandPath(new TreePath(((MyNode) ((MyNode) n.getParent()).getParent()).getPath()));
 
+		//		FileUtil.CSVFile csv = new FileUtil.CSVFile();
+		//		csv.content = new ArrayList<String[]>();
+		//		String header[] = new String[] { "index", "num-compounds", "compounds", "num-features", "features", "active",
+		//				"missing", "struct-similarity", "tox-similarity", "weighted-tox-similarity" };
+		//
+		//		csv.content.add(header);
+		//		int i = 0;
+		//		for (Cluster c : clustering.getClusters())
+		//		{
+		//			String cmpIdx = "";
+		//			for (Compound comp : c.getCompounds())
+		//				cmpIdx += comp.getOrigIndex() + ";";
+		//			cmpIdx = cmpIdx.substring(0, cmpIdx.length() - 1);
+		//			MyNode n = mapCluster.get(c);
+		//			Object vals[] = { (i + 1), c.size(), cmpIdx, n.getFeatures().size(),
+		//					ArrayUtil.toString(ArrayUtil.toArray(n.getFeatures()), ";", "", "", ""), n.getActivity(),
+		//					n.getNullRatio(), n.getStructuralSimilarity(), n.getToxSimilarity(), n.getWeightedTox() };
+		//			csv.content.add(ArrayUtil.toStringArray(vals));
+		//			i++;
+		//		}
+		//		FileUtil.writeCSV("/tmp/cluster.csv", csv, false);
+
 		//		for (int i = 0; i < tree.getRowCount(); i++)
 		//			if (!((MyNode) tree.getPathForRow(i).getLastPathComponent()).isLeaf())
 		//				tree.expandRow(i);
@@ -533,7 +661,7 @@ public class TreeView extends BlockableFrame
 		if (p.size() == 0)
 		{
 			for (Compound compound : c)
-				node.add(new MyNode(compound));
+				node.add(new MyNode(compound, null));
 		}
 		else
 		{
@@ -546,7 +674,14 @@ public class TreeView extends BlockableFrame
 			CountedSet<String> set = CountedSet.create(vals);
 			for (final String s : set.values())
 			{
-				MyNode child = new MyNode(prop + "=" + s);
+				String featureWithoutIndex = s.substring(s.indexOf(" ") + 1).trim();
+				if (featureWithoutIndex.endsWith(" <= 0"))
+					featureWithoutIndex = featureWithoutIndex.substring(0, featureWithoutIndex.length() - 5)
+							+ " no-match";
+				else if (featureWithoutIndex.endsWith(" > 0"))
+					featureWithoutIndex = featureWithoutIndex.substring(0, featureWithoutIndex.length() - 4) + " match";
+
+				MyNode child = new MyNode(prop + "=" + featureWithoutIndex, featureWithoutIndex);
 				List<Compound> ccc = new ArrayList<Compound>();
 				for (Compound cc : c)
 					if (ObjectUtil.equals(cc.getStringValue(prop), s))

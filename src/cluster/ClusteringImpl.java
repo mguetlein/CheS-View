@@ -467,8 +467,14 @@ public class ClusteringImpl implements Zoomable, Clustering
 
 		ClusteringUtil.updateScaleFactor(this);
 
+		//		SwingUtil.invokeAndWait(new Runnable()
+		//		{
+		//			public void run()
+		//			{
 		getClusterWatched().clearSelection();
 		getCompoundWatched().clearSelection();
+		//			}
+		//		});
 
 		View.instance.suspendAnimation("updating clustering positions");
 		for (Cluster c : clusters)
@@ -995,6 +1001,11 @@ public class ClusteringImpl implements Zoomable, Clustering
 	public CompoundProperty getEmbeddingQualityProperty()
 	{
 		return clusteringData.getEmbeddingQualityProperty();
+	}
+
+	public CompoundProperty[] getAppDomainProperties()
+	{
+		return clusteringData.getAppDomainProperties();
 	}
 
 	public List<CompoundProperty> getDistanceToProperties()

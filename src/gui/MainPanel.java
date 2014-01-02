@@ -1085,6 +1085,16 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 		if (clustering.getEmbeddingQualityProperty() != null)
 			h = ArrayUtil.concat(Highlighter.class, h,
 					new Highlighter[] { new CompoundPropertyHighlighter(clustering.getEmbeddingQualityProperty()) });
+		if (clustering.getAppDomainProperties() != null)
+		{
+			Highlighter[] h2 = new Highlighter[h.length + clustering.getAppDomainProperties().length];
+			int i = 0;
+			for (; i < h.length; i++)
+				h2[i] = h[i];
+			for (; i < h2.length; i++)
+				h2[i] = new CompoundPropertyHighlighter(clustering.getAppDomainProperties()[i - h.length]);
+			h = h2;
+		}
 
 		if (clustering.getDistanceToProperties() != null)
 			for (CompoundProperty p : clustering.getDistanceToProperties())
@@ -1653,9 +1663,11 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 		if (activeCluster != null && clustering.isSuperimposed())
 			throw new IllegalStateException("does not make sense, because superimposed!");
 
+		Compound active[] = new Compound[0];
 		if (activeCluster != null)
 		{
-			if (clustering.isCompoundActive())
+			active = clustering.getActiveCompounds();
+			if (active.length > 0)
 				clustering.getCompoundActive().clearSelection();
 		}
 
@@ -1675,6 +1687,14 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 		for (Compound compound : clustering.getCompounds(true))
 			if (compound.isSphereVisible())
 				view.showSphere(compound, compound.isLastFeatureSphereVisible(), true);
+		if (active.length > 0)
+		{
+			if (active.length == 1) // do not zoom in
+				toggleCompoundActive(active[0]);
+			else
+				setCompoundActive(active, false);
+		}
+
 		view.proceedAnimation("change density");
 
 		fireViewChange(PROPERTY_DENSITY_CHANGED);
@@ -1972,7 +1992,7 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 	{
 		SwingUtil.checkNoAWTEventThread();
 		while (backgroundJobs.size() > 0)
-			ThreadUtil.sleep(100);
+			ThreadUtil.sleep(10);
 	}
 
 	// cluster controler
@@ -2049,10 +2069,15 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 		}
 
 		final boolean anim;
-		if (zoomedToCluster && clustering.getActiveCluster().size() == 1)
-			anim = false; // do not animate if there is only one compound in the cluster
+		if (!animate)
+			anim = false;
 		else
-			anim = true;
+		{
+			if (zoomedToCluster && clustering.getActiveCluster().size() == 1)
+				anim = false; // do not animate if there is only one compound in the cluster
+			else
+				anim = true;
+		}
 		if (!anim)
 			view.suspendAnimation("set compound active");
 		final int idx[] = new int[c.length];
@@ -2365,17 +2390,31 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 	}
 
 	@Override
-	public void removeCluster(Cluster... c)
+	public void removeCluster(final Cluster... c)
 	{
 		clearClusterActive(true, true);
-		clustering.removeCluster(c);
+		SwingUtilities.invokeLater(new Runnable()
+		{
+			@Override
+			public void run()
+			{
+				clustering.removeCluster(c);
+			}
+		});
 	}
 
 	@Override
-	public void removeCompounds(Compound[] c)
+	public void removeCompounds(final Compound[] c)
 	{
 		clearClusterActive(true, true);
-		clustering.removeCompoundsWithJmolIndices(clustering.getJmolIndicesWithCompounds(c));
+		SwingUtilities.invokeLater(new Runnable()
+		{
+			@Override
+			public void run()
+			{
+				clustering.removeCompoundsWithJmolIndices(clustering.getJmolIndicesWithCompounds(c));
+			}
+		});
 	}
 
 	@Override

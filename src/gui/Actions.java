@@ -10,6 +10,7 @@ import gui.table.CompoundTable;
 import gui.table.FeatureTable;
 import gui.table.TreeView;
 import gui.util.CompoundPropertyHighlighter;
+import gui.util.Highlighter;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -37,7 +38,6 @@ import javax.swing.SwingUtilities;
 import main.Settings;
 import util.ArrayUtil;
 import util.CollectionUtil;
-import util.ListUtil;
 import util.SwingUtil;
 import workflow.MappingWorkflow;
 import cluster.Cluster;
@@ -283,7 +283,7 @@ public class Actions
 
 			if (selectedCompounds.length > 0 || selectedClusters.length > 0)
 			{
-				if (selectedCompounds.length > 0)
+				if (compounds.length > 0)
 				{
 					action.putValue("Compound", compounds);
 					if (compounds.length == 1)
@@ -293,7 +293,7 @@ public class Actions
 					else
 						throw new IllegalStateException();
 				}
-				else if (selectedClusters.length > 0)
+				else if (clusters.length > 0)
 				{
 					action.putValue("Cluster", clusters);
 					if (clusters.length == 1)
@@ -814,13 +814,25 @@ public class Actions
 				CompoundProperty currentProp = null;
 				if (viewControler.getHighlighter() instanceof CompoundPropertyHighlighter)
 					currentProp = ((CompoundPropertyHighlighter) viewControler.getHighlighter()).getProperty();
-				for (CompoundProperty p : ListUtil.concat(clustering.getProperties(), clustering.getFeatures()))
-					if (p.getType() == Type.NUMERIC)
-					{
-						if (p.equals(currentProp))
-							currentPropIdx = numeric.size();
-						numeric.add(p);
-					}
+				for (Highlighter hs[] : viewControler.getHighlighters().values())
+					for (Highlighter h : hs)
+						if (h instanceof CompoundPropertyHighlighter)
+						{
+							CompoundProperty p = ((CompoundPropertyHighlighter) h).getProperty();
+							if (p.getType() == Type.NUMERIC)
+							{
+								if (p.equals(currentProp))
+									currentPropIdx = numeric.size();
+								numeric.add(p);
+							}
+						}
+				//				for (CompoundProperty p : ListUtil.concat(clustering.getProperties(), clustering.getFeatures()))
+				//					if (p.getType() == Type.NUMERIC)
+				//					{
+				//						if (p.equals(currentProp))
+				//							currentPropIdx = numeric.size();
+				//						numeric.add(p);
+				//					}
 				boolean selected[] = new boolean[numeric.size()];
 				if (currentPropIdx != -1)
 					selected[currentPropIdx] = true;

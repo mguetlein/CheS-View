@@ -11,7 +11,9 @@ import gui.util.Highlighter;
 import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 import java.util.Properties;
 
@@ -42,13 +44,18 @@ import util.IntegerUtil;
 import util.StringLineAdder;
 import util.SwingUtil;
 import util.ThreadUtil;
+import weka.WekaPropertyUtil;
 import workflow.MappingWorkflow;
 import workflow.MappingWorkflow.DescriptorSelection;
 import alg.build3d.AbstractReal3DBuilder;
 import alg.build3d.OpenBabel3DBuilder;
+import cluster.ClusterController;
+import cluster.Clustering;
+import cluster.Compound;
 import cluster.ExportData;
 import data.CDKCompoundIcon;
 import data.ClusteringData;
+import data.cdk.CDKDescriptor;
 import dataInterface.CompoundProperty;
 import dataInterface.CompoundPropertyUtil;
 
@@ -71,8 +78,25 @@ public class LaunchCheSMapper
 		Settings.LOGGER.info("Starting CheS-Mapper at " + new Date());
 		Settings.LOGGER.info("OS is '" + System.getProperty("os.name") + "'");
 		Settings.LOGGER.info("Java runtime version is '" + System.getProperty("java.runtime.version") + "'");
-
 		Locale.setDefault(Locale.US);
+
+		new Thread(new Runnable()
+		{
+			@Override
+			public void run()
+			{
+				// takes some time, do this rightaway in extra thread
+				CDKDescriptor.getDescriptors();
+			}
+		}).start();
+		new Thread(new Runnable()
+		{
+			public void run()
+			{
+				// takes some time, do this rightaway in extra thread
+				WekaPropertyUtil.initWekaStuff();
+			}
+		}).start();
 
 		PropHandler.init(loadProps);
 		BinHandler.init();
@@ -265,7 +289,8 @@ public class LaunchCheSMapper
 				'z',
 				"compute-3d",
 				"uses openbabel to compute a SDF file (-o) for the input-file -d (no auto-correction of openbabel errors like in gui, use -t or -v)"));
-		options.addOption(option('k', "depict-2d", "depicts 2d images for each compound in dataset file -d"));
+		options.addOption(paramOption('k', "depict-2d", "depicts 2d images for each compound in dataset file -d",
+				"output-folder"));
 		//		options.addOption(option('n', "compute-inchi", "computes inchi for dataset file -d, saves to outfile -o"));
 
 		options.addOption(longParamOption("font-size", "change initial font size", "font-size"));
@@ -275,6 +300,14 @@ public class LaunchCheSMapper
 		options.addOption(longParamOption("hide-compounds", "change initial hide-compounds mode", "hide compounds"));
 		options.addOption(longParamOption("endpoint-highlight",
 				"enable endpoint-highlighting (log + reverse) for a feature", "endpoint-highlight feature"));
+		options.addOption(longParamOption("select-compounds", "pre select compound/s (comma seperated compound index)",
+				"selected compound/s"));
+		//		options.addOption(longParamOption("dimension", "viewer dimension (<width>x<height>)", "viewer dimension"));
+		options.addOption(longOption("background-white", "set background to white"));
+		options.addOption(longOption("full-screen", "start in full-screen"));
+
+		options.addOption(longParamOption("display-no", "set number of display to start application on",
+				"number of display"));
 
 		CommandLineParser parser = new BasicParser();
 		try
@@ -284,7 +317,8 @@ public class LaunchCheSMapper
 			PostStartModifier mod = new PostStartModifier()
 			{
 				@Override
-				public void modify(GUIControler gui, final ViewControler view)
+				public void modify(final GUIControler gui, final ViewControler view,
+						ClusterController clusterControler, Clustering clustering)
 				{
 					if (cmd.hasOption("font-size"))
 					{
@@ -316,10 +350,33 @@ public class LaunchCheSMapper
 						view.setHighlightMode(mode);
 						ThreadUtil.sleep(2000);
 					}
+					if (cmd.hasOption("background-white"))
+					{
+						SwingUtil.invokeAndWait(new Runnable()
+						{
+							@Override
+							public void run()
+							{
+								view.setBackgroundBlack(false);
+							}
+						});
+						ThreadUtil.sleep(2000);
+					}
 					if (cmd.hasOption("hide-compounds"))
 					{
 						TranslucentCompounds mode = TranslucentCompounds.valueOf(cmd.getOptionValue("hide-compounds"));
 						view.setTranslucentCompounds(mode);
+						ThreadUtil.sleep(2000);
+					}
+					if (cmd.hasOption("select-compounds"))
+					{
+						List<Compound> compounds = new ArrayList<Compound>();
+						for (String idx : cmd.getOptionValue("select-compounds").split(","))
+						{
+							Integer index = Integer.parseInt(idx);
+							compounds.add(clustering.getCompoundWithJmolIndex(index));
+						}
+						clusterControler.setCompoundActive(ArrayUtil.toArray(compounds), true);
 						ThreadUtil.sleep(2000);
 					}
 					if (cmd.hasOption("endpoint-highlight"))
@@ -335,6 +392,18 @@ public class LaunchCheSMapper
 							throw new Error("feature not found: " + cmd.getOptionValue("endpoint-highlight"));
 						view.setHighlightColors(new ColorGradient(new Color(100, 255, 100), Color.WHITE,
 								CompoundPropertyUtil.getHighValueColor()), true, new CompoundProperty[] { p });
+						ThreadUtil.sleep(2000);
+					}
+					if (cmd.hasOption("full-screen"))
+					{
+						SwingUtil.invokeAndWait(new Runnable()
+						{
+							@Override
+							public void run()
+							{
+								gui.setFullScreen(true);
+							}
+						});
 						ThreadUtil.sleep(2000);
 					}
 				}
@@ -366,6 +435,19 @@ public class LaunchCheSMapper
 			}
 			else
 				screenSetup = ScreenSetup.DEFAULT;
+			// 			not tested
+			//			if (cmd.hasOption("dimension"))
+			//			{
+			//				String s[] = cmd.getOptionValue("dimension").split("x");
+			//				Dimension dim = new Dimension(Integer.parseInt(s[0]), Integer.parseInt(s[1]));
+			//				screenSetup.setWizardSize(dim);
+			//				screenSetup.setViewerSize(dim);
+			//				screenSetup.setFullScreenSize(fullScreenSize);
+			//			}
+			if (cmd.hasOption("display-no"))
+			{
+				screenSetup.setScreen(Integer.parseInt(cmd.getOptionValue("display-no")));
+			}
 
 			boolean loadProperties = true;
 			if (cmd.hasOption('p'))
@@ -424,12 +506,20 @@ public class LaunchCheSMapper
 			{
 				String infile = cmd.getOptionValue('d');
 				String featureNames = cmd.getOptionValue('f');
-				if (infile == null || featureNames == null)
-					throw new ParseException("please give dataset-file (-d) and features (-f) to start viewer");
-				DescriptorSelection features = new DescriptorSelection(cmd.getOptionValue('f'),
-						cmd.getOptionValue('b'), cmd.getOptionValue('i'), cmd.getOptionValue('a'));
-				Properties workflow = MappingWorkflow.createMappingWorkflow(infile, features);
-				CheSMapping mapping = MappingWorkflow.createMappingFromMappingWorkflow(workflow);
+				CheSMapping mapping;
+				if (infile == null && featureNames == null)
+				{
+					mapping = MappingWorkflow.createMappingFromMappingWorkflow(PropHandler.getProperties());
+				}
+				else
+				{
+					if (infile == null || featureNames == null)
+						throw new ParseException("please give dataset-file (-d) and features (-f) to start viewer");
+					DescriptorSelection features = new DescriptorSelection(cmd.getOptionValue('f'),
+							cmd.getOptionValue('b'), cmd.getOptionValue('i'), cmd.getOptionValue('a'));
+					Properties workflow = MappingWorkflow.createMappingWorkflow(infile, features);
+					mapping = MappingWorkflow.createMappingFromMappingWorkflow(workflow);
+				}
 				start(mapping, mod);
 			}
 			else if (cmd.hasOption('t'))
@@ -438,7 +528,7 @@ public class LaunchCheSMapper
 				String outfile = cmd.getOptionValue('o');
 				if (infile == null || outfile == null)
 					throw new ParseException("please give correct-2d-sdf-file (-d) and outfile (-o) for sdf-3d-fix");
-				AbstractReal3DBuilder.check3DSDFile(cmd.getOptionValue('t'), infile, outfile);
+				AbstractReal3DBuilder.check3DSDFile(cmd.getOptionValue('t'), infile, outfile, null);
 			}
 			else if (cmd.hasOption('v'))
 			{
@@ -447,7 +537,7 @@ public class LaunchCheSMapper
 				if (infile == null || outfile == null || !infile.endsWith("smi"))
 					throw new ParseException(
 							"please give correct-smi-file (-d) and outfile (-o) for sdf-3d-fix with external script");
-				AbstractReal3DBuilder.check3DSDFileExternal(cmd.getOptionValue('v'), infile, outfile);
+				AbstractReal3DBuilder.check3DSDFileExternal(cmd.getOptionValue('v'), infile, outfile, null);
 			}
 			else if (cmd.hasOption('z'))
 			{
@@ -461,13 +551,20 @@ public class LaunchCheSMapper
 				if (p.getDatasetFile() == null)
 					throw new Error("Could not load dataset file " + infile);
 				if (cmd.hasOption('k'))
-					CDKCompoundIcon.createIcons(p.getDatasetFile(), FileUtil.getParent(infile));
+					CDKCompoundIcon.createIcons(p.getDatasetFile(), cmd.getOptionValue('k'));
 
 				OpenBabel3DBuilder builder = OpenBabel3DBuilder.INSTANCE;
 				builder.disableAutocorrect();
-				builder.build3D(p.getDatasetFile());
-				if (!FileUtil.copy(builder.get3DSDFile(), outfile))
-					throw new Error("Could not copy 3D-File to outfile " + outfile);
+				try
+				{
+					builder.build3D(p.getDatasetFile());
+					if (!FileUtil.copy(builder.get3DSDFile(), outfile))
+						throw new Error("Could not copy 3D-File to outfile " + outfile);
+				}
+				catch (Exception e)
+				{
+					e.printStackTrace();
+				}
 			}
 			else if (cmd.hasOption('k'))
 			{
@@ -478,7 +575,7 @@ public class LaunchCheSMapper
 				p.load(infile, true);
 				if (p.getDatasetFile() == null)
 					throw new Error("Could not load dataset file " + infile);
-				CDKCompoundIcon.createIcons(p.getDatasetFile(), FileUtil.getParent(infile));
+				CDKCompoundIcon.createIcons(p.getDatasetFile(), cmd.getOptionValue('k'));
 			}
 			//			else if (cmd.hasOption('n'))
 			//			{
@@ -566,7 +663,7 @@ public class LaunchCheSMapper
 		}
 
 		Task task = TaskProvider.initTask("Chemical space mapping");
-		TaskDialog waitingDialog = new TaskDialog(task, null);
+		TaskDialog waitingDialog = new TaskDialog(task, Settings.TOP_LEVEL_FRAME_SCREEN);
 		final ClusteringData clusteringData = mapping.doMapping();
 		if (clusteringData == null) //mapping failed
 		{

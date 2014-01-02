@@ -52,6 +52,7 @@ public class Compound implements Zoomable, Comparable<Compound>, DoubleNameEleme
 	private boolean sphereVisible;
 	private boolean lastFeatureSphereVisible;
 	private boolean visible = true;
+	private boolean featureSortingEnabled = true;
 
 	private float diameter = -1;
 
@@ -145,7 +146,12 @@ public class Compound implements Zoomable, Comparable<Compound>, DoubleNameEleme
 		@Override
 		public int compareTo(DisplayName d)
 		{
-			if (valCompare != null)
+			return compareTo(d, true);
+		}
+
+		public int compareTo(DisplayName d, boolean featureSortingEnabled)
+		{
+			if (featureSortingEnabled && valCompare != null)
 			{
 				for (int j = 0; j < valCompare.length; j++)
 				{
@@ -192,7 +198,7 @@ public class Compound implements Zoomable, Comparable<Compound>, DoubleNameEleme
 	@Override
 	public int compareTo(Compound m)
 	{
-		return displayName.compareTo(m.displayName);
+		return displayName.compareTo(m.displayName, featureSortingEnabled);
 	}
 
 	public String getSmiles()
@@ -385,9 +391,9 @@ public class Compound implements Zoomable, Comparable<Compound>, DoubleNameEleme
 		return false;
 	}
 
-	public ImageIcon getIcon(boolean backgroundBlack, int width, int height)
+	public ImageIcon getIcon(boolean backgroundBlack, int width, int height, boolean translucent)
 	{
-		return compoundData.getIcon(backgroundBlack, width, height);
+		return compoundData.getIcon(backgroundBlack, width, height, translucent);
 	}
 
 	public void setDescriptor(CompoundProperty descriptorProperty)
@@ -456,5 +462,15 @@ public class Compound implements Zoomable, Comparable<Compound>, DoubleNameEleme
 	public void setVisible(boolean visible)
 	{
 		this.visible = visible;
+	}
+
+	public void setFeatureSortingEnabled(boolean featureSortingEnabled)
+	{
+		this.featureSortingEnabled = featureSortingEnabled;
+	}
+
+	public CompoundData getCompoundData()
+	{
+		return compoundData;
 	}
 }
