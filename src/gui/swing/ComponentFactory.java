@@ -422,7 +422,7 @@ public class ComponentFactory
 			{
 				super.updateUI();
 				setFont(getFont().deriveFont((float) ScreenSetup.INSTANCE.getFontSize()));
-				setRowHeight((int) (ScreenSetup.INSTANCE.getFontSize() * 1.5));
+				setRowHeight((int) (ScreenSetup.INSTANCE.getFontSize() * 1.7));
 			}
 		};
 		t.setBorder(null);

@@ -1,5 +1,7 @@
 package gui;
 
+import gui.MultiImageIcon.Layout;
+import gui.MultiImageIcon.Orientation;
 import gui.ViewControler.FeatureFilter;
 import gui.swing.ComponentFactory;
 import gui.util.CompoundPropertyHighlighter;
@@ -11,6 +13,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.Insets;
 import java.awt.Rectangle;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -32,6 +35,9 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
+import util.ArrayUtil;
+import util.ImageLoader;
+import util.ImageLoader.Image;
 import util.ListUtil;
 import cluster.Cluster;
 import cluster.ClusterController;
@@ -107,7 +113,7 @@ public class InfoPanel extends JPanel
 
 		public static int find(List<Info> l, Highlighter h)
 		{
-			if (l == null)
+			if (l == null || h == Highlighter.DEFAULT_HIGHLIGHTER)
 				return -1;
 			for (int i = 0; i < l.size(); i++)
 				if (l.get(i).highlighter == h)
@@ -221,6 +227,48 @@ public class InfoPanel extends JPanel
 		}
 	}
 
+	public static final String FEATURES_ROW = "Features";
+
+	public static final HashMap<String, ImageIcon> icons = new HashMap<String, ImageIcon>();
+
+	public static ImageIcon getSortFilterIcon(boolean sorted, boolean filtered, boolean black)
+	{
+		String key = sorted + "#" + filtered + "#" + black;
+		if (!icons.containsKey(key))
+		{
+			ImageIcon img1 = null;
+			ImageIcon img2 = null;
+			if (sorted)
+				if (black)
+					img1 = ImageLoader.getImage(Image.sort_bar14_black);
+				else
+					img1 = ImageLoader.getImage(Image.sort_bar14);
+			if (filtered)
+				if (black)
+					img2 = ImageLoader.getImage(Image.filter14_black);
+				else
+					img2 = ImageLoader.getImage(Image.filter14);
+			if (img1 == null)
+			{
+				img1 = img2;
+				img2 = null;
+			}
+			ImageIcon img;
+			if (img2 == null)
+				img = img1;
+			else
+				img = new MultiImageIcon(img1, img2, Layout.horizontal, Orientation.center, 5);
+			if (img == null)
+				if (black)
+					img = ImageLoader.getImage(Image.down14_black);
+				else
+					img = ImageLoader.getImage(Image.down14);
+			img = new BorderImageIcon(img, 1, ComponentFactory.FOREGROUND, new Insets(1, 3, 1, 3));
+			icons.put(key, img);
+		}
+		return icons.get(key);
+	}
+
 	public abstract class TablePanel extends JPanel
 	{
 		final static String CARD_FIX = "fix-card";
@@ -269,6 +317,8 @@ public class InfoPanel extends JPanel
 						return;
 					selfUpdate = true;
 					int r = table_interact.getSelectedRow();
+					guiControler.setSelectedString(table_interact.getValueAt(r, 0) + " : "
+							+ table_interact.getValueAt(r, 1));
 					if (r != -1 && table_interact.getValueAt(r, 0) instanceof CompoundProperty)
 						viewControler.setHighlighter((CompoundProperty) table_interact.getValueAt(r, 0));
 					else if (r != -1 && table_interact.getValueAt(r, 0) instanceof Info)
@@ -294,16 +344,27 @@ public class InfoPanel extends JPanel
 				public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
 						boolean hasFocus, int row, int column)
 				{
-					Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+					JLabel c = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row,
+							column);
+					c.setIcon(null);
 					if (row == 0 && column == 0)
 						c.setFont(c.getFont().deriveFont(Font.BOLD));
-					if (column == 1)
+					else if (column == 0 && table.getValueAt(row, 0) == FEATURES_ROW)
+						c.setFont(c.getFont().deriveFont(Font.BOLD));
+					else if (column == 1 && table.getValueAt(row, 0) == FEATURES_ROW)
+					{
+						boolean sorted = viewControler.isFeatureSortingEnabled() && !(selected instanceof Clustering);
+						boolean filtered = viewControler.getFeatureFilter() != FeatureFilter.None;
+						boolean black = viewControler.isBlackgroundBlack();
+						c.setIcon(getSortFilterIcon(sorted, filtered, black));
+					}
+					else if (column == 1)
 					{
 						if (table.getValueAt(row, 0) instanceof CompoundProperty)
 						{
 							c.setFont(c.getFont().deriveFont(Font.ITALIC));
 
-							if (isSelected == false)
+							if (isSelected == false && !(selected instanceof Clustering))
 							{
 								Color col = MainPanel.getHighlightColor(clustering, selected,
 										(CompoundProperty) table.getValueAt(row, 0));
@@ -333,10 +394,13 @@ public class InfoPanel extends JPanel
 				model.removeRow(0);
 			model.addRow(new String[] { getType(), getName() });
 
-			List<Info> add = getAdditionalInfo();
-			if (add != null)
-				for (Info i : add)
+			List<Info> additionalInfo = getAdditionalInfo();
+			if (additionalInfo != null)
+				for (Info i : additionalInfo)
 					model.addRow(new Object[] { i, i.value });
+
+			model.addRow(new Object[] { "", "" });
+			model.addRow(new Object[] { FEATURES_ROW, "" });
 
 			//model.addRow(new String[] { "Accented by:", clustering.getAccent(m) });
 
@@ -381,7 +445,7 @@ public class InfoPanel extends JPanel
 			}
 			else
 			{
-				int infoIdx = Info.find(add, viewControler.getHighlighter());
+				int infoIdx = Info.find(additionalInfo, viewControler.getHighlighter());
 				if (infoIdx != -1)
 				{
 					int r = infoIdx + 1;
@@ -398,6 +462,8 @@ public class InfoPanel extends JPanel
 	{
 		update(false);
 	}
+
+	CompoundPropertyOwner lastWatched = null;
 
 	private void update(boolean force)
 	{
@@ -416,12 +482,18 @@ public class InfoPanel extends JPanel
 		{
 			card = CARD_COMPOUND;
 			selected = clustering.getWatchedCompounds()[0];
+			if (clustering.isCompoundActive((Compound) selected))
+				lastWatched = selected;
 			interactive = clustering.isCompoundActive() && selected == clustering.getActiveCompounds()[0];
 		}
 		else if (clustering.isCompoundActive())
 		{
 			card = CARD_COMPOUND;
-			selected = clustering.getActiveCompounds()[0];
+			Compound active[] = clustering.getActiveCompounds();
+			if (lastWatched != null && ArrayUtil.indexOf(active, lastWatched) != -1)
+				selected = lastWatched;
+			else
+				selected = active[0];
 			interactive = true;
 		}
 		else if (clustering.isClusterActive() && clustering.numClusters() > 1)
