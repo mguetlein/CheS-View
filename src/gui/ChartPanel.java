@@ -13,6 +13,8 @@ import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
@@ -28,6 +30,7 @@ import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
 import main.ScreenSetup;
+import main.Settings;
 import util.ArrayUtil;
 import util.ColorUtil;
 import util.CountedSet;
@@ -208,6 +211,19 @@ public class ChartPanel extends TransparentViewPanel
 			public void clusterActiveChanged(Cluster c)
 			{
 				update(false);
+			}
+		});
+
+		featureSmartsLabel.addMouseListener(new MouseAdapter()
+		{
+			@Override
+			public void mouseClicked(MouseEvent e)
+			{
+				if (property != null && property.getSmarts() != null)
+				{
+					SmartsViewDialog.show(Settings.TOP_LEVEL_FRAME, property.getSmarts(),
+							Settings.TOP_LEVEL_FRAME.getWidth(), Settings.TOP_LEVEL_FRAME.getHeight());
+				}
 			}
 		});
 	}
