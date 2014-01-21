@@ -34,4 +34,8 @@ public interface GUIControler extends Blockable
 	public void unblockMessages();
 
 	public boolean isVisible();
+
+	public void setSelectedString(String s);
+
+	public String getSelectedString();
 }

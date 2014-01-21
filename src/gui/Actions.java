@@ -15,6 +15,9 @@ import gui.util.Highlighter;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Desktop;
+import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
@@ -139,10 +142,11 @@ public class Actions
 	private final static String HIDDEN_FILTER_FEATURES = "filter-features";
 	private final static String HIDDEN_TOGGLE_SORTING = "toggle-sorting";
 	private final static String HIDDEN_TREE = "tree";
+	private final static String HIDDEN_COPY = "copy";
 	private final static String[] HIDDEN_ACTIONS = { HIDDEN_UPDATE_MOUSE_SELECTION_PRESSED,
 			HIDDEN_UPDATE_MOUSE_SELECTION_RELEASED, HIDDEN_DECR_COMPOUND_SIZE, HIDDEN_INCR_COMPOUND_SIZE,
 			HIDDEN_ENABLE_JMOL_POPUP, HIDDEN_INCR_SPIN_SPEED, HIDDEN_DECR_SPIN_SPEED, HIDDEN_INCR_FONT_SIZE,
-			HIDDEN_DECR_FONT_SIZE, HIDDEN_FILTER_FEATURES, HIDDEN_TOGGLE_SORTING, HIDDEN_TREE };
+			HIDDEN_DECR_FONT_SIZE, HIDDEN_FILTER_FEATURES, HIDDEN_TOGGLE_SORTING, HIDDEN_TREE, HIDDEN_COPY };
 
 	private HashMap<String, Action> actions = new LinkedHashMap<String, Action>();
 
@@ -191,6 +195,7 @@ public class Actions
 		keys.put(HIDDEN_FILTER_FEATURES, KeyStroke.getKeyStroke(KeyEvent.VK_M, ActionEvent.ALT_MASK));
 		keys.put(HIDDEN_TOGGLE_SORTING, KeyStroke.getKeyStroke(KeyEvent.VK_O, ActionEvent.ALT_MASK));
 		keys.put(HIDDEN_TREE, KeyStroke.getKeyStroke(KeyEvent.VK_4, ActionEvent.ALT_MASK));
+		keys.put(HIDDEN_COPY, KeyStroke.getKeyStroke(KeyEvent.VK_C, ActionEvent.CTRL_MASK));
 	}
 
 	private Actions(GUIControler guiControler, ViewControler viewControler, ClusterController clusterControler,
@@ -1059,6 +1064,19 @@ public class Actions
 			public void action()
 			{
 				new TreeView(viewControler, clusterControler, clustering, guiControler);
+			}
+		};
+		new ActionCreator(HIDDEN_COPY)
+		{
+			@Override
+			public void action()
+			{
+				if (guiControler.getSelectedString() != null && guiControler.getSelectedString().length() > 0)
+				{
+					StringSelection s = new StringSelection(guiControler.getSelectedString());
+					Clipboard system = Toolkit.getDefaultToolkit().getSystemClipboard();
+					system.setContents(s, s);
+				}
 			}
 		};
 

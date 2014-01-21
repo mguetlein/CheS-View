@@ -381,4 +381,18 @@ public class CheSViewer implements GUIControler
 	{
 		messagesBlocked = false;
 	}
+
+	String selectedString;
+
+	@Override
+	public String getSelectedString()
+	{
+		return selectedString;
+	}
+
+	@Override
+	public void setSelectedString(String s)
+	{
+		selectedString = s;
+	}
 }
