@@ -823,8 +823,8 @@ public class ClusteringImpl implements Zoomable, Clustering
 		Double valNormLog[] = ArrayUtil.normalizeLog(d, false);
 		specNumVals.put(p, ArrayUtil.toPrimitiveDoubleArray(ArrayUtil.removeNullValues(valNorm)));
 
-		normalizedValues.put(this, p, DoubleArraySummary.create(valNorm).getMedian());
-		normalizedLogValues.put(this, p, DoubleArraySummary.create(valNormLog).getMedian());
+		normalizedValues.put(this, p, DoubleArraySummary.create(valNorm).getMean());
+		normalizedLogValues.put(this, p, DoubleArraySummary.create(valNormLog).getMean());
 		HashMap<Cluster, List<Double>> clusterVals = new HashMap<Cluster, List<Double>>();
 		HashMap<Cluster, List<Double>> clusterValsLog = new HashMap<Cluster, List<Double>>();
 		for (Cluster c : clusters)
@@ -848,8 +848,8 @@ public class ClusteringImpl implements Zoomable, Clustering
 		}
 		for (Cluster c : clusters)
 		{
-			normalizedValues.put(c, p, DoubleArraySummary.create(clusterVals.get(c)).getMedian());
-			normalizedLogValues.put(c, p, DoubleArraySummary.create(clusterValsLog.get(c)).getMedian());
+			normalizedValues.put(c, p, DoubleArraySummary.create(clusterVals.get(c)).getMean());
+			normalizedLogValues.put(c, p, DoubleArraySummary.create(clusterValsLog.get(c)).getMean());
 			specNumClusterVals.put(c, p, ArrayUtil.toPrimitiveDoubleArray(clusterVals.get(c)));
 		}
 	}
@@ -968,7 +968,7 @@ public class ClusteringImpl implements Zoomable, Clustering
 			throw new IllegalStateException();
 		if (!summarys.containsKey(p))
 			updateNormalizedValues(p);
-		return ((DoubleArraySummary) summarys.get(p)).getMedian();
+		return ((DoubleArraySummary) summarys.get(p)).getMean();
 	}
 
 	@SuppressWarnings("unchecked")
