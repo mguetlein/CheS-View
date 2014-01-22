@@ -9,6 +9,7 @@ import java.util.HashMap;
 
 import javax.swing.JComponent;
 
+import cluster.Clustering;
 import dataInterface.AbstractCompoundProperty;
 import dataInterface.CompoundProperty;
 import dataInterface.CompoundPropertySet;
@@ -185,7 +186,37 @@ public interface ViewControler
 
 	public static enum FeatureFilter
 	{
-		None, NotUsedByEmbedding, UsedByEmbedding, Filled, Real, Endpoints
+		None, NotUsedByEmbedding, UsedByEmbedding, Filled, Real, Endpoints;
+
+		public static FeatureFilter[] validValues(Clustering clustering)
+		{
+			if (clustering.isBMBFRealEndpointDataset(true))
+				return new FeatureFilter[] { None, NotUsedByEmbedding, UsedByEmbedding, Filled, Real, Endpoints };
+			else if (clustering.isBMBFRealEndpointDataset(false))
+				return new FeatureFilter[] { None, NotUsedByEmbedding, UsedByEmbedding, Real, Endpoints };
+			else
+				return new FeatureFilter[] { None, NotUsedByEmbedding, UsedByEmbedding };
+		}
+
+		public String niceString()
+		{
+			switch (this)
+			{
+				case None:
+					return "Show all features (no filter)";
+				case NotUsedByEmbedding:
+					return "Show only features NOT used by mapping";
+				case UsedByEmbedding:
+					return "Show only features used by mapping";
+				case Filled:
+					return "Show only '_filled features'";
+				case Real:
+					return "Show only '_real features'";
+				case Endpoints:
+					return "Show only 'endpoint features'";
+			}
+			throw new IllegalStateException();
+		}
 	}
 
 	public void setFeatureFilter(FeatureFilter filter);
@@ -197,6 +228,8 @@ public interface ViewControler
 	public void setFeatureSortingEnabled(boolean b);
 
 	public boolean isShowClusteringPropsEnabled();
+
+	public void showSortFilterDialog();
 
 	// to remove
 

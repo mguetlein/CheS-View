@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Set;
 import java.util.Vector;
 
 import javax.vecmath.Vector3f;
@@ -75,6 +76,9 @@ public class ClusteringImpl implements Zoomable, Clustering
 
 	Vector3f superimposedCenter;
 	Vector3f nonSuperimposedCenter;
+
+	Boolean endpointDataset;
+	Boolean filledEndpointDataset;
 
 	public ClusteringImpl()
 	{
@@ -171,6 +175,9 @@ public class ClusteringImpl implements Zoomable, Clustering
 		normalizedValues.clear();
 		specificity.clear();
 		summarys.clear();
+
+		endpointDataset = null;
+		filledEndpointDataset = null;
 
 		dirty = false;
 	}
@@ -1231,5 +1238,44 @@ public class ClusteringImpl implements Zoomable, Clustering
 				l.compoundWatchedChanged(getCompoundsWithJmolIndices(getCompoundWatched().getSelectedIndices()));
 			}
 		});
+	}
+
+	// hack for BMBF datasets
+	@Override
+	public boolean isBMBFRealEndpointDataset(boolean filtered)
+	{
+		if (endpointDataset == null)
+		{
+			Set<String> realProps = new HashSet<String>();
+			Set<String> filledProps = new HashSet<String>();
+			Set<String> otherProps = new HashSet<String>();
+			for (CompoundProperty p : getProperties())
+			{
+				String n = p.getName();
+				if (n.endsWith("_real"))
+					realProps.add(n.substring(0, n.length() - 5));
+				else if (n.endsWith("_filled"))
+					realProps.add(n.substring(0, n.length() - 7));
+				else
+					realProps.add(n);
+			}
+			endpointDataset = true;
+			filledEndpointDataset = true;
+			for (String n : realProps)
+			{
+				if (!otherProps.contains(n))
+				{
+					endpointDataset = false;
+					filledEndpointDataset = false;
+					break;
+				}
+				if (!filledProps.contains(n))
+					filledEndpointDataset = false;
+			}
+		}
+		if (filtered)
+			return filledEndpointDataset;
+		else
+			return endpointDataset;
 	}
 }

@@ -110,8 +110,10 @@ public class Actions
 	private final static String VIEW_COMPOUND_DESCRIPTOR = "view-compound-descriptor";
 	private final static String VIEW_SELECT_LAST_FEATURE = "view-select-last-feature";
 	private final static String VIEW_DISGUISE_NON_HOVERED = "view-disguise-non-hovered";
+	private final static String VIEW_OPEN_SORT_FILTER_DIALOG = "view-open-sort-filter-dialog";
 	private final static String[] VIEW_ACTIONS = { VIEW_FULL_SCREEN, VIEW_DRAW_HYDROGENS, VIEW_SPIN, VIEW_BLACK_WHITE,
-			VIEW_ANTIALIAS, VIEW_COMPOUND_DESCRIPTOR, VIEW_SELECT_LAST_FEATURE, VIEW_DISGUISE_NON_HOVERED };
+			VIEW_ANTIALIAS, VIEW_COMPOUND_DESCRIPTOR, VIEW_SELECT_LAST_FEATURE, VIEW_OPEN_SORT_FILTER_DIALOG,
+			VIEW_DISGUISE_NON_HOVERED };
 
 	private final static String HIGHLIGHT_COLORS = "highlight-colors";
 	private final static String HIGHLIGHT_COLOR_MATCH = "highlight-color-match";
@@ -196,6 +198,22 @@ public class Actions
 		keys.put(HIDDEN_TOGGLE_SORTING, KeyStroke.getKeyStroke(KeyEvent.VK_O, ActionEvent.ALT_MASK));
 		keys.put(HIDDEN_TREE, KeyStroke.getKeyStroke(KeyEvent.VK_4, ActionEvent.ALT_MASK));
 		keys.put(HIDDEN_COPY, KeyStroke.getKeyStroke(KeyEvent.VK_C, ActionEvent.CTRL_MASK));
+	}
+
+	public static String keyStrokeToText(KeyStroke keystroke)
+	{
+		return KeyEvent.getKeyModifiersText(keystroke.getModifiers()) + " + "
+				+ new String(Character.toChars(keystroke.getKeyCode()));
+	}
+
+	public static String getToggleSortingKey()
+	{
+		return keyStrokeToText(keys.get(HIDDEN_TOGGLE_SORTING));
+	}
+
+	public static String getFilterFeaturesKey()
+	{
+		return keyStrokeToText(keys.get(HIDDEN_FILTER_FEATURES));
 	}
 
 	private Actions(GUIControler guiControler, ViewControler viewControler, ClusterController clusterControler,
@@ -644,6 +662,14 @@ public class Actions
 				return viewControler.getDisguiseUnHovered() != DisguiseMode.solid;
 			}
 		};
+		new ActionCreator(VIEW_OPEN_SORT_FILTER_DIALOG)
+		{
+			@Override
+			public void action()
+			{
+				viewControler.showSortFilterDialog();
+			}
+		};
 
 		new RadioActionCreator(VIEW_NON_ZOOMED_SOLID, ViewControler.PROPERTY_DISGUISE_CHANGED)
 		{
@@ -1042,12 +1068,13 @@ public class Actions
 			@Override
 			public void action()
 			{
-				int idx = ArrayUtil.indexOf(FeatureFilter.values(), viewControler.getFeatureFilter());
-				if (idx < FeatureFilter.values().length - 1)
+				FeatureFilter filters[] = FeatureFilter.validValues(clustering);
+				int idx = ArrayUtil.indexOf(filters, viewControler.getFeatureFilter());
+				if (idx < filters.length - 1)
 					idx++;
 				else
 					idx = 0;
-				viewControler.setFeatureFilter(FeatureFilter.values()[idx]);
+				viewControler.setFeatureFilter(filters[idx]);
 			}
 		};
 		new ActionCreator(HIDDEN_TOGGLE_SORTING)
@@ -1179,6 +1206,11 @@ public class Actions
 
 	public static void main(String args[])
 	{
-		showAboutDialog();
+
+		KeyStroke keystroke = KeyStroke.getKeyStroke(KeyEvent.VK_D, ActionEvent.ALT_MASK);
+		System.out.println(KeyEvent.getKeyModifiersText(keystroke.getModifiers()));
+		System.out.println(Character.toChars(keystroke.getKeyCode())[0]);
+
+		//showAboutDialog();
 	}
 }

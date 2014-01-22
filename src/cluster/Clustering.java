@@ -126,4 +126,6 @@ public interface Clustering extends CompoundPropertyOwner
 		}
 	}
 
+	boolean isBMBFRealEndpointDataset(boolean b);
+
 }

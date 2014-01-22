@@ -308,26 +308,38 @@ public class InfoPanel extends JPanel
 			tableModel_interact.addColumn("Value");
 			add(tableScroll_interact, CARD_INTERACT);
 
-			table_interact.getSelectionModel().addListSelectionListener(new ListSelectionListener()
+			class MyListSelectionListener implements ListSelectionListener
 			{
+				JTable table;
+
+				public MyListSelectionListener(JTable table)
+				{
+					this.table = table;
+				}
+
 				@Override
 				public void valueChanged(ListSelectionEvent e)
 				{
 					if (selfUpdate)
 						return;
 					selfUpdate = true;
-					int r = table_interact.getSelectedRow();
-					guiControler.setSelectedString(table_interact.getValueAt(r, 0) + " : "
-							+ table_interact.getValueAt(r, 1));
-					if (r != -1 && table_interact.getValueAt(r, 0) instanceof CompoundProperty)
-						viewControler.setHighlighter((CompoundProperty) table_interact.getValueAt(r, 0));
-					else if (r != -1 && table_interact.getValueAt(r, 0) instanceof Info)
-						viewControler.setHighlighter(((Info) table_interact.getValueAt(r, 0)).highlighter);
-					else
-						viewControler.setHighlighter(Highlighter.DEFAULT_HIGHLIGHTER);
+
+					int r = table.getSelectedRow();
+					guiControler.setSelectedString(table.getValueAt(r, 0) + " : " + table.getValueAt(r, 1));
+					if (r != -1 && table.getValueAt(r, 0) instanceof CompoundProperty)
+						viewControler.setHighlighter((CompoundProperty) table.getValueAt(r, 0));
+					else if (r != -1 && table.getValueAt(r, 0) instanceof Info)
+						viewControler.setHighlighter(((Info) table.getValueAt(r, 0)).highlighter);
+					//					else
+					//						viewControler.setHighlighter(Highlighter.DEFAULT_HIGHLIGHTER);
 					selfUpdate = false;
+
+					if (table.getValueAt(r, 0) == FEATURES_ROW)
+						viewControler.showSortFilterDialog();
 				}
-			});
+			}
+			table_fix.getSelectionModel().addListSelectionListener(new MyListSelectionListener(table_fix));
+			table_interact.getSelectionModel().addListSelectionListener(new MyListSelectionListener(table_interact));
 
 			table_fix.setAutoscrolls(false);
 			tableModel_fix = (DefaultTableModel) table_fix.getModel();
@@ -392,7 +404,8 @@ public class InfoPanel extends JPanel
 
 			while (model.getRowCount() > 0)
 				model.removeRow(0);
-			model.addRow(new String[] { getType(), getName() });
+			// wrap title in info object to select default highlighter when clicking on Dataset/Cluster/Compound
+			model.addRow(new Object[] { new Info(getType(), null), getName() });
 
 			List<Info> additionalInfo = getAdditionalInfo();
 			if (additionalInfo != null)

@@ -6,6 +6,7 @@ import gui.swing.ComponentFactory;
 import gui.util.CompoundPropertyHighlighter;
 import gui.util.HighlightAutomatic;
 import gui.util.Highlighter;
+import gui.util.SortFilterDialog;
 import gui.util.SubstructureHighlighter;
 
 import java.awt.BorderLayout;
@@ -1984,8 +1985,14 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 		{
 			featureSortingEnabled = b;
 			fireViewChange(PROPERTY_FEATURE_SORTING_CHANGED);
-			guiControler.showMessage((b ? "Enable" : "Disable") + " feature sorting.");
+			guiControler.showMessage((b ? "Enable" : "Disable")
+					+ " feature sorting according to specificity.");
 		}
+	}
+
+	public void showSortFilterDialog()
+	{
+		SortFilterDialog.showDialog(this, clustering);
 	}
 
 	List<Runnable> backgroundJobs = new ArrayList<Runnable>();

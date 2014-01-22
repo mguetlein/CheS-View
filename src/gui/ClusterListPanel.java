@@ -255,8 +255,7 @@ public class ClusterListPanel extends JPanel
 
 		Cluster clusters[] = new Cluster[clustering.numClusters()];
 		clustering.getClusters().toArray(clusters);
-		if (viewControler.isFeatureSortingEnabled()
-				&& viewControler.getHighlighter() instanceof CompoundPropertyHighlighter)
+		if (viewControler.getHighlighter() instanceof CompoundPropertyHighlighter)//&& viewControler.isFeatureSortingEnabled() 
 			Arrays.sort(clusters);
 		for (Cluster c : clusters)
 			if (c.size() > 0)
