@@ -39,6 +39,8 @@ import util.ArrayUtil;
 import util.ImageLoader;
 import util.ImageLoader.Image;
 import util.ListUtil;
+import util.SwingUtil;
+import util.ThreadUtil;
 import cluster.Cluster;
 import cluster.ClusterController;
 import cluster.Clustering;
@@ -670,6 +672,34 @@ public class InfoPanel extends JPanel
 				}
 			}
 		});
+
+		Thread th = new Thread(new Runnable()
+		{
+			@Override
+			public void run()
+			{
+				while (true)
+				{
+					ThreadUtil.sleep(100);
+					if ((InfoPanel.this.clustering.isClusterWatched() || InfoPanel.this.clustering.isCompoundWatched())
+							&& SwingUtil.isMouseInside(clusterCompoundPanel))
+					{
+						SwingUtilities.invokeLater(new Runnable()
+						{
+							@Override
+							public void run()
+							{
+								if (InfoPanel.this.clustering.isClusterWatched())
+									InfoPanel.this.clusterControler.clearClusterWatched();
+								else if (InfoPanel.this.clustering.isCompoundWatched())
+									InfoPanel.this.clusterControler.clearCompoundWatched();
+							}
+						});
+					}
+				}
+			}
+		});
+		th.start();
 	}
 
 	private void buildLayout()

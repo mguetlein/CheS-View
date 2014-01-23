@@ -1985,8 +1985,7 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 		{
 			featureSortingEnabled = b;
 			fireViewChange(PROPERTY_FEATURE_SORTING_CHANGED);
-			guiControler.showMessage((b ? "Enable" : "Disable")
-					+ " feature sorting according to specificity.");
+			guiControler.showMessage((b ? "Enable" : "Disable") + " feature sorting according to specificity.");
 		}
 	}
 
