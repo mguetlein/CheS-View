@@ -80,12 +80,23 @@ public class Actions
 	private final static String FILE_EXIT = "file-exit";
 	private final static String[] FILE_ACTIONS = { FILE_NEW, FILE_EXIT };
 
+	private final static String FILTER_SELECTED = "filter-selected";
+	private final static String FILTER_UNSELECTED = "filter-unselected";
+	private final static String FILTER_CLUSTERS = "filter-clusters";
+	private final static String FILTER_COMPOUNDS = "filter-compounds";
+	private final static String[] FILTER_ACTIONS = { FILTER_SELECTED, FILTER_UNSELECTED, FILTER_CLUSTERS,
+			FILTER_COMPOUNDS };
+
 	private final static String REMOVE_SELECTED = "remove-selected";
 	private final static String REMOVE_UNSELECTED = "remove-unselected";
 	private final static String REMOVE_CLUSTERS = "remove-clusters";
 	private final static String REMOVE_COMPOUNDS = "remove-compounds";
 	private final static String[] REMOVE_ACTIONS = { REMOVE_SELECTED, REMOVE_UNSELECTED, REMOVE_CLUSTERS,
 			REMOVE_COMPOUNDS };
+
+	private final static String EDIT_SHOW_DISTANCE = "edit-show-distance";
+	private final static String EDIT_SELECT_LAST_FEATURE = "edit-select-last-feature";
+	private final static String[] EDIT_ACTIONS = { EDIT_SHOW_DISTANCE, EDIT_SELECT_LAST_FEATURE };
 
 	private final static String EXPORT_SELECTED = "export-selected";
 	private final static String EXPORT_UNSELECTED = "export-unselected";
@@ -108,12 +119,10 @@ public class Actions
 	private final static String VIEW_BLACK_WHITE = "view-black-white";
 	private final static String VIEW_ANTIALIAS = "view-antialias";
 	private final static String VIEW_COMPOUND_DESCRIPTOR = "view-compound-descriptor";
-	private final static String VIEW_SELECT_LAST_FEATURE = "view-select-last-feature";
 	private final static String VIEW_DISGUISE_NON_HOVERED = "view-disguise-non-hovered";
 	private final static String VIEW_OPEN_SORT_FILTER_DIALOG = "view-open-sort-filter-dialog";
 	private final static String[] VIEW_ACTIONS = { VIEW_FULL_SCREEN, VIEW_DRAW_HYDROGENS, VIEW_SPIN, VIEW_BLACK_WHITE,
-			VIEW_ANTIALIAS, VIEW_COMPOUND_DESCRIPTOR, VIEW_SELECT_LAST_FEATURE, VIEW_OPEN_SORT_FILTER_DIALOG,
-			VIEW_DISGUISE_NON_HOVERED };
+			VIEW_ANTIALIAS, VIEW_COMPOUND_DESCRIPTOR, VIEW_OPEN_SORT_FILTER_DIALOG, VIEW_DISGUISE_NON_HOVERED };
 
 	private final static String HIGHLIGHT_COLORS = "highlight-colors";
 	private final static String HIGHLIGHT_COLOR_MATCH = "highlight-color-match";
@@ -161,6 +170,7 @@ public class Actions
 		keys.put(DATA_FEATURE_TABLE, KeyStroke.getKeyStroke(KeyEvent.VK_3, ActionEvent.ALT_MASK));
 		keys.put(FILE_NEW, KeyStroke.getKeyStroke(KeyEvent.VK_N, ActionEvent.ALT_MASK));
 		keys.put(FILE_EXIT, KeyStroke.getKeyStroke(KeyEvent.VK_F4, ActionEvent.ALT_MASK));
+		keys.put(EDIT_SHOW_DISTANCE, KeyStroke.getKeyStroke(KeyEvent.VK_D, ActionEvent.ALT_MASK));
 		keys.put(REMOVE_SELECTED, KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, ActionEvent.ALT_MASK));
 		keys.put(EXPORT_IMAGE, KeyStroke.getKeyStroke(KeyEvent.VK_I, ActionEvent.ALT_MASK));
 		keys.put(EXPORT_WORKFLOW, KeyStroke.getKeyStroke(KeyEvent.VK_W, ActionEvent.ALT_MASK));
@@ -170,7 +180,7 @@ public class Actions
 		keys.put(VIEW_SPIN, KeyStroke.getKeyStroke(KeyEvent.VK_S, ActionEvent.ALT_MASK));
 		keys.put(VIEW_BLACK_WHITE, KeyStroke.getKeyStroke(KeyEvent.VK_B, ActionEvent.ALT_MASK));
 		keys.put(HIGHLIGHT_COLOR_MATCH, KeyStroke.getKeyStroke(KeyEvent.VK_C, ActionEvent.ALT_MASK));
-		keys.put(VIEW_COMPOUND_DESCRIPTOR, KeyStroke.getKeyStroke(KeyEvent.VK_D, ActionEvent.ALT_MASK));
+		//		keys.put(VIEW_COMPOUND_DESCRIPTOR, KeyStroke.getKeyStroke(KeyEvent.VK_D, ActionEvent.ALT_MASK));
 		keys.put(HIDDEN_ENABLE_JMOL_POPUP, KeyStroke.getKeyStroke(KeyEvent.VK_R, ActionEvent.ALT_MASK));
 		keys.put(HIDDEN_UPDATE_MOUSE_SELECTION_PRESSED,
 				KeyStroke.getKeyStroke(KeyEvent.VK_SHIFT, ActionEvent.SHIFT_MASK));
@@ -178,7 +188,7 @@ public class Actions
 		keys.put(VIEW_ANTIALIAS, KeyStroke.getKeyStroke(KeyEvent.VK_G, ActionEvent.ALT_MASK));
 		keys.put(HIGHLIGHT_COLORS, KeyStroke.getKeyStroke(KeyEvent.VK_L, ActionEvent.ALT_MASK));
 		keys.put(HIGHLIGHT_LAST_FEATURE, KeyStroke.getKeyStroke(KeyEvent.VK_F, ActionEvent.ALT_MASK));
-		keys.put(VIEW_SELECT_LAST_FEATURE, KeyStroke.getKeyStroke(KeyEvent.VK_A, ActionEvent.ALT_MASK));
+		keys.put(EDIT_SELECT_LAST_FEATURE, KeyStroke.getKeyStroke(KeyEvent.VK_A, ActionEvent.ALT_MASK));
 		keys.put(HIGHLIGHT_MODE, KeyStroke.getKeyStroke(KeyEvent.VK_T, ActionEvent.ALT_MASK));
 		keys.put(HIDDEN_DECR_COMPOUND_SIZE, KeyStroke.getKeyStroke(KeyEvent.VK_MINUS, ActionEvent.CTRL_MASK));
 		keys.put(HIDDEN_INCR_COMPOUND_SIZE, KeyStroke.getKeyStroke(KeyEvent.VK_PLUS, ActionEvent.CTRL_MASK));
@@ -283,18 +293,27 @@ public class Actions
 		else if (clustering.numClusters() > 1 && clustering.isClusterActive())
 			selectedClusters = new Cluster[] { clustering.getActiveCluster() };
 
-		List<Cluster> unselectedClustersList = new ArrayList<Cluster>(clustering.getClusters());
-		for (Cluster cluster : selectedClusters)
-			unselectedClustersList.remove(cluster);
-		Cluster unselectedClusters[] = ArrayUtil.toArray(Cluster.class, unselectedClustersList);
-		List<Compound> unselectedCompoundsList = new ArrayList<Compound>(clustering.getCompounds(true));
-		for (Compound compound : selectedCompounds)
-			unselectedCompoundsList.remove(compound);
-		Compound unselectedCompounds[] = ArrayUtil.toArray(Compound.class, unselectedCompoundsList);
+		Cluster unselectedClusters[] = new Cluster[0];
+		if (selectedClusters.length > 0)
+		{
+			List<Cluster> unselectedClustersList = new ArrayList<Cluster>(clustering.getClusters());
+			for (Cluster cluster : selectedClusters)
+				unselectedClustersList.remove(cluster);
+			unselectedClusters = ArrayUtil.toArray(Cluster.class, unselectedClustersList);
+		}
+		Compound unselectedCompounds[] = new Compound[0];
+		if (selectedCompounds.length > 0)
+		{
+			List<Compound> unselectedCompoundsList = new ArrayList<Compound>(clustering.getCompounds(true));
+			for (Compound compound : selectedCompounds)
+				unselectedCompoundsList.remove(compound);
+			unselectedCompounds = ArrayUtil.toArray(Compound.class, unselectedCompoundsList);
+		}
 
-		String actionsX[] = new String[] { REMOVE_SELECTED, REMOVE_UNSELECTED, EXPORT_SELECTED, EXPORT_UNSELECTED };
-		String actionStrings[] = new String[] { "Remove", "Remove", "Export", "Export" };
-		boolean selectedX[] = new boolean[] { true, false, true, false };
+		String actionsX[] = new String[] { FILTER_SELECTED, FILTER_UNSELECTED, REMOVE_SELECTED, REMOVE_UNSELECTED,
+				EXPORT_SELECTED, EXPORT_UNSELECTED };
+		String actionStrings[] = new String[] { "Hide", "Hide", "Remove", "Remove", "Export", "Export" };
+		boolean selectedX[] = new boolean[] { true, false, true, false, true, false };
 
 		for (int i = 0; i < selectedX.length; i++)
 		{
@@ -338,43 +357,79 @@ public class Actions
 				action.setEnabled(false);
 			}
 		}
-	}
 
-	private void removeOrExport(boolean remove, AbstractAction action)
-	{
-		final Compound comps[] = (Compound[]) action.getValue("Compound");
-		final Cluster c[] = (Cluster[]) action.getValue("Cluster");
-		if (remove)
+		if (selectedCompounds.length > 0)
 		{
-			Thread th = new Thread(new Runnable()
-			{
-				public void run()
-				{
-					if (comps.length > 0)
-						clusterControler.removeCompounds(comps);
-					else if (c.length > 0)
-						clusterControler.removeCluster(c);
-				}
-			});
-			th.start();
+			actions.get(EDIT_SHOW_DISTANCE).setEnabled(true);
+			String cName = selectedCompounds[0].toString();
+			if (cName.length() > 22)
+				cName = cName.substring(0, 20) + "..";
+			actions.get(EDIT_SHOW_DISTANCE).putValue(Action.NAME, "Show distance to " + cName);
 		}
 		else
 		{
-			if (comps.length > 0)
+			actions.get(EDIT_SHOW_DISTANCE).putValue(Action.NAME, "Show distance to selected compound");
+			actions.get(EDIT_SHOW_DISTANCE).setEnabled(false);
+		}
+	}
+
+	private void filter(AbstractAction action)
+	{
+		final Compound comps[] = (Compound[]) action.getValue("Compound");
+		final Cluster c[] = (Cluster[]) action.getValue("Cluster");
+		List<Compound> compounds = new ArrayList<Compound>();
+		String desc;
+		if (comps.length > 0)
+		{
+			desc = "Hide selected compounds";
+			compounds = ArrayUtil.toList(comps);
+		}
+		else
+		{
+			desc = "Hide selected clusters";
+			for (Cluster clust : c)
+				for (Compound compound : clust.getCompounds())
+					compounds.add(compound);
+		}
+
+		clusterControler.applyCompoundFilter(desc, compounds);
+	}
+
+	private void remove(AbstractAction action)
+	{
+		final Compound comps[] = (Compound[]) action.getValue("Compound");
+		final Cluster c[] = (Cluster[]) action.getValue("Cluster");
+		Thread th = new Thread(new Runnable()
+		{
+			public void run()
 			{
-				int[] compoundOrigIndices = new int[comps.length];
-				for (int i = 0; i < compoundOrigIndices.length; i++)
-					compoundOrigIndices[i] = comps[i].getOrigIndex();
-				ExportData.exportCompoundsWithOrigIndices(clustering, compoundOrigIndices,
-						viewControler.getCompoundDescriptor());
+				if (comps.length > 0)
+					clusterControler.removeCompounds(comps);
+				else if (c.length > 0)
+					clusterControler.removeCluster(c);
 			}
-			else if (c.length > 0)
-			{
-				int[] clusterIndices = new int[c.length];
-				for (int i = 0; i < clusterIndices.length; i++)
-					clusterIndices[i] = clustering.indexOf(c[i]);
-				ExportData.exportClusters(clustering, clusterIndices, viewControler.getCompoundDescriptor());
-			}
+		});
+		th.start();
+	}
+
+	private void export(AbstractAction action)
+	{
+		final Compound comps[] = (Compound[]) action.getValue("Compound");
+		final Cluster c[] = (Cluster[]) action.getValue("Cluster");
+		if (comps.length > 0)
+		{
+			int[] compoundOrigIndices = new int[comps.length];
+			for (int i = 0; i < compoundOrigIndices.length; i++)
+				compoundOrigIndices[i] = comps[i].getOrigIndex();
+			ExportData.exportCompoundsWithOrigIndices(clustering, compoundOrigIndices,
+					viewControler.getCompoundDescriptor());
+		}
+		else if (c.length > 0)
+		{
+			int[] clusterIndices = new int[c.length];
+			for (int i = 0; i < clusterIndices.length; i++)
+				clusterIndices[i] = clustering.indexOf(c[i]);
+			ExportData.exportClusters(clustering, clusterIndices, viewControler.getCompoundDescriptor());
 		}
 	}
 
@@ -538,12 +593,44 @@ public class Actions
 				LaunchCheSMapper.exit(f);
 			}
 		};
+		new ActionCreator(FILTER_SELECTED)
+		{
+			@Override
+			public void action()
+			{
+				filter((AbstractAction) actions.get(FILTER_SELECTED));
+			}
+		};
+		new ActionCreator(FILTER_UNSELECTED)
+		{
+			@Override
+			public void action()
+			{
+				filter((AbstractAction) actions.get(FILTER_UNSELECTED));
+			}
+		};
+		new ActionCreator(FILTER_CLUSTERS)
+		{
+			@Override
+			public void action()
+			{
+				clusterControler.chooseClustersToFilter();
+			}
+		};
+		new ActionCreator(FILTER_COMPOUNDS)
+		{
+			@Override
+			public void action()
+			{
+				clusterControler.chooseCompoundsToFilter();
+			}
+		};
 		new ActionCreator(REMOVE_SELECTED)
 		{
 			@Override
 			public void action()
 			{
-				removeOrExport(true, (AbstractAction) actions.get(REMOVE_SELECTED));
+				remove((AbstractAction) actions.get(REMOVE_SELECTED));
 			}
 		};
 		new ActionCreator(REMOVE_UNSELECTED)
@@ -551,7 +638,7 @@ public class Actions
 			@Override
 			public void action()
 			{
-				removeOrExport(true, (AbstractAction) actions.get(REMOVE_UNSELECTED));
+				remove((AbstractAction) actions.get(REMOVE_UNSELECTED));
 			}
 		};
 		new ActionCreator(REMOVE_CLUSTERS)
@@ -575,7 +662,7 @@ public class Actions
 			@Override
 			public void action()
 			{
-				removeOrExport(false, (AbstractAction) actions.get(EXPORT_SELECTED));
+				export((AbstractAction) actions.get(EXPORT_SELECTED));
 			}
 		};
 		new ActionCreator(EXPORT_UNSELECTED)
@@ -583,7 +670,7 @@ public class Actions
 			@Override
 			public void action()
 			{
-				removeOrExport(false, (AbstractAction) actions.get(EXPORT_UNSELECTED));
+				export((AbstractAction) actions.get(EXPORT_UNSELECTED));
 			}
 		};
 		new ActionCreator(EXPORT_CLUSTERS)
@@ -932,7 +1019,7 @@ public class Actions
 				return viewControler.getHighlightMode() == HighlightMode.Spheres;
 			}
 		};
-		new ActionCreator(VIEW_SELECT_LAST_FEATURE)
+		new ActionCreator(EDIT_SELECT_LAST_FEATURE)
 		{
 			@Override
 			public void action()
@@ -1106,6 +1193,20 @@ public class Actions
 				}
 			}
 		};
+		new ActionCreator(EDIT_SHOW_DISTANCE)
+		{
+			@Override
+			public void action()
+			{
+				CompoundProperty p = null;
+				if (clustering.isCompoundWatched())
+					p = clustering.addDistanceToCompoundFeature(clustering.getWatchedCompounds()[0]);
+				else if (clustering.isCompoundActive())
+					p = clustering.addDistanceToCompoundFeature(clustering.getActiveCompounds()[0]);
+				if (p != null)
+					viewControler.setHighlighter(p);
+			}
+		};
 
 	}
 
@@ -1143,6 +1244,11 @@ public class Actions
 		return getActions(DATA_ACTIONS);
 	}
 
+	public Action[] getEditActions()
+	{
+		return getActions(EDIT_ACTIONS);
+	}
+
 	public Action[] getExportActions()
 	{
 		return getActions(EXPORT_ACTIONS);
@@ -1151,6 +1257,11 @@ public class Actions
 	public Action[] getRemoveActions()
 	{
 		return getActions(REMOVE_ACTIONS);
+	}
+
+	public Action[] getFilterActions()
+	{
+		return getActions(FILTER_ACTIONS);
 	}
 
 	public Action[] getViewHideNonZoomedActions()

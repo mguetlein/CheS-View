@@ -518,8 +518,8 @@ public class TreeView extends BlockableFrame
 								clusterControler.setClusterActive(node.getCluster(), true, true);
 							}
 							else
-								clusterControler.setCompoundFilter(new CompoundFilter(node.getName(), node.getLeafs()),
-										true);
+								clusterControler.setCompoundFilter(new CompoundFilter(node.getName(), node.getLeafs(),
+										true), true);
 						}
 
 						SwingUtil.invokeAndWait(new Runnable()

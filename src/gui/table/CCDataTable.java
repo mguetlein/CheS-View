@@ -31,7 +31,7 @@ public abstract class CCDataTable extends DataTable
 
 	public abstract String getExtraColumn();
 
-	public abstract boolean addEmbeddingQuality();
+	public abstract boolean addAdditionalProperties();
 
 	protected void updateFeatureSelection()
 	{
@@ -83,8 +83,9 @@ public abstract class CCDataTable extends DataTable
 		nonPropColumns = model.getColumnCount();
 
 		props = new ArrayList<CompoundProperty>();
-		if (addEmbeddingQuality() && clustering.getEmbeddingQualityProperty() != null)
-			props.add(clustering.getEmbeddingQualityProperty());
+		if (addAdditionalProperties() && clustering.getAdditionalProperties() != null)
+			for (CompoundProperty p : clustering.getAdditionalProperties())
+				props.add(p);
 		for (CompoundProperty p : clustering.getProperties())
 			if (!p.isSmiles())
 				props.add(p);

@@ -18,7 +18,7 @@ public class ClusteringUtil
 		return list;
 	}
 
-	public static List<Vector3f> getCompoundPositions(CompoundGroup c)
+	public static List<Vector3f> getCompoundPositions(ZoomableCompoundGroup c)
 	{
 		List<Vector3f> list = new ArrayList<Vector3f>();
 		for (Compound m : c.getCompounds())

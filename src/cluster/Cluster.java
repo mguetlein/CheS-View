@@ -23,10 +23,10 @@ import dataInterface.ClusterData;
 import dataInterface.CompoundData;
 import dataInterface.CompoundProperty;
 import dataInterface.CompoundProperty.Type;
-import dataInterface.CompoundPropertyOwner;
 import dataInterface.SubstructureSmartsType;
 
-public class Cluster extends CompoundGroup implements CompoundPropertyOwner, DoubleNameElement, Comparable<Cluster>
+public class Cluster extends ZoomableCompoundGroup implements CompoundGroupWithProperties, DoubleNameElement,
+		Comparable<Cluster>
 {
 	private ClusterData clusterData;
 

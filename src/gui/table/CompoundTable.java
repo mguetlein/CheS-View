@@ -200,7 +200,7 @@ public class CompoundTable extends CCDataTable
 	}
 
 	@Override
-	public boolean addEmbeddingQuality()
+	public boolean addAdditionalProperties()
 	{
 		return true;
 	}

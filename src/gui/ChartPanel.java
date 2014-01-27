@@ -319,19 +319,20 @@ public class ChartPanel extends TransparentViewPanel
 											comps.remove(compound);
 										else
 											comps.add(compound);
+								}
+
+								if (doubleClick)
+								{
+									CompoundFilter compoundFilter = new CompoundFilter(
+											selectionCriterionToString(prop), new ArrayList<Compound>(comps), true);
+									clusterControler.setCompoundFilter(compoundFilter, true);
+								}
+								else
+								{
 									if (comps.size() == 0)
 										clusterControler.clearCompoundActive(true);
 									else
 										clusterControler.setCompoundActive(ArrayUtil.toArray(comps), true);
-								}
-								else
-								{
-									for (Compound compound : clustering.getActiveCompounds())
-										comps.add(compound);
-
-									CompoundFilter compoundFilter = new CompoundFilter(
-											selectionCriterionToString(prop), new ArrayList<Compound>(comps));
-									clusterControler.setCompoundFilter(compoundFilter, true);
 								}
 							}
 						}

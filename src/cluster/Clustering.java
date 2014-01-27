@@ -93,11 +93,15 @@ public interface Clustering extends CompoundPropertyOwner
 
 	double getSpecificity(Cluster cluster, CompoundProperty p);
 
+	double getSpecificity(CompoundSelection sel, CompoundProperty p);
+
 	int getNumCompounds(boolean b);
 
 	String getEmbedAlgorithm();
 
 	String getEmbedQuality();
+
+	List<CompoundProperty> getAdditionalProperties();
 
 	CompoundProperty getEmbeddingQualityProperty();
 
@@ -128,4 +132,7 @@ public interface Clustering extends CompoundPropertyOwner
 
 	boolean isBMBFRealEndpointDataset(boolean b);
 
+	CompoundProperty addDistanceToCompoundFeature(Compound c);
+
+	public CompoundSelection getCompoundSelection(Compound[] c);
 }

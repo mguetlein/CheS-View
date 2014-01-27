@@ -11,7 +11,7 @@ import javax.vecmath.Vector3f;
 import util.ArrayUtil;
 import util.Vector3fUtil;
 
-public class CompoundGroup implements Zoomable
+public class ZoomableCompoundGroup implements Zoomable
 {
 	private Vector<Compound> origCompounds;
 	private Vector<Compound> filteredCompounds;

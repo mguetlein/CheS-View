@@ -20,22 +20,18 @@ import javax.vecmath.Vector3f;
 
 import main.Settings;
 import main.TaskProvider;
-import util.ArraySummary;
 import util.ArrayUtil;
-import util.CountedSet;
-import util.DoubleArraySummary;
-import util.DoubleKeyHashMap;
 import util.ListUtil;
 import util.SelectionModel;
 import util.Vector3fUtil;
 import util.VectorUtil;
 import data.ClusteringData;
+import data.CompoundDataImpl;
 import dataInterface.ClusterData;
 import dataInterface.CompoundData;
 import dataInterface.CompoundProperty;
 import dataInterface.CompoundProperty.Type;
 import dataInterface.CompoundPropertyOwner;
-import dataInterface.CompoundPropertySpecificity;
 import dataInterface.CompoundPropertyUtil;
 import dataInterface.SubstructureSmartsType;
 
@@ -57,6 +53,7 @@ public class ClusteringImpl implements Zoomable, Clustering
 	public static final String CLUSTER_MODIFIED = "cluster_modified";
 	public static final String CLUSTER_NEW = "cluster_new";
 	public static final String CLUSTER_CLEAR = "cluster_clear";
+	public static final String PROPERTY_ADDED = "property_added";
 
 	boolean dirty = true;
 	int numCompounds = -1;
@@ -70,6 +67,8 @@ public class ClusteringImpl implements Zoomable, Clustering
 	HashMap<Integer, Cluster> jmolCompoundIndexToCluster;
 	HashMap<CompoundProperty, Integer> numMissingValues;
 	HashMap<CompoundProperty, Integer> numDistinctValues;
+
+	ClusteringValues clusteringValues = new ClusteringValues(this);
 
 	List<Compound> filteredCompoundList;
 	List<Compound> filteredCompoundListIncludingMultiClusteredCompounds;
@@ -171,10 +170,9 @@ public class ClusteringImpl implements Zoomable, Clustering
 
 		numMissingValues.clear();
 		numDistinctValues.clear();
-		normalizedLogValues.clear();
-		normalizedValues.clear();
-		specificity.clear();
-		summarys.clear();
+
+		clusteringValues.clear();
+		compoundSelections.clear();
 
 		endpointDataset = null;
 		filledEndpointDataset = null;
@@ -342,10 +340,8 @@ public class ClusteringImpl implements Zoomable, Clustering
 		View.instance.zap(true, true, true);
 		filteredCompoundList.clear();
 		filteredCompoundListIncludingMultiClusteredCompounds.clear();
-		normalizedValues.clear();
-		normalizedLogValues.clear();
-		specificity.clear();
-		summarys.clear();
+		clusteringValues.clear();
+		compoundSelections.clear();
 		dirty = true;
 
 		getClusterActive().clearSelection();
@@ -811,187 +807,27 @@ public class ClusteringImpl implements Zoomable, Clustering
 		this.superimposed = superimposed;
 	}
 
-	HashMap<CompoundProperty, ArraySummary> summarys = new HashMap<CompoundProperty, ArraySummary>();
-	DoubleKeyHashMap<CompoundPropertyOwner, CompoundProperty, Double> normalizedValues = new DoubleKeyHashMap<CompoundPropertyOwner, CompoundProperty, Double>();
-	DoubleKeyHashMap<CompoundPropertyOwner, CompoundProperty, Double> specificity = new DoubleKeyHashMap<CompoundPropertyOwner, CompoundProperty, Double>();
-	DoubleKeyHashMap<CompoundPropertyOwner, CompoundProperty, Double> normalizedLogValues = new DoubleKeyHashMap<CompoundPropertyOwner, CompoundProperty, Double>();
-
-	HashMap<CompoundProperty, double[]> specNumVals = new HashMap<CompoundProperty, double[]>();
-	DoubleKeyHashMap<Cluster, CompoundProperty, double[]> specNumClusterVals = new DoubleKeyHashMap<Cluster, CompoundProperty, double[]>();
-
-	private synchronized void updateNormalizedNumericValues(final CompoundProperty p)
-	{
-		Double d[] = new Double[filteredCompoundListIncludingMultiClusteredCompounds.size()];
-		int i = 0;
-		for (Compound m : filteredCompoundListIncludingMultiClusteredCompounds)
-			d[i++] = m.getDoubleValue(p);
-		summarys.put(p, DoubleArraySummary.create(d));
-		Double valNorm[] = ArrayUtil.normalize(d, false);
-		Double valNormLog[] = ArrayUtil.normalizeLog(d, false);
-		specNumVals.put(p, ArrayUtil.toPrimitiveDoubleArray(ArrayUtil.removeNullValues(valNorm)));
-
-		normalizedValues.put(this, p, DoubleArraySummary.create(valNorm).getMean());
-		normalizedLogValues.put(this, p, DoubleArraySummary.create(valNormLog).getMean());
-		HashMap<Cluster, List<Double>> clusterVals = new HashMap<Cluster, List<Double>>();
-		HashMap<Cluster, List<Double>> clusterValsLog = new HashMap<Cluster, List<Double>>();
-		for (Cluster c : clusters)
-		{
-			clusterVals.put(c, new ArrayList<Double>());
-			clusterValsLog.put(c, new ArrayList<Double>());
-		}
-		i = 0;
-		for (Compound m : filteredCompoundListIncludingMultiClusteredCompounds)
-		{
-			normalizedValues.put(m, p, valNorm[i]);
-			normalizedLogValues.put(m, p, valNormLog[i]);
-			if (valNorm[i] != null)
-				for (Cluster c : clusters)
-					if (c.contains(m))
-					{
-						clusterVals.get(c).add(valNorm[i]);
-						clusterValsLog.get(c).add(valNormLog[i]);
-					}
-			i++;
-		}
-		for (Cluster c : clusters)
-		{
-			normalizedValues.put(c, p, DoubleArraySummary.create(clusterVals.get(c)).getMean());
-			normalizedLogValues.put(c, p, DoubleArraySummary.create(clusterValsLog.get(c)).getMean());
-			specNumClusterVals.put(c, p, ArrayUtil.toPrimitiveDoubleArray(clusterVals.get(c)));
-		}
-	}
-
-	private synchronized double numericClusterSpec(Cluster c, CompoundProperty p)
-	{
-		if (!specificity.containsKeyPair(c, p))
-		{
-			if (!summarys.containsKey(p))
-				updateNormalizedNumericValues(p);
-			if (c.size() == 0)
-				specificity.put(c, p, CompoundPropertySpecificity.NO_SPEC_AVAILABLE);
-			else
-				specificity.put(
-						c,
-						p,
-						CompoundPropertySpecificity.numericMultiSpecificty(specNumClusterVals.get(c, p),
-								specNumVals.get(p)));
-		}
-		return specificity.get(c, p);
-	}
-
-	private synchronized double numericCompoundSpec(Compound m, CompoundProperty p)
-	{
-		if (!specificity.containsKeyPair(m, p))
-		{
-			if (!summarys.containsKey(p))
-				updateNormalizedNumericValues(p);
-			if (normalizedValues.get(m, p) == null)
-				specificity.put(m, p, CompoundPropertySpecificity.NO_SPEC_AVAILABLE);
-			else
-				specificity.put(
-						m,
-						p,
-						CompoundPropertySpecificity.numericSingleSpecificty(normalizedValues.get(m, p),
-								specNumVals.get(p)));
-		}
-		return specificity.get(m, p);
-	}
-
-	HashMap<CompoundProperty, List<String>> specNomVals = new HashMap<CompoundProperty, List<String>>();
-	HashMap<CompoundProperty, long[]> specNomCounts = new HashMap<CompoundProperty, long[]>();
-
-	private synchronized void updateNormalizedNominalValues(final CompoundProperty p)
-	{
-		String s[] = new String[filteredCompoundListIncludingMultiClusteredCompounds.size()];
-		int i = 0;
-		for (Compound m : filteredCompoundListIncludingMultiClusteredCompounds)
-			s[i++] = m.getStringValue(p);
-		CountedSet<String> set = CountedSet.create(s);
-		summarys.put(p, set);
-
-		specNomVals.put(p, set.values());
-		specNomCounts.put(p, CompoundPropertySpecificity.nominalCounts(specNomVals.get(p), set));
-	}
-
-	private synchronized double nominalClusterSpec(Cluster c, CompoundProperty p)
-	{
-		if (!specificity.containsKeyPair(c, p))
-		{
-			if (!summarys.containsKey(p))
-				updateNormalizedNominalValues(p);
-			if (c.size() == 0)
-				specificity.put(c, p, CompoundPropertySpecificity.NO_SPEC_AVAILABLE);
-			else
-				specificity.put(c, p, CompoundPropertySpecificity.nominalSpecificty(
-						CompoundPropertySpecificity.nominalCounts(specNomVals.get(p), c.getNominalSummary(p)),
-						specNomCounts.get(p)));
-		}
-		return specificity.get(c, p);
-	}
-
-	private synchronized double nominalCompoundSpec(Compound m, CompoundProperty p)
-	{
-		if (!specificity.containsKeyPair(m, p))
-		{
-			if (!summarys.containsKey(p))
-				updateNormalizedNominalValues(p);
-			specificity.put(m, p, CompoundPropertySpecificity.nominalSpecificty(
-					CompoundPropertySpecificity.nominalCount(specNomVals.get(p), m.getStringValue(p)),
-					specNomCounts.get(p)));
-		}
-		return specificity.get(m, p);
-	}
-
-	private void updateNormalizedValues(CompoundProperty p)
-	{
-		if (p.getType() == Type.NUMERIC)
-			updateNormalizedNumericValues(p);
-		else
-			updateNormalizedNominalValues(p);
-	}
-
 	public synchronized Double getNormalizedDoubleValue(CompoundPropertyOwner m, CompoundProperty p)
 	{
-		if (p.getType() != Type.NUMERIC)
-			throw new IllegalStateException();
-		if (!normalizedValues.containsKeyPair(m, p))
-			updateNormalizedValues(p);
-		return normalizedValues.get(m, p);
+		return clusteringValues.getNormalizedDoubleValue(m, p);
 	}
 
 	public synchronized Double getNormalizedLogDoubleValue(CompoundPropertyOwner m, CompoundProperty p)
 	{
-		if (p.getType() != Type.NUMERIC)
-			throw new IllegalStateException();
-		if (!normalizedLogValues.containsKeyPair(m, p))
-			updateNormalizedValues(p);
-		return normalizedLogValues.get(m, p);
+		return clusteringValues.getNormalizedLogDoubleValue(m, p);
 	}
 
 	@Override
 	public Double getDoubleValue(CompoundProperty p)
 	{
-		if (p.getType() != Type.NUMERIC)
-			throw new IllegalStateException();
-		if (!summarys.containsKey(p))
-			updateNormalizedValues(p);
-		return ((DoubleArraySummary) summarys.get(p)).getMean();
+		return clusteringValues.getDoubleValue(p);
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public String getStringValue(CompoundProperty p)
 	{
-		if (p.getType() == Type.NUMERIC)
-			throw new IllegalStateException();
-		if (!summarys.containsKey(p))
-			updateNormalizedValues(p);
-		CountedSet<String> set = (CountedSet<String>) summarys.get(p);
-		String mode = set.getMode(false);
-		if (set.getCount(mode) > set.getSum(false) * 2 / 3.0)
-			return mode;
-		else
-			return null;
+		return clusteringValues.getStringValue(p);
 	}
 
 	@Override
@@ -1005,64 +841,52 @@ public class ClusteringImpl implements Zoomable, Clustering
 		return clusteringData.getOrigLocalPath();
 	}
 
+	@Override
+	public List<CompoundProperty> getAdditionalProperties()
+	{
+		return clusteringData.getAdditionalProperties();
+	}
+
 	public CompoundProperty getEmbeddingQualityProperty()
 	{
 		return clusteringData.getEmbeddingQualityProperty();
 	}
 
-	public CompoundProperty[] getAppDomainProperties()
+	//	public CompoundProperty[] getAppDomainProperties()
+	//	{
+	//		return clusteringData.getAppDomainProperties();
+	//	}
+	//
+	//	public List<CompoundProperty> getDistanceToProperties()
+	//	{
+	//		return clusteringData.getDistanceToProperties();
+	//	}
+
+	@Override
+	public double getSpecificity(CompoundSelection c, CompoundProperty p)
 	{
-		return clusteringData.getAppDomainProperties();
+		return clusteringValues.getSpecificity(c, p);
 	}
 
-	public List<CompoundProperty> getDistanceToProperties()
+	@Override
+	public double getSpecificity(Cluster c, CompoundProperty p)
 	{
-		return clusteringData.getDistanceToProperties();
+		return clusteringValues.getSpecificity(c, p);
 	}
 
-	public synchronized double getSpecificity(Cluster c, CompoundProperty p)
+	public double getSpecificity(Compound m, CompoundProperty p)
 	{
-		if (p.getType() == Type.NUMERIC)
-			return numericClusterSpec(c, p);
-		else
-			return nominalClusterSpec(c, p);
+		return clusteringValues.getSpecificity(m, p);
 	}
 
-	public synchronized double getSpecificity(Compound m, CompoundProperty p)
+	public String getSummaryStringValue(CompoundProperty p, boolean html)
 	{
-		if (p.getType() == Type.NUMERIC)
-			return numericCompoundSpec(m, p);
-		else
-			return nominalCompoundSpec(m, p);
+		return clusteringValues.getSummaryStringValue(p, html);
 	}
 
-	public synchronized String getSummaryStringValue(CompoundProperty p, boolean html)
+	public void initFeatureNormalization()
 	{
-		if (!summarys.containsKey(p))
-			updateNormalizedValues(p);
-		if (p.isSmartsProperty())
-		{
-			@SuppressWarnings("unchecked")
-			CountedSet<String> set = ((CountedSet<String>) summarys.get(p)).copy();
-			if (set.contains("1"))
-				set.rename("1", "match");
-			if (set.contains("0"))
-				set.rename("0", "no-match");
-			return set.toString(html);
-			//			return "matches " + set.getCount("1") + "/" + set.sum();
-
-		}
-		else
-			return summarys.get(p).toString(html);
-	}
-
-	public synchronized void initFeatureNormalization()
-	{
-		@SuppressWarnings("unchecked")
-		List<CompoundProperty> props = ListUtil.concat(getProperties(), getFeatures());
-		TaskProvider.verbose("Compute feature value statistics");
-		for (CompoundProperty p : props)
-			updateNormalizedValues(p);
+		clusteringValues.initFeatureNormalization();
 	}
 
 	public Cluster getUniqueClusterForCompounds(Compound[] c)
@@ -1278,4 +1102,51 @@ public class ClusteringImpl implements Zoomable, Clustering
 		else
 			return endpointDataset;
 	}
+
+	@Override
+	public CompoundProperty addDistanceToCompoundFeature(Compound comp)
+	{
+		for (CompoundProperty prop : getAdditionalProperties())
+		{
+			if (prop instanceof DistanceToProperty && ((DistanceToProperty) prop).getCompound() == comp)
+				return prop;
+		}
+
+		Double d[] = new Double[getNumCompounds(true)];
+		for (int i = 0; i < d.length; i++)
+			d[i] = clusteringData.getFeatureDistance(comp.getOrigIndex(), getCompounds().get(i).getOrigIndex());
+		DistanceToProperty dp = new DistanceToProperty(comp, clusteringData.getEmbeddingDistanceMeasure(), d);
+
+		int i = 0;
+		for (CompoundData cc : getCompounds())
+		{
+			CompoundDataImpl c = (CompoundDataImpl) cc;
+			c.setDoubleValue(dp, d[i]);
+			c.setNormalizedValueCompleteDataset(dp, dp.getNormalizedValuesInCompleteMappedDataset()[i]);
+			i++;
+		}
+
+		clusteringData.getAdditionalProperties().add(dp);
+		dirty = true;
+		fire(PROPERTY_ADDED, true, false);
+		return dp;
+	}
+
+	private HashMap<String, CompoundSelection> compoundSelections = new HashMap<String, CompoundSelection>();
+
+	public CompoundSelection getCompoundSelection(Compound[] c)
+	{
+		StringBuffer key = new StringBuffer();
+		for (Compound compound : c)
+			key.append(compound.getJmolIndex());
+		String k = key.toString();
+		if (!compoundSelections.containsKey(k))
+		{
+			CompoundSelection sel = new CompoundSelection(c);
+			clusteringValues.initSelectionNormalization(sel);
+			compoundSelections.put(k, sel);
+		}
+		return compoundSelections.get(k);
+	}
+
 }

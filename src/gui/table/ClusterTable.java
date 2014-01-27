@@ -199,7 +199,7 @@ public class ClusterTable extends CCDataTable
 	}
 
 	@Override
-	public boolean addEmbeddingQuality()
+	public boolean addAdditionalProperties()
 	{
 		return false;
 	}

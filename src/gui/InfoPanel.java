@@ -46,6 +46,7 @@ import cluster.ClusterController;
 import cluster.Clustering;
 import cluster.Clustering.SelectionListener;
 import cluster.Compound;
+import cluster.CompoundSelection;
 import dataInterface.CompoundProperty;
 import dataInterface.CompoundPropertyOwner;
 import dataInterface.CompoundPropertyUtil;
@@ -78,6 +79,7 @@ public class InfoPanel extends JPanel
 	CardLayout clusterCompoundLayout;
 	final static String CARD_CLUSTERING = "clustering";
 	final static String CARD_CLUSTER = "cluster";
+	final static String CARD_SELECTION = "selection";
 	final static String CARD_COMPOUND = "compound";
 	String currentCard;
 	int globalMinWidth;
@@ -196,6 +198,36 @@ public class InfoPanel extends JPanel
 		{
 			return Double.compare(clustering.getSpecificity(((Cluster) selected), p1),
 					clustering.getSpecificity(((Cluster) selected), p2));
+		}
+	}
+
+	public class SelectionTablePanel extends TablePanel
+	{
+		@Override
+		public List<Info> getAdditionalInfo()
+		{
+			List<Info> map = new ArrayList<Info>();
+			map.add(new Info("Num compounds", ((CompoundSelection) selected).size()));
+			return map;
+		}
+
+		@Override
+		public String getType()
+		{
+			return "Selection";
+		}
+
+		@Override
+		public String getName()
+		{
+			return ((CompoundSelection) selected).toString();
+		}
+
+		@Override
+		public int compare(CompoundProperty p1, CompoundProperty p2)
+		{
+			return Double.compare(clustering.getSpecificity(((CompoundSelection) selected), p1),
+					clustering.getSpecificity(((CompoundSelection) selected), p2));
 		}
 	}
 
@@ -493,23 +525,48 @@ public class InfoPanel extends JPanel
 		boolean interactive = false;
 		boolean showProps = true;
 
-		if (clustering.isCompoundWatched())
+		int numCompoundsWatched = clustering.getWatchedCompounds().length;
+		int numCompoundsActive = clustering.getActiveCompounds().length;
+
+		if (numCompoundsWatched + numCompoundsActive > 0)
 		{
-			card = CARD_COMPOUND;
-			selected = clustering.getWatchedCompounds()[0];
-			if (clustering.isCompoundActive((Compound) selected))
-				lastWatched = selected;
-			interactive = clustering.isCompoundActive() && selected == clustering.getActiveCompounds()[0];
-		}
-		else if (clustering.isCompoundActive())
-		{
-			card = CARD_COMPOUND;
-			Compound active[] = clustering.getActiveCompounds();
-			if (lastWatched != null && ArrayUtil.indexOf(active, lastWatched) != -1)
-				selected = lastWatched;
+			if (numCompoundsWatched > 1 || (numCompoundsWatched == 0 && numCompoundsActive > 1))
+			{
+				//selection
+				card = CARD_SELECTION;
+				Compound c[];
+				if (numCompoundsWatched > 1)
+				{
+					c = clustering.getWatchedCompounds();
+					interactive = false;
+				}
+				else
+				{
+					c = clustering.getActiveCompounds();
+					interactive = true;
+				}
+				selected = clustering.getCompoundSelection(c);
+			}
 			else
-				selected = active[0];
-			interactive = true;
+			{
+				card = CARD_COMPOUND;
+				if (clustering.isCompoundWatched())
+				{
+					selected = clustering.getWatchedCompounds()[0];
+					if (clustering.isCompoundActive((Compound) selected))
+						lastWatched = selected;
+					interactive = clustering.isCompoundActive() && selected == clustering.getActiveCompounds()[0];
+				}
+				else if (clustering.isCompoundActive())
+				{
+					Compound active[] = clustering.getActiveCompounds();
+					if (lastWatched != null && ArrayUtil.indexOf(active, lastWatched) != -1)
+						selected = lastWatched;
+					else
+						selected = active[0];
+					interactive = true;
+				}
+			}
 		}
 		else if (clustering.isClusterActive() && clustering.numClusters() > 1)
 		{
@@ -738,6 +795,7 @@ public class InfoPanel extends JPanel
 
 		cardToPanel.put(CARD_CLUSTERING, new ClusteringTablePanel());
 		cardToPanel.put(CARD_CLUSTER, new ClusterTablePanel());
+		cardToPanel.put(CARD_SELECTION, new SelectionTablePanel());
 		cardToPanel.put(CARD_COMPOUND, new CompoundTablePanel());
 		for (String k : cardToPanel.keySet())
 			clusterCompoundPanel.add(cardToPanel.get(k), k);

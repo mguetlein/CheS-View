@@ -47,6 +47,7 @@ import weka.WekaPropertyUtil;
 import workflow.MappingWorkflow;
 import workflow.MappingWorkflow.DescriptorSelection;
 import alg.build3d.AbstractReal3DBuilder;
+import alg.build3d.AbstractReal3DBuilder.AutoCorrect;
 import alg.build3d.OpenBabel3DBuilder;
 import cluster.ClusterController;
 import cluster.Clustering;
@@ -308,6 +309,9 @@ public class LaunchCheSMapper
 		options.addOption(longParamOption("display-no", "set number of display to start application on",
 				"number of display"));
 
+		options.addOption(longParamOption("autocorrect-3d", "corrects ob3d result (when using -z), possible values: "
+				+ ArrayUtil.toString(AutoCorrect.values(), ",", "", "", ""), "autocorrect-3d"));
+
 		CommandLineParser parser = new BasicParser();
 		try
 		{
@@ -552,7 +556,10 @@ public class LaunchCheSMapper
 					CDKCompoundIcon.createIcons(p.getDatasetFile(), cmd.getOptionValue('k'));
 
 				OpenBabel3DBuilder builder = OpenBabel3DBuilder.INSTANCE;
-				builder.disableAutocorrect();
+				if (cmd.hasOption("autocorrect-3d"))
+					builder.setAutoCorrect(AutoCorrect.valueOf(cmd.getOptionValue("autocorrect-3d")));
+				else
+					builder.setAutoCorrect(AutoCorrect.disabled);
 				try
 				{
 					builder.build3D(p.getDatasetFile());

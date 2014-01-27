@@ -736,20 +736,16 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 		// inside the active cluster
 		if (clus == activeCluster)
 		{
-			if (disguiseUnZoomed == DisguiseMode.translucent)
+			if (!clustering.getCompoundWatched().isSelected(compoundJmolIndex)
+					&& !clustering.getCompoundActive().isSelected(compoundJmolIndex))
 			{
-				if (clustering.isCompoundActiveFromCluster(clus)
-						&& !clustering.getCompoundWatched().isSelected(compoundJmolIndex)
-						&& !clustering.getCompoundActive().isSelected(compoundJmolIndex))
-					translucent = true;
-			}
-			if (disguiseUnHovered == DisguiseMode.translucent
-					|| (c.isSuperimposed() && disguiseUnZoomed == DisguiseMode.translucent))
-			{
-				if ((clustering.isCompoundWatchedFromCluster(clus) || clustering.isCompoundActiveFromCluster(clus))
-						&& !clustering.getCompoundWatched().isSelected(compoundJmolIndex)
-						&& !clustering.getCompoundActive().isSelected(compoundJmolIndex))
-					translucent = true;
+				int numWatched = clustering.getCompoundWatched().getNumSelected();
+				int numActive = clustering.getCompoundActive().getNumSelected();
+
+				if (numWatched > 0 || numActive > 1 || (numActive == 1 && !(view.getZoomTarget() instanceof Compound)))
+					translucent |= (disguiseUnHovered == DisguiseMode.translucent || c.isSuperimposed());
+				if (numActive == 1 && view.getZoomTarget() instanceof Compound)
+					translucent |= disguiseUnZoomed == DisguiseMode.translucent;
 			}
 
 			if (selectedHighlighter instanceof CompoundPropertyHighlighter)
@@ -1077,32 +1073,20 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 					updateClusterRemoved();
 				else if (evt.getPropertyName().equals(ClusteringImpl.CLUSTER_MODIFIED))
 					updateAllClustersAndCompounds(true);
+				else if (evt.getPropertyName().equals(ClusteringImpl.PROPERTY_ADDED))
+					newHighlighters();
 			}
 		});
 		updateClusteringNew();
 	}
 
-	private void updateClusteringNew()
+	private void newHighlighters()
 	{
 		Highlighter[] h = new Highlighter[] { Highlighter.DEFAULT_HIGHLIGHTER };
 		if (clustering.getNumClusters() > 1)
 			h = ArrayUtil.concat(Highlighter.class, h, new Highlighter[] { Highlighter.CLUSTER_HIGHLIGHTER });
-		if (clustering.getEmbeddingQualityProperty() != null)
-			h = ArrayUtil.concat(Highlighter.class, h,
-					new Highlighter[] { new CompoundPropertyHighlighter(clustering.getEmbeddingQualityProperty()) });
-		if (clustering.getAppDomainProperties() != null)
-		{
-			Highlighter[] h2 = new Highlighter[h.length + clustering.getAppDomainProperties().length];
-			int i = 0;
-			for (; i < h.length; i++)
-				h2[i] = h[i];
-			for (; i < h2.length; i++)
-				h2[i] = new CompoundPropertyHighlighter(clustering.getAppDomainProperties()[i - h.length]);
-			h = h2;
-		}
-
-		if (clustering.getDistanceToProperties() != null)
-			for (CompoundProperty p : clustering.getDistanceToProperties())
+		if (clustering.getAdditionalProperties() != null)
+			for (CompoundProperty p : clustering.getAdditionalProperties())
 				h = ArrayUtil.concat(Highlighter.class, h, new Highlighter[] { new CompoundPropertyHighlighter(p) });
 
 		if (clustering.getSubstructureSmartsType() != null)
@@ -1127,6 +1111,11 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 		highlighters.put("Features used for mapping", featureHighlighters);
 
 		fireViewChange(PROPERTY_NEW_HIGHLIGHTERS);
+	}
+
+	private void updateClusteringNew()
+	{
+		newHighlighters();
 
 		updateAllClustersAndCompounds(true);
 
@@ -2251,6 +2240,20 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 	}
 
 	@Override
+	public void applyCompoundFilter(final String description, final List<Compound> compounds)
+	{
+		Thread th = new Thread(new Runnable()
+		{
+			public void run()
+			{
+				CompoundFilter compoundFilter = new CompoundFilter(description, compounds, false);
+				setCompoundFilter(compoundFilter, true);
+			}
+		});
+		th.start();
+	}
+
+	@Override
 	public void setCompoundFilter(final CompoundFilter filter, final boolean animate)
 	{
 		clearClusterActive(animate, true);
@@ -2316,7 +2319,7 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 		List<Compound> c = new ArrayList<Compound>();
 		for (int i : clustering.getCompoundActive().getSelectedIndices())
 			c.add(clustering.getCompoundWithJmolIndex(i));
-		CompoundFilter compoundFilter = new CompoundFilter(filterDescription, c);
+		CompoundFilter compoundFilter = new CompoundFilter(filterDescription, c, true);
 		setCompoundFilter(compoundFilter, animate);
 	}
 
@@ -2398,6 +2401,33 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 	}
 
 	@Override
+	public void chooseClustersToFilter()
+	{
+		int[] indices = clustering.clusterChooser("Hide Cluster/s",
+				"Select the clusters you want to temporarily remove (the original dataset is not modified).");
+		if (indices == null)
+			return;
+		List<Compound> l = new ArrayList<Compound>();
+		for (int i = 0; i < indices.length; i++)
+			for (Compound compound : clustering.getCluster(indices[i]).getCompounds())
+				l.add(compound);
+		applyCompoundFilter("Hide clusters", l);
+	}
+
+	@Override
+	public void chooseCompoundsToFilter()
+	{
+		int[] indices = clustering.selectJmolIndicesWithCompoundChooser("Hide Compounds/s",
+				"Select the compounds you want to temporarily remove (the original dataset is not modified).");
+		if (indices == null)
+			return;
+		List<Compound> l = new ArrayList<Compound>();
+		for (int i = 0; i < indices.length; i++)
+			l.add(clustering.getCompoundWithJmolIndex(indices[i]));
+		applyCompoundFilter("Hide compounds", l);
+	}
+
+	@Override
 	public void chooseClustersToRemove()
 	{
 		int[] indices = clustering.clusterChooser("Remove Cluster/s",
@@ -2416,7 +2446,7 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 	public void chooseCompoundsToRemove()
 	{
 		int[] indices = clustering.selectJmolIndicesWithCompoundChooser("Remove Compounds/s",
-				"Select the compounds you want to remove from the dataset (the original dataset is not modified).");
+				"Select the compounds you want to remove (the original dataset is not modified).");
 		if (indices == null)
 			return;
 		clearClusterActive(true, true);
