@@ -41,7 +41,11 @@ public interface Clustering extends CompoundPropertyOwner
 
 	Compound[] getActiveCompounds();
 
+	Compound getActiveCompound();
+
 	int[] getActiveCompoundsJmolIdx();
+
+	Compound getWatchedCompound();
 
 	Compound[] getWatchedCompounds();
 
@@ -135,4 +139,5 @@ public interface Clustering extends CompoundPropertyOwner
 	CompoundProperty addDistanceToCompoundFeature(Compound c);
 
 	public CompoundSelection getCompoundSelection(Compound[] c);
+
 }

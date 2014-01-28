@@ -13,7 +13,9 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JCheckBox;
@@ -27,6 +29,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
 import main.ScreenSetup;
+import util.ArrayUtil;
 import cluster.Cluster;
 import cluster.ClusterController;
 import cluster.Clustering;
@@ -145,6 +148,28 @@ public class CompoundListPanel extends TransparentViewPanel
 							throw new IllegalStateException();
 						if (e.isControlDown())
 							clusterControler.toggleCompoundActive(m);
+						else if (e.isShiftDown() && clustering.isCompoundActive())
+						{
+							int startIdx = listModel.indexOf(clustering.getActiveCompound());
+							int min, max;
+							if (startIdx < idx)
+							{
+								min = startIdx + 1;
+								max = idx;
+							}
+							else
+							{
+								min = idx;
+								max = startIdx - 1;
+							}
+							List<Compound> comps = new ArrayList<Compound>();
+							for (int i = min; i <= max; i++)
+								comps.add((Compound) listModel.elementAt(i));
+							for (Compound c : clustering.getActiveCompounds())
+								if (!comps.contains(c))
+									comps.add(c);
+							clusterControler.setCompoundActive(ArrayUtil.toArray(comps), true);
+						}
 						else
 						{
 							if (clustering.isCompoundActive(m))
@@ -331,7 +356,7 @@ public class CompoundListPanel extends TransparentViewPanel
 	private void updateActiveCompoundSelection()
 	{
 		if (clustering.isCompoundActive())
-			list.setSelectedValue(clustering.getActiveCompounds()[0], true);
+			list.setSelectedValue(clustering.getActiveCompound(), true);
 		else
 			list.clearSelection();
 	}

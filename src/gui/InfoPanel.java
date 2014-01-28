@@ -35,7 +35,6 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
-import util.ArrayUtil;
 import util.ImageLoader;
 import util.ImageLoader.Image;
 import util.ListUtil;
@@ -510,8 +509,6 @@ public class InfoPanel extends JPanel
 		update(false);
 	}
 
-	CompoundPropertyOwner lastWatched = null;
-
 	private void update(boolean force)
 	{
 		if (!SwingUtilities.isEventDispatchThread())
@@ -552,18 +549,12 @@ public class InfoPanel extends JPanel
 				card = CARD_COMPOUND;
 				if (clustering.isCompoundWatched())
 				{
-					selected = clustering.getWatchedCompounds()[0];
-					if (clustering.isCompoundActive((Compound) selected))
-						lastWatched = selected;
-					interactive = clustering.isCompoundActive() && selected == clustering.getActiveCompounds()[0];
+					selected = clustering.getWatchedCompound();
+					interactive = clustering.isCompoundActive() && selected == clustering.getActiveCompound();
 				}
 				else if (clustering.isCompoundActive())
 				{
-					Compound active[] = clustering.getActiveCompounds();
-					if (lastWatched != null && ArrayUtil.indexOf(active, lastWatched) != -1)
-						selected = lastWatched;
-					else
-						selected = active[0];
+					selected = clustering.getActiveCompound();
 					interactive = true;
 				}
 			}

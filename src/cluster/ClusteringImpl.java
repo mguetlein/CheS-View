@@ -1003,9 +1003,21 @@ public class ClusteringImpl implements Zoomable, Clustering
 	}
 
 	@Override
+	public Compound getActiveCompound()
+	{
+		return getCompoundWithJmolIndex(getCompoundActive().getSelected());
+	}
+
+	@Override
 	public int[] getActiveCompoundsJmolIdx()
 	{
 		return getCompoundActive().getSelectedIndices();
+	}
+
+	@Override
+	public Compound getWatchedCompound()
+	{
+		return getCompoundWithJmolIndex(getCompoundWatched().getSelected());
 	}
 
 	@Override

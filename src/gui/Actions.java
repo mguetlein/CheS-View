@@ -281,11 +281,18 @@ public class Actions
 	private void update()
 	{
 		Compound selectedCompounds[] = new Compound[0];
+		Compound selectedCompound = null;
 		if (clustering.isCompoundActive())
+		{
 			selectedCompounds = clustering.getActiveCompounds();
+			selectedCompound = clustering.getActiveCompound();
+		}
 		if (clustering.isCompoundWatched())
+		{
 			selectedCompounds = ArrayUtil.removeDuplicates(Compound.class,
 					ArrayUtil.concat(Compound.class, selectedCompounds, clustering.getWatchedCompounds()));
+			selectedCompound = clustering.getWatchedCompound();
+		}
 
 		Cluster selectedClusters[] = new Cluster[0];
 		if (clustering.numClusters() > 1 && clustering.isClusterWatched())
@@ -361,7 +368,7 @@ public class Actions
 		if (selectedCompounds.length > 0)
 		{
 			actions.get(EDIT_SHOW_DISTANCE).setEnabled(true);
-			String cName = selectedCompounds[0].toString();
+			String cName = selectedCompound.toString();
 			if (cName.length() > 22)
 				cName = cName.substring(0, 20) + "..";
 			actions.get(EDIT_SHOW_DISTANCE).putValue(Action.NAME, "Show distance to " + cName);
@@ -1200,9 +1207,9 @@ public class Actions
 			{
 				CompoundProperty p = null;
 				if (clustering.isCompoundWatched())
-					p = clustering.addDistanceToCompoundFeature(clustering.getWatchedCompounds()[0]);
+					p = clustering.addDistanceToCompoundFeature(clustering.getWatchedCompound());
 				else if (clustering.isCompoundActive())
-					p = clustering.addDistanceToCompoundFeature(clustering.getActiveCompounds()[0]);
+					p = clustering.addDistanceToCompoundFeature(clustering.getActiveCompound());
 				if (p != null)
 					viewControler.setHighlighter(p);
 			}
