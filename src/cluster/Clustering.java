@@ -140,4 +140,6 @@ public interface Clustering extends CompoundPropertyOwner
 
 	public CompoundSelection getCompoundSelection(Compound[] c);
 
+	boolean isRandomEmbedding();
+
 }

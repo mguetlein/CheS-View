@@ -25,6 +25,7 @@ import util.ListUtil;
 import util.SelectionModel;
 import util.Vector3fUtil;
 import util.VectorUtil;
+import alg.embed3d.Random3DEmbedder;
 import data.ClusteringData;
 import data.CompoundDataImpl;
 import dataInterface.ClusterData;
@@ -776,6 +777,12 @@ public class ClusteringImpl implements Zoomable, Clustering
 	public String getEmbedQuality()
 	{
 		return clusteringData.getEmbedQuality();
+	}
+
+	@Override
+	public boolean isRandomEmbedding()
+	{
+		return clusteringData.getThreeDEmbedder() instanceof Random3DEmbedder;
 	}
 
 	@Override

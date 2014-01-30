@@ -365,7 +365,7 @@ public class Actions
 			}
 		}
 
-		if (selectedCompounds.length > 0)
+		if (selectedCompounds.length > 0 && !clustering.isRandomEmbedding())
 		{
 			actions.get(EDIT_SHOW_DISTANCE).setEnabled(true);
 			String cName = selectedCompound.toString();
