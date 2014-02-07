@@ -138,6 +138,8 @@ public interface Clustering extends CompoundPropertyOwner
 
 	CompoundProperty addDistanceToCompoundFeature(Compound c);
 
+	CompoundProperty addSALIFeature(CompoundProperty c);
+
 	public CompoundSelection getCompoundSelection(Compound[] c);
 
 	boolean isRandomEmbedding();

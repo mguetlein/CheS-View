@@ -311,6 +311,13 @@ public class LaunchCheSMapper
 
 		options.addOption(longParamOption("autocorrect-3d", "corrects ob3d result (when using -z), possible values: "
 				+ ArrayUtil.toString(AutoCorrect.values(), ",", "", "", ""), "autocorrect-3d"));
+		options.addOption(longParamOption("distance-to",
+				"adds distance to compound/s to export of features (-e), comma separated compound index",
+				"compound indices"));
+		options.addOption(longParamOption("distance-measure",
+				"configure distance measure for distance-to option (euclidean or tanimoto)", "compound indices"));
+
+		options.addOption(longOption("verbose", "print more messages"));
 
 		CommandLineParser parser = new BasicParser();
 		try
@@ -420,6 +427,9 @@ public class LaunchCheSMapper
 				System.exit(0);
 			}
 
+			if (cmd.hasOption("verbose"))
+				TaskProvider.setPrintVerbose(true);
+
 			ScreenSetup screenSetup;
 			if (cmd.hasOption('y'))
 			{
@@ -484,7 +494,23 @@ public class LaunchCheSMapper
 				double missingRatio = 0;
 				if (cmd.hasOption("rem-missing-above-ratio"))
 					missingRatio = Double.parseDouble(cmd.getOptionValue("rem-missing-above-ratio"));
-				ExportData.scriptExport(infile, features, outfile, cmd.hasOption('u'), missingRatio);
+
+				List<Integer> compounds = new ArrayList<Integer>();
+				for (String idx : cmd.getOptionValue("distance-to").split(","))
+					compounds.add(Integer.parseInt(idx));
+				boolean euclidean = true;
+				if (compounds.size() > 0 && cmd.hasOption("distance-measure"))
+				{
+					if (cmd.getOptionValue("distance-measure").equals("euclidean"))
+						euclidean = true;
+					else if (cmd.getOptionValue("distance-measure").equals("tanimoto"))
+						euclidean = false;
+					else
+						throw new IllegalAccessError("unknown distance measure: "
+								+ cmd.getOptionValue("distance-measure"));
+				}
+				ExportData.scriptExport(infile, features, outfile, cmd.hasOption('u'), missingRatio, compounds,
+						euclidean);
 			}
 			else if (cmd.hasOption('x')) // export workflow
 			{

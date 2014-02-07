@@ -11,6 +11,7 @@ import gui.table.FeatureTable;
 import gui.table.TreeView;
 import gui.util.CompoundPropertyHighlighter;
 import gui.util.Highlighter;
+import gui.util.SALIDialog;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -95,8 +96,9 @@ public class Actions
 			REMOVE_COMPOUNDS };
 
 	private final static String EDIT_SHOW_DISTANCE = "edit-show-distance";
+	private final static String EDIT_SHOW_SALI = "edit-show-sali";
 	private final static String EDIT_SELECT_LAST_FEATURE = "edit-select-last-feature";
-	private final static String[] EDIT_ACTIONS = { EDIT_SHOW_DISTANCE, EDIT_SELECT_LAST_FEATURE };
+	private final static String[] EDIT_ACTIONS = { EDIT_SHOW_DISTANCE, EDIT_SHOW_SALI, EDIT_SELECT_LAST_FEATURE };
 
 	private final static String EXPORT_SELECTED = "export-selected";
 	private final static String EXPORT_UNSELECTED = "export-unselected";
@@ -1212,6 +1214,14 @@ public class Actions
 					p = clustering.addDistanceToCompoundFeature(clustering.getActiveCompound());
 				if (p != null)
 					viewControler.setHighlighter(p);
+			}
+		};
+		new ActionCreator(EDIT_SHOW_SALI)
+		{
+			@Override
+			public void action()
+			{
+				SALIDialog.showDialog(viewControler, clustering);
 			}
 		};
 

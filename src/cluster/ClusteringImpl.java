@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.Vector;
 
+import javax.swing.JOptionPane;
 import javax.vecmath.Vector3f;
 
 import main.Settings;
@@ -391,7 +392,7 @@ public class ClusteringImpl implements Zoomable, Clustering
 
 		{
 			String filename = d.getSDF();
-			TaskProvider.verbose("Load dataset into Jmol");
+			TaskProvider.debug("Load dataset into Jmol");
 
 			if (View.instance != null) // for export without graphics
 			{
@@ -1123,6 +1124,55 @@ public class ClusteringImpl implements Zoomable, Clustering
 	}
 
 	@Override
+	public CompoundProperty addSALIFeature(CompoundProperty p)
+	{
+		CompoundProperty old = null;
+		for (CompoundProperty prop : getAdditionalProperties())
+			if (prop instanceof SALIProperty)
+			{
+				old = prop;
+				break;
+			}
+
+		boolean log = false;
+		if (p.getType() == Type.NUMERIC && p.isLogHighlightingEnabled())
+		{
+			int ret = JOptionPane.showConfirmDialog(Settings.TOP_LEVEL_FRAME,
+					"Use log-transformated value for computation of activity cliffs (maximum SALI values)?",
+					"Use log-transformation?", JOptionPane.YES_NO_OPTION);
+			log = (ret == JOptionPane.YES_OPTION);
+		}
+
+		Double d[] = new Double[getNumCompounds(true)];
+		int count = 0;
+		String domain[] = null;
+		if (p.getType() != Type.NUMERIC)
+		{
+			domain = p.getNominalDomainInMappedDataset();
+			if (domain.length != 2)
+				throw new IllegalArgumentException("not yet implemented");
+		}
+		for (Compound comp : getCompounds(false))
+			if (p.getType() == Type.NUMERIC)
+			{
+				if (!log)
+					d[count++] = getNormalizedDoubleValue(comp, p);
+				else
+					d[count++] = getNormalizedLogDoubleValue(comp, p);
+			}
+			else
+			{
+				if (comp.getStringValue(p) != null)
+					d[count++] = (double) ArrayUtil.indexOf(domain, comp.getStringValue(p));
+			}
+
+		SALIProperty s = new SALIProperty(d, clusteringData.getFeatureDistanceMatrix().getValues(),
+				(log ? "Log-transformed " : "") + p);
+		addNewAdditionalProperty(s, old);
+		return s;
+	}
+
+	@Override
 	public CompoundProperty addDistanceToCompoundFeature(Compound comp)
 	{
 		for (CompoundProperty prop : getAdditionalProperties())
@@ -1135,20 +1185,25 @@ public class ClusteringImpl implements Zoomable, Clustering
 		for (int i = 0; i < d.length; i++)
 			d[i] = clusteringData.getFeatureDistance(comp.getOrigIndex(), getCompounds().get(i).getOrigIndex());
 		DistanceToProperty dp = new DistanceToProperty(comp, clusteringData.getEmbeddingDistanceMeasure(), d);
+		addNewAdditionalProperty(dp, null);
+		return dp;
+	}
 
+	private void addNewAdditionalProperty(CompoundProperty p, CompoundProperty old)
+	{
 		int i = 0;
 		for (CompoundData cc : getCompounds())
 		{
 			CompoundDataImpl c = (CompoundDataImpl) cc;
-			c.setDoubleValue(dp, d[i]);
-			c.setNormalizedValueCompleteDataset(dp, dp.getNormalizedValuesInCompleteMappedDataset()[i]);
+			c.setDoubleValue(p, p.getDoubleValuesInCompleteMappedDataset()[i]);
+			c.setNormalizedValueCompleteDataset(p, p.getNormalizedValuesInCompleteMappedDataset()[i]);
 			i++;
 		}
-
-		clusteringData.getAdditionalProperties().add(dp);
+		if (old != null)
+			clusteringData.getAdditionalProperties().remove(old);
+		clusteringData.getAdditionalProperties().add(p);
 		dirty = true;
 		fire(PROPERTY_ADDED, true, false);
-		return dp;
 	}
 
 	private HashMap<String, CompoundSelection> compoundSelections = new HashMap<String, CompoundSelection>();

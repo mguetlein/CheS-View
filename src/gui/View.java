@@ -315,7 +315,7 @@ public class View
 			scriptWait("ellipsoid ID " + id + " center " + convertPos(getAtomSetCenter(m.getBitSet())));
 
 			scriptWait("ellipsoid ID " + id + "_2 AXES {" + size * 1.5 + " 0 0} {0 " + size * 1.5 + " 0} {0 0 " + size
-					* 0.33 + "}");
+					* 0.55 + "}");
 			scriptWait("ellipsoid ID " + id + "_2 center " + convertPos(getAtomSetCenter(m.getBitSet())));
 
 			//			Point3f c = getAtomSetCenter(m.getBitSet());

@@ -300,7 +300,7 @@ public class Compound implements Zoomable, Comparable<Compound>, DoubleNameEleme
 
 	public void setHighlightColor(String colorString, Color color)
 	{
-		if (!ObjectUtil.equals(highlightColorString, colorString))
+		if (!ObjectUtil.equals(highlightColorString, colorString) || lastHighlightColorString == null)
 		{
 			this.lastHighlightColorString = highlightColorString;
 			this.highlightColorString = colorString;
@@ -348,6 +348,7 @@ public class Compound implements Zoomable, Comparable<Compound>, DoubleNameEleme
 				displayName.valDisplay = getFormattedValue(highlightCompoundProperty);
 			}
 			this.highlightCompoundProperty = highlightCompoundProperty;
+			lastHighlightColorString = null;
 		}
 	}
 

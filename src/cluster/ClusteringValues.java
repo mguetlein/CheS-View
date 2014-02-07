@@ -240,7 +240,7 @@ public class ClusteringValues
 	{
 		@SuppressWarnings("unchecked")
 		List<CompoundProperty> props = ListUtil.concat(clustering.getProperties(), clustering.getFeatures());
-		TaskProvider.verbose("Compute feature value statistics");
+		TaskProvider.debug("Compute feature value statistics");
 		for (CompoundProperty p : props)
 			updateNormalizedValues(p);
 	}

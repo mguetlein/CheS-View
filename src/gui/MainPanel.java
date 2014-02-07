@@ -30,6 +30,7 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
+import javax.vecmath.Vector3f;
 
 import main.ScreenSetup;
 import main.Settings;
@@ -81,6 +82,9 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 	private static final ColorGradient DEFAULT_COLOR_GRADIENT = new ColorGradient(
 			CompoundPropertyUtil.getHighValueColor(), Color.WHITE, CompoundPropertyUtil.getLowValueColor());
 
+	private static final ColorGradient DEFAULT_COLOR_GRADIENT_WHITE = new ColorGradient(Color.RED, Color.GRAY,
+			Color.BLUE);
+
 	private String getStyleString()
 	{
 		if (ScreenSetup.INSTANCE.isFontSizeLarge())
@@ -130,7 +134,7 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 
 	public static Color getHighlightColor(Clustering clustering, CompoundPropertyOwner m, CompoundProperty p)
 	{
-		return getHighlightColor(clustering, m, p, false);
+		return getHighlightColor(clustering, m, p, !ComponentFactory.isBackgroundBlack());
 	}
 
 	public static Color getHighlightColor(Clustering clustering, CompoundPropertyOwner m, CompoundProperty p,
@@ -157,9 +161,7 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 				val = clustering.getNormalizedLogDoubleValue(m, p);
 			else
 				val = clustering.getNormalizedDoubleValue(m, p);
-			ColorGradient grad = DEFAULT_COLOR_GRADIENT;
-			if (whiteBackground && grad.med == Color.WHITE)
-				grad = new ColorGradient(grad.high, Color.BLACK, grad.low);
+			ColorGradient grad = whiteBackground ? DEFAULT_COLOR_GRADIENT_WHITE : DEFAULT_COLOR_GRADIENT;
 			if (p.getType() == Type.NUMERIC && p.getHighlightColorGradient() != null)
 				grad = p.getHighlightColorGradient();
 			return grad.getColor(val);
@@ -706,6 +708,16 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 		view.display(toDisplay);
 	}
 
+	public static boolean vectorEquals(Vector3f o1, Vector3f o2)
+	{
+		if (o1 == null)
+			return o2 == null;
+		else if (o2 == null)
+			return false;
+		else
+			return o1.x == o2.x && o1.y == o2.y && o1.z == o2.z;
+	}
+
 	/**
 	 * updates single compound
 	 * forceUpdate = true -> everything is reset (independent of compound is part of active cluster or if single props have changed)
@@ -854,7 +866,7 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 				|| (lastFeatureSphereVisible != m.isLastFeatureSphereVisible())
 				|| (sphereVisible && (translucency != m.getTranslucency() || !ObjectUtil.equals(highlightColorString,
 						m.getHighlightColorString())));
-		boolean spherePositionUpdate = sphereVisible && !ObjectUtil.equals(m.getPosition(), m.getSpherePosition());
+		boolean spherePositionUpdate = sphereVisible && !vectorEquals(m.getPosition(), m.getSpherePosition());
 		boolean hoverBoxUpdate = showHoverBox != m.isShowHoverBox();
 		boolean activeBoxUpdate = showActiveBox != m.isShowActiveBox();
 		boolean smartsUpdate = compoundUpdate || smarts != m.getHighlightedSmarts();

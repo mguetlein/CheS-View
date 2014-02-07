@@ -28,6 +28,9 @@ import util.ObjectUtil;
 import util.StringUtil;
 import workflow.MappingWorkflow;
 import workflow.MappingWorkflow.DescriptorSelection;
+import alg.embed3d.ThreeDEmbedder;
+import alg.embed3d.WekaPCA3DEmbedder;
+import alg.embed3d.r.Sammon3DEmbedder;
 import data.ClusteringData;
 import data.DatasetFile;
 import data.cdk.CDKProperty;
@@ -143,6 +146,9 @@ public class ExportData
 			availableProps.add(p);
 		for (CompoundProperty p : clustering.getFeatures())
 			availableProps.add(p);
+		for (CompoundProperty p : clustering.getAdditionalProperties())
+			if (script == null || p instanceof DistanceToProperty)
+				availableProps.add(p); // when scripting do not add embedding stress
 
 		if (availableProps.size() == 0) // no features to select
 			selectedProps = new CompoundProperty[0];
@@ -419,14 +425,27 @@ public class ExportData
 	}
 
 	public static void scriptExport(String datasetFile, DescriptorSelection features, String outfile,
-			boolean keepUniform, double missingRatio)
+			boolean keepUniform, double missingRatio, List<Integer> distanceToCompounds, boolean euclideanDistance)
 	{
-		Properties props = MappingWorkflow.createMappingWorkflow(datasetFile, features, null, null);
+		ThreeDEmbedder embed = null;
+		if (distanceToCompounds != null && euclideanDistance)
+			embed = WekaPCA3DEmbedder.INSTANCE;
+		else if (distanceToCompounds != null && !euclideanDistance)
+		{
+			embed = Sammon3DEmbedder.INSTANCE;
+			((Sammon3DEmbedder) embed).enableTanimoto();
+		}
+
+		Properties props = MappingWorkflow.createMappingWorkflow(datasetFile, features, null, embed);
 		CheSMapping mapping = MappingWorkflow.createMappingFromMappingWorkflow(props, "");
 
 		ClusteringData clusteringData = mapping.doMapping();
 		ClusteringImpl clustering = new ClusteringImpl();
 		clustering.newClustering(clusteringData);
+
+		if (distanceToCompounds != null)
+			for (Integer i : distanceToCompounds)
+				clustering.addDistanceToCompoundFeature(clustering.getCompoundWithJmolIndex(i));
 
 		//		LaunchCheSMapper.start(mapping);
 		//		while (CheSViewer.getFrame() == null || CheSViewer.getClustering() == null)
@@ -444,7 +463,7 @@ public class ExportData
 
 		//String input = "/home/martin/data/valium.csv";
 		String input = "/home/martin/data/caco2.sdf";
-		scriptExport(input, new DescriptorSelection("integrated"), "/tmp/data.csv", false, 0.1);
+		scriptExport(input, new DescriptorSelection("integrated"), "/tmp/data.csv", false, 0.1, null, false);
 
 	}
 
