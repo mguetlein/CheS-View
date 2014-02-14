@@ -18,7 +18,6 @@ import javax.swing.border.EmptyBorder;
 
 import main.Settings;
 import util.ArrayUtil;
-import util.StringUtil;
 import cluster.Clustering;
 import cluster.SALIProperty;
 
@@ -32,17 +31,12 @@ public class SALIDialog extends JDialog
 {
 	private SALIDialog(final ViewControler viewControler, final Clustering clustering, List<CompoundProperty> list)
 	{
-		super(Settings.TOP_LEVEL_FRAME, "Detect activity cliffs", true);
+		super(Settings.TOP_LEVEL_FRAME, Settings.text("action.edit-show-sali"), true);
 
 		DefaultFormBuilder builder = new DefaultFormBuilder(new FormLayout("fill:p:grow,10px,fill:p:grow"));
 
-		TextPanel tp1 = new TextPanel(
-				"Acticity cliffs are pairs of compounds with similar feature values but differing endpoint values.\n"
-						+ "Hence, the maximum pairwise SALI index is computed to identify if a compound is part of an activity cliff.\n\n"
-						+ "For numeric endpoints, a change in activity of at least "
-						+ StringUtil.formatDouble(SALIProperty.MIN_ENDPOINT_DEV * 100)
-						+ "% must be given to compute SALI values\n"
-						+ "(otherwise, very similar compound pairs could get exterme high SALI values with only small differences in activity)");
+		TextPanel tp1 = new TextPanel(Settings.text("props.sali.detail", SALIProperty.NUM_TOP_PERCENT_STR,
+				SALIProperty.MIN_ENDPOINT_DEV_STR));
 		builder.append(tp1, 3);
 
 		final JComboBox<CompoundProperty> propCombo = new JComboBox<CompoundProperty>(ArrayUtil.toArray(list));

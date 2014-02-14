@@ -1,9 +1,13 @@
 package cluster;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import javax.swing.JOptionPane;
 
 import main.Settings;
-import util.StringUtil;
+import util.DoubleArraySummary;
 import dataInterface.NumericDynamicCompoundProperty;
 
 public class SALIProperty extends NumericDynamicCompoundProperty
@@ -16,12 +20,17 @@ public class SALIProperty extends NumericDynamicCompoundProperty
 		this.target = target;
 	}
 
-	public static final double MIN_ENDPOINT_DEV = 0.25;
+	public static final double MIN_ENDPOINT_DEV = 0.1;
+	public static final double NUM_TOP_PERCENT = 0.1;
 	public static final double IDENTICAL_FEATURES_SALI = 1000.0;
+
+	public static final String MIN_ENDPOINT_DEV_STR = ((int) (MIN_ENDPOINT_DEV * 100)) + "%";
+	public static final String NUM_TOP_PERCENT_STR = ((int) (NUM_TOP_PERCENT * 100)) + "%";
 
 	private static Double[] computeMaxSali(Double[] endpointVals, double[][] featureDistanceMatrix)
 	{
 		int identicalFeats = 0;
+		int numTopPercent = (int) (endpointVals.length * NUM_TOP_PERCENT);
 
 		if (endpointVals.length != featureDistanceMatrix.length
 				|| endpointVals.length != featureDistanceMatrix[0].length)
@@ -39,6 +48,8 @@ public class SALIProperty extends NumericDynamicCompoundProperty
 			//			int b = 0;
 			//			int c = 0;
 			//			int d = 0;
+
+			List<Double> allSalis = new ArrayList<Double>();
 
 			for (int j = 0; j < salis.length; j++)
 			{
@@ -76,47 +87,42 @@ public class SALIProperty extends NumericDynamicCompoundProperty
 					break;
 				}
 				double tmpSali = endpointDist / featureDistanceMatrix[i][j];
-				if (salis[i] == null || tmpSali > salis[i])
-					salis[i] = tmpSali;
+				//				if (salis[i] == null || tmpSali > salis[i])
+				//					salis[i] = tmpSali;
+				allSalis.add(tmpSali);
+			}
+			if (salis[i] == null)
+			{
+				Collections.sort(allSalis);
+				while (allSalis.size() > numTopPercent)
+					allSalis.remove(0);
+				salis[i] = DoubleArraySummary.create(allSalis).getMean();
+
+				//salis[i] = DoubleArraySummary.create(allSalis).getMax();
 			}
 		}
 
 		if (identicalFeats > 0)
 		{
-			JOptionPane
-					.showConfirmDialog(
-							Settings.TOP_LEVEL_FRAME,
-							identicalFeats
-									+ " compounds have identical feature values but differing endpoint values (by >"
-									+ StringUtil.formatDouble(MIN_ENDPOINT_DEV * 100)
-									+ "%).\n"
-									+ "A fixed value of "
-									+ IDENTICAL_FEATURES_SALI
-									+ " is assigned to these compounds.\n\n"
-									+ "Details:\n"
-									+ "The maximum pairwise SALI index is computed to identify if a compound is part of an activity cliff.\n"
-									+ "For numeric endpoints, a change in activity of at least "
-									+ StringUtil.formatDouble(MIN_ENDPOINT_DEV * 100)
-									+ "% must be given to compute SALI values\n"
-									+ "(otherwise, very similar compound pairs could get exterme high SALI values with only small differences in activity).\n"
-									+ "By definition, compounds have an infinite high SALI index if they are 100% similar, but have no identical endpoint value.\n"
-									+ "Here, this compounds have a fixed value of " + IDENTICAL_FEATURES_SALI
-									+ " assigned.", "Warning", JOptionPane.WARNING_MESSAGE, JOptionPane.OK_OPTION);
+			String warning = Settings.text("props.sali.identical-warning", identicalFeats + "", MIN_ENDPOINT_DEV_STR,
+					IDENTICAL_FEATURES_SALI + "") + "\n\n";
+			warning += "Details:\n";
+			warning += Settings.text("props.sali.detail", NUM_TOP_PERCENT_STR, MIN_ENDPOINT_DEV_STR);
+			JOptionPane.showMessageDialog(Settings.TOP_LEVEL_FRAME, warning, "Warning", JOptionPane.WARNING_MESSAGE);
 		}
-
 		return salis;
 	}
 
 	@Override
 	public String getName()
 	{
-		return "Activity cliffs";
+		return Settings.text("props.sali");
 	}
 
 	@Override
 	public String getDescription()
 	{
-		return "Maximum pairwise SALI for : " + target;
+		return Settings.text("props.sali.desc", NUM_TOP_PERCENT_STR, target);
 	}
 
 }
