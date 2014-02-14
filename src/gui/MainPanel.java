@@ -82,9 +82,6 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 	private static final ColorGradient DEFAULT_COLOR_GRADIENT = new ColorGradient(
 			CompoundPropertyUtil.getHighValueColor(), Color.WHITE, CompoundPropertyUtil.getLowValueColor());
 
-	private static final ColorGradient DEFAULT_COLOR_GRADIENT_WHITE = new ColorGradient(Color.RED, Color.GRAY,
-			Color.BLUE);
-
 	private String getStyleString()
 	{
 		if (ScreenSetup.INSTANCE.isFontSizeLarge())
@@ -115,13 +112,13 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 		}
 	}
 
-	public Color getHighlightColor(CompoundPropertyOwner m, Highlighter h, CompoundProperty p)
+	public Color getHighlightColor(CompoundPropertyOwner m, Highlighter h, CompoundProperty p, boolean textColor)
 	{
-		return getHighlightColor(clustering, m, h, p);
+		return getHighlightColor(this, clustering, m, h, p, textColor);
 	}
 
-	public static Color getHighlightColor(Clustering clustering, CompoundPropertyOwner m, Highlighter h,
-			CompoundProperty p)
+	public static Color getHighlightColor(ViewControler viewControler, Clustering clustering, CompoundPropertyOwner m,
+			Highlighter h, CompoundProperty p, boolean textColor)
 	{
 		if (h == Highlighter.CLUSTER_HIGHLIGHTER)
 			if (m instanceof Compound)
@@ -129,16 +126,11 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 			else
 				return null;
 		else
-			return getHighlightColor(clustering, m, p);
+			return getHighlightColor(viewControler, clustering, m, p, textColor);
 	}
 
-	public static Color getHighlightColor(Clustering clustering, CompoundPropertyOwner m, CompoundProperty p)
-	{
-		return getHighlightColor(clustering, m, p, !ComponentFactory.isBackgroundBlack());
-	}
-
-	public static Color getHighlightColor(Clustering clustering, CompoundPropertyOwner m, CompoundProperty p,
-			boolean whiteBackground)
+	public static Color getHighlightColor(ViewControler viewControler, Clustering clustering, CompoundPropertyOwner m,
+			CompoundProperty p, boolean textColor)
 	{
 		if (m == null)
 			throw new IllegalStateException();
@@ -161,9 +153,20 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 				val = clustering.getNormalizedLogDoubleValue(m, p);
 			else
 				val = clustering.getNormalizedDoubleValue(m, p);
-			ColorGradient grad = whiteBackground ? DEFAULT_COLOR_GRADIENT_WHITE : DEFAULT_COLOR_GRADIENT;
+			ColorGradient grad;
 			if (p.getType() == Type.NUMERIC && p.getHighlightColorGradient() != null)
 				grad = p.getHighlightColorGradient();
+			else
+				grad = DEFAULT_COLOR_GRADIENT;
+			if (grad.getMed().equals(Color.WHITE))
+			{
+				if (textColor)
+					grad = new ColorGradient(grad.high, Color.GRAY, grad.low);
+				else if (viewControler.isAntialiasEnabled())
+					grad = new ColorGradient(grad.high, Color.WHITE, grad.low);
+				else
+					grad = new ColorGradient(grad.high, Color.LIGHT_GRAY, grad.low);
+			}
 			return grad.getColor(val);
 		}
 		else
@@ -634,7 +637,7 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 		}
 		if (forceUpdate || selectedHighlightCompoundProperty != c.getHighlightProperty())
 			c.setHighlighProperty(selectedHighlightCompoundProperty,
-					MainPanel.getHighlightColor(clustering, c, selectedHighlightCompoundProperty));
+					MainPanel.getHighlightColor(this, clustering, c, selectedHighlightCompoundProperty, true));
 		c.setHighlightSorting(highlightSorting);
 	}
 
@@ -812,13 +815,18 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 		if (!highlighterLabelsVisible)
 			showLabel = false;
 
-		Color highlightColor = getHighlightColor(m, selectedHighlighter, selectedHighlightCompoundProperty);
-		String highlightColorString = highlightColor == null ? null : "color " + ColorUtil.toJMolString(highlightColor);
+		Color highlightColorCompound = getHighlightColor(m, selectedHighlighter, selectedHighlightCompoundProperty,
+				false);
+		Color highlightColorText = getHighlightColor(m, selectedHighlighter, selectedHighlightCompoundProperty, true);
+
+		String highlightColorString = highlightColorCompound == null ? null : "color "
+				+ ColorUtil.toJMolString(highlightColorCompound);
 		String compoundColor;
 		if (highlightMode == HighlightMode.Spheres)
 			compoundColor = "color cpk";
 		else
-			compoundColor = highlightColor == null ? "color cpk" : "color " + ColorUtil.toJMolString(highlightColor);
+			compoundColor = highlightColorCompound == null ? "color cpk" : "color "
+					+ ColorUtil.toJMolString(highlightColorCompound);
 		if (compoundColor.equals("color cpk") && style == Style.dots)
 			compoundColor = "color "
 					+ ColorUtil.toJMolString(isBlackgroundBlack() ? Color.LIGHT_GRAY.brighter() : Color.GRAY);
@@ -875,7 +883,7 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 		m.setStyle(style);
 		m.setTranslucency(translucency);
 		m.setHighlightCompoundProperty(selectedHighlightCompoundProperty);
-		m.setHighlightColor(highlightColorString, highlightColor);
+		m.setHighlightColor(highlightColorString, highlightColorText);
 		m.setSpherePosition(m.getPosition());
 		m.setSphereVisible(sphereVisible);
 		m.setLastFeatureSphereVisible(lastFeatureSphereVisible);

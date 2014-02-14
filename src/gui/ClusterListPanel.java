@@ -365,10 +365,10 @@ public class ClusterListPanel extends JPanel
 					setBackground(ComponentFactory.LIST_WATCH_BACKGROUND);
 					setForeground(ComponentFactory.LIST_SELECTION_FOREGROUND);
 				}
-				else if (c != null && c.getHighlightColor() != null
-						&& c.getHighlightColor() != CompoundPropertyUtil.getNullValueColor())
+				else if (c != null && c.getHighlightColorText() != null
+						&& c.getHighlightColorText() != CompoundPropertyUtil.getNullValueColor())
 				{
-					setForegroundLabel2(c.getHighlightColor());
+					setForegroundLabel2(c.getHighlightColorText());
 				}
 
 				return this;

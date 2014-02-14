@@ -300,9 +300,9 @@ public class CompoundListPanel extends TransparentViewPanel
 					setForeground(ComponentFactory.LIST_SELECTION_FOREGROUND);
 				}
 				else if (c.getHighlightColorString() != null
-						&& c.getHighlightColor() != CompoundPropertyUtil.getNullValueColor())
+						&& c.getHighlightColorText() != CompoundPropertyUtil.getNullValueColor())
 				{
-					setForegroundLabel2(c.getHighlightColor());
+					setForegroundLabel2(c.getHighlightColorText());
 				}
 				return this;
 			}

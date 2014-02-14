@@ -148,7 +148,7 @@ public class ClusterTable extends CCDataTable
 
 				if (column >= nonPropColumns)
 				{
-					Color col = MainPanel.getHighlightColor(clustering, c, p, true);
+					Color col = MainPanel.getHighlightColor(viewControler, clustering, c, p, true);
 					setForeground(col);
 				}
 				else

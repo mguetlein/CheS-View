@@ -149,7 +149,7 @@ public class CompoundTable extends CCDataTable
 
 				if (column >= nonPropColumns)
 				{
-					Color col = MainPanel.getHighlightColor(clustering, m, p, true);
+					Color col = MainPanel.getHighlightColor(viewControler, clustering, m, p, true);
 					setForeground(col);
 				}
 				else

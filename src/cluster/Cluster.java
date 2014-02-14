@@ -103,7 +103,7 @@ public class Cluster extends ZoomableCompoundGroup implements CompoundGroupWithP
 	}
 
 	private DisplayName displayName = new DisplayName();
-	private Color highlightColor;
+	private Color highlightColorText;
 
 	public String getName()
 	{
@@ -309,10 +309,10 @@ public class Cluster extends ZoomableCompoundGroup implements CompoundGroupWithP
 		this.watched = watched;
 	}
 
-	public void setHighlighProperty(CompoundProperty highlightProp, Color highlightColor)
+	public void setHighlighProperty(CompoundProperty highlightProp, Color highlightColorText)
 	{
 		this.highlightProp = highlightProp;
-		this.highlightColor = highlightColor;
+		this.highlightColorText = highlightColorText;
 		updateDisplayName();
 	}
 
@@ -419,9 +419,9 @@ public class Cluster extends ZoomableCompoundGroup implements CompoundGroupWithP
 		return clusterData.getStringValue(p);
 	}
 
-	public Color getHighlightColor()
+	public Color getHighlightColorText()
 	{
-		return highlightColor;
+		return highlightColorText;
 	}
 
 	@Override

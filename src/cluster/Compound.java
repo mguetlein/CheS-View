@@ -41,10 +41,12 @@ public class Compound implements Zoomable, Comparable<Compound>, DoubleNameEleme
 	private String smarts = null;
 
 	private HashMap<String, BitSet> smartsMatches;
+
 	private String compoundColor;
 	private String highlightColorString;
-	private Color highlightColor;
+	private Color highlightColorText;
 	private String lastHighlightColorString;
+
 	private Vector3f spherePosition;
 	private CompoundProperty highlightCompoundProperty;
 	private Style style;
@@ -298,19 +300,19 @@ public class Compound implements Zoomable, Comparable<Compound>, DoubleNameEleme
 		return compoundColor;
 	}
 
-	public void setHighlightColor(String colorString, Color color)
+	public void setHighlightColor(String colorString, Color colorText)
 	{
 		if (!ObjectUtil.equals(highlightColorString, colorString) || lastHighlightColorString == null)
 		{
 			this.lastHighlightColorString = highlightColorString;
 			this.highlightColorString = colorString;
-			this.highlightColor = color;
+			this.highlightColorText = colorText;
 		}
 	}
 
-	public Color getHighlightColor()
+	public Color getHighlightColorText()
 	{
-		return highlightColor;
+		return highlightColorText;
 	}
 
 	public String getHighlightColorString()

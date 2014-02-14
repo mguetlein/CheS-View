@@ -613,7 +613,7 @@ public class TreeView extends BlockableFrame
 				if (isLeaf && ((MyNode) value).getUserObject() instanceof Compound)
 				{
 					Compound comp = ((Compound) ((MyNode) value).getUserObject());
-					c.setText("<html>" + comp.getDisplayName().toString(true, comp.getHighlightColor()) + "</html>");
+					c.setText("<html>" + comp.getDisplayName().toString(true, comp.getHighlightColorText()) + "</html>");
 					int size = guiControler.getComponentMaxWidth(InfoPanel.ICON_SIZE);
 					Icon icon = comp.getIcon(false, size, size, false);
 					if (icon == null)

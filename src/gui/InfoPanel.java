@@ -411,8 +411,8 @@ public class InfoPanel extends JPanel
 
 							if (isSelected == false && !(selected instanceof Clustering))
 							{
-								Color col = MainPanel.getHighlightColor(clustering, selected,
-										(CompoundProperty) table.getValueAt(row, 0));
+								Color col = MainPanel.getHighlightColor(viewControler, clustering, selected,
+										(CompoundProperty) table.getValueAt(row, 0), true);
 								if (col != null && col != CompoundPropertyUtil.getNullValueColor())
 									setForeground(col);
 							}
