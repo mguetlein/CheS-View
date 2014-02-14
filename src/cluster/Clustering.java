@@ -3,6 +3,7 @@ package cluster;
 import java.beans.PropertyChangeListener;
 import java.util.List;
 
+import weka.Predictor.PredictionResult;
 import dataInterface.CompoundData;
 import dataInterface.CompoundProperty;
 import dataInterface.CompoundPropertyOwner;
@@ -139,6 +140,8 @@ public interface Clustering extends CompoundPropertyOwner
 	CompoundProperty addDistanceToCompoundFeature(Compound c);
 
 	CompoundProperty addSALIFeature(CompoundProperty c);
+
+	void addPredictionFeature(CompoundProperty clazz, PredictionResult p);
 
 	public CompoundSelection getCompoundSelection(Compound[] c);
 

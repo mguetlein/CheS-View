@@ -43,6 +43,7 @@ import main.Settings;
 import util.ArrayUtil;
 import util.CollectionUtil;
 import util.SwingUtil;
+import weka.Predictor;
 import workflow.MappingWorkflow;
 import cluster.Cluster;
 import cluster.ClusterController;
@@ -156,10 +157,12 @@ public class Actions
 	private final static String HIDDEN_TOGGLE_SORTING = "toggle-sorting";
 	private final static String HIDDEN_TREE = "tree";
 	private final static String HIDDEN_COPY = "copy";
+	private final static String HIDDEN_PREDICT = "predict";
 	private final static String[] HIDDEN_ACTIONS = { HIDDEN_UPDATE_MOUSE_SELECTION_PRESSED,
 			HIDDEN_UPDATE_MOUSE_SELECTION_RELEASED, HIDDEN_DECR_COMPOUND_SIZE, HIDDEN_INCR_COMPOUND_SIZE,
 			HIDDEN_ENABLE_JMOL_POPUP, HIDDEN_INCR_SPIN_SPEED, HIDDEN_DECR_SPIN_SPEED, HIDDEN_INCR_FONT_SIZE,
-			HIDDEN_DECR_FONT_SIZE, HIDDEN_FILTER_FEATURES, HIDDEN_TOGGLE_SORTING, HIDDEN_TREE, HIDDEN_COPY };
+			HIDDEN_DECR_FONT_SIZE, HIDDEN_FILTER_FEATURES, HIDDEN_TOGGLE_SORTING, HIDDEN_TREE, HIDDEN_COPY,
+			HIDDEN_PREDICT };
 
 	private HashMap<String, Action> actions = new LinkedHashMap<String, Action>();
 
@@ -210,6 +213,7 @@ public class Actions
 		keys.put(HIDDEN_TOGGLE_SORTING, KeyStroke.getKeyStroke(KeyEvent.VK_O, ActionEvent.ALT_MASK));
 		keys.put(HIDDEN_TREE, KeyStroke.getKeyStroke(KeyEvent.VK_4, ActionEvent.ALT_MASK));
 		keys.put(HIDDEN_COPY, KeyStroke.getKeyStroke(KeyEvent.VK_C, ActionEvent.CTRL_MASK));
+		keys.put(HIDDEN_PREDICT, KeyStroke.getKeyStroke(KeyEvent.VK_P, ActionEvent.ALT_MASK));
 	}
 
 	public static String keyStrokeToText(KeyStroke keystroke)
@@ -1199,6 +1203,29 @@ public class Actions
 					StringSelection s = new StringSelection(guiControler.getSelectedString());
 					Clipboard system = Toolkit.getDefaultToolkit().getSystemClipboard();
 					system.setContents(s, s);
+				}
+			}
+		};
+		new ActionCreator(HIDDEN_PREDICT)
+		{
+			@Override
+			public void action()
+			{
+				guiControler.block("predict");
+				try
+				{
+					CompoundProperty clazz = null;
+					for (CompoundProperty p : clustering.getProperties())
+						if (p.toString().equals("activity"))
+							clazz = p;
+					if (clazz == null)
+						throw new Error();
+					clustering.addPredictionFeature(clazz,
+							Predictor.predict(clustering.getCompounds(), clustering.getFeatures(), clazz));
+				}
+				finally
+				{
+					guiControler.unblock("predict");
 				}
 			}
 		};

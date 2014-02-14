@@ -26,6 +26,7 @@ import util.ListUtil;
 import util.SelectionModel;
 import util.Vector3fUtil;
 import util.VectorUtil;
+import weka.Predictor.PredictionResult;
 import alg.embed3d.Random3DEmbedder;
 import data.ClusteringData;
 import data.CompoundDataImpl;
@@ -1187,6 +1188,21 @@ public class ClusteringImpl implements Zoomable, Clustering
 		DistanceToProperty dp = new DistanceToProperty(comp, clusteringData.getEmbeddingDistanceMeasure(), d);
 		addNewAdditionalProperty(dp, null);
 		return dp;
+	}
+
+	CompoundProperty pred;
+	CompoundProperty predMis;
+
+	@Override
+	public void addPredictionFeature(CompoundProperty clazz, PredictionResult p)
+	{
+		CompoundProperty pred = p.createFeature();
+		addNewAdditionalProperty(pred, this.pred);
+		this.pred = pred;
+
+		CompoundProperty predMis = p.createMissclassifiedFeature();
+		addNewAdditionalProperty(predMis, this.predMis);
+		this.predMis = predMis;
 	}
 
 	private void addNewAdditionalProperty(CompoundProperty p, CompoundProperty old)
