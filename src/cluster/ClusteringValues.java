@@ -15,6 +15,7 @@ import dataInterface.CompoundProperty;
 import dataInterface.CompoundProperty.Type;
 import dataInterface.CompoundPropertyOwner;
 import dataInterface.CompoundPropertySpecificity;
+import dataInterface.CompoundPropertyUtil;
 
 public class ClusteringValues
 {
@@ -220,7 +221,7 @@ public class ClusteringValues
 	{
 		if (!summarys.containsKey(p))
 			updateNormalizedValues(p);
-		if (p.isSmartsProperty())
+		if (p.isSmartsProperty() || CompoundPropertyUtil.isExportedFPProperty(p))
 		{
 			@SuppressWarnings("unchecked")
 			CountedSet<String> set = ((CountedSet<String>) summarys.get(p)).copy();

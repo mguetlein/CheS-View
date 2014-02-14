@@ -51,7 +51,6 @@ import com.jgoodies.forms.builder.DefaultFormBuilder;
 import com.jgoodies.forms.layout.FormLayout;
 import com.jgoodies.forms.layout.Sizes;
 
-import dataInterface.AbstractFragmentProperty;
 import dataInterface.CompoundProperty;
 import dataInterface.CompoundProperty.Type;
 import dataInterface.CompoundPropertyUtil;
@@ -561,13 +560,9 @@ public class ChartPanel extends TransparentViewPanel
 			data.put("Dataset", datasetCounts);
 
 			vals = new String[datasetValues.size()];
-			datasetValues.toArray(vals);
-
+			//			datasetValues.toArray(vals);
 			for (int i = 0; i < vals.length; i++)
-				if (vals[i] == null)
-					vals[i] = "null";
-				else if (p.isSmartsProperty())
-					vals[i] = AbstractFragmentProperty.getFormattedSmartsValue(vals[i]);
+				vals[i] = p.getFormattedValue(datasetValues.get(i));
 
 			plot = new StackedBarPlot(null, null, "#compounds", StackedBarPlot.convertTotalToAdditive(data), vals);
 			configurePlotColors(plot, c, ms, p);

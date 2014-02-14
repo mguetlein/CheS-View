@@ -33,12 +33,10 @@ import alg.embed3d.WekaPCA3DEmbedder;
 import alg.embed3d.r.Sammon3DEmbedder;
 import data.ClusteringData;
 import data.DatasetFile;
-import data.cdk.CDKProperty;
-import data.obdesc.OBDescriptorProperty;
-import data.obfingerprints.OBFingerprintProperty;
 import dataInterface.CompoundData;
 import dataInterface.CompoundProperty;
 import dataInterface.CompoundProperty.Type;
+import dataInterface.CompoundPropertyUtil;
 
 public class ExportData
 {
@@ -94,17 +92,6 @@ public class ExportData
 			this.skipEqualValues = skipEqualValues;
 			this.skipNullValueRatio = skipNullValueRatio;
 		}
-	}
-
-	public static String propToExportString(CompoundProperty p)
-	{
-		if (p instanceof CDKProperty)
-			return "CDK:" + p.toString();
-		if (p instanceof OBDescriptorProperty)
-			return "OB:" + p.toString();
-		if (p instanceof OBFingerprintProperty)
-			return "OB-" + ((OBFingerprintProperty) p).getOBType() + ":" + p.toString();
-		return p.toString();
 	}
 
 	public static void exportCompoundsWithOrigIndices(Clustering clustering, int compoundOrigIndices[],
@@ -237,13 +224,13 @@ public class ExportData
 						val = clustering.getCompounds().get(j).getStringValue(p);
 					if (val == null)
 						val = "";
-					featureValues.put(j, propToExportString(p), val);
+					featureValues.put(j, CompoundPropertyUtil.propToExportString(p), val);
 				}
 
 			for (CompoundProperty c : logFeatures)
 				featureValues.put(
 						j,
-						propToExportString(c) + "_log",
+						CompoundPropertyUtil.propToExportString(c) + "_log",
 						clustering.getCompounds().get(j).getDoubleValue(c) == null ? "" : Math.log10(clustering
 								.getCompounds().get(j).getDoubleValue(c)));
 		}
@@ -409,7 +396,7 @@ public class ExportData
 						val = clustering.getCompounds().get(j).getStringValue(compoundDescriptorFeature);
 					if (val == null)
 						val = "";
-					featureValues.put(j, propToExportString(compoundDescriptorFeature), val);
+					featureValues.put(j, CompoundPropertyUtil.propToExportString(compoundDescriptorFeature), val);
 					newTitle.put(j, val);
 				}
 			}

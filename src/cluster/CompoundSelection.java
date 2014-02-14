@@ -7,6 +7,7 @@ import util.CountedSet;
 import util.DoubleArraySummary;
 import dataInterface.CompoundProperty;
 import dataInterface.CompoundProperty.Type;
+import dataInterface.CompoundPropertyUtil;
 
 public class CompoundSelection implements CompoundGroupWithProperties
 {
@@ -93,7 +94,7 @@ public class CompoundSelection implements CompoundGroupWithProperties
 				updateNumeric(p);
 			else
 				updateNominal(p);
-		if (p.isSmartsProperty())
+		if (p.isSmartsProperty() || CompoundPropertyUtil.isExportedFPProperty(p))
 		{
 			@SuppressWarnings("unchecked")
 			CountedSet<String> set = ((CountedSet<String>) summarys.get(p)).copy();
