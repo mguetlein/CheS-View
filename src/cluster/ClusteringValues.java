@@ -15,11 +15,11 @@ import dataInterface.CompoundProperty;
 import dataInterface.CompoundProperty.Type;
 import dataInterface.CompoundPropertyOwner;
 import dataInterface.CompoundPropertySpecificity;
-import dataInterface.CompoundPropertyUtil;
 
 public class ClusteringValues
 {
 	HashMap<CompoundProperty, ArraySummary> summarys = new HashMap<CompoundProperty, ArraySummary>();
+	HashMap<CompoundProperty, ArraySummary> formattedSummarys = new HashMap<CompoundProperty, ArraySummary>();
 	DoubleKeyHashMap<CompoundPropertyOwner, CompoundProperty, Double> normalizedValues = new DoubleKeyHashMap<CompoundPropertyOwner, CompoundProperty, Double>();
 	DoubleKeyHashMap<CompoundPropertyOwner, CompoundProperty, Double> specificity = new DoubleKeyHashMap<CompoundPropertyOwner, CompoundProperty, Double>();
 	DoubleKeyHashMap<CompoundPropertyOwner, CompoundProperty, Double> normalizedLogValues = new DoubleKeyHashMap<CompoundPropertyOwner, CompoundProperty, Double>();
@@ -40,6 +40,7 @@ public class ClusteringValues
 		normalizedValues.clear();
 		specificity.clear();
 		summarys.clear();
+		formattedSummarys.clear();
 	}
 
 	private synchronized void updateNormalizedNumericValues(final CompoundProperty p)
@@ -151,6 +152,10 @@ public class ClusteringValues
 			s[i++] = m.getStringValue(p);
 		CountedSet<String> set = CountedSet.create(s);
 		summarys.put(p, set);
+		CountedSet<String> fSet = set.copy();
+		for (String key : fSet.values())
+			fSet.rename(key, p.getFormattedValue(key));
+		formattedSummarys.put(p, fSet);
 
 		specNomVals.put(p, set.values());
 		specNomCounts.put(p, CompoundPropertySpecificity.nominalCounts(specNomVals.get(p), set));
@@ -221,18 +226,8 @@ public class ClusteringValues
 	{
 		if (!summarys.containsKey(p))
 			updateNormalizedValues(p);
-		if (p.isSmartsProperty() || CompoundPropertyUtil.isExportedFPProperty(p))
-		{
-			@SuppressWarnings("unchecked")
-			CountedSet<String> set = ((CountedSet<String>) summarys.get(p)).copy();
-			if (set.contains("1"))
-				set.rename("1", "match");
-			if (set.contains("0"))
-				set.rename("0", "no-match");
-			return set.toString(html);
-			//			return "matches " + set.getCount("1") + "/" + set.sum();
-
-		}
+		if (p.getType() == Type.NOMINAL)
+			return formattedSummarys.get(p).toString(html);
 		else
 			return summarys.get(p).toString(html);
 	}

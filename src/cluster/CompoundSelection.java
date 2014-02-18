@@ -7,12 +7,12 @@ import util.CountedSet;
 import util.DoubleArraySummary;
 import dataInterface.CompoundProperty;
 import dataInterface.CompoundProperty.Type;
-import dataInterface.CompoundPropertyUtil;
 
 public class CompoundSelection implements CompoundGroupWithProperties
 {
 	private Compound[] compounds;
 	HashMap<CompoundProperty, ArraySummary> summarys = new HashMap<CompoundProperty, ArraySummary>();
+	HashMap<CompoundProperty, ArraySummary> formattedSummarys = new HashMap<CompoundProperty, ArraySummary>();
 
 	public CompoundSelection(Compound[] c)
 	{
@@ -57,6 +57,10 @@ public class CompoundSelection implements CompoundGroupWithProperties
 			s[i++] = m.getStringValue(p);
 		CountedSet<String> set = CountedSet.create(s);
 		summarys.put(p, set);
+		CountedSet<String> fSet = set.copy();
+		for (String key : fSet.values())
+			fSet.rename(key, p.getFormattedValue(key));
+		formattedSummarys.put(p, fSet);
 	}
 
 	@Override
@@ -94,20 +98,10 @@ public class CompoundSelection implements CompoundGroupWithProperties
 				updateNumeric(p);
 			else
 				updateNominal(p);
-		if (p.isSmartsProperty() || CompoundPropertyUtil.isExportedFPProperty(p))
-		{
-			@SuppressWarnings("unchecked")
-			CountedSet<String> set = ((CountedSet<String>) summarys.get(p)).copy();
-			if (set.contains("1"))
-				set.rename("1", "match");
-			if (set.contains("0"))
-				set.rename("0", "no-match");
-			return set.toString(false);
-			//			return "matches " + set.getCount("1") + "/" + set.sum();
-
-		}
-		else
+		if (p.getType() == Type.NUMERIC)
 			return summarys.get(p).toString(false);
+		else
+			return formattedSummarys.get(p).toString(false);
 	}
 
 	public int size()
