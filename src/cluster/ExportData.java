@@ -97,36 +97,6 @@ public class ExportData
 	public static void exportCompoundsWithOrigIndices(Clustering clustering, int compoundOrigIndices[],
 			CompoundProperty compoundDescriptorFeature, Script script)
 	{
-		String dest;
-		if (script != null)
-			dest = script.dest;
-		else
-		{
-			String dir = clustering.getOrigLocalPath();
-			if (dir == null)
-				dir = System.getProperty("user.home");
-			JFileChooser f = new JFileChooser(dir);//origSDFFile);
-			f.setDialogTitle("Save to SDF/CSV file (according to filename extension)");
-			int i = f.showSaveDialog(Settings.TOP_LEVEL_FRAME);
-			if (i != JFileChooser.APPROVE_OPTION)
-				return;
-			dest = f.getSelectedFile().getAbsolutePath();
-			if (!f.getSelectedFile().exists() && !FileUtil.getFilenamExtension(dest).matches("(?i)sdf")
-					&& !FileUtil.getFilenamExtension(dest).matches("(?i)csv"))
-				dest += ".sdf";
-			if (new File(dest).exists())
-			{
-				if (JOptionPane.showConfirmDialog(Settings.TOP_LEVEL_FRAME, "File '" + dest
-						+ "' already exists, overwrite?", "Warning", JOptionPane.YES_NO_OPTION,
-						JOptionPane.WARNING_MESSAGE) != JOptionPane.YES_OPTION)
-					return;
-			}
-		}
-		boolean csvExport = FileUtil.getFilenamExtension(dest).matches("(?i)csv");
-
-		// file may be overwritten, and then reloaded -> clear
-		DatasetFile.clearFiles(dest);
-
 		CompoundProperty selectedProps[];
 		List<CompoundProperty> availableProps = new ArrayList<CompoundProperty>();
 		for (CompoundProperty p : clustering.getProperties())
@@ -143,15 +113,7 @@ public class ExportData
 			selectedProps = ArrayUtil.toArray(CompoundProperty.class, availableProps);
 		else
 		{
-			String title;
-			if (csvExport)
-			{
-				title = "Select features for CSV export";
-			}
-			else
-			{
-				title = "Select features for SDF export";
-			}
+			String title = "Select features for SDF/CSV export";
 			selectedProps = ArrayUtil.cast(
 					CompoundProperty.class,
 					CheckBoxSelectDialog.select(Settings.TOP_LEVEL_FRAME, title, null,
@@ -322,6 +284,35 @@ public class ExportData
 			for (Integer j : compoundOrigIndices)
 				featureValues.remove(j, p);
 		}
+
+		String dest;
+		if (script != null)
+			dest = script.dest;
+		else
+		{
+			String dir = clustering.getOrigLocalPath();
+			if (dir == null)
+				dir = System.getProperty("user.home");
+			JFileChooser f = new JFileChooser(dir);//origSDFFile);
+			f.setDialogTitle("Save to SDF/CSV file (according to filename extension)");
+			int i = f.showSaveDialog(Settings.TOP_LEVEL_FRAME);
+			if (i != JFileChooser.APPROVE_OPTION)
+				return;
+			dest = f.getSelectedFile().getAbsolutePath();
+			if (!f.getSelectedFile().exists() && !FileUtil.getFilenamExtension(dest).matches("(?i)sdf")
+					&& !FileUtil.getFilenamExtension(dest).matches("(?i)csv"))
+				dest += ".sdf";
+			if (new File(dest).exists())
+			{
+				if (JOptionPane.showConfirmDialog(Settings.TOP_LEVEL_FRAME, "File '" + dest
+						+ "' already exists, overwrite?", "Warning", JOptionPane.YES_NO_OPTION,
+						JOptionPane.WARNING_MESSAGE) != JOptionPane.YES_OPTION)
+					return;
+			}
+		}
+		boolean csvExport = FileUtil.getFilenamExtension(dest).matches("(?i)csv");
+		// file may be overwritten, and then reloaded -> clear
+		DatasetFile.clearFiles(dest);
 		if (csvExport)
 		{
 			List<Object> feats = new ArrayList<Object>();
