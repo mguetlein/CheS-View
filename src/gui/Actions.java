@@ -1,6 +1,5 @@
 package gui;
 
-import gui.ViewControler.DisguiseMode;
 import gui.ViewControler.FeatureFilter;
 import gui.ViewControler.HighlightMode;
 import gui.property.ColorGradient;
@@ -10,6 +9,7 @@ import gui.table.CompoundTable;
 import gui.table.FeatureTable;
 import gui.table.TreeView;
 import gui.util.CompoundPropertyHighlighter;
+import gui.util.HideUnselectedDialog;
 import gui.util.Highlighter;
 import gui.util.SALIDialog;
 
@@ -110,22 +110,16 @@ public class Actions
 	private final static String[] EXPORT_ACTIONS = { EXPORT_SELECTED, EXPORT_UNSELECTED, EXPORT_CLUSTERS,
 			EXPORT_COMPOUNDS, EXPORT_IMAGE, EXPORT_WORKFLOW };
 
-	private final static String VIEW_NON_ZOOMED_SOLID = "view-non-zoomed-solid";
-	private final static String VIEW_NON_ZOOMED_TRANSLUCENT = "view-non-zoomed-translucent";
-	private final static String VIEW_NON_ZOOMED_INVISIBLE = "view-non-zoomed-invisible";
-	private final static String[] VIEW_HIDE_NON_ZOOMED_ACTIONS = { VIEW_NON_ZOOMED_SOLID, VIEW_NON_ZOOMED_TRANSLUCENT,
-			VIEW_NON_ZOOMED_INVISIBLE };
-
 	private final static String VIEW_FULL_SCREEN = "view-full-screen";
 	private final static String VIEW_DRAW_HYDROGENS = "view-draw-hydrogens";
 	private final static String VIEW_SPIN = "view-spin";
 	private final static String VIEW_BLACK_WHITE = "view-black-white";
 	private final static String VIEW_ANTIALIAS = "view-antialias";
 	private final static String VIEW_COMPOUND_DESCRIPTOR = "view-compound-descriptor";
-	private final static String VIEW_DISGUISE_NON_HOVERED = "view-disguise-non-hovered";
+	private final static String VIEW_HIDE_UNSELECTED_DIALOG = "view-hide-unselected";
 	private final static String VIEW_OPEN_SORT_FILTER_DIALOG = "view-open-sort-filter-dialog";
 	private final static String[] VIEW_ACTIONS = { VIEW_FULL_SCREEN, VIEW_DRAW_HYDROGENS, VIEW_SPIN, VIEW_BLACK_WHITE,
-			VIEW_ANTIALIAS, VIEW_COMPOUND_DESCRIPTOR, VIEW_OPEN_SORT_FILTER_DIALOG, VIEW_DISGUISE_NON_HOVERED };
+			VIEW_ANTIALIAS, VIEW_COMPOUND_DESCRIPTOR, VIEW_OPEN_SORT_FILTER_DIALOG, VIEW_HIDE_UNSELECTED_DIALOG };
 
 	private final static String HIGHLIGHT_COLORS = "highlight-colors";
 	private final static String HIGHLIGHT_COLOR_MATCH = "highlight-color-match";
@@ -396,7 +390,6 @@ public class Actions
 				for (Compound compound : clust.getCompounds())
 					compounds.add(compound);
 		}
-
 		clusterControler.applyCompoundFilter(desc, compounds);
 	}
 
@@ -738,20 +731,12 @@ public class Actions
 				return !viewControler.isHideHydrogens();
 			}
 		};
-		new ActionCreator(VIEW_DISGUISE_NON_HOVERED, ViewControler.PROPERTY_DISGUISE_CHANGED)
+		new ActionCreator(VIEW_HIDE_UNSELECTED_DIALOG)
 		{
 			@Override
 			public void action()
 			{
-				viewControler
-						.setDisguiseUnHovered(viewControler.getDisguiseUnHovered() != DisguiseMode.solid ? DisguiseMode.solid
-								: DisguiseMode.translucent);
-			}
-
-			@Override
-			public Boolean isSelected()
-			{
-				return viewControler.getDisguiseUnHovered() != DisguiseMode.solid;
+				HideUnselectedDialog.showDialog(viewControler, clustering);
 			}
 		};
 		new ActionCreator(VIEW_OPEN_SORT_FILTER_DIALOG)
@@ -760,49 +745,6 @@ public class Actions
 			public void action()
 			{
 				viewControler.showSortFilterDialog();
-			}
-		};
-
-		new RadioActionCreator(VIEW_NON_ZOOMED_SOLID, ViewControler.PROPERTY_DISGUISE_CHANGED)
-		{
-			@Override
-			public void action()
-			{
-				viewControler.setDisguiseUnZoomed(DisguiseMode.solid);
-			}
-
-			@Override
-			public Boolean isSelected()
-			{
-				return viewControler.getDisguiseUnZoomed() == DisguiseMode.solid;
-			}
-		};
-		new RadioActionCreator(VIEW_NON_ZOOMED_TRANSLUCENT, ViewControler.PROPERTY_DISGUISE_CHANGED)
-		{
-			@Override
-			public void action()
-			{
-				viewControler.setDisguiseUnZoomed(DisguiseMode.translucent);
-			}
-
-			@Override
-			public Boolean isSelected()
-			{
-				return viewControler.getDisguiseUnZoomed() == DisguiseMode.translucent;
-			}
-		};
-		new RadioActionCreator(VIEW_NON_ZOOMED_INVISIBLE, ViewControler.PROPERTY_DISGUISE_CHANGED)
-		{
-			@Override
-			public void action()
-			{
-				viewControler.setDisguiseUnZoomed(DisguiseMode.invisible);
-			}
-
-			@Override
-			public Boolean isSelected()
-			{
-				return viewControler.getDisguiseUnZoomed() == DisguiseMode.invisible;
 			}
 		};
 
@@ -1300,10 +1242,10 @@ public class Actions
 		return getActions(FILTER_ACTIONS);
 	}
 
-	public Action[] getViewHideNonZoomedActions()
-	{
-		return getActions(VIEW_HIDE_NON_ZOOMED_ACTIONS);
-	}
+	//	public Action[] getViewHideNonZoomedActions()
+	//	{
+	//		return getActions(VIEW_HIDE_NON_ZOOMED_ACTIONS);
+	//	}
 
 	public Action[] getViewActions()
 	{
