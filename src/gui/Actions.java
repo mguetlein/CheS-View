@@ -98,8 +98,10 @@ public class Actions
 
 	private final static String EDIT_SHOW_DISTANCE = "edit-show-distance";
 	private final static String EDIT_SHOW_SALI = "edit-show-sali";
+	private final static String EDIT_SUPERIMPOSE = "edit-superimpose";
 	private final static String EDIT_SELECT_LAST_FEATURE = "edit-select-last-feature";
-	private final static String[] EDIT_ACTIONS = { EDIT_SHOW_DISTANCE, EDIT_SHOW_SALI, EDIT_SELECT_LAST_FEATURE };
+	private final static String[] EDIT_ACTIONS = { EDIT_SHOW_DISTANCE, EDIT_SHOW_SALI, EDIT_SUPERIMPOSE,
+			EDIT_SELECT_LAST_FEATURE };
 
 	private final static String EXPORT_SELECTED = "export-selected";
 	private final static String EXPORT_UNSELECTED = "export-unselected";
@@ -124,13 +126,14 @@ public class Actions
 	private final static String HIGHLIGHT_COLORS = "highlight-colors";
 	private final static String HIGHLIGHT_COLOR_MATCH = "highlight-color-match";
 	private final static String HIGHLIGHT_MODE = "highlight-mode";
+	private final static String HIGHLIGHT_LABELS = "highlight-labels";
 	private final static String HIGHLIGHT_LAST_FEATURE = "highlight-last-feature";
 	private final static String HIGHLIGHT_DECR_SPHERE_SIZE = "highlight-decr-sphere-size";
 	private final static String HIGHLIGHT_INCR_SPHERE_SIZE = "highlight-incr-sphere-size";
 	private final static String HIGHLIGHT_DECR_SPHERE_TRANSLUCENCY = "highlight-decr-sphere-translucency";
 	private final static String HIGHLIGHT_INCR_SPHERE_TRANSLUCENCY = "highlight-incr-sphere-translucency";
-	private final static String[] HIGHLIGHT_ACTIONS = { HIGHLIGHT_COLORS, HIGHLIGHT_COLOR_MATCH, HIGHLIGHT_MODE,
-			HIGHLIGHT_LAST_FEATURE };
+	private final static String[] HIGHLIGHT_ACTIONS = { HIGHLIGHT_COLORS, HIGHLIGHT_COLOR_MATCH, HIGHLIGHT_LABELS,
+			HIGHLIGHT_MODE, HIGHLIGHT_LAST_FEATURE };
 	private final static String[] HIGHLIGHT_SPHERE_ACTIONS = { HIGHLIGHT_DECR_SPHERE_SIZE, HIGHLIGHT_INCR_SPHERE_SIZE,
 			HIGHLIGHT_DECR_SPHERE_TRANSLUCENCY, HIGHLIGHT_INCR_SPHERE_TRANSLUCENCY };
 
@@ -170,6 +173,7 @@ public class Actions
 		keys.put(FILE_NEW, KeyStroke.getKeyStroke(KeyEvent.VK_N, ActionEvent.ALT_MASK));
 		keys.put(FILE_EXIT, KeyStroke.getKeyStroke(KeyEvent.VK_F4, ActionEvent.ALT_MASK));
 		keys.put(EDIT_SHOW_DISTANCE, KeyStroke.getKeyStroke(KeyEvent.VK_D, ActionEvent.ALT_MASK));
+		keys.put(EDIT_SUPERIMPOSE, KeyStroke.getKeyStroke(KeyEvent.VK_U, ActionEvent.ALT_MASK));
 		keys.put(REMOVE_SELECTED, KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, ActionEvent.ALT_MASK));
 		keys.put(EXPORT_IMAGE, KeyStroke.getKeyStroke(KeyEvent.VK_I, ActionEvent.ALT_MASK));
 		keys.put(EXPORT_WORKFLOW, KeyStroke.getKeyStroke(KeyEvent.VK_W, ActionEvent.ALT_MASK));
@@ -370,6 +374,12 @@ public class Actions
 			actions.get(EDIT_SHOW_DISTANCE).putValue(Action.NAME, "Show distance to selected compound");
 			actions.get(EDIT_SHOW_DISTANCE).setEnabled(false);
 		}
+
+		AbstractAction superImp = ((AbstractAction) actions.get(EDIT_SUPERIMPOSE));
+		if (clustering.isClusterActive())
+			superImp.setEnabled(viewControler.isSingleClusterSpreadable());
+		else
+			superImp.setEnabled(viewControler.isAllClustersSpreadable());
 	}
 
 	private void filter(AbstractAction action)
@@ -945,6 +955,21 @@ public class Actions
 			}
 		};
 
+		new ActionCreator(HIGHLIGHT_LABELS, ViewControler.PROPERTY_HIGHLIGHT_CHANGED)
+		{
+			@Override
+			public void action()
+			{
+				viewControler.setHighlighterLabelsVisible(!viewControler.isHighlighterLabelsVisible());
+			}
+
+			@Override
+			public Boolean isSelected()
+			{
+				return viewControler.isHighlighterLabelsVisible();
+			}
+		};
+
 		new ActionCreator(HIGHLIGHT_LAST_FEATURE, ViewControler.PROPERTY_HIGHLIGHT_LAST_FEATURE,
 				ViewControler.PROPERTY_HIGHLIGHT_MODE_CHANGED)
 		{
@@ -965,6 +990,22 @@ public class Actions
 			{
 				return viewControler.getHighlightMode() == HighlightMode.Spheres;
 			}
+		};
+
+		new ActionCreator(EDIT_SUPERIMPOSE, ViewControler.PROPERTY_SUPERIMPOSE_CHANGED)
+		{
+			@Override
+			public void action()
+			{
+				viewControler.setSuperimpose(!viewControler.isSuperimpose());
+			}
+
+			@Override
+			public Boolean isSelected()
+			{
+				return viewControler.isSuperimpose();
+			}
+
 		};
 		new ActionCreator(EDIT_SELECT_LAST_FEATURE)
 		{
