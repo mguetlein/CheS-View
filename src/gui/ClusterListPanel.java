@@ -1,6 +1,5 @@
 package gui;
 
-import gui.DoubleNameListCellRenderer.DoubleNameElement;
 import gui.swing.ComponentFactory;
 import gui.swing.TransparentViewPanel;
 import gui.util.CompoundPropertyHighlighter;
@@ -18,7 +17,7 @@ import java.beans.PropertyChangeListener;
 import java.util.Arrays;
 
 import javax.swing.DefaultListModel;
-import javax.swing.JCheckBox;
+import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
@@ -43,8 +42,6 @@ import dataInterface.CompoundPropertyUtil;
 
 public class ClusterListPanel extends JPanel
 {
-	//	JLabel datasetNameLabel;
-
 	JPanel clusterPanel;
 
 	DefaultListModel listModel;
@@ -63,11 +60,9 @@ public class ClusterListPanel extends JPanel
 
 	ControlPanel controlPanel;
 
-	JCheckBox superimposeCheckBox;
-
 	JPanel filterPanel;
 	JLabel filterLabel;
-	LinkButton filterRemoveButton;
+	JButton filterRemoveButton;
 
 	public ClusterListPanel(Clustering clustering, ClusterController clusterControler, ViewControler viewControler,
 			GUIControler guiControler)
@@ -95,18 +90,6 @@ public class ClusterListPanel extends JPanel
 			public void clusterActiveChanged(Cluster c)
 			{
 				updateCluster(c);
-				updateSuperimposeCheckBox();
-			}
-		});
-
-		superimposeCheckBox.addActionListener(new ActionListener()
-		{
-			@Override
-			public void actionPerformed(ActionEvent e)
-			{
-				if (selfBlock)
-					return;
-				viewControler.setSuperimpose(superimposeCheckBox.isSelected());
 			}
 		});
 
@@ -115,11 +98,7 @@ public class ClusterListPanel extends JPanel
 			@Override
 			public void propertyChange(PropertyChangeEvent evt)
 			{
-				if (evt.getPropertyName().equals(ViewControler.PROPERTY_SUPERIMPOSE_CHANGED))
-				{
-					updateSuperimposeCheckBox();
-				}
-				else if (evt.getPropertyName().equals(ViewControler.PROPERTY_COMPOUND_FILTER_CHANGED))
+				if (evt.getPropertyName().equals(ViewControler.PROPERTY_COMPOUND_FILTER_CHANGED))
 				{
 					updateFilter();
 				}
@@ -134,16 +113,7 @@ public class ClusterListPanel extends JPanel
 				if (selfBlock)
 					return;
 				selfBlock = true;
-
-				if (clusterList.getSelectedValue() == AllClusters)
-				{
-					// clear only if home selected
-					if (e.getFirstIndex() == 0)
-						clusterControler.clearClusterWatched();
-				}
-				else
-					clusterControler.setClusterWatched((Cluster) clusterList.getSelectedValue());
-
+				clusterControler.setClusterWatched((Cluster) clusterList.getSelectedValue());
 				selfBlock = false;
 			}
 		});
@@ -158,18 +128,11 @@ public class ClusterListPanel extends JPanel
 				{
 					public void run()
 					{
-						if (clusterList.getSelectedValue() == AllClusters)
-						{
-							clusterControler.clearClusterActive(true, true);
-						}
+						Cluster c = (Cluster) clusterList.getSelectedValue();
+						if (c == clustering.getActiveCluster())
+							clusterControler.clearCompoundActive(true);
 						else
-						{
-							Cluster c = (Cluster) clusterList.getSelectedValue();
-							if (c == clustering.getActiveCluster())
-								clusterControler.clearCompoundActive(true);
-							else
-								clusterControler.setClusterActive(c, true, true);
-						}
+							clusterControler.setClusterActive(c, true, true);
 						selfBlock = false;
 					}
 				});
@@ -226,17 +189,6 @@ public class ClusterListPanel extends JPanel
 
 	}
 
-	private void updateSuperimposeCheckBox()
-	{
-		selfBlock = true;
-		superimposeCheckBox.setSelected(viewControler.isSuperimpose());
-		if (clustering.isClusterActive())
-			superimposeCheckBox.setVisible(viewControler.isSingleClusterSpreadable());
-		else
-			superimposeCheckBox.setVisible(viewControler.isAllClustersSpreadable());
-		selfBlock = false;
-	}
-
 	private void updateList()
 	{
 		if (!SwingUtilities.isEventDispatchThread())
@@ -250,9 +202,6 @@ public class ClusterListPanel extends JPanel
 			return;
 		}
 
-		if (clustering.getNumClusters() > 1)
-			listModel.addElement(AllClusters);
-
 		Cluster clusters[] = new Cluster[clustering.numClusters()];
 		clustering.getClusters().toArray(clusters);
 		if (viewControler.getHighlighter() instanceof CompoundPropertyHighlighter)//&& viewControler.isFeatureSortingEnabled() 
@@ -263,17 +212,6 @@ public class ClusterListPanel extends JPanel
 
 		updateListSize();
 		scroll.setVisible(listModel.size() > 1);
-
-		if (listModel.size() == 0)
-			superimposeCheckBox.setVisible(false);
-		else
-		{
-			updateSuperimposeCheckBox();
-			if (listModel.size() == 1)
-				compoundListPanel.appendCheckbox(superimposeCheckBox);
-			else
-				clusterPanel.add(superimposeCheckBox, BorderLayout.SOUTH);
-		}
 
 		updateListSize();
 		revalidate();
@@ -305,21 +243,6 @@ public class ClusterListPanel extends JPanel
 		scroll.repaint();
 	}
 
-	public static DoubleNameElement AllClusters = new DoubleNameElement()
-	{
-		@Override
-		public String getFirstName()
-		{
-			return "All clusters";
-		}
-
-		@Override
-		public String getSecondName()
-		{
-			return null;
-		}
-	};
-
 	private void buildLayout()
 	{
 		listModel = new DefaultListModel();
@@ -343,14 +266,13 @@ public class ClusterListPanel extends JPanel
 				}
 			}
 
+			@SuppressWarnings("rawtypes")
 			public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected,
 					boolean cellHasFocus)
 			{
 				super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
 
-				Cluster c = null;
-				if (value != AllClusters)
-					c = (Cluster) value;
+				Cluster c = (Cluster) value;
 				setOpaque(isSelected || c == clustering.getActiveCluster());
 
 				setForeground(ComponentFactory.FOREGROUND);
@@ -381,7 +303,7 @@ public class ClusterListPanel extends JPanel
 		compoundListPanel = new CompoundListPanel(clustering, clusterControler, viewControler, guiControler);
 
 		setLayout(new BorderLayout(0, 0));
-		FormLayout layout = new FormLayout("pref,10,pref", "fill:pref");
+		FormLayout layout = new FormLayout("pref,6,pref", "fill:pref");
 		JPanel panel = new JPanel();
 		panel.setOpaque(false);
 		panel.setLayout(layout);
@@ -389,18 +311,15 @@ public class ClusterListPanel extends JPanel
 		scroll = ComponentFactory.createViewScrollpane(clusterList);
 		clusterPanel = new TransparentViewPanel(new BorderLayout(5, 5));
 		clusterPanel.add(scroll);
-		superimposeCheckBox = ComponentFactory.createViewCheckBox("Superimpose");
-		superimposeCheckBox.setSelected(viewControler.isSuperimpose());
-		superimposeCheckBox.setOpaque(false);
-		clusterPanel.add(superimposeCheckBox, BorderLayout.SOUTH);
 		panel.add(clusterPanel, cc.xy(1, 1));
 		panel.add(compoundListPanel, cc.xy(3, 1));
 		add(panel, BorderLayout.WEST);
+
 		controlPanel = new ControlPanel(viewControler, clusterControler, clustering, guiControler);
 		add(controlPanel, BorderLayout.SOUTH);
 
 		filterLabel = ComponentFactory.createViewLabel("Filter applied:");
-		filterRemoveButton = ComponentFactory.createViewLinkButton("remove");
+		filterRemoveButton = ComponentFactory.createCrossViewButton();
 		filterRemoveButton.addActionListener(new ActionListener()
 		{
 			@Override

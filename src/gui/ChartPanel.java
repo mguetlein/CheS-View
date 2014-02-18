@@ -13,6 +13,8 @@ import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
@@ -25,6 +27,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 
+import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
@@ -80,6 +83,8 @@ public class ChartPanel extends TransparentViewPanel
 	private JLabel featureMappingLabel = ComponentFactory.createViewLabel("");
 	private JLabel featureMissingLabel = ComponentFactory.createViewLabel("");
 
+	private JButton clearSelectedFeatureButton;
+
 	HashMap<String, AbstractFreeChartPanel> cardContents = new HashMap<String, AbstractFreeChartPanel>();
 	JPanel cardPanel;
 	AbstractFreeChartPanel currentChartPanel;
@@ -129,7 +134,16 @@ public class ChartPanel extends TransparentViewPanel
 
 		setLayout(new BorderLayout(3, 3));
 
-		add(featurePanel, BorderLayout.NORTH);
+		clearSelectedFeatureButton = ComponentFactory.createCrossViewButton();
+		JPanel featureRemovePanel = new JPanel(new BorderLayout());
+		featureRemovePanel.setOpaque(false);
+		featureRemovePanel.add(featurePanel);
+		JPanel removeButtonPanel = new JPanel(new BorderLayout());
+		removeButtonPanel.setOpaque(false);
+		removeButtonPanel.add(clearSelectedFeatureButton, BorderLayout.NORTH);
+		featureRemovePanel.add(removeButtonPanel, BorderLayout.EAST);
+
+		add(featureRemovePanel, BorderLayout.NORTH);
 
 		cardPanel = new JPanel(new CardLayout());
 		cardPanel.setOpaque(false);
@@ -224,6 +238,15 @@ public class ChartPanel extends TransparentViewPanel
 					SmartsViewDialog.show(Settings.TOP_LEVEL_FRAME, property.getSmarts(),
 							Settings.TOP_LEVEL_FRAME.getWidth(), Settings.TOP_LEVEL_FRAME.getHeight());
 				}
+			}
+		});
+
+		clearSelectedFeatureButton.addActionListener(new ActionListener()
+		{
+			@Override
+			public void actionPerformed(ActionEvent e)
+			{
+				viewControler.setHighlighter(Highlighter.DEFAULT_HIGHLIGHTER);
 			}
 		});
 	}

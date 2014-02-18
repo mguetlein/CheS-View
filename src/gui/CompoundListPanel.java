@@ -7,6 +7,8 @@ import gui.util.CompoundPropertyHighlighter;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.ContainerEvent;
 import java.awt.event.ContainerListener;
 import java.awt.event.MouseAdapter;
@@ -18,8 +20,8 @@ import java.util.Arrays;
 import java.util.List;
 
 import javax.swing.DefaultListModel;
+import javax.swing.JButton;
 import javax.swing.JCheckBox;
-import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -47,9 +49,6 @@ import dataInterface.CompoundPropertyUtil;
 
 public class CompoundListPanel extends TransparentViewPanel
 {
-	JLabel clusterNameVal;
-	JLabel clusterNumVal;
-
 	JScrollPane listScrollPane;
 	MouseOverList list;
 	DefaultListModel listModel;
@@ -61,6 +60,8 @@ public class CompoundListPanel extends TransparentViewPanel
 	ClusterController clusterControler;
 	ViewControler viewControler;
 	GUIControler guiControler;
+
+	JButton clearSelectedButton;
 
 	public CompoundListPanel(Clustering clustering, ClusterController clusterControler, ViewControler controler,
 			GUIControler guiControler)
@@ -231,6 +232,24 @@ public class CompoundListPanel extends TransparentViewPanel
 			}
 		});
 
+		clearSelectedButton.addActionListener(new ActionListener()
+		{
+			@Override
+			public void actionPerformed(ActionEvent arg0)
+			{
+				Thread noAwt = new Thread(new Runnable()
+				{
+					public void run()
+					{
+						if (clustering.isCompoundActive())
+							clusterControler.clearCompoundActive(true);
+						else if (clustering.isClusterActive() && clustering.getNumClusters() > 1)
+							clusterControler.clearClusterActive(true, true);
+					}
+				});
+				noAwt.start();
+			}
+		});
 	}
 
 	private void updateCluster(Cluster c, boolean active)
@@ -240,7 +259,6 @@ public class CompoundListPanel extends TransparentViewPanel
 		if (active)
 		{
 			update(c, false);
-			//			hideUnselectedCheckBox.setSelected(controler.isHideUnselected());
 		}
 		else
 		{
@@ -257,9 +275,6 @@ public class CompoundListPanel extends TransparentViewPanel
 
 		DefaultFormBuilder builder = new DefaultFormBuilder(layout);
 		builder.setLineGapSize(new ConstantSize(2, ConstantSize.PX));
-
-		clusterNameVal = ComponentFactory.createViewLabel();
-		clusterNumVal = ComponentFactory.createViewLabel();
 
 		listModel = new DefaultListModel();
 
@@ -315,12 +330,18 @@ public class CompoundListPanel extends TransparentViewPanel
 		list.setFocusable(false);
 		//		list.setBorder(new EmptyBorder(5, 5, 5, 5));
 
-		JPanel p = new JPanel(new FormLayout("fill:pref:grow", "fill:p:grow,p"));//,5px,p,p"));
+		JPanel p = new JPanel(new FormLayout("fill:pref:grow,6,pref", "fill:p:grow,p"));//,5px,p,p"));
 		p.setOpaque(false);
 		CellConstraints cc = new CellConstraints();
 
 		listScrollPane = ComponentFactory.createViewScrollpane(list);
 		p.add(listScrollPane, cc.xy(1, 1));
+
+		clearSelectedButton = ComponentFactory.createCrossViewButton();
+		JPanel removeButtonPanel = new JPanel(new BorderLayout());
+		removeButtonPanel.setOpaque(false);
+		removeButtonPanel.add(clearSelectedButton, BorderLayout.NORTH);
+		p.add(removeButtonPanel, cc.xy(3, 1));
 
 		checkBoxContainer = new JPanel(new BorderLayout());
 		checkBoxContainer.setOpaque(false);
@@ -371,9 +392,8 @@ public class CompoundListPanel extends TransparentViewPanel
 		setIgnoreRepaint(true);
 		if (c == null)
 		{
-			clusterNameVal.setText(" ");
-			clusterNumVal.setText(" ");
 			listScrollPane.setVisible(false);
+			clearSelectedButton.setVisible(false);
 		}
 		else
 		{
@@ -382,11 +402,10 @@ public class CompoundListPanel extends TransparentViewPanel
 			if (noList)
 			{
 				listScrollPane.setVisible(false);
+				clearSelectedButton.setVisible(false);
 			}
 			else
 			{
-				clusterNameVal.setText(c.toString());
-				clusterNumVal.setText(" ");
 				listScrollPane.setPreferredSize(null);
 
 				Compound m[] = new Compound[c.getCompounds().size()];
@@ -404,6 +423,9 @@ public class CompoundListPanel extends TransparentViewPanel
 					listModel.addElement(compound);
 				updateActiveCompoundSelection();
 				updateListSize();
+
+				clearSelectedButton.setVisible((clustering.isClusterActive() && clustering.getNumClusters() > 1)
+						|| clustering.isCompoundActive());
 				listScrollPane.setVisible(true);
 			}
 		}

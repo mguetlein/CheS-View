@@ -73,7 +73,7 @@ public class SALIDialog extends JDialog
 		add(builder.getPanel());
 
 		pack();
-		tp1.setPreferredWith(label.getPreferredSize().width + 10 + propCombo.getPreferredSize().width);
+		tp1.setPreferredWith(Math.max(300, label.getPreferredSize().width + 10 + propCombo.getPreferredSize().width));
 		pack();
 		setLocationRelativeTo(getOwner());
 	}

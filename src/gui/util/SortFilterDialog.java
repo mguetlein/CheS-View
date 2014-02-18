@@ -112,8 +112,8 @@ public class SortFilterDialog extends JDialog
 		});
 
 		pack();
-		tp1.setPreferredWith(sortBox.getPreferredSize().width);
-		tp2.setPreferredWith(sortBox.getPreferredSize().width);
+		tp1.setPreferredWith(Math.max(300, sortBox.getPreferredSize().width));
+		tp2.setPreferredWith(Math.max(300, sortBox.getPreferredSize().width));
 		pack();
 		setLocationRelativeTo(getOwner());
 	}

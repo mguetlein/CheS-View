@@ -1,7 +1,10 @@
 package gui.swing;
 
+import gui.BorderImageIcon;
 import gui.DescriptionListCellRenderer;
+import gui.LaunchCheSMapper;
 import gui.LinkButton;
+import gui.SimpleImageIcon;
 import gui.ViewControler.Style;
 
 import java.awt.Color;
@@ -565,17 +568,55 @@ public class ComponentFactory
 		return createViewButton(string, insets, null);
 	}
 
+	public static JButton createPlusViewButton()
+	{
+		return createViewButton(null, SimpleImageIcon.plusImageIcon(), new Insets(4, 4, 4, 4), null);
+	}
+
+	public static JButton createMinusViewButton()
+	{
+		return createViewButton(null, SimpleImageIcon.minusImageIcon(), new Insets(4, 4, 4, 4), null);
+	}
+
+	public static JButton createCrossViewButton()
+	{
+		return createViewButton(null, SimpleImageIcon.crossImageIcon(), new Insets(4, 4, 4, 4), null);
+	}
+
 	public static JButton createViewButton(String string, final Insets insets, final PreferredSizeProvider prov)
 	{
-		JButton c = new JButton(string)
+		return createViewButton(string, null, insets, prov);
+	}
+
+	public static JButton createViewButton(final String string, final SimpleImageIcon icon, final Insets insets,
+			final PreferredSizeProvider prov)
+	{
+		final BorderImageIcon ic;
+		if (icon != null)
+		{
+			icon.setSize((int) (ScreenSetup.INSTANCE.getFontSize() * 0.55));
+			ic = new BorderImageIcon(icon, 1, FOREGROUND, insets);
+		}
+		else
+			ic = null;
+		JButton c = new JButton(string, ic)
 		{
 			public void updateUI()
 			{
 				super.updateUI();
 				setForeground(FOREGROUND);
 				setBackground(BACKGROUND);
-				setBorder(new CompoundBorder(new LineBorder(FOREGROUND, 1), new EmptyBorder(insets)));
-				setFont(getFont().deriveFont((float) ScreenSetup.INSTANCE.getFontSize()));
+				if (ic != null)
+				{
+					icon.setColor(FOREGROUND);
+					icon.setSize((int) (ScreenSetup.INSTANCE.getFontSize() * 0.55));
+					ic.setColor(FOREGROUND);
+				}
+				else
+				{
+					setBorder(new CompoundBorder(new LineBorder(FOREGROUND, 1), new EmptyBorder(insets)));
+					setFont(getFont().deriveFont((float) ScreenSetup.INSTANCE.getFontSize()));
+				}
 			}
 
 			@Override
@@ -591,6 +632,8 @@ public class ComponentFactory
 		c.setFocusable(false);
 		c.setFont(new JLabel().getFont().deriveFont((float) ScreenSetup.INSTANCE.getFontSize()));
 		c.setFocusable(false);
+		if (ic != null)
+			c.setBorder(new EmptyBorder(0, 0, 1, 1)); // hack: otherwise right and bottom line is missing
 		return c;
 	}
 
@@ -655,13 +698,22 @@ public class ComponentFactory
 
 	public static void main(String args[])
 	{
+		LaunchCheSMapper.init();
 		ComponentFactory.setBackgroundBlack(false);
 
 		JPanel p = new JPanel();
 		p.setBackground(BACKGROUND);
-		p.setPreferredSize(new Dimension(500, 100));
-		p.add(ComponentFactory.createViewButton("testing"));
-		p.add(ComponentFactory.createViewSlider(0, 100, 33));
+		//		p.setPreferredSize(new Dimension(500, 100));
+		//		p.add(ComponentFactory.createViewButton("testing"));
+
+		p.add(ComponentFactory.createMinusViewButton());
+		p.add(ComponentFactory.createCrossViewButton());
+		p.add(ComponentFactory.createPlusViewButton());
+		//		p.add(ComponentFactory.createViewButton("X"), new Insets(0, 5, 0, 5));
+		//		p.add(ComponentFactory.createViewButton("X"), new Insets(0, 6, 0, 6));
+		//		p.add(ComponentFactory.createViewSlider(0, 100, 33));
 		SwingUtil.showInDialog(p);
+
+		System.exit(0);
 	}
 }

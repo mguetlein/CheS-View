@@ -46,6 +46,7 @@ import cluster.Clustering;
 import cluster.Clustering.SelectionListener;
 import cluster.Compound;
 import cluster.CompoundSelection;
+import cluster.SALIProperty;
 import dataInterface.CompoundProperty;
 import dataInterface.CompoundPropertyOwner;
 import dataInterface.CompoundPropertyUtil;
@@ -819,6 +820,9 @@ public class InfoPanel extends JPanel
 			props = new ArrayList<CompoundProperty>();
 			for (CompoundProperty p : clustering.getProperties())
 				if (!p.isSmiles())
+					props.add(p);
+			for (CompoundProperty p : clustering.getAdditionalProperties())
+				if (p instanceof SALIProperty)
 					props.add(p);
 			if (viewControler.getFeatureFilter() == FeatureFilter.None)
 				props = ListUtil.concat(props, clustering.getFeatures());

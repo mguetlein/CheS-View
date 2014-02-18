@@ -11,7 +11,6 @@ import gui.util.Highlighter;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
-import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
@@ -21,12 +20,12 @@ import java.util.HashMap;
 import javax.swing.ButtonGroup;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
-import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
 import javax.swing.SwingUtilities;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
@@ -39,8 +38,6 @@ public class ControlPanel extends TransparentViewPanel
 {
 	boolean selfUpdate = false;
 
-	//	JCheckBox spinCheckbox;
-
 	StyleButton buttonWire;
 	StyleButton buttonBalls;
 	StyleButton buttonDots;
@@ -51,8 +48,8 @@ public class ControlPanel extends TransparentViewPanel
 	JSlider slider;
 
 	JComboBox highlightCombobox;
-	JCheckBox labelCheckbox;
 	JComboBox highlightMinMaxCombobox;
+	JButton buttonClearFeature;
 
 	ViewControler viewControler;
 	Clustering clustering;
@@ -73,12 +70,6 @@ public class ControlPanel extends TransparentViewPanel
 
 	private void buildLayout()
 	{
-		//		spinCheckbox = ComponentFactory.createCheckBox("Spin on/off");
-		//		spinCheckbox.setSelected(viewControler.isSpinEnabled());
-		//		spinCheckbox.setOpaque(false);
-
-		//		setBackground(Settings.TRANSPARENT_BACKGROUND);
-
 		buttonWire = new StyleButton("Wireframe", true, Style.wireframe);
 		buttonBalls = new StyleButton("Balls & Sticks", false, Style.ballsAndSticks);
 		buttonDots = new StyleButton("Dots", false, Style.dots);
@@ -92,18 +83,8 @@ public class ControlPanel extends TransparentViewPanel
 			b.setFocusable(false);
 		}
 
-		buttonPlus = ComponentFactory.createViewButton("+", new Insets(1, 3, 1, 3));
-		buttonMinus = ComponentFactory.createViewButton("-", new Insets(1, 3, 1, 3),
-				new ComponentFactory.PreferredSizeProvider()
-				{
-
-					@Override
-					public Dimension getPreferredSize()
-					{
-						return buttonPlus.getPreferredSize();
-					}
-				});
-		//		buttonMinus.setPreferredSize(buttonPlus.getPreferredSize());
+		buttonPlus = ComponentFactory.createPlusViewButton();
+		buttonMinus = ComponentFactory.createMinusViewButton();
 
 		slider = ComponentFactory.createViewSlider(0, viewControler.getCompoundSizeMax(),
 				viewControler.getCompoundSize());
@@ -114,20 +95,12 @@ public class ControlPanel extends TransparentViewPanel
 
 		highlightCombobox.setSelectedItem(viewControler.getHighlighter());
 
-		labelCheckbox = ComponentFactory.createViewCheckBox("Label");
-		labelCheckbox.setSelected(viewControler.isHighlighterLabelsVisible());
-		labelCheckbox.setOpaque(false);
-		labelCheckbox.setVisible(false);
-
 		highlightMinMaxCombobox = ComponentFactory.createViewComboBox(HighlightSorting.values());
 
 		highlightMinMaxCombobox.setSelectedItem(viewControler.getHighlightSorting());
 		highlightMinMaxCombobox.setVisible(false);
 
-		// setBorder(new MatteBorder(1, 1, 1, 1, Color.red));
-		// JPanel p = new JPanel();
-
-		// add(new JLabel("Graphic Settings:"));
+		buttonClearFeature = ComponentFactory.createCrossViewButton();
 
 		JPanel p = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
 		p.setOpaque(false);
@@ -135,7 +108,6 @@ public class ControlPanel extends TransparentViewPanel
 		p.add(slider);
 		p.add(buttonPlus);
 		p.add(new JLabel("   "));
-		//		p.add(spinCheckbox);
 		p.add(buttonWire);
 		p.add(new JLabel(""));
 		p.add(buttonBalls);
@@ -146,8 +118,12 @@ public class ControlPanel extends TransparentViewPanel
 		p2.setOpaque(false);
 		p2.add(ComponentFactory.createViewLabel("<html><b>Feature:</b></html>"));
 		p2.add(highlightCombobox);
-		p2.add(labelCheckbox);
 		p2.add(highlightMinMaxCombobox);
+		JPanel clear = new JPanel(new BorderLayout());
+		clear.setOpaque(false);
+		clear.add(buttonClearFeature);
+		clear.setBorder(new EmptyBorder(0, 1, 0, 0));
+		p2.add(clear);
 
 		setLayout(new BorderLayout());
 		JPanel pp = new JPanel(new BorderLayout());
@@ -162,18 +138,6 @@ public class ControlPanel extends TransparentViewPanel
 
 	private void addListeners()
 	{
-		//		spinCheckbox.addActionListener(new ActionListener()
-		//		{
-		//
-		//			@Override
-		//			public void actionPerformed(ActionEvent e)
-		//			{
-		//				if (updateByViewControler)
-		//					return;
-		//				viewControler.setSpinEnabled(spinCheckbox.isSelected());
-		//			}
-		//		});
-
 		ActionListener l = new ActionListener()
 		{
 			public void actionPerformed(ActionEvent e)
@@ -229,23 +193,6 @@ public class ControlPanel extends TransparentViewPanel
 			}
 		});
 
-		labelCheckbox.addActionListener(new ActionListener()
-		{
-			@Override
-			public void actionPerformed(ActionEvent e)
-			{
-				if (selfUpdate)
-					return;
-				SwingUtilities.invokeLater(new Runnable()
-				{
-					@Override
-					public void run()
-					{
-						viewControler.setHighlighterLabelsVisible(labelCheckbox.isSelected());
-					}
-				});
-			}
-		});
 		highlightMinMaxCombobox.addActionListener(new ActionListener()
 		{
 			@Override
@@ -261,6 +208,15 @@ public class ControlPanel extends TransparentViewPanel
 						viewControler.setHighlightSorting((HighlightSorting) highlightMinMaxCombobox.getSelectedItem());
 					}
 				});
+			}
+		});
+
+		buttonClearFeature.addActionListener(new ActionListener()
+		{
+			@Override
+			public void actionPerformed(ActionEvent arg0)
+			{
+				viewControler.setHighlighter(Highlighter.DEFAULT_HIGHLIGHTER);
 			}
 		});
 
@@ -325,12 +281,11 @@ public class ControlPanel extends TransparentViewPanel
 
 		selfUpdate = true;
 		highlightCombobox.setSelectedItem(viewControler.getHighlighter());
-		labelCheckbox.setSelected(viewControler.isHighlighterLabelsVisible());
 		highlightMinMaxCombobox.setSelectedItem(viewControler.getHighlightSorting());
 		boolean featHighSel = ((Highlighter) highlightCombobox.getSelectedItem()) instanceof CompoundPropertyHighlighter;
-		labelCheckbox.setVisible(featHighSel);
 		highlightMinMaxCombobox.setVisible(featHighSel && viewControler.isSuperimpose()
 				&& !clustering.isClusterActive());
+		buttonClearFeature.setVisible(viewControler.getHighlighter() != Highlighter.DEFAULT_HIGHLIGHTER);
 		selfUpdate = false;
 	}
 
