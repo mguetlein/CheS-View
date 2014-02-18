@@ -338,30 +338,22 @@ public class Actions
 			action.putValue("Compound", new Compound[0]);
 			action.putValue("Cluster", new Cluster[0]);
 
-			if (selectedCompounds.length > 0 || selectedClusters.length > 0)
+			if (compounds.length > 0)
 			{
-				if (compounds.length > 0)
-				{
-					action.putValue("Compound", compounds);
-					if (compounds.length == 1)
-						action.putValue(Action.NAME, actionString + " " + compounds[0]);
-					else if (compounds.length > 1)
-						action.putValue(Action.NAME, actionString + " " + compounds.length + " compounds");
-					else
-						throw new IllegalStateException();
-				}
-				else if (clusters.length > 0)
-				{
-					action.putValue("Cluster", clusters);
-					if (clusters.length == 1)
-						action.putValue(Action.NAME, actionString + " " + clusters[0].getName());
-					else if (clusters.length > 1)
-						action.putValue(Action.NAME, actionString + " " + clusters.length + " clusters");
-					else
-						throw new IllegalStateException();
-				}
-				else
-					throw new IllegalStateException();
+				action.putValue("Compound", compounds);
+				if (compounds.length == 1)
+					action.putValue(Action.NAME, actionString + " " + compounds[0]);
+				else if (compounds.length > 1)
+					action.putValue(Action.NAME, actionString + " " + compounds.length + " compounds");
+				action.setEnabled(true);
+			}
+			else if (clusters.length > 0)
+			{
+				action.putValue("Cluster", clusters);
+				if (clusters.length == 1)
+					action.putValue(Action.NAME, actionString + " " + clusters[0].getName());
+				else if (clusters.length > 1)
+					action.putValue(Action.NAME, actionString + " " + clusters.length + " clusters");
 				action.setEnabled(true);
 			}
 			else
