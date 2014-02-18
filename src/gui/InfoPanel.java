@@ -389,12 +389,14 @@ public class InfoPanel extends JPanel
 				public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
 						boolean hasFocus, int row, int column)
 				{
+					if (column == 0 && value instanceof CompoundProperty)
+						value = CompoundPropertyUtil.stripExportString((CompoundProperty) value);
 					JLabel c = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row,
 							column);
 					c.setIcon(null);
 					if (row == 0 && column == 0)
 						c.setFont(c.getFont().deriveFont(Font.BOLD));
-					else if (column == 0 && table.getValueAt(row, 0) == FEATURES_ROW)
+					else if (column == 0 && value == FEATURES_ROW)
 						c.setFont(c.getFont().deriveFont(Font.BOLD));
 					else if (column == 1 && table.getValueAt(row, 0) == FEATURES_ROW)
 					{
@@ -403,19 +405,15 @@ public class InfoPanel extends JPanel
 						boolean black = viewControler.isBlackgroundBlack();
 						c.setIcon(getSortFilterIcon(sorted, filtered, black));
 					}
-					else if (column == 1)
+					else if (column == 1 && table.getValueAt(row, 0) instanceof CompoundProperty)
 					{
-						if (table.getValueAt(row, 0) instanceof CompoundProperty)
+						c.setFont(c.getFont().deriveFont(Font.ITALIC));
+						if (isSelected == false && !(selected instanceof Clustering))
 						{
-							c.setFont(c.getFont().deriveFont(Font.ITALIC));
-
-							if (isSelected == false && !(selected instanceof Clustering))
-							{
-								Color col = MainPanel.getHighlightColor(viewControler, clustering, selected,
-										(CompoundProperty) table.getValueAt(row, 0), true);
-								if (col != null && col != CompoundPropertyUtil.getNullValueColor())
-									setForeground(col);
-							}
+							Color col = MainPanel.getHighlightColor(viewControler, clustering, selected,
+									(CompoundProperty) table.getValueAt(row, 0), true);
+							if (col != null && col != CompoundPropertyUtil.getNullValueColor())
+								setForeground(col);
 						}
 					}
 					return c;
