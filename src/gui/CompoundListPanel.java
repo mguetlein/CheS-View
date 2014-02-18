@@ -110,12 +110,13 @@ public class CompoundListPanel extends TransparentViewPanel
 			@Override
 			public void compoundActiveChanged(Compound[] c)
 			{
-				if (selfBlock)
-					return;
-				selfBlock = true;
-
-				updateActiveCompoundSelection();
-				selfBlock = false;
+				if (!selfBlock)
+				{
+					selfBlock = true;
+					updateActiveCompoundSelection();
+					selfBlock = false;
+				}
+				updateClearButton();
 			}
 
 			@Override
@@ -128,6 +129,7 @@ public class CompoundListPanel extends TransparentViewPanel
 			public void clusterActiveChanged(Cluster c)
 			{
 				updateCluster(c, true);
+				updateClearButton();
 			}
 		});
 
@@ -252,6 +254,14 @@ public class CompoundListPanel extends TransparentViewPanel
 		});
 	}
 
+	private void updateClearButton()
+	{
+		clearSelectedButton
+				.setVisible(listScrollPane.isVisible()
+						&& ((clustering.isClusterActive() && clustering.getNumClusters() > 1) || clustering
+								.isCompoundActive()));
+	}
+
 	private void updateCluster(Cluster c, boolean active)
 	{
 		selfBlock = true;
@@ -342,6 +352,7 @@ public class CompoundListPanel extends TransparentViewPanel
 		removeButtonPanel.setOpaque(false);
 		removeButtonPanel.add(clearSelectedButton, BorderLayout.NORTH);
 		p.add(removeButtonPanel, cc.xy(3, 1));
+		clearSelectedButton.setVisible(false);
 
 		checkBoxContainer = new JPanel(new BorderLayout());
 		checkBoxContainer.setOpaque(false);
@@ -393,7 +404,6 @@ public class CompoundListPanel extends TransparentViewPanel
 		if (c == null)
 		{
 			listScrollPane.setVisible(false);
-			clearSelectedButton.setVisible(false);
 		}
 		else
 		{
@@ -402,7 +412,6 @@ public class CompoundListPanel extends TransparentViewPanel
 			if (noList)
 			{
 				listScrollPane.setVisible(false);
-				clearSelectedButton.setVisible(false);
 			}
 			else
 			{
@@ -423,9 +432,6 @@ public class CompoundListPanel extends TransparentViewPanel
 					listModel.addElement(compound);
 				updateActiveCompoundSelection();
 				updateListSize();
-
-				clearSelectedButton.setVisible((clustering.isClusterActive() && clustering.getNumClusters() > 1)
-						|| clustering.isCompoundActive());
 				listScrollPane.setVisible(true);
 			}
 		}
