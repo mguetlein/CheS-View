@@ -1242,11 +1242,6 @@ public class Actions
 		return getActions(FILTER_ACTIONS);
 	}
 
-	//	public Action[] getViewHideNonZoomedActions()
-	//	{
-	//		return getActions(VIEW_HIDE_NON_ZOOMED_ACTIONS);
-	//	}
-
 	public Action[] getViewActions()
 	{
 		return getActions(VIEW_ACTIONS);

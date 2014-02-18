@@ -89,7 +89,7 @@ public class SALIDialog extends JDialog
 		}
 		if (list.size() == 0)
 			JOptionPane
-					.showConfirmDialog(
+					.showMessageDialog(
 							Settings.TOP_LEVEL_FRAME,
 							"Currently, only numeric or binary endpoint properties are supported.\nNo such property is available in the dataset.",
 							"Message", JOptionPane.OK_OPTION);
