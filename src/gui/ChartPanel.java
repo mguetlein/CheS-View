@@ -5,6 +5,7 @@ import freechart.FreeChartPanel.ChartMouseSelectionListener;
 import freechart.HistogramPanel;
 import freechart.StackedBarPlot;
 import gui.swing.ComponentFactory;
+import gui.swing.ComponentFactory.DimensionProvider;
 import gui.swing.TransparentViewPanel;
 import gui.util.CompoundPropertyHighlighter;
 import gui.util.Highlighter;
@@ -30,7 +31,9 @@ import java.util.List;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
+import javax.swing.border.EmptyBorder;
 
 import main.ScreenSetup;
 import main.Settings;
@@ -70,18 +73,36 @@ public class ChartPanel extends TransparentViewPanel
 	Compound compounds[];
 	CompoundProperty property;
 	CompoundFilter filter;
+	int fontSize;
+
+	private DimensionProvider maxLabelWidth = new DimensionProvider()
+	{
+		@Override
+		public Dimension getPreferredSize(Dimension orig)
+		{
+			return new Dimension(Math.min(guiControler.getComponentMaxWidth(0.2), orig.width),
+					featureNameLabel.getHeight());
+		}
+	};
 
 	private JPanel featurePanel;
-	private JLabel featureNameLabel = ComponentFactory.createViewLabel("");
-	private JLabel featureSetLabel = ComponentFactory.createViewLabel("");
-	private JLabel featureValuesLabel = ComponentFactory.createViewLabel("");
+	private JLabel featureNameLabelHeader = ComponentFactory.createViewLabel("<html><b>Feature:</b><html>");
+	private JLabel featureNameLabel = ComponentFactory.createViewLabel("", maxLabelWidth);
+	private JLabel featureSetLabel = ComponentFactory.createViewLabel("", maxLabelWidth);
+	private JLabel featureValuesLabel = ComponentFactory.createViewLabel("", maxLabelWidth);
 	private JLabel featureValuesLabelHeader = ComponentFactory.createViewLabel("Values:");
-	private JLabel featureDescriptionLabel = ComponentFactory.createViewLabel("");
+	private JLabel featureDescriptionLabel = ComponentFactory.createViewLabel("", maxLabelWidth);
 	private JLabel featureDescriptionLabelHeader = ComponentFactory.createViewLabel("Description:");
 	private JLabel featureSmartsLabelHeader = ComponentFactory.createViewLabel("Smarts:");
-	private JLabel featureSmartsLabel = ComponentFactory.createViewLabel("");
-	private JLabel featureMappingLabel = ComponentFactory.createViewLabel("");
+	private JLabel featureSmartsLabel = ComponentFactory.createViewLabel("", maxLabelWidth);
+	private JLabel featureMappingLabelHeader = ComponentFactory.createViewLabel("Usage:");
+	private JLabel featureMappingLabel = ComponentFactory.createViewLabel("", maxLabelWidth);
+	private JLabel featureMissingLabelHeader = ComponentFactory.createViewLabel("Missing values:");
 	private JLabel featureMissingLabel = ComponentFactory.createViewLabel("");
+	private JLabel labelList[] = { featureNameLabelHeader, featureNameLabel, featureSetLabel, featureValuesLabel,
+			featureValuesLabelHeader, featureDescriptionLabel, featureDescriptionLabelHeader, featureSmartsLabel,
+			featureSmartsLabelHeader, featureMappingLabel, featureMappingLabelHeader, featureMissingLabel,
+			featureMissingLabelHeader };
 
 	private JButton clearSelectedFeatureButton;
 
@@ -106,10 +127,22 @@ public class ChartPanel extends TransparentViewPanel
 
 	private void buildLayout()
 	{
+		for (JLabel l : labelList)
+		{
+			l.setHorizontalAlignment(SwingConstants.LEFT);
+			l.setVerticalAlignment(SwingConstants.TOP);
+			l.setBorder(new EmptyBorder(0, 0, 4, 0));
+		}
+		clearSelectedFeatureButton = ComponentFactory.createCrossViewButton();
+		JPanel nameLabelAndClearButton = new JPanel(new BorderLayout());
+		nameLabelAndClearButton.setOpaque(false);
+		nameLabelAndClearButton.add(featureNameLabel);
+		nameLabelAndClearButton.add(clearSelectedFeatureButton, BorderLayout.EAST);
+
 		DefaultFormBuilder b = new DefaultFormBuilder(new FormLayout("p,3dlu,p"));
-		b.setLineGapSize(Sizes.pixel(2));
-		b.append(ComponentFactory.createViewLabel("<html><b>Feature:</b><html>"));
-		b.append(featureNameLabel);
+		b.setLineGapSize(Sizes.pixel(0));
+		b.append(featureNameLabelHeader);
+		b.append(nameLabelAndClearButton);
 		b.nextLine();
 		b.append("");
 		b.append(featureSetLabel);
@@ -123,32 +156,31 @@ public class ChartPanel extends TransparentViewPanel
 		b.append(featureSmartsLabelHeader);
 		b.append(featureSmartsLabel);
 		b.nextLine();
-		b.append(ComponentFactory.createViewLabel("<html>Usage:<html>"));
+		b.append(featureMappingLabelHeader);
 		b.append(featureMappingLabel);
 		b.nextLine();
-		b.append(ComponentFactory.createViewLabel("<html>Missing values:<html>"));
+		b.append(featureMissingLabelHeader);
 		b.append(featureMissingLabel);
-
 		featurePanel = b.getPanel();
 		featurePanel.setOpaque(false);
+		JPanel wrappedFeaturePanel = new JPanel(new BorderLayout());
+		wrappedFeaturePanel.setOpaque(false);
+		wrappedFeaturePanel.add(featurePanel, BorderLayout.EAST);
 
-		setLayout(new BorderLayout(3, 3));
-
-		clearSelectedFeatureButton = ComponentFactory.createCrossViewButton();
-		JPanel featureRemovePanel = new JPanel(new BorderLayout());
-		featureRemovePanel.setOpaque(false);
-		featureRemovePanel.add(featurePanel);
-		JPanel removeButtonPanel = new JPanel(new BorderLayout());
-		removeButtonPanel.setOpaque(false);
-		removeButtonPanel.add(clearSelectedFeatureButton, BorderLayout.NORTH);
-		featureRemovePanel.add(removeButtonPanel, BorderLayout.EAST);
-
-		add(featureRemovePanel, BorderLayout.NORTH);
-
-		cardPanel = new JPanel(new CardLayout());
+		setLayout(new BorderLayout(0, 0));
+		add(wrappedFeaturePanel, BorderLayout.NORTH);
+		cardPanel = new JPanel(new CardLayout())
+		{
+			public Dimension getPreferredSize()
+			{
+				Dimension dim = super.getPreferredSize();
+				dim.width = Math.min(dim.width, guiControler.getComponentMaxWidth(0.33));
+				dim.height = Math.min(dim.height, Math.min(guiControler.getComponentMaxHeight(0.25), dim.width));
+				return dim;
+			}
+		};
 		cardPanel.setOpaque(false);
 		add(cardPanel, BorderLayout.CENTER);
-
 		setOpaque(true);
 		//		setBackground(Settings.TRANSPARENT_BACKGROUND);
 	}
@@ -173,8 +205,7 @@ public class ChartPanel extends TransparentViewPanel
 				}
 				else if (evt.getPropertyName().equals(ViewControler.PROPERTY_FONT_SIZE_CHANGED))
 				{
-					if (currentChartPanel != null)
-						currentChartPanel.setFontSize(ScreenSetup.INSTANCE.getFontSize());
+					update(false);
 				}
 			}
 		});
@@ -251,13 +282,13 @@ public class ChartPanel extends TransparentViewPanel
 		});
 	}
 
-	private static String getKey(Cluster c, CompoundProperty p, Compound m[], CompoundFilter f)
+	private static String getKey(Cluster c, CompoundProperty p, Compound m[], CompoundFilter f, int fontSize)
 	{
 		String mString = "";
 		for (Compound compound : m)
 			mString = mString.concat(compound.toString());
 		return (c == null ? "null" : c.getName()) + "_" + p.toString() + "_" + mString.hashCode() + "_"
-				+ (f == null ? "" : f.hashCode());
+				+ (f == null ? "" : f.hashCode()) + "_" + fontSize;
 	}
 
 	static boolean selfUpdate = false;
@@ -437,7 +468,7 @@ public class ChartPanel extends TransparentViewPanel
 		List<String> captions;
 		List<double[]> vals;
 
-		public NumericPlotData(Cluster c, CompoundProperty p, Compound m[])
+		public NumericPlotData(Cluster c, CompoundProperty p, Compound m[], int fontsize)
 		{
 			Double v[] = clustering.getDoubleValues(p);
 			captions = new ArrayList<String>();
@@ -467,7 +498,7 @@ public class ChartPanel extends TransparentViewPanel
 			}
 
 			plot = new HistogramPanel(null, null, null, "#compounds", captions, vals, 20);
-			configurePlotColors(plot, c, m, p);
+			configurePlotColors(plot, c, m, p, fontsize);
 			SwingUtilities.invokeLater(new Runnable()// wait to add listerner, so that chart has finished painting 
 					{
 						@Override
@@ -527,7 +558,7 @@ public class ChartPanel extends TransparentViewPanel
 		LinkedHashMap<String, List<Double>> data;
 		String vals[];
 
-		public NominalPlotData(Cluster c, CompoundProperty p, Compound ms[])
+		public NominalPlotData(Cluster c, CompoundProperty p, Compound ms[], int fontsize)
 		{
 			Compound m = ms.length > 0 ? ms[0] : null;
 
@@ -589,7 +620,7 @@ public class ChartPanel extends TransparentViewPanel
 				vals[i] = p.getFormattedValue(datasetValues.get(i));
 
 			plot = new StackedBarPlot(null, null, "#compounds", StackedBarPlot.convertTotalToAdditive(data), vals);
-			configurePlotColors(plot, c, ms, p);
+			configurePlotColors(plot, c, ms, p, fontsize);
 			SwingUtilities.invokeLater(new Runnable() // wait to add listerner, so that chart has finished painting 
 					{
 						@Override
@@ -603,7 +634,7 @@ public class ChartPanel extends TransparentViewPanel
 	}
 
 	private void configurePlotColors(AbstractFreeChartPanel chartPanel, Cluster cluster, Compound[] compounds,
-			CompoundProperty property)
+			CompoundProperty property, int fontsize)
 	{
 		int dIndex = -1;
 		int cIndex = -1;
@@ -676,7 +707,7 @@ public class ChartPanel extends TransparentViewPanel
 		chartPanel.setShadowVisible(false);
 		chartPanel.setIntegerTickUnits();
 		chartPanel.setBarWidthLimited();
-		chartPanel.setFontSize(ScreenSetup.INSTANCE.getFontSize());
+		chartPanel.setFontSize(fontsize);
 	}
 
 	private void update(final boolean force)
@@ -712,12 +743,13 @@ public class ChartPanel extends TransparentViewPanel
 		}
 
 		if (force || cluster != c || property != prop || !Arrays.equals(compounds, comps)
-				|| filter != clusterControler.getCompoundFilter())
+				|| filter != clusterControler.getCompoundFilter() || fontSize != ScreenSetup.INSTANCE.getFontSize())
 		{
 			cluster = c;
 			property = prop;
 			compounds = comps;
 			filter = clusterControler.getCompoundFilter();
+			fontSize = ScreenSetup.INSTANCE.getFontSize();
 
 			if (property == null)
 				setVisible(false);
@@ -727,15 +759,17 @@ public class ChartPanel extends TransparentViewPanel
 				final CompoundProperty fProperty = this.property;
 				final Compound fCompounds[] = this.compounds;
 				final CompoundFilter fFilter = filter;
+				final int fFontSize = fontSize;
 
 				workerThread.addJob(new Runnable()
 				{
 					public void run()
 					{
-						if (fCluster != cluster || fProperty != property || fCompounds != compounds)
+						if (fCluster != cluster || fProperty != property || fCompounds != compounds
+								|| fFontSize != fontSize)
 							return;
 
-						String plotKey = getKey(fCluster, fProperty, fCompounds, fFilter);
+						String plotKey = getKey(fCluster, fProperty, fCompounds, fFilter, fFontSize);
 						if (force && cardContents.containsKey(plotKey))
 							cardContents.remove(plotKey);
 						if (!cardContents.containsKey(plotKey))
@@ -743,9 +777,9 @@ public class ChartPanel extends TransparentViewPanel
 							CompoundProperty.Type type = fProperty.getType();
 							PlotData d = null;
 							if (type == Type.NOMINAL)
-								d = new NominalPlotData(fCluster, fProperty, fCompounds);
+								d = new NominalPlotData(fCluster, fProperty, fCompounds, fFontSize);
 							else if (type == Type.NUMERIC)
-								d = new NumericPlotData(fCluster, fProperty, fCompounds);
+								d = new NumericPlotData(fCluster, fProperty, fCompounds, fFontSize);
 							if (d != null)
 							{
 								cardContents.put(plotKey, d.getPlot());
@@ -753,7 +787,8 @@ public class ChartPanel extends TransparentViewPanel
 							}
 						}
 
-						if (fCluster != cluster || fProperty != property || fCompounds != compounds)
+						if (fCluster != cluster || fProperty != property || fCompounds != compounds
+								|| fFontSize != fontSize)
 							return;
 						setIgnoreRepaint(true);
 
@@ -770,8 +805,10 @@ public class ChartPanel extends TransparentViewPanel
 						featureSmartsLabel.setVisible(fProperty.getSmarts() != null);
 						featureSmartsLabelHeader.setVisible(fProperty.getSmarts() != null);
 						featureMappingLabel
-								.setText((fProperty.getCompoundPropertySet().isUsedForMapping() ? "Used for clustering and/or embedding."
-										: "NOT used for clustering and/or embedding."));
+								.setText((fProperty.getCompoundPropertySet().isUsedForMapping() ? "Used for mapping"
+										: "NOT used for mapping"));
+						featureMissingLabelHeader.setVisible(clustering.numMissingValues(fProperty) > 0);
+						featureMissingLabel.setVisible(clustering.numMissingValues(fProperty) > 0);
 						featureMissingLabel.setText(clustering.numMissingValues(fProperty) + "");
 
 						if (cardContents.containsKey(plotKey))
@@ -791,13 +828,5 @@ public class ChartPanel extends TransparentViewPanel
 				}, "update chart");
 			}
 		}
-	}
-
-	public Dimension getPreferredSize()
-	{
-		Dimension dim = super.getPreferredSize();
-		dim.width = Math.min(dim.width, guiControler.getComponentMaxWidth(0.33));
-		dim.height = Math.min(dim.height, Math.min(guiControler.getComponentMaxHeight(0.33), dim.width));
-		return dim;
 	}
 }

@@ -3,6 +3,7 @@ package gui;
 import gui.swing.ComponentFactory;
 
 import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.LayoutManager;
 
 import javax.swing.JLabel;
@@ -57,20 +58,39 @@ public class ClusterPanel extends JPanel
 		allPanelsContainer.add(clusterListPanel, BorderLayout.WEST);
 		add(allPanelsContainer, BorderLayout.WEST);
 
-		JPanel infoAndChartContainer = new JPanel(new BorderLayout(0, 20));
+		final int gap = 20;
+		JPanel infoAndChartContainer = new JPanel(new BorderLayout(0, gap));
 		infoAndChartContainer.setOpaque(false);
 
-		InfoPanel infoPanel = new InfoPanel(mainPanel, mainPanel, mainPanel.getClustering(), guiControler);
+		final int top = 25;
+		final int bottom = 25;
+
+		final InfoPanel infoPanel = new InfoPanel(mainPanel, mainPanel, mainPanel.getClustering(), guiControler);
+		final JPanel chartContainer = new JPanel(new BorderLayout())
+		{
+			@Override
+			public Dimension getPreferredSize()
+			{
+				// to "push back" the table
+				int increasedHeight = (ClusterPanel.this.getHeight() - (gap + top + bottom + 40))
+						- infoPanel.getPreferredTableHeight();
+				if (increasedHeight < 0)
+					return super.getPreferredSize();
+				else
+					return new Dimension(10, Math.max(super.getPreferredSize().height, increasedHeight));
+			}
+		};
 		ChartPanel chartPanel = new ChartPanel(mainPanel.getClustering(), mainPanel, mainPanel, guiControler);
 		chartPanel.setBorder(new EmptyBorder(0, 0, 0, 0));
-		infoAndChartContainer.add(infoPanel, BorderLayout.EAST);
-
-		JPanel chartContainer = new JPanel(new BorderLayout());
 		chartContainer.setOpaque(false);
-		chartContainer.add(chartPanel, BorderLayout.EAST);
+		JPanel chartWrapperPanel = new JPanel(new BorderLayout());
+		chartWrapperPanel.setOpaque(false);
+		chartWrapperPanel.add(chartPanel, BorderLayout.EAST);
+		chartContainer.add(chartWrapperPanel, BorderLayout.SOUTH);
 
+		infoAndChartContainer.add(infoPanel, BorderLayout.EAST);
 		infoAndChartContainer.add(chartContainer, BorderLayout.SOUTH);
-		infoAndChartContainer.setBorder(new EmptyBorder(25, 25, 25, 25));
+		infoAndChartContainer.setBorder(new EmptyBorder(top, 25, bottom, 25));
 
 		mainPanel.addIgnoreMouseMovementComponents(chartPanel);
 

@@ -180,6 +180,16 @@ public class ComponentFactory
 
 	public static JLabel createViewLabel(String text)
 	{
+		return createViewLabel(text, null);
+	}
+
+	public static interface DimensionProvider
+	{
+		public Dimension getPreferredSize(Dimension orig);
+	}
+
+	public static JLabel createViewLabel(String text, final DimensionProvider preferredSize)
+	{
 		JLabel l = new JLabel(text)
 		{
 			public void updateUI()
@@ -194,6 +204,15 @@ public class ComponentFactory
 			{
 				super.setText(text);
 				setToolTipText(text);
+			}
+
+			@Override
+			public Dimension getPreferredSize()
+			{
+				if (preferredSize == null)
+					return super.getPreferredSize();
+				else
+					return preferredSize.getPreferredSize(super.getPreferredSize());
 			}
 		};
 		l.setToolTipText(text);

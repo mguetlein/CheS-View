@@ -1,5 +1,7 @@
 package gui;
 
+import gui.swing.ComponentFactory;
+
 import java.awt.Dimension;
 import java.awt.KeyEventDispatcher;
 import java.awt.KeyboardFocusManager;
@@ -198,6 +200,7 @@ public class CheSViewer implements GUIControler
 
 			public void componentResized(ComponentEvent e)
 			{
+				ComponentFactory.updateComponents();
 				fireEvent(PROPERTY_VIEWER_SIZE_CHANGED);
 			}
 		});

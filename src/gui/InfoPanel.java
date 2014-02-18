@@ -44,6 +44,7 @@ import cluster.Cluster;
 import cluster.ClusterController;
 import cluster.Clustering;
 import cluster.Clustering.SelectionListener;
+import cluster.ClusteringImpl;
 import cluster.Compound;
 import cluster.CompoundSelection;
 import cluster.SALIProperty;
@@ -482,6 +483,8 @@ public class InfoPanel extends JPanel
 			else
 				minWidth_fix = Math.max(minWidth_fix, width);
 
+			table.setPreferredScrollableViewportSize(table.getPreferredSize());
+
 			if (showProps && selectedP != null && props.indexOf(selectedP) != -1)
 			{
 				int pIndex = rowOffset + props.indexOf(selectedP);
@@ -500,6 +503,11 @@ public class InfoPanel extends JPanel
 				else
 					table.scrollRectToVisible(new Rectangle(table.getCellRect(0, 0, true)));
 			}
+		}
+
+		public int getPreferredTableHeight()
+		{
+			return interactive ? table_interact.getPreferredSize().height : table_fix.getPreferredSize().height;
 		}
 	}
 
@@ -657,6 +665,8 @@ public class InfoPanel extends JPanel
 			public void propertyChange(PropertyChangeEvent evt)
 			{
 				//				updateDataset();
+				if (evt.getPropertyName().equals(ClusteringImpl.CLUSTER_NEW))
+					resetMinSizes();
 				update(true);
 			}
 		});
@@ -700,19 +710,14 @@ public class InfoPanel extends JPanel
 				{
 					update(true);
 				}
-				else if (evt.getPropertyName().equals(ViewControler.PROPERTY_FONT_SIZE_CHANGED))
+				else if (evt.getPropertyName().equals(ViewControler.PROPERTY_FEATURE_FILTER_CHANGED)
+						|| evt.getPropertyName().equals(ViewControler.PROPERTY_FONT_SIZE_CHANGED))
 				{
 					//					updateDatasetPanelSize();
-					globalMinWidth = 0;
-					for (String k : cardToPanel.keySet())
-					{
-						cardToPanel.get(k).minWidth_fix = 0;
-						cardToPanel.get(k).minWidth_interact = 0;
-					}
+					resetMinSizes();
 					update(true);
 				}
-				else if (evt.getPropertyName().equals(ViewControler.PROPERTY_FEATURE_FILTER_CHANGED)
-						|| evt.getPropertyName().equals(ViewControler.PROPERTY_FEATURE_SORTING_CHANGED)
+				else if (evt.getPropertyName().equals(ViewControler.PROPERTY_FEATURE_SORTING_CHANGED)
 						|| evt.getPropertyName().equals(ViewControler.PROPERTY_COMPOUND_FILTER_CHANGED))
 				{
 					update(true);
@@ -747,6 +752,17 @@ public class InfoPanel extends JPanel
 			}
 		});
 		th.start();
+	}
+
+	private void resetMinSizes()
+	{
+		globalMinWidth = 0;
+		for (String k : cardToPanel.keySet())
+		{
+			cardToPanel.get(k).minWidth_fix = 0;
+			cardToPanel.get(k).minWidth_interact = 0;
+		}
+		preferredTableHeight = 0;
 	}
 
 	private void buildLayout()
@@ -852,6 +868,20 @@ public class InfoPanel extends JPanel
 				};
 			});
 		return props;
+	}
+
+	int preferredTableHeight = -1;
+
+	public int getPreferredTableHeight()
+	{
+		if (isVisible() && cardToPanel.get(currentCard) != null)
+		{
+			preferredTableHeight = Math.max(preferredTableHeight, cardToPanel.get(currentCard)
+					.getPreferredTableHeight());
+			return preferredTableHeight;
+		}
+		else
+			return 0;
 	}
 
 }
