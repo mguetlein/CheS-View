@@ -27,6 +27,7 @@ import java.util.List;
 
 import javax.swing.JComponent;
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
@@ -2267,6 +2268,11 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 	@Override
 	public void applyCompoundFilter(final String description, final List<Compound> compounds)
 	{
+		if (compounds.size() == clustering.numCompounds())
+		{
+			JOptionPane.showMessageDialog(Settings.TOP_LEVEL_FRAME, "Cannot hide all compounds of the dataset.");
+			return;
+		}
 		Thread th = new Thread(new Runnable()
 		{
 			public void run()
@@ -2464,10 +2470,15 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 				"Select the clusters you want to remove (the original dataset is not modified).");
 		if (indices != null)
 		{
+			if (indices.length == clustering.numClusters())
+			{
+				JOptionPane.showMessageDialog(Settings.TOP_LEVEL_FRAME, "Cannot remove all clusters from the dataset.");
+				return;
+			}
 			Cluster c2[] = new Cluster[indices.length];
 			for (int i = 0; i < indices.length; i++)
 				c2[i] = clustering.getCluster(indices[i]);
-			clearClusterActive(true, true);
+			clearClusterActive(false, false);
 			clustering.removeCluster(c2);
 		}
 	}
@@ -2479,13 +2490,23 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 				"Select the compounds you want to remove (the original dataset is not modified).");
 		if (indices == null)
 			return;
-		clearClusterActive(true, true);
+		if (indices.length == clustering.numCompounds())
+		{
+			JOptionPane.showMessageDialog(Settings.TOP_LEVEL_FRAME, "Cannot remove all compounds from the dataset.");
+			return;
+		}
+		clearClusterActive(false, false);
 		clustering.removeCompoundsWithJmolIndices(indices);
 	}
 
 	@Override
 	public void removeCluster(final Cluster... c)
 	{
+		if (c.length == clustering.numClusters())
+		{
+			JOptionPane.showMessageDialog(Settings.TOP_LEVEL_FRAME, "Cannot remove all clusters from the dataset.");
+			return;
+		}
 		clearClusterActive(true, true);
 		SwingUtilities.invokeLater(new Runnable()
 		{
@@ -2500,6 +2521,11 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 	@Override
 	public void removeCompounds(final Compound[] c)
 	{
+		if (c.length == clustering.numCompounds())
+		{
+			JOptionPane.showMessageDialog(Settings.TOP_LEVEL_FRAME, "Cannot remove all compounds from the dataset.");
+			return;
+		}
 		clearClusterActive(true, true);
 		SwingUtilities.invokeLater(new Runnable()
 		{
