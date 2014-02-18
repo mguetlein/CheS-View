@@ -480,6 +480,16 @@ public class View
 	 */
 	public void exportImage()
 	{
+		Dimension resScreen = new Dimension(viewer.getScreenWidth(), viewer.getScreenHeight());
+		Dimension resCached = cachedResolutions.get(resScreen);
+		if (resCached == null)
+			resCached = resScreen;
+		Dimension resSelected = ResolutionPanel.getResuloution(Settings.TOP_LEVEL_FRAME, "Select Image Resolution",
+				(int) resCached.getWidth(), (int) resCached.getHeight());
+		if (resSelected == null)
+			return;
+		cachedResolutions.put(resScreen, resSelected);
+
 		int qualityJPG = -1;
 		int qualityPNG = -1;
 		String imageType = null;
@@ -508,15 +518,6 @@ public class View
 				return; // make no assumptions - require a type by extension
 			sType = sType.substring(i + 1).toUpperCase();
 		}
-		Dimension resScreen = new Dimension(viewer.getScreenWidth(), viewer.getScreenHeight());
-		Dimension resCached = cachedResolutions.get(resScreen);
-		if (resCached == null)
-			resCached = resScreen;
-		Dimension resSelected = ResolutionPanel.getResuloution(Settings.TOP_LEVEL_FRAME, "Select Image Resolution",
-				(int) resCached.getWidth(), (int) resCached.getHeight());
-		if (resSelected == null)
-			return;
-		cachedResolutions.put(resScreen, resSelected);
 		Settings.LOGGER.info((String) viewer.createImage(fileName, sType, null, sd.getQuality(sType),
 				resSelected.width, resSelected.height));
 	}
