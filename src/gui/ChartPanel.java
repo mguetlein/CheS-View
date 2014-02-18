@@ -46,6 +46,7 @@ import cluster.Clustering.SelectionListener;
 import cluster.ClusteringImpl;
 import cluster.Compound;
 import cluster.CompoundFilter;
+import cluster.CompoundFilterImpl;
 
 import com.jgoodies.forms.builder.DefaultFormBuilder;
 import com.jgoodies.forms.layout.FormLayout;
@@ -322,7 +323,7 @@ public class ChartPanel extends TransparentViewPanel
 
 								if (doubleClick)
 								{
-									CompoundFilter compoundFilter = new CompoundFilter(
+									CompoundFilter compoundFilter = new CompoundFilterImpl(
 											selectionCriterionToString(prop), new ArrayList<Compound>(comps), true);
 									clusterControler.setCompoundFilter(compoundFilter, true);
 								}

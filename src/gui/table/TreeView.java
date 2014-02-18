@@ -41,7 +41,7 @@ import cluster.ClusterController;
 import cluster.Clustering;
 import cluster.Clustering.SelectionListener;
 import cluster.Compound;
-import cluster.CompoundFilter;
+import cluster.CompoundFilterImpl;
 import data.DistanceUtil;
 import dataInterface.CompoundData;
 import dataInterface.CompoundProperty;
@@ -518,7 +518,7 @@ public class TreeView extends BlockableFrame
 								clusterControler.setClusterActive(node.getCluster(), true, true);
 							}
 							else
-								clusterControler.setCompoundFilter(new CompoundFilter(node.getName(), node.getLeafs(),
+								clusterControler.setCompoundFilter(new CompoundFilterImpl(node.getName(), node.getLeafs(),
 										true), true);
 						}
 

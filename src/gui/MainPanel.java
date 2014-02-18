@@ -53,8 +53,10 @@ import cluster.ClusterController;
 import cluster.Clustering;
 import cluster.ClusteringImpl;
 import cluster.ClusteringUtil;
+import cluster.CompositeFilter;
 import cluster.Compound;
 import cluster.CompoundFilter;
+import cluster.CompoundFilterImpl;
 import data.ClusteringData;
 import dataInterface.CompoundProperty;
 import dataInterface.CompoundProperty.Type;
@@ -1850,11 +1852,14 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 	@SuppressWarnings("unchecked")
 	private void initCompoundDescriptor()
 	{
-		if (compoundDescriptorProperty != COMPOUND_INDEX_PROPERTY
-				&& compoundDescriptorProperty != COMPOUND_SMILES_PROPERTY
-				&& !clustering.getFeatures().contains(compoundDescriptorProperty)
-				&& !clustering.getProperties().contains(compoundDescriptorProperty))
-			compoundDescriptorProperty = null;
+		//		if (compoundDescriptorProperty == COMPOUND_INDEX_PROPERTY)
+		//compoundDescriptorProperty = null;
+		//		else if (!clustering.getFeatures().contains(compoundDescriptorProperty)
+		//				&& !clustering.getProperties().contains(compoundDescriptorProperty))
+		/**
+		 * !!!!until compound-property rewrite the old integrated property cannot be retained!!!
+		 */
+		compoundDescriptorProperty = null;
 		if (compoundDescriptorProperty == null)
 		{
 			for (String names : new String[] { "(?i)^name$", "(?i).*name.*", "(?i)^id$", "(?i).*id.*", "(?i)^cas$",
@@ -2266,7 +2271,7 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 		{
 			public void run()
 			{
-				CompoundFilter compoundFilter = new CompoundFilter(description, compounds, false);
+				CompoundFilter compoundFilter = new CompoundFilterImpl(description, compounds, false);
 				setCompoundFilter(compoundFilter, true);
 			}
 		});
@@ -2286,18 +2291,23 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 			@Override
 			public void run()
 			{
-				compoundFilter = filter;
+				CompoundFilter f;
+				if (compoundFilter != null && filter != null)
+					f = new CompositeFilter(filter, compoundFilter);
+				else
+					f = filter;
+				compoundFilter = f;
 				clustering.setCompoundFilter(null);
 				updateAllClustersAndCompounds(false);
 
 				clustering.updatePositions(); // update cluster position stuff after compounds are visible again
-				if (filter != null)
+				if (f != null)
 				{
-					clustering.setCompoundFilter(filter);
+					clustering.setCompoundFilter(f);
 					updateAllClustersAndCompounds(false);
 					clustering.updatePositions(); // update cluster position stuff after compounds are visible again
 				}
-				guiControler.showMessage((filter != null ? "Enable" : "Disable") + " compound filter.");
+				guiControler.showMessage((f != null ? "Enable" : "Disable") + " compound filter.");
 
 				Runnable r = new Runnable()
 				{
@@ -2339,7 +2349,7 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 		List<Compound> c = new ArrayList<Compound>();
 		for (int i : clustering.getCompoundActive().getSelectedIndices())
 			c.add(clustering.getCompoundWithJmolIndex(i));
-		CompoundFilter compoundFilter = new CompoundFilter(filterDescription, c, true);
+		CompoundFilter compoundFilter = new CompoundFilterImpl(filterDescription, c, true);
 		setCompoundFilter(compoundFilter, animate);
 	}
 

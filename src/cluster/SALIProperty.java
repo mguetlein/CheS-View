@@ -29,7 +29,9 @@ public class SALIProperty extends NumericDynamicCompoundProperty
 
 	private static Double[] computeMaxSali(Double[] endpointVals, double[][] featureDistanceMatrix)
 	{
-		int identicalFeats = 0;
+		int identicalFeatsCompounds = 0;
+		int identicalFeatsCliffs = 0;
+
 		int numTopPercent = (int) (endpointVals.length * NUM_TOP_PERCENT);
 
 		if (endpointVals.length != featureDistanceMatrix.length
@@ -37,6 +39,7 @@ public class SALIProperty extends NumericDynamicCompoundProperty
 			throw new IllegalArgumentException();
 
 		Double salis[] = new Double[endpointVals.length];
+
 		for (int i = 0; i < salis.length; i++)
 		{
 			if (endpointVals[i] == null)
@@ -82,8 +85,11 @@ public class SALIProperty extends NumericDynamicCompoundProperty
 					continue;
 				if (featureDistanceMatrix[i][j] == 0)
 				{
+					if (salis[i] == null && salis[j] == null)
+						identicalFeatsCliffs++;
 					salis[i] = IDENTICAL_FEATURES_SALI;
-					identicalFeats++;
+					salis[j] = IDENTICAL_FEATURES_SALI;
+					identicalFeatsCompounds++;
 					break;
 				}
 				double tmpSali = endpointDist / featureDistanceMatrix[i][j];
@@ -102,10 +108,10 @@ public class SALIProperty extends NumericDynamicCompoundProperty
 			}
 		}
 
-		if (identicalFeats > 0)
+		if (identicalFeatsCompounds > 0)
 		{
-			String warning = Settings.text("props.sali.identical-warning", identicalFeats + "", MIN_ENDPOINT_DEV_STR,
-					IDENTICAL_FEATURES_SALI + "") + "\n\n";
+			String warning = Settings.text("props.sali.identical-warning", identicalFeatsCompounds + "",
+					identicalFeatsCliffs + "", MIN_ENDPOINT_DEV_STR, IDENTICAL_FEATURES_SALI + "") + "\n\n";
 			warning += "Details:\n";
 			warning += Settings.text("props.sali.detail", NUM_TOP_PERCENT_STR, MIN_ENDPOINT_DEV_STR);
 			JOptionPane.showMessageDialog(Settings.TOP_LEVEL_FRAME, warning, "Warning", JOptionPane.WARNING_MESSAGE);

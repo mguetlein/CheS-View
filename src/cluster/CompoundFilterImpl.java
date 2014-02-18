@@ -4,13 +4,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class CompoundFilter
+public class CompoundFilterImpl implements CompoundFilter
 {
 	private String desc;
 	private Set<Compound> compounds;
 	private boolean accept;
 
-	public CompoundFilter(String desc, List<Compound> compounds, boolean accept)
+	public CompoundFilterImpl(String desc, List<Compound> compounds, boolean accept)
 	{
 		this.desc = desc;
 		this.compounds = new HashSet<Compound>(compounds);
