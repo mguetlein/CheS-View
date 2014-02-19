@@ -149,28 +149,38 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 		}
 		else if (p.getType() == Type.NUMERIC)
 		{
-			if (m.getDoubleValue(p) == null)
-				return CompoundPropertyUtil.getNullValueColor();
-			double val;
-			if (p.getType() == Type.NUMERIC && p.isLogHighlightingEnabled())
-				val = clustering.getNormalizedLogDoubleValue(m, p);
-			else
-				val = clustering.getNormalizedDoubleValue(m, p);
-			ColorGradient grad;
-			if (p.getType() == Type.NUMERIC && p.getHighlightColorGradient() != null)
-				grad = p.getHighlightColorGradient();
-			else
-				grad = DEFAULT_COLOR_GRADIENT;
-			if (grad.getMed().equals(Color.WHITE))
+			try
 			{
-				if (textColor)
-					grad = new ColorGradient(grad.high, Color.GRAY, grad.low);
-				else if (viewControler.isAntialiasEnabled())
-					grad = new ColorGradient(grad.high, Color.WHITE, grad.low);
+				if (m.getDoubleValue(p) == null)
+					return CompoundPropertyUtil.getNullValueColor();
+				double val;
+				if (p.getType() == Type.NUMERIC && p.isLogHighlightingEnabled())
+					val = clustering.getNormalizedLogDoubleValue(m, p);
 				else
-					grad = new ColorGradient(grad.high, Color.LIGHT_GRAY, grad.low);
+					val = clustering.getNormalizedDoubleValue(m, p);
+				ColorGradient grad;
+				if (p.getType() == Type.NUMERIC && p.getHighlightColorGradient() != null)
+					grad = p.getHighlightColorGradient();
+				else
+					grad = DEFAULT_COLOR_GRADIENT;
+				if (grad.getMed().equals(Color.WHITE))
+				{
+					if (textColor)
+						grad = new ColorGradient(grad.high, Color.GRAY, grad.low);
+					else if (viewControler.isAntialiasEnabled())
+						grad = new ColorGradient(grad.high, Color.WHITE, grad.low);
+					else
+						grad = new ColorGradient(grad.high, Color.LIGHT_GRAY, grad.low);
+				}
+				return grad.getColor(val);
 			}
-			return grad.getColor(val);
+			catch (NullPointerException e)
+			{
+				throw new IllegalStateException("Nullpointer exception in getHighlightColor\nproperty: " + p
+						+ " prop-owner: " + m + " get-double-value:" + m.getDoubleValue(p)
+						+ " get-normalized-double-value: " + clustering.getNormalizedDoubleValue(m, p)
+						+ " get-log-normalized-double-value: " + clustering.getNormalizedLogDoubleValue(m, p), e);
+			}
 		}
 		else
 			return null;
