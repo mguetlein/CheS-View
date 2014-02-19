@@ -253,6 +253,7 @@ public class ControlPanel extends TransparentViewPanel
 					selfUpdate = true;
 					buttonPlus.setEnabled(viewControler.canChangeCompoundSize(true));
 					buttonMinus.setEnabled(viewControler.canChangeCompoundSize(false));
+					slider.setEnabled(viewControler.canChangeCompoundSize(false));
 					slider.setValue(viewControler.getCompoundSize());
 					selfUpdate = false;
 				}
