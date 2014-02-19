@@ -617,7 +617,7 @@ public class ChartPanel extends TransparentViewPanel
 			vals = new String[datasetValues.size()];
 			//			datasetValues.toArray(vals);
 			for (int i = 0; i < vals.length; i++)
-				vals[i] = p.getFormattedValue(datasetValues.get(i));
+				vals[i] = p.getFormattedValueInMappedDataset(datasetValues.get(i));
 
 			plot = new StackedBarPlot(null, null, "#compounds", StackedBarPlot.convertTotalToAdditive(data), vals);
 			configurePlotColors(plot, c, ms, p, fontsize);

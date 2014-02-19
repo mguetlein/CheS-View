@@ -59,7 +59,7 @@ public class CompoundSelection implements CompoundGroupWithProperties
 		summarys.put(p, set);
 		CountedSet<String> fSet = set.copy();
 		for (String key : fSet.values())
-			fSet.rename(key, p.getFormattedValue(key));
+			fSet.rename(key, p.getFormattedValueInMappedDataset(key));
 		formattedSummarys.put(p, fSet);
 	}
 

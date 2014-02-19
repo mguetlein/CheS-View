@@ -154,7 +154,7 @@ public class ClusteringValues
 		summarys.put(p, set);
 		CountedSet<String> fSet = set.copy();
 		for (String key : fSet.values())
-			fSet.rename(key, p.getFormattedValue(key));
+			fSet.rename(key, p.getFormattedValueInMappedDataset(key));
 		formattedSummarys.put(p, fSet);
 
 		specNomVals.put(p, set.values());
@@ -244,7 +244,8 @@ public class ClusteringValues
 	public synchronized void initSelectionNormalization(CompoundSelection s)
 	{
 		@SuppressWarnings("unchecked")
-		List<CompoundProperty> props = ListUtil.concat(clustering.getProperties(), clustering.getFeatures());
+		List<CompoundProperty> props = ListUtil.concat(clustering.getProperties(), clustering.getFeatures(),
+				clustering.getAdditionalProperties());
 		for (CompoundProperty p : props)
 			updateNormalizedSelectionValues(p, s);
 	}
