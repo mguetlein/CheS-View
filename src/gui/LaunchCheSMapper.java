@@ -40,6 +40,7 @@ import task.TaskDialog;
 import util.ArrayUtil;
 import util.FileUtil;
 import util.IntegerUtil;
+import util.ScreenUtil;
 import util.StringLineAdder;
 import util.SwingUtil;
 import util.ThreadUtil;
@@ -465,7 +466,15 @@ public class LaunchCheSMapper
 			init(Locale.US, screenSetup, loadProperties);
 
 			if (cmd.hasOption("display-no"))
+			{
 				Settings.TOP_LEVEL_FRAME_SCREEN = Integer.parseInt(cmd.getOptionValue("display-no"));
+				if (ScreenUtil.getNumMonitors() <= Settings.TOP_LEVEL_FRAME_SCREEN)
+				{
+					Settings.LOGGER.warn("only " + ScreenUtil.getNumMonitors()
+							+ " monitor/s found (ignoring display-no = " + Settings.TOP_LEVEL_FRAME_SCREEN + ")");
+					Settings.TOP_LEVEL_FRAME_SCREEN = ScreenUtil.getLargestScreen();
+				}
+			}
 
 			if (cmd.hasOption('r'))
 				Settings.DESC_MIXTURE_HANDLING = true;
