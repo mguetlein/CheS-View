@@ -1792,7 +1792,7 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 		if (b)
 			guiControler.showMessage("Hide hydrogens.");
 		else
-			guiControler.showMessage("Draw hydrogens (if available).");
+			guiControler.showMessage("Draw hydrogens (if available in the dataset file).");
 	}
 
 	@Override
@@ -1834,6 +1834,12 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 			guiControler.showMessage((increase ? "Increase" : "Descrease") + " font size to "
 					+ ScreenSetup.INSTANCE.getFontSize() + ".");
 		}
+	}
+
+	@Override
+	public int getFontSize()
+	{
+		return ScreenSetup.INSTANCE.getFontSize();
 	}
 
 	@Override
@@ -1930,7 +1936,7 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 		if (selectedHighlightCompoundProperty != null && selectedHighlightCompoundProperty.getType() == Type.NUMERIC)
 			return selectedHighlightCompoundProperty.isLogHighlightingEnabled();
 		else
-			return null;
+			return false;
 	}
 
 	@Override
@@ -1944,7 +1950,7 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 				return selectedHighlightCompoundProperty.getHighlightColorGradient();
 		}
 		else
-			return null;
+			return DEFAULT_COLOR_GRADIENT;
 	}
 
 	@Override

@@ -4,6 +4,9 @@ import gui.ViewControler.FeatureFilter;
 import gui.ViewControler.HighlightMode;
 import gui.property.ColorGradient;
 import gui.property.ColorGradientChooser;
+import gui.property.IntegerProperty;
+import gui.property.Property;
+import gui.property.PropertyPanel;
 import gui.table.ClusterTable;
 import gui.table.CompoundTable;
 import gui.table.FeatureTable;
@@ -100,7 +103,7 @@ public class Actions
 	private final static String EDIT_SHOW_SALI = "edit-show-sali";
 	private final static String EDIT_SUPERIMPOSE = "edit-superimpose";
 	private final static String EDIT_SELECT_LAST_FEATURE = "edit-select-last-feature";
-	private final static String[] EDIT_ACTIONS = { EDIT_SHOW_DISTANCE, EDIT_SHOW_SALI, EDIT_SUPERIMPOSE,
+	private final static String[] EDIT_ACTIONS = { EDIT_SUPERIMPOSE, EDIT_SHOW_DISTANCE, EDIT_SHOW_SALI,
 			EDIT_SELECT_LAST_FEATURE };
 
 	private final static String EXPORT_SELECTED = "export-selected";
@@ -120,8 +123,10 @@ public class Actions
 	private final static String VIEW_COMPOUND_DESCRIPTOR = "view-compound-descriptor";
 	private final static String VIEW_HIDE_UNSELECTED_DIALOG = "view-hide-unselected";
 	private final static String VIEW_OPEN_SORT_FILTER_DIALOG = "view-open-sort-filter-dialog";
+	private final static String VIEW_FONT_DIALOG = "view-font-dialog";
 	private final static String[] VIEW_ACTIONS = { VIEW_FULL_SCREEN, VIEW_DRAW_HYDROGENS, VIEW_SPIN, VIEW_BLACK_WHITE,
-			VIEW_ANTIALIAS, VIEW_COMPOUND_DESCRIPTOR, VIEW_OPEN_SORT_FILTER_DIALOG, VIEW_HIDE_UNSELECTED_DIALOG };
+			VIEW_ANTIALIAS, VIEW_COMPOUND_DESCRIPTOR, VIEW_OPEN_SORT_FILTER_DIALOG, VIEW_HIDE_UNSELECTED_DIALOG,
+			VIEW_FONT_DIALOG };
 
 	private final static String HIGHLIGHT_COLORS = "highlight-colors";
 	private final static String HIGHLIGHT_COLOR_MATCH = "highlight-color-match";
@@ -172,11 +177,18 @@ public class Actions
 		keys.put(DATA_FEATURE_TABLE, KeyStroke.getKeyStroke(KeyEvent.VK_3, ActionEvent.ALT_MASK));
 		keys.put(FILE_NEW, KeyStroke.getKeyStroke(KeyEvent.VK_N, ActionEvent.ALT_MASK));
 		keys.put(FILE_EXIT, KeyStroke.getKeyStroke(KeyEvent.VK_F4, ActionEvent.ALT_MASK));
+
 		keys.put(EDIT_SHOW_DISTANCE, KeyStroke.getKeyStroke(KeyEvent.VK_D, ActionEvent.ALT_MASK));
 		keys.put(EDIT_SUPERIMPOSE, KeyStroke.getKeyStroke(KeyEvent.VK_U, ActionEvent.ALT_MASK));
-		keys.put(REMOVE_SELECTED, KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, ActionEvent.ALT_MASK));
+		keys.put(EDIT_SELECT_LAST_FEATURE, KeyStroke.getKeyStroke(KeyEvent.VK_A, ActionEvent.ALT_MASK));
+
+		keys.put(FILTER_SELECTED, KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, ActionEvent.ALT_MASK));
+		keys.put(FILTER_UNSELECTED,
+				KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, ActionEvent.ALT_MASK | ActionEvent.SHIFT_MASK));
+
 		keys.put(EXPORT_IMAGE, KeyStroke.getKeyStroke(KeyEvent.VK_I, ActionEvent.ALT_MASK));
 		keys.put(EXPORT_WORKFLOW, KeyStroke.getKeyStroke(KeyEvent.VK_W, ActionEvent.ALT_MASK));
+
 		keys.put(VIEW_FULL_SCREEN, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, ActionEvent.ALT_MASK));
 		keys.put(VIEW_DRAW_HYDROGENS, KeyStroke.getKeyStroke(KeyEvent.VK_H, ActionEvent.ALT_MASK));
 		//		keys.put(VIEW_HIDE_UNSELECTED, KeyStroke.getKeyStroke(KeyEvent.VK_V, ActionEvent.ALT_MASK));
@@ -191,7 +203,6 @@ public class Actions
 		keys.put(VIEW_ANTIALIAS, KeyStroke.getKeyStroke(KeyEvent.VK_G, ActionEvent.ALT_MASK));
 		keys.put(HIGHLIGHT_COLORS, KeyStroke.getKeyStroke(KeyEvent.VK_L, ActionEvent.ALT_MASK));
 		keys.put(HIGHLIGHT_LAST_FEATURE, KeyStroke.getKeyStroke(KeyEvent.VK_F, ActionEvent.ALT_MASK));
-		keys.put(EDIT_SELECT_LAST_FEATURE, KeyStroke.getKeyStroke(KeyEvent.VK_A, ActionEvent.ALT_MASK));
 		keys.put(HIGHLIGHT_MODE, KeyStroke.getKeyStroke(KeyEvent.VK_T, ActionEvent.ALT_MASK));
 		keys.put(HIDDEN_DECR_COMPOUND_SIZE, KeyStroke.getKeyStroke(KeyEvent.VK_MINUS, ActionEvent.CTRL_MASK));
 		keys.put(HIDDEN_INCR_COMPOUND_SIZE, KeyStroke.getKeyStroke(KeyEvent.VK_PLUS, ActionEvent.CTRL_MASK));
@@ -205,8 +216,8 @@ public class Actions
 				KeyStroke.getKeyStroke(KeyEvent.VK_PLUS, ActionEvent.CTRL_MASK | ActionEvent.ALT_MASK));
 		keys.put(HIDDEN_INCR_SPIN_SPEED, KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, ActionEvent.CTRL_MASK));// | ActionEvent.ALT_MASK));
 		keys.put(HIDDEN_DECR_SPIN_SPEED, KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, ActionEvent.CTRL_MASK));// | ActionEvent.ALT_MASK));
-		keys.put(HIDDEN_INCR_FONT_SIZE, KeyStroke.getKeyStroke(KeyEvent.VK_UP, ActionEvent.CTRL_MASK));// | ActionEvent.ALT_MASK));
-		keys.put(HIDDEN_DECR_FONT_SIZE, KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, ActionEvent.CTRL_MASK));// | ActionEvent.ALT_MASK));
+		keys.put(HIDDEN_INCR_FONT_SIZE, KeyStroke.getKeyStroke(KeyEvent.VK_PLUS, ActionEvent.ALT_MASK));// | ActionEvent.ALT_MASK));
+		keys.put(HIDDEN_DECR_FONT_SIZE, KeyStroke.getKeyStroke(KeyEvent.VK_MINUS, ActionEvent.ALT_MASK));// | ActionEvent.ALT_MASK));
 		keys.put(HIDDEN_FILTER_FEATURES, KeyStroke.getKeyStroke(KeyEvent.VK_M, ActionEvent.ALT_MASK));
 		keys.put(HIDDEN_TOGGLE_SORTING, KeyStroke.getKeyStroke(KeyEvent.VK_O, ActionEvent.ALT_MASK));
 		keys.put(HIDDEN_TREE, KeyStroke.getKeyStroke(KeyEvent.VK_4, ActionEvent.ALT_MASK));
@@ -218,6 +229,18 @@ public class Actions
 	{
 		return KeyEvent.getKeyModifiersText(keystroke.getModifiers()) + " + "
 				+ new String(Character.toChars(keystroke.getKeyCode()));
+	}
+
+	public static String getIncrDecrFontSizeKeys()
+	{
+		if (keys.get(HIDDEN_INCR_FONT_SIZE).getKeyCode() == KeyEvent.VK_PLUS
+				&& keys.get(HIDDEN_DECR_FONT_SIZE).getKeyCode() == KeyEvent.VK_MINUS
+				&& keys.get(HIDDEN_INCR_FONT_SIZE).getModifiers() == keys.get(HIDDEN_DECR_FONT_SIZE).getModifiers())
+		{
+			return KeyEvent.getKeyModifiersText(keys.get(HIDDEN_INCR_FONT_SIZE).getModifiers()) + " +/-";
+		}
+		else
+			throw new IllegalStateException();
 	}
 
 	public static String getToggleSortingKey()
@@ -367,11 +390,11 @@ public class Actions
 			String cName = selectedCompound.toString();
 			if (cName.length() > 22)
 				cName = cName.substring(0, 20) + "..";
-			actions.get(EDIT_SHOW_DISTANCE).putValue(Action.NAME, "Show distance to " + cName);
+			actions.get(EDIT_SHOW_DISTANCE).putValue(Action.NAME, "Distance to " + cName);
 		}
 		else
 		{
-			actions.get(EDIT_SHOW_DISTANCE).putValue(Action.NAME, "Show distance to selected compound");
+			actions.get(EDIT_SHOW_DISTANCE).putValue(Action.NAME, "Distance to selected compound");
 			actions.get(EDIT_SHOW_DISTANCE).setEnabled(false);
 		}
 
@@ -757,6 +780,39 @@ public class Actions
 				viewControler.showSortFilterDialog();
 			}
 		};
+		new ActionCreator(VIEW_FONT_DIALOG)
+		{
+			IntegerProperty font;
+
+			@Override
+			public void action()
+			{
+				if (font == null)
+				{
+					font = new IntegerProperty("Font size (" + getIncrDecrFontSizeKeys() + ")",
+							viewControler.getFontSize(), 6, 48);
+					viewControler.addViewListener(new PropertyChangeListener()
+					{
+						@Override
+						public void propertyChange(PropertyChangeEvent e)
+						{
+							if (e.getPropertyName().equals(ViewControler.PROPERTY_FONT_SIZE_CHANGED))
+								font.setValue(viewControler.getFontSize());
+						}
+					});
+					font.addPropertyChangeListener(new PropertyChangeListener()
+					{
+						@Override
+						public void propertyChange(PropertyChangeEvent evt)
+						{
+							viewControler.setFontSize(font.getValue());
+						}
+					});
+				}
+				SwingUtil.showInDialog(new PropertyPanel(new Property[] { font }),
+						String.valueOf(action.getValue(Action.NAME)));
+			}
+		};
 
 		new ActionCreator(VIEW_SPIN, ViewControler.PROPERTY_SPIN_CHANGED)
 		{
@@ -896,7 +952,7 @@ public class Actions
 					viewControler.setMatchColor(col);
 			}
 		};
-		new ActionCreator(HIGHLIGHT_COLORS, null, ViewControler.PROPERTY_HIGHLIGHT_CHANGED)
+		new ActionCreator(HIGHLIGHT_COLORS)
 		{
 			@SuppressWarnings("unchecked")
 			@Override
@@ -904,9 +960,9 @@ public class Actions
 			{
 				ArrayList<CompoundProperty> numeric = new ArrayList<CompoundProperty>();
 				int currentPropIdx = -1;
-				CompoundProperty currentProp = null;
+				CompoundProperty currentNumProp = null;
 				if (viewControler.getHighlighter() instanceof CompoundPropertyHighlighter)
-					currentProp = ((CompoundPropertyHighlighter) viewControler.getHighlighter()).getProperty();
+					currentNumProp = ((CompoundPropertyHighlighter) viewControler.getHighlighter()).getProperty();
 				for (Highlighter hs[] : viewControler.getHighlighters().values())
 					for (Highlighter h : hs)
 						if (h instanceof CompoundPropertyHighlighter)
@@ -914,11 +970,21 @@ public class Actions
 							CompoundProperty p = ((CompoundPropertyHighlighter) h).getProperty();
 							if (p.getType() == Type.NUMERIC)
 							{
-								if (p.equals(currentProp))
+								if (p.equals(currentNumProp))
 									currentPropIdx = numeric.size();
 								numeric.add(p);
 							}
 						}
+				if (numeric.size() == 0)
+				{
+					JOptionPane
+							.showMessageDialog(
+									Settings.TOP_LEVEL_FRAME,
+									"Currently only highlighting colors of numeric features can be configured.\nThere are no numeric features available.",
+									"Message", JOptionPane.WARNING_MESSAGE);
+					return;
+				}
+
 				//				for (CompoundProperty p : ListUtil.concat(clustering.getProperties(), clustering.getFeatures()))
 				//					if (p.getType() == Type.NUMERIC)
 				//					{
@@ -941,17 +1007,10 @@ public class Actions
 				p.add(features, BorderLayout.NORTH);
 
 				ColorGradient grad = ColorGradientChooser.show(Settings.TOP_LEVEL_FRAME,
-						Settings.text("action.highlight-grad.feature", viewControler.getHighlighter().toString()),
-						viewControler.getHighlightGradient(), p);
+						Settings.text("action.highlight-grad"), viewControler.getHighlightGradient(), p);
 				CompoundProperty props[] = ArrayUtil.cast(CompoundProperty.class, features.getSelectedValues());
 				if (grad != null && props.length > 0)
 					viewControler.setHighlightColors(grad, logHighlighting.isSelected(), props);
-			}
-
-			@Override
-			public boolean isEnabled()
-			{
-				return viewControler.isHighlightLogEnabled() != null;
 			}
 		};
 

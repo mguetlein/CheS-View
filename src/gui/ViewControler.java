@@ -137,6 +137,8 @@ public interface ViewControler
 
 	public void setFontSize(int fontsize);
 
+	public int getFontSize();
+
 	public void setMatchColor(Color color);
 
 	public Color getMatchColor();
