@@ -2,7 +2,9 @@ package cluster;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.swing.JOptionPane;
 
@@ -27,91 +29,120 @@ public class SALIProperty extends NumericDynamicCompoundProperty
 	public static final String MIN_ENDPOINT_DEV_STR = ((int) (MIN_ENDPOINT_DEV * 100)) + "%";
 	public static final String NUM_TOP_PERCENT_STR = ((int) (NUM_TOP_PERCENT * 100)) + "%";
 
+	private static class EqualFeatureTuple
+	{
+		private Double id;
+		private Boolean isCliff;
+		private Set<Integer> indices = new HashSet<Integer>();
+
+		public boolean isCliff(double[][] featureDistanceMatrix, Double[] endpointVals)
+		{
+			if (isCliff == null)
+			{
+				isCliff = false;
+				for (Integer idx1 : indices)
+				{
+					if (endpointVals[idx1] == null)
+						continue;
+					for (Integer idx2 : indices)
+					{
+						if (endpointVals[idx2] == null)
+							continue;
+						if (idx1 == idx2)
+							continue;
+						if (featureDistanceMatrix[idx1][idx2] != 0)
+							throw new IllegalStateException("distance measure not transitiv");
+						double endpointDist = Math.abs(endpointVals[idx1] - endpointVals[idx2]);
+						if (endpointDist >= MIN_ENDPOINT_DEV)
+						{
+							isCliff = true;
+							break;
+						}
+					}
+					if (isCliff)
+						break;
+				}
+			}
+			return isCliff;
+		}
+	}
+
 	private static Double[] computeMaxSali(Double[] endpointVals, double[][] featureDistanceMatrix)
 	{
-		int identicalFeatsCompounds = 0;
-		int identicalFeatsCliffs = 0;
-
-		int numTopPercent = (int) (endpointVals.length * NUM_TOP_PERCENT);
-
 		if (endpointVals.length != featureDistanceMatrix.length
 				|| endpointVals.length != featureDistanceMatrix[0].length)
 			throw new IllegalArgumentException();
 
-		Double salis[] = new Double[endpointVals.length];
+		List<EqualFeatureTuple> eqTuplesList = new ArrayList<EqualFeatureTuple>();
+		EqualFeatureTuple eqTuplesArray[] = new EqualFeatureTuple[endpointVals.length];
+		for (int i = 0; i < eqTuplesArray.length - 1; i++)
+		{
+			for (int j = i + 1; j < eqTuplesArray.length; j++)
+			{
+				if (featureDistanceMatrix[i][j] != featureDistanceMatrix[j][i])
+					throw new IllegalStateException("distance measure not symmetric");
+				if (featureDistanceMatrix[i][j] == 0)
+				{
+					if (eqTuplesArray[i] != null && eqTuplesArray[j] != null && eqTuplesArray[i] != eqTuplesArray[j])
+						throw new IllegalStateException();
+					EqualFeatureTuple n = eqTuplesArray[i];
+					if (n == null)
+						n = eqTuplesArray[j];
+					if (n == null)
+					{
+						n = new EqualFeatureTuple();
+						eqTuplesList.add(n);
+					}
+					n.indices.add(i);
+					n.indices.add(j);
+					eqTuplesArray[i] = n;
+					eqTuplesArray[j] = n;
+				}
+			}
+		}
+		int identicalFeatsCompounds = 0;
+		int identicalFeatsCliffs = 0;
+		for (EqualFeatureTuple n : eqTuplesList)
+			if (n.isCliff(featureDistanceMatrix, endpointVals))
+			{
+				n.id = IDENTICAL_FEATURES_SALI + identicalFeatsCliffs;
+				identicalFeatsCliffs++;
+				identicalFeatsCompounds += n.indices.size();
+			}
 
+		int numTopPercent = (int) (endpointVals.length * NUM_TOP_PERCENT);
+		Double salis[] = new Double[endpointVals.length];
 		for (int i = 0; i < salis.length; i++)
 		{
+			if (eqTuplesArray[i] != null && eqTuplesArray[i].isCliff(featureDistanceMatrix, endpointVals))
+			{
+				salis[i] = eqTuplesArray[i].id;
+				continue;
+			}
 			if (endpointVals[i] == null)
 				continue;
-			if (endpointVals[i] < 0 || endpointVals[i] > 1)
-				throw new IllegalStateException("please normalize!");
-
-			//			int a = 0;
-			//			int b = 0;
-			//			int c = 0;
-			//			int d = 0;
-
 			List<Double> allSalis = new ArrayList<Double>();
-
 			for (int j = 0; j < salis.length; j++)
 			{
 				if (i == j)
 					continue;
 				if (endpointVals[j] == null)
 					continue;
+				if (endpointVals[i] < 0 || endpointVals[i] > 1)
+					throw new IllegalStateException("please normalize!");
 				double endpointDist = Math.abs(endpointVals[i] - endpointVals[j]);
-
-				//				if (endpointDist < 0.5)
-				//				{// small endpoint diff
-				//					if (featureDistanceMatrix[i][j] < 0.2)
-				//						c++;//high similarity
-				//					else
-				//						d++;//low similarity
-				//				}
-				//				else
-				//				{//large endpoint diff
-				//					if (featureDistanceMatrix[i][j] < 0.2)
-				//						a++;//high similarity
-				//					else
-				//						b++;//low similarity
-				//				}
-				//				salis[i] = a * Math.log((a * (c + d)) / (double) (c * (a + b))) + b
-				//						* Math.log((b * (c + d)) / (double) (d * (a + b)));	
-
-				if (endpointDist == 0)
-					continue;
 				if (endpointDist < MIN_ENDPOINT_DEV)
 					continue;
 				if (featureDistanceMatrix[i][j] == 0)
-				{
-					if (salis[i] == null && salis[j] == null)
-					{
-						// new activity cliff, assign new "id" to this cliff
-						salis[i] = IDENTICAL_FEATURES_SALI + identicalFeatsCliffs;
-						salis[j] = IDENTICAL_FEATURES_SALI + identicalFeatsCliffs;
-						identicalFeatsCliffs++;
-					}
-					else
-						// cliff already found, use "id" from old cliff
-						salis[i] = salis[j];
-					identicalFeatsCompounds++;
-					break;
-				}
+					throw new IllegalStateException();
 				double tmpSali = endpointDist / featureDistanceMatrix[i][j];
-				//				if (salis[i] == null || tmpSali > salis[i])
-				//					salis[i] = tmpSali;
 				allSalis.add(tmpSali);
 			}
-			if (salis[i] == null)
-			{
-				Collections.sort(allSalis);
-				while (allSalis.size() > numTopPercent)
-					allSalis.remove(0);
-				salis[i] = DoubleArraySummary.create(allSalis).getMean();
-
-				//salis[i] = DoubleArraySummary.create(allSalis).getMax();
-			}
+			Collections.sort(allSalis);
+			while (allSalis.size() > numTopPercent)
+				allSalis.remove(0);
+			salis[i] = DoubleArraySummary.create(allSalis).getMean();
+			//salis[i] = DoubleArraySummary.create(allSalis).getMax();
 		}
 
 		if (identicalFeatsCompounds > 0)
