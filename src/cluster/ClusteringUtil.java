@@ -56,6 +56,9 @@ public class ClusteringUtil
 
 		// the average min distance mean distance of each compound to its closest neighbor compound
 		float d = Vector3fUtil.avgMinDist(v);
+		if (d == 0)
+			d = 1;
+
 		// the smaller the distance, the higher the scale factor
 		// the neigbhor should be on average 30units away
 		float s = 1 / d * 30;
