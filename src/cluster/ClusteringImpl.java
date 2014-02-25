@@ -1154,18 +1154,24 @@ public class ClusteringImpl implements Zoomable, Clustering
 				throw new IllegalArgumentException("not yet implemented");
 		}
 		for (Compound comp : getCompounds(false))
+		{
 			if (p.getType() == Type.NUMERIC)
 			{
-				if (!log)
-					d[count++] = getNormalizedDoubleValue(comp, p);
-				else
-					d[count++] = getNormalizedLogDoubleValue(comp, p);
+				if (comp.getDoubleValue(p) != null)
+				{
+					if (!log)
+						d[count] = getNormalizedDoubleValue(comp, p);
+					else
+						d[count] = getNormalizedLogDoubleValue(comp, p);
+				}
 			}
 			else
 			{
 				if (comp.getStringValue(p) != null)
-					d[count++] = (double) ArrayUtil.indexOf(domain, comp.getStringValue(p));
+					d[count] = (double) ArrayUtil.indexOf(domain, comp.getStringValue(p));
 			}
+			count++;
+		}
 
 		SALIProperty s = new SALIProperty(d, clusteringData.getFeatureDistanceMatrix().getValues(),
 				(log ? "Log-transformed " : "") + p);
