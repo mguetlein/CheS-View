@@ -86,9 +86,15 @@ public class SALIProperty extends NumericDynamicCompoundProperty
 				if (featureDistanceMatrix[i][j] == 0)
 				{
 					if (salis[i] == null && salis[j] == null)
+					{
+						// new activity cliff, assign new "id" to this cliff
+						salis[i] = IDENTICAL_FEATURES_SALI + identicalFeatsCliffs;
+						salis[j] = IDENTICAL_FEATURES_SALI + identicalFeatsCliffs;
 						identicalFeatsCliffs++;
-					salis[i] = IDENTICAL_FEATURES_SALI;
-					salis[j] = IDENTICAL_FEATURES_SALI;
+					}
+					else
+						// cliff already found, use "id" from old cliff
+						salis[i] = salis[j];
 					identicalFeatsCompounds++;
 					break;
 				}
