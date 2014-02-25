@@ -96,7 +96,7 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 				case ballsAndSticks:
 					return "wireframe 35; spacefill 21%";
 				case dots:
-					return "spacefill 65%";
+					return "spacefill 85%";
 			}
 			throw new IllegalStateException("WTF");
 		}
@@ -109,7 +109,7 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 				case ballsAndSticks:
 					return "wireframe 25; spacefill 15%";
 				case dots:
-					return "spacefill 55%";
+					return "spacefill 70%";
 			}
 			throw new IllegalStateException("WTF");
 		}

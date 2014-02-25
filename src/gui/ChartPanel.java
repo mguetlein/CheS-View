@@ -62,7 +62,7 @@ import dataInterface.CompoundProperty;
 import dataInterface.CompoundProperty.Type;
 import dataInterface.CompoundPropertyUtil;
 
-public class ChartPanel extends TransparentViewPanel
+public class ChartPanel extends JPanel
 {
 	Clustering clustering;
 	ClusterController clusterControler;
@@ -163,13 +163,15 @@ public class ChartPanel extends TransparentViewPanel
 		b.append(featureMissingLabel);
 		featurePanel = b.getPanel();
 		featurePanel.setOpaque(false);
+		JPanel viewFeaturePanel = new TransparentViewPanel();
+		viewFeaturePanel.add(featurePanel);
 		JPanel wrappedFeaturePanel = new JPanel(new BorderLayout());
 		wrappedFeaturePanel.setOpaque(false);
-		wrappedFeaturePanel.add(featurePanel, BorderLayout.EAST);
+		wrappedFeaturePanel.add(viewFeaturePanel, BorderLayout.EAST);
 
 		setLayout(new BorderLayout(0, 0));
 		add(wrappedFeaturePanel, BorderLayout.NORTH);
-		cardPanel = new JPanel(new CardLayout())
+		cardPanel = new TransparentViewPanel(new CardLayout())
 		{
 			public Dimension getPreferredSize()
 			{
@@ -179,10 +181,12 @@ public class ChartPanel extends TransparentViewPanel
 				return dim;
 			}
 		};
-		cardPanel.setOpaque(false);
 		add(cardPanel, BorderLayout.CENTER);
-		setOpaque(true);
-		//		setBackground(Settings.TRANSPARENT_BACKGROUND);
+		setOpaque(false);
+
+		//		SwingUtil.setDebugBorder(viewFeaturePanel, Color.RED);
+		//		SwingUtil.setDebugBorder(wrappedFeaturePanel, Color.MAGENTA);
+		//		SwingUtil.setDebugBorder(cardPanel, Color.CYAN);
 	}
 
 	private void addListeners()

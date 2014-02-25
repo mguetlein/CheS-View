@@ -34,7 +34,11 @@ import cluster.Clustering;
 import cluster.Clustering.SelectionListener;
 import cluster.Compound;
 
-public class ControlPanel extends TransparentViewPanel
+import com.jgoodies.forms.builder.DefaultFormBuilder;
+import com.jgoodies.forms.layout.FormLayout;
+import com.jgoodies.forms.layout.Sizes;
+
+public class ControlPanel extends JPanel
 {
 	boolean selfUpdate = false;
 
@@ -102,20 +106,20 @@ public class ControlPanel extends TransparentViewPanel
 
 		buttonClearFeature = ComponentFactory.createCrossViewButton();
 
-		JPanel p = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
-		p.setOpaque(false);
+		JPanel p = new TransparentViewPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
 		p.add(buttonMinus);
 		p.add(slider);
 		p.add(buttonPlus);
-		p.add(new JLabel("   "));
-		p.add(buttonWire);
-		p.add(new JLabel(""));
-		p.add(buttonBalls);
-		p.add(new JLabel(""));
-		p.add(buttonDots);
+		p.setBorder(new EmptyBorder(5, 5, 5, 5));
 
-		JPanel p2 = new JPanel();
-		p2.setOpaque(false);
+		JPanel p1 = new TransparentViewPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
+		p1.add(buttonWire);
+		p1.add(new JLabel(""));
+		p1.add(buttonBalls);
+		p1.add(new JLabel(""));
+		p1.add(buttonDots);
+
+		JPanel p2 = new TransparentViewPanel();
 		p2.add(ComponentFactory.createViewLabel("<html><b>Feature:</b></html>"));
 		p2.add(highlightCombobox);
 		p2.add(highlightMinMaxCombobox);
@@ -125,15 +129,14 @@ public class ControlPanel extends TransparentViewPanel
 		clear.setBorder(new EmptyBorder(0, 1, 0, 0));
 		p2.add(clear);
 
-		setLayout(new BorderLayout());
-		JPanel pp = new JPanel(new BorderLayout());
-		pp.setOpaque(false);
-		pp.add(p, BorderLayout.WEST);
-		add(pp, BorderLayout.NORTH);
-		JPanel pp2 = new JPanel(new BorderLayout());
-		pp2.setOpaque(false);
-		pp2.add(p2, BorderLayout.WEST);
-		add(pp2, BorderLayout.SOUTH);
+		DefaultFormBuilder b = new DefaultFormBuilder(new FormLayout("left:p"));
+		b.setLineGapSize(Sizes.pixel(0));
+		b.append(p);
+		b.append(p1);
+		b.append(p2);
+		b.getPanel().setOpaque(false);
+		add(b.getPanel());
+		setOpaque(false);
 	}
 
 	private void addListeners()
@@ -234,7 +237,8 @@ public class ControlPanel extends TransparentViewPanel
 			@Override
 			public void propertyChange(PropertyChangeEvent evt)
 			{
-				//					Settings.LOGGER.println("fire updated " + evt.getPropertyName());
+				// Settings.LOGGER.println("fire updated " +
+				// evt.getPropertyName());
 				if (evt.getPropertyName().equals(ViewControler.PROPERTY_HIGHLIGHT_CHANGED))
 				{
 					updateComboStuff();
@@ -318,7 +322,7 @@ public class ControlPanel extends TransparentViewPanel
 		highlightCombobox.setPreferredSize(null);
 		Dimension dim = highlightCombobox.getPreferredSize();
 		int width = Math.min(dim.width, guiControler.getComponentMaxWidth(0.33));
-		//		System.out.println(width);
+		// System.out.println(width);
 		highlightCombobox.setPreferredSize(new Dimension(width, dim.height));
 		highlightCombobox.setMaximumRowCount(Math.min(highlightCombobox.getItemCount(), 15));
 		highlightCombobox.revalidate();
