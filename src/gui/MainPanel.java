@@ -568,6 +568,12 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 	}
 
 	@Override
+	public CompoundProperty getHighlightedProperty()
+	{
+		return selectedHighlightCompoundProperty;
+	}
+
+	@Override
 	public void setHighlighter(SubstructureSmartsType type)
 	{
 		Highlighter high = getHighlighter(type);

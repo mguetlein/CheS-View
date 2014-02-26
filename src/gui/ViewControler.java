@@ -82,6 +82,8 @@ public interface ViewControler
 
 	public Highlighter getHighlighter(CompoundProperty p);
 
+	public CompoundProperty getHighlightedProperty();
+
 	public void setSuperimpose(boolean superimpose);
 
 	public boolean isSuperimpose();

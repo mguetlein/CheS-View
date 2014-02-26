@@ -2,7 +2,6 @@ package gui.table;
 
 import gui.ClickMouseOverTable;
 import gui.ViewControler;
-import gui.util.CompoundPropertyHighlighter;
 
 import java.awt.Rectangle;
 import java.util.ArrayList;
@@ -39,9 +38,9 @@ public abstract class CCDataTable extends DataTable
 			return;
 		selfUpdate = true;
 
-		if (viewControler.getHighlighter() instanceof CompoundPropertyHighlighter)
+		if (viewControler.getHighlightedProperty() != null)
 		{
-			CompoundProperty prop = ((CompoundPropertyHighlighter) viewControler.getHighlighter()).getProperty();
+			CompoundProperty prop = viewControler.getHighlightedProperty();
 			int idx = props.indexOf(prop);
 			if (idx != -1)
 				sortColumn = idx + nonPropColumns;

@@ -960,9 +960,7 @@ public class Actions
 			{
 				ArrayList<CompoundProperty> numeric = new ArrayList<CompoundProperty>();
 				int currentPropIdx = -1;
-				CompoundProperty currentNumProp = null;
-				if (viewControler.getHighlighter() instanceof CompoundPropertyHighlighter)
-					currentNumProp = ((CompoundPropertyHighlighter) viewControler.getHighlighter()).getProperty();
+				CompoundProperty currentNumProp = viewControler.getHighlightedProperty();
 				for (Highlighter hs[] : viewControler.getHighlighters().values())
 					for (Highlighter h : hs)
 						if (h instanceof CompoundPropertyHighlighter)

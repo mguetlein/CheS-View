@@ -4,7 +4,6 @@ import gui.MultiImageIcon.Layout;
 import gui.MultiImageIcon.Orientation;
 import gui.ViewControler.FeatureFilter;
 import gui.swing.ComponentFactory;
-import gui.util.CompoundPropertyHighlighter;
 import gui.util.Highlighter;
 
 import java.awt.BorderLayout;
@@ -426,9 +425,7 @@ public class InfoPanel extends JPanel
 
 		public void update()
 		{
-			CompoundProperty selectedP = null;
-			if (viewControler.getHighlighter() instanceof CompoundPropertyHighlighter)
-				selectedP = ((CompoundPropertyHighlighter) viewControler.getHighlighter()).getProperty();
+			CompoundProperty selectedP = viewControler.getHighlightedProperty();
 
 			cardLayout.show(this, interactive ? CARD_INTERACT : CARD_FIX);
 			DefaultTableModel model = (interactive ? tableModel_interact : tableModel_fix);

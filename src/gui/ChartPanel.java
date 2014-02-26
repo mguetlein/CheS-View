@@ -7,7 +7,6 @@ import freechart.StackedBarPlot;
 import gui.swing.ComponentFactory;
 import gui.swing.ComponentFactory.DimensionProvider;
 import gui.swing.TransparentViewPanel;
-import gui.util.CompoundPropertyHighlighter;
 import gui.util.Highlighter;
 
 import java.awt.BorderLayout;
@@ -338,11 +337,7 @@ public class ChartPanel extends JPanel
 							return;
 						updateSelectionCriterion();
 
-						Highlighter h = viewControler.getHighlighter();
-						CompoundProperty prop = null;
-						if (h instanceof CompoundPropertyHighlighter)
-							prop = ((CompoundPropertyHighlighter) h).getProperty();
-
+						CompoundProperty prop = viewControler.getHighlightedProperty();
 						final HashSet<Compound> comps = new HashSet<Compound>();
 						Iterable<Compound> compounds;
 						if (clustering.isClusterActive())
@@ -725,11 +720,7 @@ public class ChartPanel extends JPanel
 			return;
 		}
 
-		Highlighter h = viewControler.getHighlighter();
-		CompoundProperty prop = null;
-		if (h instanceof CompoundPropertyHighlighter)
-			prop = ((CompoundPropertyHighlighter) h).getProperty();
-
+		CompoundProperty prop = viewControler.getHighlightedProperty();
 		Cluster c = clustering.getActiveCluster();
 		if (c == null)
 			c = clustering.getWatchedCluster();

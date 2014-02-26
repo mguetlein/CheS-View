@@ -3,7 +3,6 @@ package gui;
 import gui.DoubleNameListCellRenderer.DoubleNameElement;
 import gui.swing.ComponentFactory;
 import gui.swing.TransparentViewPanel;
-import gui.util.CompoundPropertyHighlighter;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
@@ -218,9 +217,8 @@ public class ClusterListPanel extends JPanel
 		@Override
 		public String getSecondName()
 		{
-			if (viewControler.getHighlighter() instanceof CompoundPropertyHighlighter)
-				return clustering.getFormattedValue(((CompoundPropertyHighlighter) viewControler.getHighlighter())
-						.getProperty());
+			if (viewControler.getHighlightedProperty() != null)
+				return clustering.getFormattedValue(viewControler.getHighlightedProperty());
 			else
 				return null;
 		}
@@ -242,7 +240,7 @@ public class ClusterListPanel extends JPanel
 		listModel.addElement(AllCompounds);
 		Cluster clusters[] = new Cluster[clustering.numClusters()];
 		clustering.getClusters().toArray(clusters);
-		if (viewControler.getHighlighter() instanceof CompoundPropertyHighlighter)//&& viewControler.isFeatureSortingEnabled() 
+		if (viewControler.getHighlightedProperty() != null)
 			Arrays.sort(clusters);
 		for (Cluster c : clusters)
 			if (c.size() > 0)

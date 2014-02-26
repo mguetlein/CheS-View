@@ -420,7 +420,7 @@ public class CompoundListPanel extends JPanel
 
 		list.setVisibleRowCount(rowCount);
 
-		if (viewControler.getHighlighter() instanceof CompoundPropertyHighlighter)
+		if (viewControler.getHighlightedProperty() != null)
 		{
 			// features values are shown on the right, restrict long compound names to show feature values without scroll pane
 			listRenderer.setMaxl1Width(guiControler.getComponentMaxWidth(0.15));

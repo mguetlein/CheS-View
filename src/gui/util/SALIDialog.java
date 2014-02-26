@@ -40,9 +40,9 @@ public class SALIDialog extends JDialog
 		builder.append(tp1, 3);
 
 		final JComboBox<CompoundProperty> propCombo = new JComboBox<CompoundProperty>(ArrayUtil.toArray(list));
-		if (viewControler.getHighlighter() instanceof CompoundPropertyHighlighter)
+		if (viewControler.getHighlightedProperty() != null)
 		{
-			CompoundProperty sel = ((CompoundPropertyHighlighter) viewControler.getHighlighter()).getProperty();
+			CompoundProperty sel = viewControler.getHighlightedProperty();
 			if (list.contains(sel))
 				propCombo.setSelectedItem(sel);
 		}
