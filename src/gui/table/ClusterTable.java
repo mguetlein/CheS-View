@@ -2,6 +2,7 @@ package gui.table;
 
 import gui.ClickMouseOverTable;
 import gui.ClickMouseOverTable.ClickMouseOverRenderer;
+import gui.MainPanel;
 import gui.ViewControler;
 import gui.swing.ComponentFactory;
 
