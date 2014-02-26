@@ -9,8 +9,6 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.ContainerEvent;
-import java.awt.event.ContainerListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
@@ -21,12 +19,10 @@ import java.util.List;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
-import javax.swing.JCheckBox;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
-import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
@@ -39,19 +35,13 @@ import cluster.Clustering.SelectionListener;
 import cluster.ClusteringImpl;
 import cluster.Compound;
 
-import com.jgoodies.forms.builder.DefaultFormBuilder;
-import com.jgoodies.forms.layout.CellConstraints;
-import com.jgoodies.forms.layout.ConstantSize;
-import com.jgoodies.forms.layout.FormLayout;
 import com.lowagie.text.Font;
 
-import dataInterface.CompoundPropertyUtil;
-
-public class CompoundListPanel extends TransparentViewPanel
+public class CompoundListPanel extends JPanel
 {
 	JScrollPane listScrollPane;
 	MouseOverList list;
-	DefaultListModel listModel;
+	DefaultListModel<Compound> listModel;
 	DoubleNameListCellRenderer listRenderer;
 
 	boolean selfBlock = false;
@@ -73,7 +63,7 @@ public class CompoundListPanel extends TransparentViewPanel
 
 		buildLayout();
 
-		update(null, false);
+		updateList();
 		installListeners(controler);
 	}
 
@@ -86,7 +76,7 @@ public class CompoundListPanel extends TransparentViewPanel
 			{
 				if (evt.getPropertyName().equals(ClusteringImpl.CLUSTER_MODIFIED))
 				{
-					update(clustering.getActiveCluster(), false);
+					updateList();
 				}
 			}
 		});
@@ -122,13 +112,13 @@ public class CompoundListPanel extends TransparentViewPanel
 			@Override
 			public void clusterWatchedChanged(Cluster c)
 			{
-				updateCluster(c, false);
+				updateList();
 			}
 
 			@Override
 			public void clusterActiveChanged(Cluster c)
 			{
-				updateCluster(c, true);
+				updateList();
 				updateClearButton();
 			}
 		});
@@ -201,7 +191,10 @@ public class CompoundListPanel extends TransparentViewPanel
 					//compoundWatched.clearSelection();
 				}
 				else
+				{
+					clusterControler.clearClusterWatched();
 					clusterControler.setCompoundWatched((Compound) listModel.elementAt(index));
+				}
 				selfBlock = false;
 			}
 		});
@@ -215,8 +208,12 @@ public class CompoundListPanel extends TransparentViewPanel
 						|| evt.getPropertyName().equals(ViewControler.PROPERTY_HIGHLIGHT_CHANGED)
 						|| evt.getPropertyName().equals(ViewControler.PROPERTY_FEATURE_SORTING_CHANGED)
 						|| evt.getPropertyName().equals(ViewControler.PROPERTY_COMPOUND_FILTER_CHANGED))
+
+					updateList();
+				else if (evt.getPropertyName().equals(ViewControler.PROPERTY_SINGLE_COMPOUND_SELECTION_ENABLED))
 				{
-					update(clustering.getActiveCluster(), false);
+					updateList();
+					updateClearButton();
 				}
 				else if (evt.getPropertyName().equals(ViewControler.PROPERTY_FONT_SIZE_CHANGED))
 					updateListSize();
@@ -247,6 +244,18 @@ public class CompoundListPanel extends TransparentViewPanel
 							clusterControler.clearCompoundActive(true);
 						else if (clustering.isClusterActive() && clustering.getNumClusters() > 1)
 							clusterControler.clearClusterActive(true, true);
+						else if (viewControler.isSingleCompoundSelection())
+						{
+							viewControler.setSingleCompoundSelection(false);
+							SwingUtilities.invokeLater(new Runnable()
+							{
+								public void run()
+								{
+									updateList();
+									updateClearButton();
+								}
+							});
+						}
 					}
 				});
 				noAwt.start();
@@ -258,35 +267,14 @@ public class CompoundListPanel extends TransparentViewPanel
 	{
 		clearSelectedButton
 				.setVisible(listScrollPane.isVisible()
-						&& ((clustering.isClusterActive() && clustering.getNumClusters() > 1) || clustering
-								.isCompoundActive()));
+						&& ((clustering.isClusterActive() && clustering.getNumClusters() > 1)
+								|| clustering.isCompoundActive() || viewControler.isSingleCompoundSelection()));
 	}
 
-	private void updateCluster(Cluster c, boolean active)
-	{
-		selfBlock = true;
-
-		if (active)
-		{
-			update(c, false);
-		}
-		else
-		{
-			// only cluster watch updates if no cluster is active
-			if (!clustering.isClusterActive())
-				update(c, true);
-		}
-		selfBlock = false;
-	}
-
+	@SuppressWarnings("unchecked")
 	private void buildLayout()
 	{
-		FormLayout layout = new FormLayout("pref");
-
-		DefaultFormBuilder builder = new DefaultFormBuilder(layout);
-		builder.setLineGapSize(new ConstantSize(2, ConstantSize.PX));
-
-		listModel = new DefaultListModel();
+		listModel = new DefaultListModel<Compound>();
 
 		list = new MouseOverList(listModel);
 		list.setClearOnExit(false);
@@ -305,6 +293,7 @@ public class CompoundListPanel extends TransparentViewPanel
 				}
 			}
 
+			@SuppressWarnings("rawtypes")
 			public Component getListCellRendererComponent(JList list, Object value, int i, boolean isSelected,
 					boolean cellHasFocus)
 			{
@@ -324,8 +313,7 @@ public class CompoundListPanel extends TransparentViewPanel
 					setBackground(ComponentFactory.LIST_WATCH_BACKGROUND);
 					setForeground(ComponentFactory.LIST_SELECTION_FOREGROUND);
 				}
-				else if (c.getHighlightColorString() != null
-						&& c.getHighlightColorText() != CompoundPropertyUtil.getNullValueColor())
+				else
 				{
 					setForegroundLabel2(c.getHighlightColorText());
 				}
@@ -335,54 +323,29 @@ public class CompoundListPanel extends TransparentViewPanel
 		};
 		listRenderer.setFontLabel2(listRenderer.getFontLabel2().deriveFont(Font.ITALIC));
 		list.setCellRenderer(listRenderer);
-
 		list.setOpaque(false);
 		list.setFocusable(false);
-		//		list.setBorder(new EmptyBorder(5, 5, 5, 5));
 
-		JPanel p = new JPanel(new FormLayout("fill:pref:grow,6,pref", "fill:p:grow,p"));//,5px,p,p"));
+		JPanel p = new JPanel(new BorderLayout(6, 6));
 		p.setOpaque(false);
-		CellConstraints cc = new CellConstraints();
 
 		listScrollPane = ComponentFactory.createViewScrollpane(list);
-		p.add(listScrollPane, cc.xy(1, 1));
+		JPanel listWrapped = new TransparentViewPanel(new BorderLayout());
+		listWrapped.add(listScrollPane);
+		p.add(listWrapped);
 
 		clearSelectedButton = ComponentFactory.createCrossViewButton();
+		JPanel buttonWrapped = new TransparentViewPanel(new BorderLayout());
+		buttonWrapped.add(clearSelectedButton);
 		JPanel removeButtonPanel = new JPanel(new BorderLayout());
 		removeButtonPanel.setOpaque(false);
-		removeButtonPanel.add(clearSelectedButton, BorderLayout.NORTH);
-		p.add(removeButtonPanel, cc.xy(3, 1));
+		removeButtonPanel.add(buttonWrapped, BorderLayout.NORTH);
+		p.add(removeButtonPanel, BorderLayout.EAST);
 		clearSelectedButton.setVisible(false);
 
-		checkBoxContainer = new JPanel(new BorderLayout());
-		checkBoxContainer.setOpaque(false);
-		checkBoxContainer.setBorder(new EmptyBorder(5, 0, 0, 0));
-		checkBoxContainer.setVisible(false);
-		checkBoxContainer.addContainerListener(new ContainerListener()
-		{
-			@Override
-			public void componentRemoved(ContainerEvent e)
-			{
-				checkBoxContainer.setVisible(false);
-			}
-
-			@Override
-			public void componentAdded(ContainerEvent e)
-			{
-				checkBoxContainer.setVisible(true);
-			}
-		});
-		p.add(checkBoxContainer, cc.xy(1, 2));//4));
 		setLayout(new BorderLayout());
-
 		add(p);
-	}
-
-	JPanel checkBoxContainer;
-
-	public void appendCheckbox(JCheckBox superimposeCheckBox)
-	{
-		checkBoxContainer.add(superimposeCheckBox, BorderLayout.NORTH);
+		setOpaque(false);
 	}
 
 	private void updateActiveCompoundSelection()
@@ -393,15 +356,16 @@ public class CompoundListPanel extends TransparentViewPanel
 			list.clearSelection();
 	}
 
-	private void update(Cluster c, boolean noList)
+	private void updateList()
 	{
 		if (!SwingUtilities.isEventDispatchThread())
 			throw new IllegalStateException("GUI updates only in event dispatch thread plz");
 
+		selfBlock = true;
 		setVisible(true);
 
 		setIgnoreRepaint(true);
-		if (c == null)
+		if (!clustering.isClusterActive() && !viewControler.isSingleCompoundSelection())
 		{
 			listScrollPane.setVisible(false);
 		}
@@ -409,34 +373,37 @@ public class CompoundListPanel extends TransparentViewPanel
 		{
 			listModel.removeAllElements();
 
-			if (noList)
-			{
-				listScrollPane.setVisible(false);
-			}
-			else
-			{
-				listScrollPane.setPreferredSize(null);
+			listScrollPane.setPreferredSize(null);
+			Compound m[] = new Compound[viewControler.isSingleCompoundSelection() ? clustering.getCompounds(false)
+					.size() : clustering.getActiveCluster().getCompounds().size()];
 
-				Compound m[] = new Compound[c.getCompounds().size()];
-				int i = 0;
-				for (Compound mod : c.getCompounds())
-				{
-					m[i++] = mod;
-					if (mod.getDisplayName() == null)
-						throw new IllegalStateException("display name for compound is nil, check order of listeners");
-				}
-				for (Compound comp : c.getCompounds())
-					comp.setFeatureSortingEnabled(true);//viewControler.isFeatureSortingEnabled());
-				Arrays.sort(m);
-				for (Compound compound : m)
-					listModel.addElement(compound);
-				updateActiveCompoundSelection();
-				updateListSize();
-				listScrollPane.setVisible(true);
+			int i = 0;
+			for (Compound mod : (viewControler.isSingleCompoundSelection() ? clustering.getCompounds(false)
+					: clustering.getActiveCluster().getCompounds()))
+			{
+				m[i++] = mod;
+				if (mod.getDisplayName() == null)
+					throw new IllegalStateException("display name for compound is nil, check order of listeners");
 			}
+			for (Compound comp : (viewControler.isSingleCompoundSelection() ? clustering.getCompounds(false)
+					: clustering.getActiveCluster().getCompounds()))
+				comp.setFeatureSortingEnabled(true);//viewControler.isFeatureSortingEnabled());
+			for (Compound compound : m)
+				if (compound == null)
+					throw new IllegalStateException();
+			if (m.length > 1)
+				Arrays.sort(m);
+
+			for (Compound compound : m)
+				listModel.addElement(compound);
+			updateActiveCompoundSelection();
+			updateListSize();
+			listScrollPane.setVisible(true);
 		}
 		setIgnoreRepaint(false);
+		revalidate();
 		repaint();
+		selfBlock = false;
 	}
 
 	private void updateListSize()

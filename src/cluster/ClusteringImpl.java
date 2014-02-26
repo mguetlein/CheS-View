@@ -4,6 +4,7 @@ import gui.CheckBoxSelectDialog;
 import gui.View;
 import gui.Zoomable;
 
+import java.awt.Color;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
@@ -81,6 +82,9 @@ public class ClusteringImpl implements Zoomable, Clustering
 
 	Boolean endpointDataset;
 	Boolean filledEndpointDataset;
+
+	CompoundProperty highlightProperty;
+	Color highlightColorText;
 
 	public ClusteringImpl()
 	{
@@ -1243,6 +1247,24 @@ public class ClusteringImpl implements Zoomable, Clustering
 			compoundSelections.put(k, sel);
 		}
 		return compoundSelections.get(k);
+	}
+
+	@Override
+	public CompoundProperty getHighlightProperty()
+	{
+		return highlightProperty;
+	}
+
+	public void setHighlighProperty(CompoundProperty prop, Color highlightColorText)
+	{
+		this.highlightProperty = prop;
+		this.highlightColorText = highlightColorText;
+	}
+
+	@Override
+	public Color getHighlightColorText()
+	{
+		return highlightColorText;
 	}
 
 }

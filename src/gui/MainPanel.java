@@ -120,7 +120,7 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 		return getHighlightColor(this, clustering, m, h, p, textColor);
 	}
 
-	public static Color getHighlightColor(ViewControler viewControler, Clustering clustering, CompoundPropertyOwner m,
+	private static Color getHighlightColor(ViewControler viewControler, Clustering clustering, CompoundPropertyOwner m,
 			Highlighter h, CompoundProperty p, boolean textColor)
 	{
 		if (h == Highlighter.CLUSTER_HIGHLIGHTER)
@@ -139,11 +139,11 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 			throw new IllegalStateException();
 
 		if (p == null)
-			return null;
+			return textColor ? ComponentFactory.FOREGROUND : null;
 		else if (p.getType() == Type.NOMINAL)
 		{
 			if (m.getStringValue(p) == null)
-				return CompoundPropertyUtil.getNullValueColor();
+				return textColor ? ComponentFactory.FOREGROUND : CompoundPropertyUtil.getNullValueColor();
 			else
 				return CompoundPropertyUtil.getNominalColor(p, m.getStringValue(p));
 		}
@@ -152,7 +152,7 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 			try
 			{
 				if (m.getDoubleValue(p) == null)
-					return CompoundPropertyUtil.getNullValueColor();
+					return textColor ? ComponentFactory.FOREGROUND : CompoundPropertyUtil.getNullValueColor();
 				double val;
 				if (p.getType() == Type.NUMERIC && p.isLogHighlightingEnabled())
 					val = clustering.getNormalizedLogDoubleValue(m, p);
@@ -163,7 +163,7 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 					grad = p.getHighlightColorGradient();
 				else
 					grad = DEFAULT_COLOR_GRADIENT;
-				if (grad.getMed().equals(Color.WHITE))
+				if (!viewControler.isBlackgroundBlack() && grad.getMed().equals(Color.WHITE))
 				{
 					if (textColor)
 						grad = new ColorGradient(grad.high, Color.GRAY, grad.low);
@@ -183,7 +183,7 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 			}
 		}
 		else
-			return null;
+			return textColor ? ComponentFactory.FOREGROUND : null;
 	}
 
 	public static enum Translucency
@@ -266,6 +266,26 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 		}
 	}
 
+	boolean singleCompoundSelection = false;
+
+	@Override
+	public void setSingleCompoundSelection(boolean b)
+	{
+		if (singleCompoundSelection != b)
+		{
+			singleCompoundSelection = b;
+			if (singleCompoundSelection)
+				fireViewChange(PROPERTY_SINGLE_COMPOUND_SELECTION_ENABLED);
+			guiControler.showMessage((singleCompoundSelection ? "Compound" : "Cluster") + " selection enabled.");
+		}
+	}
+
+	@Override
+	public boolean isSingleCompoundSelection()
+	{
+		return singleCompoundSelection;
+	}
+
 	public MainPanel(GUIControler guiControler)
 	{
 		this.guiControler = guiControler;
@@ -314,7 +334,8 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 							{
 								Compound c = clustering.getCompoundWithJmolIndex(view.getAtomCompoundIndex(atomIndex));
 								boolean selectCluster = !clustering.isClusterActive() && !e.isControlDown();
-								boolean selectCompound = clustering.isClusterActive() || e.isShiftDown();
+								boolean selectCompound = clustering.isClusterActive() || e.isShiftDown()
+										|| singleCompoundSelection;
 
 								if (selectCompound)
 								{
@@ -366,7 +387,6 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 	}
 
 	Point mousePos;
-	boolean shiftDown;
 
 	@Override
 	public void updateMouseSelection(boolean shiftDown)
@@ -380,7 +400,6 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 			return;
 
 		this.mousePos = mousePos;
-		this.shiftDown = shiftDown;
 
 		for (JComponent c : ignoreMouseMovementPanels)
 		{
@@ -394,7 +413,7 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 
 		int atomIndex = view.findNearestAtomIndex(mousePos.x, mousePos.y);
 
-		if (!clustering.isClusterActive() && !shiftDown)
+		if (!clustering.isClusterActive() && !shiftDown && !singleCompoundSelection)
 		{
 			if (atomIndex == -1)
 			{
@@ -616,6 +635,10 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 	 */
 	private void updateAllClustersAndCompounds(boolean forceUpdate)
 	{
+		if (forceUpdate || selectedHighlightCompoundProperty != clustering.getHighlightProperty())
+			clustering.setHighlighProperty(selectedHighlightCompoundProperty,
+					MainPanel.getHighlightColor(this, clustering, clustering, selectedHighlightCompoundProperty, true));
+
 		//		int a = getClustering().getClusterActive().getSelected();
 		for (int j = 0; j < clustering.numClusters(); j++)
 			updateCluster(j, forceUpdate);
@@ -1066,6 +1089,7 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 			{
 				int cIndexOldArray[] = ((int[]) e.getOldValue());
 				int cIndexOld = cIndexOldArray.length == 0 ? -1 : cIndexOldArray[0];
+				singleCompoundSelection = false;
 				updateClusterSelection(clustering.getClusterActive().getSelected(), cIndexOld, true);
 			}
 		});
@@ -1811,11 +1835,19 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 	{
 		if (backgroundBlack != ComponentFactory.isBackgroundBlack() || forceUpdate)
 		{
-			ComponentFactory.setBackgroundBlack(backgroundBlack);
-			view.setBackground(ComponentFactory.BACKGROUND);
-			updateAllClustersAndCompounds(false);
-			fireViewChange(PROPERTY_BACKGROUND_CHANGED);
-			guiControler.showMessage("Background color set to " + (backgroundBlack ? "black." : "white."));
+			guiControler.block("changing background");
+			try
+			{
+				ComponentFactory.setBackgroundBlack(backgroundBlack);
+				view.setBackground(ComponentFactory.BACKGROUND);
+				updateAllClustersAndCompounds(true); // force to assign new colors
+				fireViewChange(PROPERTY_BACKGROUND_CHANGED);
+				guiControler.showMessage("Background color set to " + (backgroundBlack ? "black." : "white."));
+			}
+			finally
+			{
+				guiControler.unblock("changing background");
+			}
 		}
 	}
 

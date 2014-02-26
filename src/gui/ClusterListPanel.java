@@ -1,5 +1,6 @@
 package gui;
 
+import gui.DoubleNameListCellRenderer.DoubleNameElement;
 import gui.swing.ComponentFactory;
 import gui.swing.TransparentViewPanel;
 import gui.util.CompoundPropertyHighlighter;
@@ -38,13 +39,11 @@ import com.jgoodies.forms.layout.CellConstraints;
 import com.jgoodies.forms.layout.FormLayout;
 import com.lowagie.text.Font;
 
-import dataInterface.CompoundPropertyUtil;
-
 public class ClusterListPanel extends JPanel
 {
 	JPanel clusterPanel;
 
-	DefaultListModel listModel;
+	DefaultListModel<DoubleNameElement> listModel;
 	DoubleNameListCellRenderer listRenderer;
 
 	MouseOverList clusterList;
@@ -113,7 +112,10 @@ public class ClusterListPanel extends JPanel
 				if (selfBlock)
 					return;
 				selfBlock = true;
-				clusterControler.setClusterWatched((Cluster) clusterList.getSelectedValue());
+				if (clusterList.getSelectedValue() == AllCompounds)
+					clusterControler.clearClusterWatched();
+				else
+					clusterControler.setClusterWatched((Cluster) clusterList.getSelectedValue());
 				selfBlock = false;
 			}
 		});
@@ -128,11 +130,27 @@ public class ClusterListPanel extends JPanel
 				{
 					public void run()
 					{
-						Cluster c = (Cluster) clusterList.getSelectedValue();
-						if (c == clustering.getActiveCluster())
-							clusterControler.clearCompoundActive(true);
+						if (clusterList.getSelectedValue() == AllCompounds)
+						{
+							if (clustering.isClusterActive())
+								clusterControler.clearClusterActive(true, true);
+							SwingUtilities.invokeLater(new Runnable()
+							{
+								@Override
+								public void run()
+								{
+									viewControler.setSingleCompoundSelection(true);
+								}
+							});
+						}
 						else
-							clusterControler.setClusterActive(c, true, true);
+						{
+							Cluster c = (Cluster) clusterList.getSelectedValue();
+							if (c == clustering.getActiveCluster())
+								clusterControler.clearCompoundActive(true);
+							else
+								clusterControler.setClusterActive(c, true, true);
+						}
 						selfBlock = false;
 					}
 				});
@@ -189,6 +207,25 @@ public class ClusterListPanel extends JPanel
 
 	}
 
+	public DoubleNameElement AllCompounds = new DoubleNameElement()
+	{
+		@Override
+		public String getFirstName()
+		{
+			return "All Compounds";
+		}
+
+		@Override
+		public String getSecondName()
+		{
+			if (viewControler.getHighlighter() instanceof CompoundPropertyHighlighter)
+				return clustering.getFormattedValue(((CompoundPropertyHighlighter) viewControler.getHighlighter())
+						.getProperty());
+			else
+				return null;
+		}
+	};
+
 	private void updateList()
 	{
 		if (!SwingUtilities.isEventDispatchThread())
@@ -196,12 +233,13 @@ public class ClusterListPanel extends JPanel
 
 		listModel.clear();
 
-		if (clustering.getNumClusters() == 0)
+		if (clustering.getNumClusters() < 2)
 		{
 			scroll.setVisible(false);
 			return;
 		}
 
+		listModel.addElement(AllCompounds);
 		Cluster clusters[] = new Cluster[clustering.numClusters()];
 		clustering.getClusters().toArray(clusters);
 		if (viewControler.getHighlighter() instanceof CompoundPropertyHighlighter)//&& viewControler.isFeatureSortingEnabled() 
@@ -243,9 +281,10 @@ public class ClusterListPanel extends JPanel
 		scroll.repaint();
 	}
 
+	@SuppressWarnings("unchecked")
 	private void buildLayout()
 	{
-		listModel = new DefaultListModel();
+		listModel = new DefaultListModel<DoubleNameElement>();
 		clusterList = new MouseOverList(listModel);
 		clusterList.setClearOnExit(false);
 		clusterList.setFocusable(false);
@@ -272,12 +311,12 @@ public class ClusterListPanel extends JPanel
 			{
 				super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
 
-				Cluster c = (Cluster) value;
+				Cluster c = value == AllCompounds ? null : (Cluster) value;
 				setOpaque(isSelected || c == clustering.getActiveCluster());
-
 				setForeground(ComponentFactory.FOREGROUND);
-
-				if (c == clustering.getActiveCluster())
+				setBackground(ComponentFactory.BACKGROUND);
+				if ((c != null && clustering.isClusterActive() && c == clustering.getActiveCluster())
+						|| (c == null && viewControler.isSingleCompoundSelection()))
 				{
 					setBackground(ComponentFactory.LIST_ACTIVE_BACKGROUND);
 					setForeground(ComponentFactory.LIST_SELECTION_FOREGROUND);
@@ -287,12 +326,14 @@ public class ClusterListPanel extends JPanel
 					setBackground(ComponentFactory.LIST_WATCH_BACKGROUND);
 					setForeground(ComponentFactory.LIST_SELECTION_FOREGROUND);
 				}
-				else if (c != null && c.getHighlightColorText() != null
-						&& c.getHighlightColorText() != CompoundPropertyUtil.getNullValueColor())
+				else if (c != null)
 				{
 					setForegroundLabel2(c.getHighlightColorText());
 				}
-
+				else if (c == null)
+				{
+					setForegroundLabel2(clustering.getHighlightColorText());
+				}
 				return this;
 			}
 

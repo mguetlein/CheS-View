@@ -410,12 +410,11 @@ public class InfoPanel extends JPanel
 					else if (column == 1 && table.getValueAt(row, 0) instanceof CompoundProperty)
 					{
 						c.setFont(c.getFont().deriveFont(Font.ITALIC));
-						if (isSelected == false && !(selected instanceof Clustering))
+						if (isSelected == false)// && !(selected instanceof Clustering))
 						{
 							Color col = MainPanel.getHighlightColor(viewControler, clustering, selected,
 									(CompoundProperty) table.getValueAt(row, 0), true);
-							if (col != null && col != CompoundPropertyUtil.getNullValueColor())
-								setForeground(col);
+							setForeground(col);
 						}
 					}
 					return c;

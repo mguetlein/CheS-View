@@ -113,6 +113,7 @@ public interface ViewControler
 	public static final String PROPERTY_FEATURE_FILTER_CHANGED = "propertyFeatureFilterChanged";
 	public static final String PROPERTY_FEATURE_SORTING_CHANGED = "propertyFeatureSortingChanged";
 	public static final String PROPERTY_COMPOUND_FILTER_CHANGED = "propertyCompoundFilterChanged";
+	public static final String PROPERTY_SINGLE_COMPOUND_SELECTION_ENABLED = "propertySingleCompoundSelectionEnabled";
 
 	public boolean isHighlighterLabelsVisible();
 
@@ -232,6 +233,10 @@ public interface ViewControler
 	public boolean isShowClusteringPropsEnabled();
 
 	public void showSortFilterDialog();
+
+	public void setSingleCompoundSelection(boolean b);
+
+	public boolean isSingleCompoundSelection();
 
 	// to remove
 

@@ -1,5 +1,6 @@
 package cluster;
 
+import java.awt.Color;
 import java.beans.PropertyChangeListener;
 import java.util.List;
 
@@ -146,5 +147,9 @@ public interface Clustering extends CompoundPropertyOwner
 	public CompoundSelection getCompoundSelection(Compound[] c);
 
 	boolean isRandomEmbedding();
+
+	CompoundProperty getHighlightProperty();
+
+	Color getHighlightColorText();
 
 }
