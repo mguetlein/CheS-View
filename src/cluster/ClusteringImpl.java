@@ -964,6 +964,7 @@ public class ClusteringImpl implements Zoomable, Clustering
 	{
 		for (Cluster c : clusters)
 			c.setFilter(filter);
+		clusteringValues.clear();
 		dirty = true;
 		//		updatePositions();
 	}

@@ -57,9 +57,11 @@ public class Cluster extends ZoomableCompoundGroup implements CompoundGroupWithP
 	{
 		super.setFilter(filter);
 		List<Integer> origIndices = new ArrayList<Integer>();
-		for (Compound c : getCompounds())
-			origIndices.add(c.getOrigIndex());
-		clusterData.setFilter(origIndices);
+		if (filter != null)
+			for (Compound c : getCompounds())
+				if (filter.accept(c))
+					origIndices.add(c.getOrigIndex());
+		clusterData.setFilter(filter == null ? null : origIndices);
 		updateDisplayName();
 	}
 

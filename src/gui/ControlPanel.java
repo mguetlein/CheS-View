@@ -135,7 +135,9 @@ public class ControlPanel extends JPanel
 		b.append(p1);
 		b.append(p2);
 		b.getPanel().setOpaque(false);
-		add(b.getPanel());
+
+		setLayout(new BorderLayout());
+		add(b.getPanel(), BorderLayout.WEST);
 		setOpaque(false);
 	}
 

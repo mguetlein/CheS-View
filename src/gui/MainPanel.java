@@ -158,6 +158,8 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 					val = clustering.getNormalizedLogDoubleValue(m, p);
 				else
 					val = clustering.getNormalizedDoubleValue(m, p);
+				if (Double.isNaN(val) || Double.isInfinite(val))
+					throw new NullPointerException("not null, but nan or infinite");
 				ColorGradient grad;
 				if (p.getType() == Type.NUMERIC && p.getHighlightColorGradient() != null)
 					grad = p.getHighlightColorGradient();
@@ -176,10 +178,12 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 			}
 			catch (NullPointerException e)
 			{
-				throw new IllegalStateException("Nullpointer exception in getHighlightColor\nproperty: " + p
+				System.err.println("Nullpointer exception in getHighlightColor: " + e.getMessage() + "\nproperty: " + p
 						+ " prop-owner: " + m + " get-double-value:" + m.getDoubleValue(p)
 						+ " get-normalized-double-value: " + clustering.getNormalizedDoubleValue(m, p)
-						+ " get-log-normalized-double-value: " + clustering.getNormalizedLogDoubleValue(m, p), e);
+						+ " get-log-normalized-double-value: " + clustering.getNormalizedLogDoubleValue(m, p));
+				e.printStackTrace();
+				return null;
 			}
 		}
 		else
@@ -2341,8 +2345,9 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 	@Override
 	public void setCompoundFilter(final CompoundFilter filter, final boolean animate)
 	{
+		if (filter == null && compoundFilter == null)
+			return;
 		clearClusterActive(animate, true);
-
 		if (!animate)
 			view.suspendAnimation("change compound filter");
 
@@ -2351,6 +2356,7 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 			@Override
 			public void run()
 			{
+				guiControler.block("update filter");
 				CompoundFilter f;
 				if (compoundFilter != null && filter != null)
 					f = new CompositeFilter(filter, compoundFilter);
@@ -2358,13 +2364,12 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 					f = filter;
 				compoundFilter = f;
 				clustering.setCompoundFilter(null);
-				updateAllClustersAndCompounds(false);
-
+				updateAllClustersAndCompounds(f == null); // force to get cluster-colors right
 				clustering.updatePositions(); // update cluster position stuff after compounds are visible again
 				if (f != null)
 				{
 					clustering.setCompoundFilter(f);
-					updateAllClustersAndCompounds(false);
+					updateAllClustersAndCompounds(true);
 					clustering.updatePositions(); // update cluster position stuff after compounds are visible again
 				}
 				guiControler.showMessage((f != null ? "Enable" : "Disable") + " compound filter.");
@@ -2389,7 +2394,6 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 						});
 					}
 				};
-
 				if (animate)
 					runInBackground(r);
 				else
@@ -2397,6 +2401,7 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 					SwingUtil.invokeAndWait(r);
 					view.proceedAnimation("change compound filter");
 				}
+				guiControler.unblock("update filter");
 			}
 		});
 		if (animate)
