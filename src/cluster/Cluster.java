@@ -328,6 +328,12 @@ public class Cluster extends ZoomableCompoundGroup implements CompoundGroupWithP
 				displayName.valCompare = new Double[] { getDoubleValue(highlightProp) };
 			else
 			{
+				String mode = getNominalSummary(highlightProp).getMode(false);
+				String domain[] = highlightProp.getNominalDomainInMappedDataset();
+				boolean invertSecondBinaryVal = false;
+				if (domain.length == 2 && ArrayUtil.indexOf(domain, mode) == 1)
+					invertSecondBinaryVal = true;
+				CountedSet<String> set = getNominalSummary(highlightProp);
 				/**
 				 * Clusters with nominal feature values should be sorted as follows:
 				 * 1. according to the mode (the most common feature value)
@@ -335,11 +341,9 @@ public class Cluster extends ZoomableCompoundGroup implements CompoundGroupWithP
 				 * 3. within equal ratios, according to size (and therefore according to number of compounds with this feature value)
 				 * 4. within equal size, according to cluster index   
 				 */
-				displayName.valCompare = new Comparable[] {
-						getNominalSummary(highlightProp).getMode(false),
-						-1
-								* (getNominalSummary(highlightProp).getMaxCount(false) / (double) (getNominalSummary(highlightProp)
-										.getSum(false))), -1 * getNominalSummary(highlightProp).getSum(false) };
+				displayName.valCompare = new Comparable[] { mode,
+						(invertSecondBinaryVal ? 1 : -1) * (set.getMaxCount(false) / (double) (set.getSum(false))),
+						(invertSecondBinaryVal ? 1 : -1) * set.getSum(false) };
 			}
 			displayName.valDisplay = getFormattedValue(highlightProp);
 		}
