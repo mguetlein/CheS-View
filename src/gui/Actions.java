@@ -183,8 +183,7 @@ public class Actions
 		keys.put(EDIT_SELECT_LAST_FEATURE, KeyStroke.getKeyStroke(KeyEvent.VK_A, ActionEvent.ALT_MASK));
 
 		keys.put(FILTER_SELECTED, KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, ActionEvent.ALT_MASK));
-		keys.put(FILTER_UNSELECTED,
-				KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, ActionEvent.ALT_MASK | ActionEvent.SHIFT_MASK));
+		keys.put(FILTER_UNSELECTED, KeyStroke.getKeyStroke(KeyEvent.VK_INSERT, ActionEvent.ALT_MASK));
 
 		keys.put(EXPORT_IMAGE, KeyStroke.getKeyStroke(KeyEvent.VK_I, ActionEvent.ALT_MASK));
 		keys.put(EXPORT_WORKFLOW, KeyStroke.getKeyStroke(KeyEvent.VK_W, ActionEvent.ALT_MASK));
