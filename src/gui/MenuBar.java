@@ -166,7 +166,7 @@ public class MenuBar extends JMenuBar
 
 		MyMenu dataMenu = new MyMenu(DATA_MENU, a.getDataActions());
 		MyMenu fileMenu = new MyMenu("File", a.getFileActions(), new MyMenu[] { dataMenu }, new int[] { 1 });
-		MyMenu filterMenu = new MyMenu("Hide", a.getFilterActions());
+		MyMenu filterMenu = new MyMenu("Filter", a.getFilterActions());
 		MyMenu removeMenu = new MyMenu("Remove", a.getRemoveActions());
 		MyMenu exportMenu = new MyMenu("Export", a.getExportActions());
 		MyMenu editMenu = new MyMenu("Edit", a.getEditActions(), filterMenu, removeMenu, exportMenu);
