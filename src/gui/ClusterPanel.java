@@ -1,9 +1,11 @@
 package gui;
 
 import gui.swing.ComponentFactory;
+import gui.swing.TransparentViewLabel;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.FontMetrics;
 import java.awt.LayoutManager;
 
 import javax.swing.JLabel;
@@ -43,6 +45,7 @@ public class ClusterPanel extends JPanel
 		messagePanel = new JPanel(l);// new BorderLayout());
 		messagePanel.setOpaque(false);
 		messageLabel = ComponentFactory.createTransparentViewLabel();
+		((TransparentViewLabel) messageLabel).setAlpha(150); // less translucent for better readability
 		messageLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		messageLabel.setOpaque(true);
 		//		messageLabel.setBackground(Settings.TRANSPARENT_BACKGROUND);
@@ -117,21 +120,27 @@ public class ClusterPanel extends JPanel
 		return mainPanel.getClustering();
 	}
 
+	String currentMsg;
+
 	public void showMessage(final String msg)
 	{
+		currentMsg = msg;
 		Thread th = new Thread(new Runnable()
 		{
 			@Override
 			public void run()
 			{
-				messageLabel.setFont(messageLabel.getFont().deriveFont(ScreenSetup.INSTANCE.getFontSize() + 4f));
+				messagePanel.setIgnoreRepaint(true);
+				messageLabel.setFont(messageLabel.getFont().deriveFont(ScreenSetup.INSTANCE.getFontSize() + 8f));
 				messageLabel.setText(msg);
-				messageLabel.setPreferredSize(null);
+				FontMetrics metrics = messageLabel.getFontMetrics(messageLabel.getFont());
+				messagePanel.setSize(metrics.stringWidth(msg), metrics.getHeight());
+				messagePanel.setIgnoreRepaint(false);
 				messagePanel.setVisible(true);
-				// show message between 2 and 6 seconds depending on the number of words (<=3 words 2s, 7 words 4.5s, >=9 words 6000)
-				long sleep = Math.max(2000, Math.min(6000, StringUtil.numOccurences(msg, " ") * 750));
+				// show message between 2.4 and 6.4 seconds depending on the number of words (<=4 words 2.4s, 7 words 4.8s, >=9 words 6.4s)
+				long sleep = Math.max(2400, Math.min(6400, StringUtil.numOccurences(msg, " ") * 800));
 				ThreadUtil.sleep(sleep);
-				if (msg.equals(messageLabel.getText()))
+				if (msg == currentMsg)
 					messagePanel.setVisible(false);
 			}
 		});

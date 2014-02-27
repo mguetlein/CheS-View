@@ -13,6 +13,7 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Insets;
 
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -183,12 +184,23 @@ public class ComponentFactory
 		return createViewLabel(text, null);
 	}
 
+	public static JLabel createViewLabel(String text, ImageIcon iconBlack, ImageIcon iconWhite)
+	{
+		return createViewLabel(text, null, iconBlack, iconWhite);
+	}
+
+	public static JLabel createViewLabel(String text, DimensionProvider preferredSize)
+	{
+		return createViewLabel(text, preferredSize, null, null);
+	}
+
 	public static interface DimensionProvider
 	{
 		public Dimension getPreferredSize(Dimension orig);
 	}
 
-	public static JLabel createViewLabel(String text, final DimensionProvider preferredSize)
+	public static JLabel createViewLabel(String text, final DimensionProvider preferredSize, final ImageIcon iconBlack,
+			final ImageIcon iconWhite)
 	{
 		JLabel l = new JLabel(text)
 		{
@@ -197,6 +209,7 @@ public class ComponentFactory
 				super.updateUI();
 				setForeground(FOREGROUND);
 				setFont(getFont().deriveFont((float) ScreenSetup.INSTANCE.getFontSize()));
+				setIcon(isBackgroundBlack() ? iconBlack : iconWhite);
 			}
 
 			@Override
@@ -215,6 +228,7 @@ public class ComponentFactory
 					return preferredSize.getPreferredSize(super.getPreferredSize());
 			}
 		};
+		l.setIcon(isBackgroundBlack() ? iconBlack : iconWhite);
 		l.setToolTipText(text);
 		return l;
 	}

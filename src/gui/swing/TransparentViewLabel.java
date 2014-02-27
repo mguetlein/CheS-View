@@ -7,6 +7,7 @@ import javax.swing.JLabel;
 public class TransparentViewLabel extends JLabel
 {
 	private Color background;
+	private int alpha = 100;
 
 	public TransparentViewLabel()
 	{
@@ -27,9 +28,15 @@ public class TransparentViewLabel extends JLabel
 		setForeground(ComponentFactory.FOREGROUND);
 	}
 
+	public void setAlpha(int alpha)
+	{
+		this.alpha = alpha;
+		setBackground(background);
+	}
+
 	public void setBackground(Color col)
 	{
-		background = new Color(col.getRed(), col.getGreen(), col.getBlue(), 100);
+		background = new Color(col.getRed(), col.getGreen(), col.getBlue(), alpha);
 	}
 
 	public Color getBackground()

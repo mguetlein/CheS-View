@@ -280,7 +280,7 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 			singleCompoundSelection = b;
 			if (singleCompoundSelection)
 				fireViewChange(PROPERTY_SINGLE_COMPOUND_SELECTION_ENABLED);
-			guiControler.showMessage((singleCompoundSelection ? "Compound" : "Cluster") + " selection enabled.");
+			guiControler.showMessage((singleCompoundSelection ? "Single compound" : "Cluster") + " selection enabled.");
 		}
 	}
 

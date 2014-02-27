@@ -28,6 +28,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
 import main.ScreenSetup;
+import util.ImageLoader;
 import cluster.Cluster;
 import cluster.ClusterController;
 import cluster.Clustering;
@@ -357,7 +358,9 @@ public class ClusterListPanel extends JPanel
 		controlPanel = new ControlPanel(viewControler, clusterControler, clustering, guiControler);
 		add(controlPanel, BorderLayout.SOUTH);
 
-		filterLabel = ComponentFactory.createViewLabel("Filter applied:");
+		filterLabel = ComponentFactory.createViewLabel("Filter applied:",
+				ImageLoader.getImage(ImageLoader.Image.filter14_black),
+				ImageLoader.getImage(ImageLoader.Image.filter14));
 		filterRemoveButton = ComponentFactory.createCrossViewButton();
 		filterRemoveButton.addActionListener(new ActionListener()
 		{
