@@ -1130,7 +1130,7 @@ public class ClusteringImpl implements Zoomable, Clustering
 	}
 
 	@Override
-	public CompoundProperty addSALIFeature(CompoundProperty p)
+	public CompoundProperty addSALIFeature(CompoundProperty p, boolean max)
 	{
 		CompoundProperty old = null;
 		for (CompoundProperty prop : getAdditionalProperties())
@@ -1179,7 +1179,7 @@ public class ClusteringImpl implements Zoomable, Clustering
 		}
 
 		SALIProperty s = new SALIProperty(d, clusteringData.getFeatureDistanceMatrix().getValues(),
-				(log ? "Log-transformed " : "") + p);
+				(log ? "Log-transformed " : "") + p, max);
 		addNewAdditionalProperty(s, old);
 		return s;
 	}

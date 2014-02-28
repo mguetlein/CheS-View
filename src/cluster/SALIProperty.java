@@ -1,7 +1,6 @@
 package cluster;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -15,19 +14,19 @@ import dataInterface.NumericDynamicCompoundProperty;
 public class SALIProperty extends NumericDynamicCompoundProperty
 {
 	String target;
+	boolean max;
 
-	public SALIProperty(Double[] endpointVals, double[][] featureDistanceMatrix, String target)
+	public SALIProperty(Double[] endpointVals, double[][] featureDistanceMatrix, String target, boolean max)
 	{
-		super(computeMaxSali(endpointVals, featureDistanceMatrix));
+		super(computeMaxSali(endpointVals, featureDistanceMatrix, max));
 		this.target = target;
+		this.max = max;
 	}
 
 	public static final double MIN_ENDPOINT_DEV = 0.1;
-	public static final double NUM_TOP_PERCENT = 0.1;
 	public static final double IDENTICAL_FEATURES_SALI = 1000.0;
 
 	public static final String MIN_ENDPOINT_DEV_STR = ((int) (MIN_ENDPOINT_DEV * 100)) + "%";
-	public static final String NUM_TOP_PERCENT_STR = ((int) (NUM_TOP_PERCENT * 100)) + "%";
 
 	private static class EqualFeatureTuple
 	{
@@ -67,7 +66,7 @@ public class SALIProperty extends NumericDynamicCompoundProperty
 		}
 	}
 
-	private static Double[] computeMaxSali(Double[] endpointVals, double[][] featureDistanceMatrix)
+	private static Double[] computeMaxSali(Double[] endpointVals, double[][] featureDistanceMatrix, boolean max)
 	{
 		if (endpointVals.length != featureDistanceMatrix.length
 				|| endpointVals.length != featureDistanceMatrix[0].length)
@@ -110,7 +109,6 @@ public class SALIProperty extends NumericDynamicCompoundProperty
 				identicalFeatsCompounds += n.indices.size();
 			}
 
-		int numTopPercent = (int) (endpointVals.length * NUM_TOP_PERCENT);
 		Double salis[] = new Double[endpointVals.length];
 		for (int i = 0; i < salis.length; i++)
 		{
@@ -138,11 +136,10 @@ public class SALIProperty extends NumericDynamicCompoundProperty
 				double tmpSali = endpointDist / featureDistanceMatrix[i][j];
 				allSalis.add(tmpSali);
 			}
-			Collections.sort(allSalis);
-			while (allSalis.size() > numTopPercent)
-				allSalis.remove(0);
-			salis[i] = DoubleArraySummary.create(allSalis).getMean();
-			//salis[i] = DoubleArraySummary.create(allSalis).getMax();
+			if (max)
+				salis[i] = DoubleArraySummary.create(allSalis).getMax();
+			else
+				salis[i] = DoubleArraySummary.create(allSalis).getMean();
 		}
 
 		if (identicalFeatsCompounds > 0)
@@ -150,7 +147,7 @@ public class SALIProperty extends NumericDynamicCompoundProperty
 			String warning = Settings.text("props.sali.identical-warning", identicalFeatsCompounds + "",
 					identicalFeatsCliffs + "", MIN_ENDPOINT_DEV_STR, IDENTICAL_FEATURES_SALI + "") + "\n\n";
 			warning += "Details:\n";
-			warning += Settings.text("props.sali.detail", NUM_TOP_PERCENT_STR, MIN_ENDPOINT_DEV_STR);
+			warning += Settings.text("props.sali.detail", MIN_ENDPOINT_DEV_STR);
 			JOptionPane.showMessageDialog(Settings.TOP_LEVEL_FRAME, warning, "Warning", JOptionPane.WARNING_MESSAGE);
 		}
 		return salis;
@@ -165,7 +162,7 @@ public class SALIProperty extends NumericDynamicCompoundProperty
 	@Override
 	public String getDescription()
 	{
-		return Settings.text("props.sali.desc", NUM_TOP_PERCENT_STR, target);
+		return Settings.text("props.sali.desc", max ? "Max" : "Mean", target);
 	}
 
 }

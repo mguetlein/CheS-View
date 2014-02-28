@@ -140,7 +140,7 @@ public interface Clustering extends CompoundPropertyOwner
 
 	CompoundProperty addDistanceToCompoundFeature(Compound c);
 
-	CompoundProperty addSALIFeature(CompoundProperty c);
+	CompoundProperty addSALIFeature(CompoundProperty c, boolean max);
 
 	void addPredictionFeature(CompoundProperty clazz, PredictionResult p);
 
