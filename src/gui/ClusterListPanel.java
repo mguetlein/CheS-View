@@ -125,36 +125,50 @@ public class ClusterListPanel extends JPanel
 			{
 				if (selfBlock)
 					return;
+				guiControler.block("click cluster");
 				selfBlock = true;
 				Thread th = new Thread(new Runnable()
 				{
 					public void run()
 					{
-						//clear only if there is a single zoomed in compound
-						boolean clearCompound = clustering.getActiveCompounds().length == 1
-								&& View.instance.getZoomTarget() == clustering.getActiveCompound();
-						if (clusterList.getSelectedValue() == AllCompounds)
+						try
 						{
-							if (clustering.isClusterActive())
-								clusterControler.clearClusterActive(true, clearCompound);
+							//clear only if there is a single zoomed in compound
+							boolean clearCompound = clustering.getActiveCompounds().length == 1
+									&& View.instance.getZoomTarget() == clustering.getActiveCompound();
+							if (clusterList.getSelectedValue() == AllCompounds)
+							{
+								if (clustering.isClusterActive())
+									clusterControler.clearClusterActive(true, clearCompound);
+								SwingUtilities.invokeLater(new Runnable()
+								{
+									@Override
+									public void run()
+									{
+										viewControler.setSingleCompoundSelection(true);
+									}
+								});
+							}
+							else
+							{
+								Cluster c = (Cluster) clusterList.getSelectedValue();
+								if (c != clustering.getActiveCluster())
+									clusterControler.setClusterActive(c, true, clearCompound);
+								else if (clearCompound)
+									clusterControler.clearCompoundActive(true);
+							}
+						}
+						finally
+						{
+							selfBlock = false;
 							SwingUtilities.invokeLater(new Runnable()
 							{
-								@Override
 								public void run()
 								{
-									viewControler.setSingleCompoundSelection(true);
+									guiControler.unblock("click cluster");
 								}
 							});
 						}
-						else
-						{
-							Cluster c = (Cluster) clusterList.getSelectedValue();
-							if (c != clustering.getActiveCluster())
-								clusterControler.setClusterActive(c, true, clearCompound);
-							else if (clearCompound)
-								clusterControler.clearCompoundActive(true);
-						}
-						selfBlock = false;
 					}
 				});
 				th.start();

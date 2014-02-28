@@ -133,48 +133,63 @@ public class CompoundListPanel extends JPanel
 			{
 				if (selfBlock)
 					return;
+				guiControler.block("click compound");
 				selfBlock = true;
 
 				Thread th = new Thread(new Runnable()
 				{
 					public void run()
 					{
-						int idx = list.getLastSelectedIndex();
-						Compound m = (Compound) listModel.elementAt(idx);
-						if (m == null)
-							throw new IllegalStateException();
-						if (e.isControlDown())
-							clusterControler.toggleCompoundActive(m);
-						else if (e.isShiftDown() && clustering.isCompoundActive())
+						try
 						{
-							int startIdx = listModel.indexOf(clustering.getActiveCompound());
-							int min, max;
-							if (startIdx < idx)
+							int idx = list.getLastSelectedIndex();
+							Compound m = (Compound) listModel.elementAt(idx);
+							if (m == null)
+								throw new IllegalStateException();
+							if (e.isControlDown())
+								clusterControler.toggleCompoundActive(m);
+							else if (e.isShiftDown() && clustering.isCompoundActive())
 							{
-								min = startIdx + 1;
-								max = idx;
+								int startIdx = listModel.indexOf(clustering.getActiveCompound());
+								int min, max;
+								if (startIdx < idx)
+								{
+									min = startIdx + 1;
+									max = idx;
+								}
+								else
+								{
+									min = idx;
+									max = startIdx - 1;
+								}
+								List<Compound> comps = new ArrayList<Compound>();
+								for (int i = min; i <= max; i++)
+									comps.add((Compound) listModel.elementAt(i));
+								for (Compound c : clustering.getActiveCompounds())
+									if (!comps.contains(c))
+										comps.add(c);
+								clusterControler.setCompoundActive(ArrayUtil.toArray(comps), true);
 							}
 							else
 							{
-								min = idx;
-								max = startIdx - 1;
+								if (clustering.isCompoundActive(m))
+									clusterControler.clearCompoundActive(true);
+								else
+									clusterControler.setCompoundActive(m, true);
 							}
-							List<Compound> comps = new ArrayList<Compound>();
-							for (int i = min; i <= max; i++)
-								comps.add((Compound) listModel.elementAt(i));
-							for (Compound c : clustering.getActiveCompounds())
-								if (!comps.contains(c))
-									comps.add(c);
-							clusterControler.setCompoundActive(ArrayUtil.toArray(comps), true);
+
 						}
-						else
+						finally
 						{
-							if (clustering.isCompoundActive(m))
-								clusterControler.clearCompoundActive(true);
-							else
-								clusterControler.setCompoundActive(m, true);
+							selfBlock = false;
+							SwingUtilities.invokeLater(new Runnable()
+							{
+								public void run()
+								{
+									guiControler.unblock("click compound");
+								}
+							});
 						}
-						selfBlock = false;
 					}
 				});
 				th.start();
