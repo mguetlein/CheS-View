@@ -216,8 +216,8 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 	}
 
 	HashMap<String, Highlighter[]> highlighters;
-	Highlighter selectedHighlighter = Highlighter.CLUSTER_HIGHLIGHTER;
-	Highlighter lastSelectedHighlighter = Highlighter.DEFAULT_HIGHLIGHTER;
+	Highlighter selectedHighlighter = null;
+	Highlighter lastSelectedHighlighter = null;
 	CompoundProperty selectedHighlightCompoundProperty = null;
 	boolean highlighterLabelsVisible = false;
 	HighlightSorting highlightSorting = HighlightSorting.Median;
@@ -1141,24 +1141,24 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 				else if (evt.getPropertyName().equals(ClusteringImpl.CLUSTER_MODIFIED))
 					updateAllClustersAndCompounds(true);
 				else if (evt.getPropertyName().equals(ClusteringImpl.PROPERTY_ADDED))
-					newHighlighters();
+					newHighlighters(false);
 			}
 		});
 		updateClusteringNew();
 	}
 
-	private void newHighlighters()
+	private void newHighlighters(boolean init)
 	{
 		Highlighter[] h = new Highlighter[] { Highlighter.DEFAULT_HIGHLIGHTER };
 		if (clustering.getNumClusters() > 1)
 			h = ArrayUtil.concat(Highlighter.class, h, new Highlighter[] { Highlighter.CLUSTER_HIGHLIGHTER });
 		if (clustering.getAdditionalProperties() != null)
 			for (CompoundProperty p : clustering.getAdditionalProperties())
-				h = ArrayUtil.concat(Highlighter.class, h, new Highlighter[] { new CompoundPropertyHighlighter(p) });
+				h = ArrayUtil.concat(Highlighter.class, h, new Highlighter[] { CompoundPropertyHighlighter.create(p) });
 
 		if (clustering.getSubstructureSmartsType() != null)
 			h = ArrayUtil.concat(Highlighter.class, h,
-					new Highlighter[] { new SubstructureHighlighter(clustering.getSubstructureSmartsType()) });
+					new Highlighter[] { SubstructureHighlighter.create(clustering.getSubstructureSmartsType()) });
 
 		highlighters = new LinkedHashMap<String, Highlighter[]>();
 		highlighters.put("", h);
@@ -1167,22 +1167,31 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 		CompoundPropertyHighlighter[] featureHighlighters = new CompoundPropertyHighlighter[props.size()];
 		int fCount = 0;
 		for (CompoundProperty p : props)
-			featureHighlighters[fCount++] = new CompoundPropertyHighlighter(p);
+			featureHighlighters[fCount++] = CompoundPropertyHighlighter.create(p);
 		highlighters.put("Features NOT used for mapping", featureHighlighters);
 
 		props = clustering.getFeatures();
 		featureHighlighters = new CompoundPropertyHighlighter[props.size()];
 		fCount = 0;
 		for (CompoundProperty p : props)
-			featureHighlighters[fCount++] = new CompoundPropertyHighlighter(p);
+			featureHighlighters[fCount++] = CompoundPropertyHighlighter.create(p);
 		highlighters.put("Features used for mapping", featureHighlighters);
 
+		if (init)
+		{
+			if (clustering.getNumClusters() > 1)
+				selectedHighlighter = Highlighter.CLUSTER_HIGHLIGHTER;
+			else
+				selectedHighlighter = Highlighter.DEFAULT_HIGHLIGHTER;
+			lastSelectedHighlighter = selectedHighlighter;
+			highlightAutomatic.init();
+		}
 		fireViewChange(PROPERTY_NEW_HIGHLIGHTERS);
 	}
 
 	private void updateClusteringNew()
 	{
-		newHighlighters();
+		newHighlighters(true);
 
 		updateAllClustersAndCompounds(true);
 
@@ -1191,7 +1200,6 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 
 		setSpinEnabled(isSpinEnabled(), true);
 
-		initHighlighter();
 		initCompoundDescriptor();
 
 		view.suspendAnimation("new clustering");
@@ -1204,20 +1212,11 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 		view.proceedAnimation("new clustering");
 	}
 
-	private void initHighlighter()
-	{
-		if (clustering.getNumClusters() == 1)
-			setHighlighter(Highlighter.DEFAULT_HIGHLIGHTER, false);
-		else
-			setHighlighter(Highlighter.CLUSTER_HIGHLIGHTER, false);
-		highlightAutomatic.init();
-	}
-
 	private void updateClusterRemoved()
 	{
 		updateAllClustersAndCompounds(true);
-		if (clustering.getNumClusters() == 0 && selectedHighlightCompoundProperty != null)
-			initHighlighter();
+		if (clustering.getNumClusters() <= 1)
+			newHighlighters(selectedHighlighter == Highlighter.CLUSTER_HIGHLIGHTER);
 		if (clustering.getNumClusters() == 1)
 			clustering.getClusterActive().setSelected(0);
 	}

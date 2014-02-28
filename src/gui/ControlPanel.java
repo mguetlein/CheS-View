@@ -287,6 +287,9 @@ public class ControlPanel extends JPanel
 			throw new IllegalStateException("GUI updates only in event dispatch thread plz");
 
 		selfUpdate = true;
+		if (((DefaultComboBoxModel) highlightCombobox.getModel()).getIndexOf(viewControler.getHighlighter()) == -1)
+			new IllegalStateException("cannot find " + viewControler.getHighlighter() + " in highlighter combo box")
+					.printStackTrace();
 		highlightCombobox.setSelectedItem(viewControler.getHighlighter());
 		highlightMinMaxCombobox.setSelectedItem(viewControler.getHighlightSorting());
 		boolean featHighSel = ((Highlighter) highlightCombobox.getSelectedItem()) instanceof CompoundPropertyHighlighter;

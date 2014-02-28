@@ -1,12 +1,23 @@
 package gui.util;
 
+import java.util.HashMap;
+
 import dataInterface.SubstructureSmartsType;
 
 public class SubstructureHighlighter extends Highlighter
 {
 	private SubstructureSmartsType type;
 
-	public SubstructureHighlighter(SubstructureSmartsType type)
+	private static HashMap<SubstructureSmartsType, SubstructureHighlighter> INSTANCES = new HashMap<SubstructureSmartsType, SubstructureHighlighter>();
+
+	public static SubstructureHighlighter create(SubstructureSmartsType type)
+	{
+		if (!INSTANCES.containsKey(type))
+			INSTANCES.put(type, new SubstructureHighlighter(type));
+		return INSTANCES.get(type);
+	}
+
+	private SubstructureHighlighter(SubstructureSmartsType type)
 	{
 		super(type.getName());
 		this.type = type;
