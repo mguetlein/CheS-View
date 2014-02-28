@@ -2,7 +2,6 @@ package gui;
 
 import gui.swing.ComponentFactory;
 import gui.swing.TransparentViewPanel;
-import gui.util.CompoundPropertyHighlighter;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
@@ -28,6 +27,7 @@ import javax.swing.event.ListSelectionListener;
 
 import main.ScreenSetup;
 import util.ArrayUtil;
+import util.ImageLoader;
 import cluster.Cluster;
 import cluster.ClusterController;
 import cluster.Clustering;
@@ -52,6 +52,7 @@ public class CompoundListPanel extends JPanel
 	GUIControler guiControler;
 
 	JButton clearSelectedButton;
+	JButton filterButton;
 
 	public CompoundListPanel(Clustering clustering, ClusterController clusterControler, ViewControler controler,
 			GUIControler guiControler)
@@ -74,7 +75,8 @@ public class CompoundListPanel extends JPanel
 			@Override
 			public void propertyChange(PropertyChangeEvent evt)
 			{
-				if (evt.getPropertyName().equals(ClusteringImpl.CLUSTER_MODIFIED))
+				if (evt.getPropertyName().equals(ClusteringImpl.CLUSTER_MODIFIED)
+						|| evt.getPropertyName().equals(ClusteringImpl.CLUSTER_CLEAR))
 				{
 					updateList();
 				}
@@ -107,6 +109,7 @@ public class CompoundListPanel extends JPanel
 					selfBlock = false;
 				}
 				updateClearButton();
+				updateFilterButton();
 			}
 
 			@Override
@@ -231,6 +234,19 @@ public class CompoundListPanel extends JPanel
 			}
 		});
 
+		filterButton.addActionListener(new ActionListener()
+		{
+			@Override
+			public void actionPerformed(ActionEvent e)
+			{
+				List<Compound> unselectedCompounds = new ArrayList<Compound>();
+				for (Compound c : clustering.getCompounds(false))
+					if (!clustering.isCompoundActive(c))
+						unselectedCompounds.add(c);
+				clusterControler.applyCompoundFilter("Hide unselected compounds", unselectedCompounds);
+			}
+		});
+
 		clearSelectedButton.addActionListener(new ActionListener()
 		{
 			@Override
@@ -261,6 +277,12 @@ public class CompoundListPanel extends JPanel
 				noAwt.start();
 			}
 		});
+	}
+
+	private void updateFilterButton()
+	{
+		filterButton.setVisible(listScrollPane.isVisible() && clustering.getActiveCompounds().length > 1
+				&& clustering.getActiveCompounds().length < clustering.getNumCompounds(false) - 1);
 	}
 
 	private void updateClearButton()
@@ -335,13 +357,17 @@ public class CompoundListPanel extends JPanel
 		p.add(listWrapped);
 
 		clearSelectedButton = ComponentFactory.createCrossViewButton();
-		JPanel buttonWrapped = new TransparentViewPanel(new BorderLayout());
+		filterButton = ComponentFactory.createViewButton(ImageLoader.getImage(ImageLoader.Image.filter14_black),
+				ImageLoader.getImage(ImageLoader.Image.filter14));
+		JPanel buttonWrapped = new TransparentViewPanel(new BorderLayout(6, 6));
 		buttonWrapped.add(clearSelectedButton);
+		buttonWrapped.add(filterButton, BorderLayout.SOUTH);
 		JPanel removeButtonPanel = new JPanel(new BorderLayout());
 		removeButtonPanel.setOpaque(false);
 		removeButtonPanel.add(buttonWrapped, BorderLayout.NORTH);
 		p.add(removeButtonPanel, BorderLayout.EAST);
 		clearSelectedButton.setVisible(false);
+		filterButton.setVisible(false);
 
 		setLayout(new BorderLayout());
 		add(p);
@@ -365,7 +391,13 @@ public class CompoundListPanel extends JPanel
 		setVisible(true);
 
 		setIgnoreRepaint(true);
-		if (!clustering.isClusterActive() && !viewControler.isSingleCompoundSelection())
+		if (clustering.getNumClusters() == 0)
+		{
+			listScrollPane.setVisible(false);
+			clearSelectedButton.setVisible(false);
+			filterButton.setVisible(false);
+		}
+		else if (!clustering.isClusterActive() && !viewControler.isSingleCompoundSelection())
 		{
 			listScrollPane.setVisible(false);
 		}

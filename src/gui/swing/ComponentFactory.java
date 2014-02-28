@@ -670,6 +670,25 @@ public class ComponentFactory
 		return c;
 	}
 
+	public static JButton createViewButton(final ImageIcon blackIcon, final ImageIcon whiteIcon)
+	{
+		JButton c = new JButton(isBackgroundBlack() ? blackIcon : whiteIcon)
+		{
+			public void updateUI()
+			{
+				super.updateUI();
+				setForeground(FOREGROUND);
+				setBackground(BACKGROUND);
+				setBorder(new CompoundBorder(new LineBorder(FOREGROUND, 1), new EmptyBorder(new Insets(1, 1, 1, 1))));
+				setIcon(isBackgroundBlack() ? blackIcon : whiteIcon);
+			}
+		};
+		c.setOpaque(false);
+		c.setFocusable(false);
+		c.setBorder(new CompoundBorder(new LineBorder(FOREGROUND, 1), new EmptyBorder(new Insets(1, 1, 1, 1))));
+		return c;
+	}
+
 	public static JTextArea createViewTextArea(String text, boolean editable, boolean wrap)
 	{
 		JTextArea infoTextArea = new JTextArea(text)

@@ -352,7 +352,7 @@ public class Actions
 		{
 			AbstractAction action = (AbstractAction) actions.get(actionsX[i]);
 			boolean selected = selectedX[i];
-			String actionString = actionStrings[i] + " " + (selected ? "selected" : "un-selected");
+			String actionString = actionStrings[i] + " " + (selected ? "selected" : "unselected");
 			Cluster clusters[] = selected ? selectedClusters : unselectedClusters;
 			Compound compounds[] = selected ? selectedCompounds : unselectedCompounds;
 			action.putValue("Compound", new Compound[0]);
@@ -404,7 +404,7 @@ public class Actions
 			superImp.setEnabled(viewControler.isAllClustersSpreadable());
 	}
 
-	private void filter(AbstractAction action)
+	private void filter(AbstractAction action, boolean unselected)
 	{
 		final Compound comps[] = (Compound[]) action.getValue("Compound");
 		final Cluster c[] = (Cluster[]) action.getValue("Cluster");
@@ -412,12 +412,12 @@ public class Actions
 		String desc;
 		if (comps.length > 0)
 		{
-			desc = "Hide selected compounds";
+			desc = "Hide " + (unselected ? "un" : "") + "selected compounds";
 			compounds = ArrayUtil.toList(comps);
 		}
 		else
 		{
-			desc = "Hide selected clusters";
+			desc = "Hide " + (unselected ? "un" : "") + "selected clusters";
 			for (Cluster clust : c)
 				for (Compound compound : clust.getCompounds())
 					compounds.add(compound);
@@ -628,7 +628,7 @@ public class Actions
 			@Override
 			public void action()
 			{
-				filter((AbstractAction) actions.get(FILTER_SELECTED));
+				filter((AbstractAction) actions.get(FILTER_SELECTED), false);
 			}
 		};
 		new ActionCreator(FILTER_UNSELECTED)
@@ -636,7 +636,7 @@ public class Actions
 			@Override
 			public void action()
 			{
-				filter((AbstractAction) actions.get(FILTER_UNSELECTED));
+				filter((AbstractAction) actions.get(FILTER_UNSELECTED), true);
 			}
 		};
 		new ActionCreator(FILTER_CLUSTERS)

@@ -1789,7 +1789,7 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 				guiControler
 						.showMessage("When a compound (or cluster) is selected via mouse-over, draw other compounds translucent.");
 			else
-				guiControler.showMessage("Ignore mouse-over selection, draw un-selected compounds solid.");
+				guiControler.showMessage("Ignore mouse-over selection, draw unselected compounds solid.");
 		}
 	}
 
