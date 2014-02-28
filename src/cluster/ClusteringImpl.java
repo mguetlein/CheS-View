@@ -352,7 +352,6 @@ public class ClusteringImpl implements Zoomable, Clustering
 		dirty = true;
 
 		getClusterActive().clearSelection();
-		fire(CLUSTER_REMOVED, old, clusters);
 		fire(CLUSTER_CLEAR, old, clusters);
 	}
 

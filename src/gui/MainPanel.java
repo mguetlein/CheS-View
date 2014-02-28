@@ -1085,10 +1085,7 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 	public void init(ClusteringData clusteredDataset)
 	{
 		if (clustering.numClusters() > 0)
-		{
-			clearClusterActive(false, true);
-			clustering.clear();
-		}
+			throw new IllegalStateException("only done once at the start");
 		clustering.newClustering(clusteredDataset);
 		clustering.initFeatureNormalization();
 
@@ -2454,6 +2451,7 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 							public void run()
 							{
 								clustering.clear();
+								compoundFilter = null;
 							}
 						});
 

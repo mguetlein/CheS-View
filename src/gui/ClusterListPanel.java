@@ -164,10 +164,12 @@ public class ClusterListPanel extends JPanel
 			public void propertyChange(PropertyChangeEvent evt)
 			{
 				if (evt.getPropertyName().equals(ClusteringImpl.CLUSTER_ADDED)
-						|| evt.getPropertyName().equals(ClusteringImpl.CLUSTER_REMOVED))
+						|| evt.getPropertyName().equals(ClusteringImpl.CLUSTER_REMOVED)
+						|| evt.getPropertyName().equals(ClusteringImpl.CLUSTER_CLEAR))
 				{
 					selfBlock = true;
 					updateList();
+					updateFilter();
 					selfBlock = false;
 				}
 			}
@@ -390,7 +392,7 @@ public class ClusterListPanel extends JPanel
 
 	private void updateFilter()
 	{
-		if (clusterControler.getCompoundFilter() == null)
+		if (clusterControler.getCompoundFilter() == null || clustering.getNumClusters() == 0)
 		{
 			filterPanel.setVisible(false);
 		}

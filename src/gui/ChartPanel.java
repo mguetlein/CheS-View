@@ -221,13 +221,9 @@ public class ChartPanel extends JPanel
 				{
 					update(true);
 				}
-				else if (evt.getPropertyName().equals(ClusteringImpl.CLUSTER_REMOVED))
-				{
-					cardPanel.removeAll();
-					cardContents.clear();
-					update(true);
-				}
-				else if (evt.getPropertyName().equals(ClusteringImpl.CLUSTER_ADDED))
+				else if (evt.getPropertyName().equals(ClusteringImpl.CLUSTER_REMOVED)
+						|| evt.getPropertyName().equals(ClusteringImpl.CLUSTER_CLEAR)
+						|| evt.getPropertyName().equals(ClusteringImpl.CLUSTER_ADDED))
 				{
 					cardPanel.removeAll();
 					cardContents.clear();
