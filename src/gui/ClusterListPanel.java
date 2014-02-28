@@ -130,10 +130,13 @@ public class ClusterListPanel extends JPanel
 				{
 					public void run()
 					{
+						//clear only if there is a single zoomed in compound
+						boolean clearCompound = clustering.getActiveCompounds().length == 1
+								&& View.instance.getZoomTarget() == clustering.getActiveCompound();
 						if (clusterList.getSelectedValue() == AllCompounds)
 						{
 							if (clustering.isClusterActive())
-								clusterControler.clearClusterActive(true, true);
+								clusterControler.clearClusterActive(true, clearCompound);
 							SwingUtilities.invokeLater(new Runnable()
 							{
 								@Override
@@ -146,10 +149,10 @@ public class ClusterListPanel extends JPanel
 						else
 						{
 							Cluster c = (Cluster) clusterList.getSelectedValue();
-							if (c == clustering.getActiveCluster())
+							if (c != clustering.getActiveCluster())
+								clusterControler.setClusterActive(c, true, clearCompound);
+							else if (clearCompound)
 								clusterControler.clearCompoundActive(true);
-							else
-								clusterControler.setClusterActive(c, true, true);
 						}
 						selfBlock = false;
 					}

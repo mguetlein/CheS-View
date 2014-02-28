@@ -123,6 +123,7 @@ public class CompoundListPanel extends JPanel
 			{
 				updateList();
 				updateClearButton();
+				updateFilterButton();
 			}
 		});
 
@@ -217,6 +218,7 @@ public class CompoundListPanel extends JPanel
 				{
 					updateList();
 					updateClearButton();
+					updateFilterButton();
 				}
 				else if (evt.getPropertyName().equals(ViewControler.PROPERTY_FONT_SIZE_CHANGED))
 					updateListSize();
