@@ -112,7 +112,7 @@ public class ClusterListPanel extends JPanel
 				if (selfBlock)
 					return;
 				selfBlock = true;
-				if (clusterList.getSelectedValue() == AllCompounds)
+				if (clusterList.getSelectedValue() == AllCompounds || clusterList.getSelectedIndex() == -1)
 					clusterControler.clearClusterWatched();
 				else
 					clusterControler.setClusterWatched((Cluster) clusterList.getSelectedValue());

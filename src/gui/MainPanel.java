@@ -2165,7 +2165,7 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 		Cluster clust = clustering.getUniqueClusterForCompounds(c);
 		if (clust == null && clustering.isClusterActive())
 			clearClusterActive(true, false);
-		else if (clust != null && clustering.getActiveCluster() != clust)
+		else if (c.length == 1 && clust != null && clustering.getActiveCluster() != clust)
 		{
 			setClusterActive(clust, animate, true);
 			zoomedToCluster = true;
