@@ -309,6 +309,7 @@ public class View
 			//				scriptWait("ellipsoid ID " + id + " center " + convertPos(center));
 
 			double mSize = medianDiameter() + ((m.getDiameter() - medianDiameter()) * 0.25);
+			mSize = Math.min(8.0, mSize);
 			double size = Math.max(1.0, mSize * 0.5 * (0.1 + 0.9 * sphereSize));
 
 			scriptWait("ellipsoid ID " + id + " AXES {" + size + " 0 0} {0 " + size + " 0} {0 0 " + size + "}");
