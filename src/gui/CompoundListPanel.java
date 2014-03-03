@@ -135,6 +135,7 @@ public class CompoundListPanel extends JPanel
 					return;
 				guiControler.block("click compound");
 				selfBlock = true;
+				viewControler.clearMouseMoveWatchUpdates(false);
 
 				Thread th = new Thread(new Runnable()
 				{
@@ -211,8 +212,15 @@ public class CompoundListPanel extends JPanel
 				}
 				else
 				{
-					clusterControler.clearClusterWatched();
-					clusterControler.setCompoundWatched((Compound) listModel.elementAt(index));
+					final Compound watched = (Compound) listModel.elementAt(index);
+					controler.doMouseMoveWatchUpdates(new Runnable()
+					{
+						public void run()
+						{
+							clusterControler.clearClusterWatched();
+							clusterControler.setCompoundWatched(watched);
+						}
+					});
 				}
 				selfBlock = false;
 			}

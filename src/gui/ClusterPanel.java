@@ -95,8 +95,6 @@ public class ClusterPanel extends JPanel
 		infoAndChartContainer.add(chartContainer, BorderLayout.SOUTH);
 		infoAndChartContainer.setBorder(new EmptyBorder(top, 25, bottom, 25));
 
-		mainPanel.addIgnoreMouseMovementComponents(chartPanel);
-
 		allPanelsContainer.add(infoAndChartContainer);
 
 		//		SwingUtil.setDebugBorder(chartPanel, Color.LIGHT_GRAY);

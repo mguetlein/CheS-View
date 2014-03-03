@@ -180,6 +180,7 @@ public class ChartPanel extends JPanel
 				return dim;
 			}
 		};
+		viewControler.addIgnoreMouseMovementComponents(cardPanel);
 		add(cardPanel, BorderLayout.CENTER);
 		setOpaque(false);
 
@@ -312,6 +313,7 @@ public class ChartPanel extends JPanel
 		@Override
 		public void clickEvent(boolean ctrlDown, boolean doubleClick)
 		{
+			viewControler.clearMouseMoveWatchUpdates(false);
 			handleEvent(false, ctrlDown, doubleClick);
 		}
 
@@ -351,9 +353,16 @@ public class ChartPanel extends JPanel
 							selfUpdateCompounds = comps;
 
 							if (comps.size() == 0)
-								clusterControler.clearCompoundWatched();
+								viewControler.clearMouseMoveWatchUpdates(true);
 							else
-								clusterControler.setCompoundWatched(ArrayUtil.toArray(comps));
+								viewControler.doMouseMoveWatchUpdates(new Runnable()
+								{
+									@Override
+									public void run()
+									{
+										clusterControler.setCompoundWatched(ArrayUtil.toArray(comps));
+									}
+								});
 						}
 						else
 						{

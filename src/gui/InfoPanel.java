@@ -732,17 +732,7 @@ public class InfoPanel extends JPanel
 					if ((InfoPanel.this.clustering.isClusterWatched() || InfoPanel.this.clustering.isCompoundWatched())
 							&& SwingUtil.isMouseInside(clusterCompoundPanel))
 					{
-						SwingUtilities.invokeLater(new Runnable()
-						{
-							@Override
-							public void run()
-							{
-								if (InfoPanel.this.clustering.isClusterWatched())
-									InfoPanel.this.clusterControler.clearClusterWatched();
-								else if (InfoPanel.this.clustering.isCompoundWatched())
-									InfoPanel.this.clusterControler.clearCompoundWatched();
-							}
-						});
+						InfoPanel.this.viewControler.clearMouseMoveWatchUpdates(true);
 					}
 				}
 			}

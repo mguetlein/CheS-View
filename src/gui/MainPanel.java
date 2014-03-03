@@ -326,6 +326,7 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 			{
 				//				MainPanel.this.guiControler.block("handle click");
 
+				clearMouseMoveWatchUpdates(false);
 				if (SwingUtilities.isLeftMouseButton(e))
 				{
 					Thread th = new Thread(new Runnable()
@@ -382,12 +383,80 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 
 		jmolPanel.addMouseMotionListener(new MouseAdapter()
 		{
-
-			public void mouseMoved(MouseEvent e)
+			public void mouseMoved(final MouseEvent ev)
 			{
-				updateMouse(e.getPoint(), e.isShiftDown());
+				updateMouse(ev.getPoint(), ev.isShiftDown());
 			}
 		});
+	}
+
+	Thread mouseMoveUpdateThread;
+	boolean mouseMoveUpdate = false;
+	Runnable mouseMoveRunnable = null;
+
+	@Override
+	public void clearMouseMoveWatchUpdates(boolean clearWatched)
+	{
+		if (mouseMoveUpdateThread != null)
+			synchronized (mouseMoveUpdateThread)
+			{
+				this.mouseMoveRunnable = null;
+				mouseMoveUpdate = false;
+			}
+		SwingUtilities.invokeLater(new Runnable()
+		{
+			public void run()
+			{
+				clearCompoundWatched();
+				clearClusterWatched();
+			}
+		});
+	}
+
+	@Override
+	public void doMouseMoveWatchUpdates(Runnable run)
+	{
+		if (mouseMoveUpdateThread == null)
+		{
+			mouseMoveUpdateThread = new Thread(new Runnable()
+			{
+				@Override
+				public void run()
+				{
+					while (true)
+					{
+						Runnable r = null;
+						synchronized (mouseMoveUpdateThread)
+						{
+							if (mouseMoveUpdate)
+								r = mouseMoveRunnable;
+						}
+						ThreadUtil.sleep(100);
+						synchronized (mouseMoveUpdateThread)
+						{
+							if (mouseMoveUpdate && r == mouseMoveRunnable)//check for override by new event 
+							{
+								SwingUtilities.invokeLater(new Runnable()
+								{
+									public void run()
+									{
+										mouseMoveRunnable.run();
+									}
+								});
+								mouseMoveUpdate = false;
+							}
+						}
+						ThreadUtil.sleep(10);
+					}
+				}
+			});
+			mouseMoveUpdateThread.start();
+		}
+		synchronized (mouseMoveUpdateThread)
+		{
+			mouseMoveRunnable = run;
+			mouseMoveUpdate = true;
+		}
 	}
 
 	Point mousePos;
@@ -398,7 +467,7 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 		updateMouse(mousePos, shiftDown);
 	}
 
-	private void updateMouse(Point mousePos, boolean shiftDown)
+	private void updateMouse(Point mousePos, final boolean shiftDown)
 	{
 		if (guiControler.isBlocked())
 			return;
@@ -414,37 +483,29 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 					return;
 			}
 		}
-
-		int atomIndex = view.findNearestAtomIndex(mousePos.x, mousePos.y);
-
-		if (!clustering.isClusterActive() && !shiftDown && !singleCompoundSelection)
-		{
-			if (atomIndex == -1)
-			{
-				// // do not clear cluster selection
-				clustering.getClusterWatched().clearSelection();
-			}
-			else
-			{
-				clustering.getCompoundWatched().clearSelection();
-				//clustering.getCompoundActive().clearSelection();
-				clustering.getClusterWatched().setSelected(
-						(clustering.getClusterIndexForJmolIndex(view.getAtomCompoundIndex(atomIndex))));
-			}
-		}
+		final int atomIndex = view.findNearestAtomIndex(mousePos.x, mousePos.y);
+		if (atomIndex == -1)
+			clearMouseMoveWatchUpdates(true);
 		else
-		{
-			if (atomIndex == -1)
+			doMouseMoveWatchUpdates(new Runnable()
 			{
-				// // do not clear compound selection
-				clustering.getCompoundWatched().clearSelection();
-			}
-			else
-			{
-				clustering.getClusterWatched().clearSelection();
-				clustering.getCompoundWatched().setSelected(view.getAtomCompoundIndex(atomIndex));
-			}
-		}
+				@Override
+				public void run()
+				{
+					if (!clustering.isClusterActive() && !shiftDown && !singleCompoundSelection)
+					{
+						clustering.getCompoundWatched().clearSelection();
+						//clustering.getCompoundActive().clearSelection();
+						clustering.getClusterWatched().setSelected(
+								(clustering.getClusterIndexForJmolIndex(view.getAtomCompoundIndex(atomIndex))));
+					}
+					else
+					{
+						clustering.getClusterWatched().clearSelection();
+						clustering.getCompoundWatched().setSelected(view.getAtomCompoundIndex(atomIndex));
+					}
+				}
+			});
 	}
 
 	@Override
@@ -790,6 +851,7 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 		int watchedCluster = clustering.getClusterWatched().getSelected();
 
 		boolean showHoverBox = false;
+		boolean showHoverBoxLabels = false;
 		boolean showActiveBox = false;
 		boolean showLabel = false;
 		boolean translucent = false;
@@ -813,7 +875,10 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 				showLabel = true;
 
 			if (clustering.getCompoundWatched().isSelected(compoundJmolIndex) && !c.isSuperimposed())
+			{
 				showHoverBox = true;
+				showHoverBoxLabels = clustering.getCompoundWatched().getNumSelected() == 1;
+			}
 			if (clustering.getCompoundActive().isSelected(compoundJmolIndex) && !c.isSuperimposed())
 				showActiveBox = true;
 		}
@@ -846,7 +911,10 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 			}
 
 			if (clustering.getCompoundWatched().isSelected(compoundJmolIndex) && !c.isSuperimposed())
+			{
 				showHoverBox = true;
+				showHoverBoxLabels = clustering.getCompoundWatched().getNumSelected() == 1;
+			}
 			if (clustering.getCompoundActive().isSelected(compoundJmolIndex) && !c.isSuperimposed())
 				showActiveBox = true;
 		}
@@ -980,9 +1048,12 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 					view.scriptWait("boundbox { selected }");
 				view.scriptWait("boundbox off");
 				//				view.scriptWait("font bb" + m.getJmolIndex() + "h " + View.FONT_SIZE);
+				String label = "";
+				if (showHoverBoxLabels)
+					label = " \"" + m.toStringWithValue() + "\"";
 				view.scriptWait("draw ID bb" + m.getJmolIndex() + "h BOUNDBOX color "
 						+ ColorUtil.toJMolString(ComponentFactory.LIST_WATCH_BACKGROUND) + " translucent "
-						+ boxTranslucency + " MESH NOFILL \"" + m.toStringWithValue() + "\"");
+						+ boxTranslucency + " MESH NOFILL" + label);
 
 				//				jmolPanel.repaint(); // HACK to avoid label display errors
 			}
@@ -1180,6 +1251,7 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 				selectedHighlighter = Highlighter.CLUSTER_HIGHLIGHTER;
 			else
 				selectedHighlighter = Highlighter.DEFAULT_HIGHLIGHTER;
+			selectedHighlightCompoundProperty = null;
 			lastSelectedHighlighter = selectedHighlighter;
 			highlightAutomatic.init();
 		}
@@ -2341,11 +2413,15 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 	@Override
 	public void setCompoundFilter(final CompoundFilter filter, final boolean animate)
 	{
-		if (filter == null && compoundFilter == null)
+		if (filter == null && compoundFilter == null || filter == compoundFilter)
 			return;
 		clearClusterActive(animate, true);
 		if (!animate)
 			view.suspendAnimation("change compound filter");
+
+		final CompoundProperty p = selectedHighlightCompoundProperty;
+		if (selectedHighlightCompoundProperty != null) // otherwise spheres will screw up
+			selectedHighlightCompoundProperty = null;
 
 		SwingUtil.invokeAndWait(new Runnable()
 		{
@@ -2385,6 +2461,11 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 							@Override
 							public void run()
 							{
+								if (p != null)
+								{
+									selectedHighlightCompoundProperty = p;
+									updateAllClustersAndCompounds(false);
+								}
 								fireViewChange(PROPERTY_COMPOUND_FILTER_CHANGED);
 							}
 						});

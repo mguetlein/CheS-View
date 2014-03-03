@@ -113,10 +113,25 @@ public class ClusterListPanel extends JPanel
 					return;
 				selfBlock = true;
 				if (clusterList.getSelectedValue() == AllCompounds || clusterList.getSelectedIndex() == -1)
-					clusterControler.clearClusterWatched();
+					viewControler.clearMouseMoveWatchUpdates(true);
 				else
-					clusterControler.setClusterWatched((Cluster) clusterList.getSelectedValue());
-				selfBlock = false;
+				{
+					final Cluster watchCluster = (Cluster) clusterList.getSelectedValue();
+					viewControler.doMouseMoveWatchUpdates(new Runnable()
+					{
+						public void run()
+						{
+							clusterControler.setClusterWatched(watchCluster);
+						}
+					});
+				}
+				SwingUtilities.invokeLater(new Runnable()
+				{
+					public void run()
+					{
+						selfBlock = false;
+					}
+				});
 			}
 		});
 		clusterList.addMouseListener(new MouseAdapter()
@@ -127,6 +142,7 @@ public class ClusterListPanel extends JPanel
 					return;
 				guiControler.block("click cluster");
 				selfBlock = true;
+				viewControler.clearMouseMoveWatchUpdates(false);
 				Thread th = new Thread(new Runnable()
 				{
 					public void run()

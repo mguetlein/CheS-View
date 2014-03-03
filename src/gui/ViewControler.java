@@ -240,6 +240,10 @@ public interface ViewControler
 
 	public boolean isSingleCompoundSelection();
 
+	public void doMouseMoveWatchUpdates(Runnable runnable);
+
+	public void clearMouseMoveWatchUpdates(boolean clearWatched);
+
 	// to remove
 
 	//	public void setZoomToSingleActiveCompounds(boolean b);
