@@ -920,11 +920,14 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 		}
 
 		String smarts = null;
-		if (selectedHighlighter instanceof SubstructureHighlighter)
-			smarts = c.getSubstructureSmarts(((SubstructureHighlighter) selectedHighlighter).getType());
-		else if (selectedHighlighter instanceof CompoundPropertyHighlighter
-				&& ((CompoundPropertyHighlighter) selectedHighlighter).getProperty().isSmartsProperty())
-			smarts = ((CompoundPropertyHighlighter) selectedHighlighter).getProperty().getSmarts();
+		if (style != Style.dots)
+		{
+			if (selectedHighlighter instanceof SubstructureHighlighter)
+				smarts = c.getSubstructureSmarts(((SubstructureHighlighter) selectedHighlighter).getType());
+			else if (selectedHighlighter instanceof CompoundPropertyHighlighter
+					&& ((CompoundPropertyHighlighter) selectedHighlighter).getProperty().isSmartsProperty())
+				smarts = ((CompoundPropertyHighlighter) selectedHighlighter).getProperty().getSmarts();
+		}
 
 		if (!highlighterLabelsVisible)
 			showLabel = false;
