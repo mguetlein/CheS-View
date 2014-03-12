@@ -66,6 +66,8 @@ public class TreeView extends BlockableFrame
 
 	JTree tree;
 
+	boolean tanimotoWorking;
+
 	public static enum Crit
 	{
 		size, uniform, activity, nullRatio;
@@ -135,7 +137,16 @@ public class TreeView extends BlockableFrame
 
 		public Double getStructuralSimilarity()
 		{
-			return getSimilarity(clustering.getFeatures(), tanimotoSim);
+			if (tanimotoWorking)
+				return getSimilarity(clustering.getFeatures(), tanimotoSim);
+
+			List<Double> distances = new ArrayList<Double>();
+			List<Compound> compounds = getLeafs();
+			for (int i = 0; i < compounds.size() - 1; i++)
+				for (int j = i + 1; j < compounds.size(); j++)
+					distances.add(clustering.getFeatureDistance(compounds.get(i).getOrigIndex(), compounds.get(j)
+							.getOrigIndex()));
+			return DoubleArraySummary.create(distances).getMean();
 		}
 
 		public Double getToxSimilarity()
@@ -389,10 +400,22 @@ public class TreeView extends BlockableFrame
 				//					System.out.println();
 				//
 				//				}
-				return "<html>"
-						+ super.toString()
-						+ " "
-						+ (cluster != null ? ("<b>" + cluster.getName() + "</b> ") : "")
+
+				String simStruct = "";
+				if (getCluster() != null)
+				{
+					Double d = getStructuralSimilarity();
+					if (tanimotoWorking)
+						simStruct = " simStruct:" + StringUtil.formatDouble(d);
+					else
+						simStruct = " distStruct:" + StringUtil.formatDouble(d);
+				}
+
+				return //"<html>"
+						//+ 
+				super.toString() + " "
+						+ (cluster != null ? (cluster.getName() + " ") : "")
+						//+ (cluster != null ? ("<b>" + cluster.getName() + "</b> ") : "")
 						+ "(#"
 						+ getNumOffspring()
 						+ ") active:"
@@ -402,8 +425,7 @@ public class TreeView extends BlockableFrame
 						+ StringUtil.formatDouble(getNullRatio())
 						//						+ " #all-missing:"
 						//						+ getNumAllNull()
-						+ (getCluster() != null ? (" simStruct:" + StringUtil.formatDouble(getStructuralSimilarity()))
-								: "")
+						+ simStruct
 						+ (getCluster() != null ? (" simTox:" + StringUtil.formatDouble(getToxSimilarity())) : "")
 						+ (getCluster() != null ? (" wTox:" + StringUtil.formatDouble(getWeightedTox())) : "");
 				//						+ (getClusterNodes().size() > 0 ? (" num:" + getClusterNodes().size() + " avg-act:"
@@ -423,6 +445,8 @@ public class TreeView extends BlockableFrame
 		this.clusterControler = clusterControler;
 		this.clustering = clustering;
 		this.guiControler = guiControler;
+
+		tanimotoWorking = DistanceUtil.isBoolean(clustering.getFeatures());
 
 		HashSet<String> propNames = new HashSet<String>();
 		if (propNames.size() == 0)
@@ -518,8 +542,8 @@ public class TreeView extends BlockableFrame
 								clusterControler.setClusterActive(node.getCluster(), true, true);
 							}
 							else
-								clusterControler.setCompoundFilter(new CompoundFilterImpl(node.getName(), node.getLeafs(),
-										true), true);
+								clusterControler.setCompoundFilter(
+										new CompoundFilterImpl(node.getName(), node.getLeafs(), true), true);
 						}
 
 						SwingUtil.invokeAndWait(new Runnable()
@@ -632,7 +656,12 @@ public class TreeView extends BlockableFrame
 		//		FileUtil.CSVFile csv = new FileUtil.CSVFile();
 		//		csv.content = new ArrayList<String[]>();
 		//		String header[] = new String[] { "index", "num-compounds", "compounds", "num-features", "features", "active",
-		//				"missing", "struct-similarity", "tox-similarity", "weighted-tox-similarity" };
+		//				"missing", (tanimotoWorking ? "struct-similarity" : "struct-distance"), "tox-similarity",
+		//				"weighted-tox-similarity" };
+		//		String props[] = new String[activityProps.size()];
+		//		for (int i = 0; i < props.length; i++)
+		//			props[i] = activityProps.get(i).toString() + "-missing";
+		//		header = ArrayUtil.concat(header, props);
 		//
 		//		csv.content.add(header);
 		//		int i = 0;
@@ -643,17 +672,28 @@ public class TreeView extends BlockableFrame
 		//				cmpIdx += comp.getOrigIndex() + ";";
 		//			cmpIdx = cmpIdx.substring(0, cmpIdx.length() - 1);
 		//			MyNode n = mapCluster.get(c);
-		//			Object vals[] = { (i + 1), c.size(), cmpIdx, n.getFeatures().size(),
+		//			int idx = 0;
+		//			Object vals[] = new Object[header.length];
+		//			for (Object object : new Object[] { (i + 1), c.size(), cmpIdx, n.getFeatures().size(),
 		//					ArrayUtil.toString(ArrayUtil.toArray(n.getFeatures()), ";", "", "", ""), n.getActivity(),
-		//					n.getNullRatio(), n.getStructuralSimilarity(), n.getToxSimilarity(), n.getWeightedTox() };
+		//					n.getNullRatio(), n.getStructuralSimilarity(), n.getToxSimilarity(), n.getWeightedTox() })
+		//				vals[idx++] = object;
+		//
+		//			for (CompoundProperty p : activityProps)
+		//			{
+		//				vals[idx++] = c.numMissingValues(p) / (double) c.size();
+		//			}
 		//			csv.content.add(ArrayUtil.toStringArray(vals));
 		//			i++;
 		//		}
 		//		FileUtil.writeCSV("/tmp/cluster.csv", csv, false);
+		//
+		//		String json = JsonTreeNode.create(root).toJson();
+		//		FileUtil.writeStringToFile("/home/martin/documents/tree/tree.json", json);
 
-		//		for (int i = 0; i < tree.getRowCount(); i++)
-		//			if (!((MyNode) tree.getPathForRow(i).getLastPathComponent()).isLeaf())
-		//				tree.expandRow(i);
+		// //		for (int i = 0; i < tree.getRowCount(); i++)
+		// //			if (!((MyNode) tree.getPathForRow(i).getLastPathComponent()).isLeaf())
+		// //				tree.expandRow(i);
 	}
 
 	private void addNodes(MyNode node, List<CompoundProperty> p, List<Compound> c)

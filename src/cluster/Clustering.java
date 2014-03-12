@@ -152,4 +152,6 @@ public interface Clustering extends CompoundPropertyOwner
 
 	Color getHighlightColorText();
 
+	Double getFeatureDistance(int origIndex, int origIndex2);
+
 }

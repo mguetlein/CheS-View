@@ -1104,12 +1104,12 @@ public class ClusteringImpl implements Zoomable, Clustering
 				if (n.endsWith("_real"))
 					realProps.add(n.substring(0, n.length() - 5));
 				else if (n.endsWith("_filled"))
-					realProps.add(n.substring(0, n.length() - 7));
+					filledProps.add(n.substring(0, n.length() - 7));
 				else
-					realProps.add(n);
+					otherProps.add(n);
 			}
-			endpointDataset = true;
-			filledEndpointDataset = true;
+			endpointDataset = realProps.size() > 0;
+			filledEndpointDataset = filledProps.size() > 0 && filledProps.size() == realProps.size();
 			for (String n : realProps)
 			{
 				if (!otherProps.contains(n))
@@ -1184,6 +1184,12 @@ public class ClusteringImpl implements Zoomable, Clustering
 	}
 
 	@Override
+	public Double getFeatureDistance(int origIndex, int origIndex2)
+	{
+		return clusteringData.getFeatureDistance(origIndex, origIndex2);
+	}
+
+	@Override
 	public CompoundProperty addDistanceToCompoundFeature(Compound comp)
 	{
 		for (CompoundProperty prop : getAdditionalProperties())
@@ -1191,10 +1197,10 @@ public class ClusteringImpl implements Zoomable, Clustering
 			if (prop instanceof DistanceToProperty && ((DistanceToProperty) prop).getCompound() == comp)
 				return prop;
 		}
-
 		Double d[] = new Double[getNumCompounds(true)];
 		for (int i = 0; i < d.length; i++)
 			d[i] = clusteringData.getFeatureDistance(comp.getOrigIndex(), getCompounds().get(i).getOrigIndex());
+
 		DistanceToProperty dp = new DistanceToProperty(comp, clusteringData.getEmbeddingDistanceMeasure(), d);
 		addNewAdditionalProperty(dp, null);
 		return dp;
@@ -1229,7 +1235,8 @@ public class ClusteringImpl implements Zoomable, Clustering
 			clusteringData.getAdditionalProperties().remove(old);
 		clusteringData.getAdditionalProperties().add(p);
 		dirty = true;
-		fire(PROPERTY_ADDED, true, false);
+		if (View.instance != null) // for export
+			fire(PROPERTY_ADDED, true, false);
 	}
 
 	private HashMap<String, CompoundSelection> compoundSelections = new HashMap<String, CompoundSelection>();
