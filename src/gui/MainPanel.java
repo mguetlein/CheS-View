@@ -436,11 +436,12 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 						{
 							if (mouseMoveUpdate && r == mouseMoveRunnable)//check for override by new event 
 							{
+								final Runnable fr = r;
 								SwingUtilities.invokeLater(new Runnable()
 								{
 									public void run()
 									{
-										mouseMoveRunnable.run();
+										fr.run();
 									}
 								});
 								mouseMoveUpdate = false;
