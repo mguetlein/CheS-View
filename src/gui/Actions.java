@@ -396,12 +396,11 @@ public class Actions
 			actions.get(EDIT_SHOW_DISTANCE).putValue(Action.NAME, "Distance to selected compound");
 			actions.get(EDIT_SHOW_DISTANCE).setEnabled(false);
 		}
-
-		AbstractAction superImp = ((AbstractAction) actions.get(EDIT_SUPERIMPOSE));
+		actions.get(EDIT_SHOW_SALI).setEnabled(!clustering.isRandomEmbedding());
 		if (clustering.isClusterActive())
-			superImp.setEnabled(viewControler.isSingleClusterSpreadable());
+			actions.get(EDIT_SUPERIMPOSE).setEnabled(viewControler.isSingleClusterSpreadable());
 		else
-			superImp.setEnabled(viewControler.isAllClustersSpreadable());
+			actions.get(EDIT_SUPERIMPOSE).setEnabled(viewControler.isAllClustersSpreadable());
 	}
 
 	private void filter(AbstractAction action, boolean unselected)
@@ -1265,13 +1264,20 @@ public class Actions
 			@Override
 			public void action()
 			{
-				CompoundProperty p = null;
-				if (clustering.isCompoundWatched())
-					p = clustering.addDistanceToCompoundFeature(clustering.getWatchedCompound());
-				else if (clustering.isCompoundActive())
-					p = clustering.addDistanceToCompoundFeature(clustering.getActiveCompound());
-				if (p != null)
-					viewControler.setHighlighter(p);
+				guiControler.block("distance");
+				try
+				{
+					Compound c = null;
+					if (clustering.isCompoundWatched())
+						c = clustering.getWatchedCompound();
+					else if (clustering.isCompoundActive())
+						c = clustering.getActiveCompound();
+					viewControler.setHighlighter(clustering.addDistanceToCompoundFeature(c));
+				}
+				finally
+				{
+					guiControler.unblock("distance");
+				}
 			}
 		};
 		new ActionCreator(EDIT_SHOW_SALI)
