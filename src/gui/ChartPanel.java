@@ -381,8 +381,8 @@ public class ChartPanel extends JPanel
 
 								if (doubleClick)
 								{
-									CompoundFilter compoundFilter = new CompoundFilterImpl(
-											selectionCriterionToString(prop), new ArrayList<Compound>(comps), true);
+									CompoundFilter compoundFilter = new CompoundFilterImpl(clustering,
+											new ArrayList<Compound>(comps), selectionCriterionToString(prop));
 									clusterControler.setCompoundFilter(compoundFilter, true);
 								}
 								else

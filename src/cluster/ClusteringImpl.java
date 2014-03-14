@@ -731,6 +731,12 @@ public class ClusteringImpl implements Zoomable, Clustering
 		return getCompounds(includingMultiClusteredCompounds).size();
 	}
 
+	@Override
+	public int getNumUnfilteredCompounds(boolean includingMultiClusteredCompounds)
+	{
+		return clusteringData.getNumCompounds(includingMultiClusteredCompounds);
+	}
+
 	public List<Compound> getCompounds(boolean includingMultiClusteredCompounds)
 	{
 		update();

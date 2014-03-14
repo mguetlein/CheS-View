@@ -1,33 +1,36 @@
 package cluster;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
+
+import util.ListUtil;
 
 public class CompoundFilterImpl implements CompoundFilter
 {
 	private String desc;
-	private Set<Compound> compounds;
-	private boolean accept;
+	private List<Compound> compounds;
 
-	public CompoundFilterImpl(String desc, List<Compound> compounds, boolean accept)
+	public CompoundFilterImpl(Clustering clustering, List<Compound> compounds, String additionalDesc)
 	{
-		this.desc = desc;
-		this.compounds = new HashSet<Compound>(compounds);
-		this.accept = accept;
+		this.compounds = compounds;
+		desc = "Show " + compounds.size() + "/" + clustering.getNumUnfilteredCompounds(false) + " compounds";
+		if (additionalDesc != null)
+			desc += " (" + additionalDesc + ")";
+	}
+
+	public static CompoundFilterImpl combine(Clustering clustering, CompoundFilter filter1, CompoundFilter filter2)
+	{
+		return new CompoundFilterImpl(clustering, ListUtil.cut2(((CompoundFilterImpl) filter1).compounds,
+				((CompoundFilterImpl) filter2).compounds), null);
 	}
 
 	public String toString()
 	{
-		return desc + " (#" + compounds.size() + ")";
+		return desc;
 	}
 
 	public boolean accept(Compound c)
 	{
-		if (accept)
-			return compounds.contains(c);
-		else
-			return !compounds.contains(c);
+		return compounds.contains(c);
 	}
 
 }

@@ -101,7 +101,9 @@ public interface Clustering extends CompoundPropertyOwner
 
 	double getSpecificity(CompoundSelection sel, CompoundProperty p);
 
-	int getNumCompounds(boolean b);
+	int getNumCompounds(boolean includingMultiClusteredCompounds);
+
+	int getNumUnfilteredCompounds(boolean includingMultiClusteredCompounds);
 
 	String getEmbedAlgorithm();
 

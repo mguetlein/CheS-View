@@ -264,11 +264,7 @@ public class CompoundListPanel extends JPanel
 			@Override
 			public void actionPerformed(ActionEvent e)
 			{
-				List<Compound> unselectedCompounds = new ArrayList<Compound>();
-				for (Compound c : clustering.getCompounds(false))
-					if (!clustering.isCompoundActive(c))
-						unselectedCompounds.add(c);
-				clusterControler.applyCompoundFilter("Hide unselected compounds", unselectedCompounds);
+				clusterControler.applyCompoundFilter(ArrayUtil.toList(clustering.getActiveCompounds()), true);
 			}
 		});
 

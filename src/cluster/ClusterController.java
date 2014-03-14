@@ -26,11 +26,11 @@ public interface ClusterController
 
 	public CompoundFilter getCompoundFilter();
 
-	public void applyCompoundFilter(String description, List<Compound> compounds);
+	public void applyCompoundFilter(List<Compound> compounds, boolean accept);
 
 	public void setCompoundFilter(CompoundFilter filter, boolean animate);
 
-	public void useSelectedCompoundsAsFilter(String filterDescription, boolean animate);
+	public void useSelectedCompoundsAsFilter(boolean animate);
 
 	public void removeCompounds(Compound[] c);
 

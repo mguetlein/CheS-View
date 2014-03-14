@@ -432,7 +432,7 @@ public class ClusterListPanel extends JPanel
 		else
 		{
 			filterPanel.setIgnoreRepaint(true);
-			filterLabel.setText("Compound Filter: " + clusterControler.getCompoundFilter());
+			filterLabel.setText(clusterControler.getCompoundFilter().toString());
 			filterPanel.setIgnoreRepaint(false);
 			filterPanel.setVisible(true);
 		}
