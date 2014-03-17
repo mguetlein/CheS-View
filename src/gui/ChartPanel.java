@@ -552,8 +552,7 @@ public class ChartPanel extends JPanel
 		@Override
 		protected boolean isSelected(Compound m, CompoundProperty p)
 		{
-			return m.getStringValue(p) == null && selectedCategory == null
-					|| m.getFormattedValue(p).equals(selectedCategory);
+			return selectedCategory != null && selectedCategory.equals(m.getFormattedValue(p));
 		}
 	}
 
