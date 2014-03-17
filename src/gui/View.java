@@ -134,10 +134,11 @@ public class View
 		final float diameter = zoomable.getDiameter(superimposed);
 		final Vector3f center = zoomable.getCenter(superimposed);
 
-		//		Settings.LOGGER.debug("Superimposed " + superimposed);
-		//		Settings.LOGGER.debug("Center       " + center);
-		//		Settings.LOGGER.debug("Diameter     " + diameter);
-		//		Settings.LOGGER.debug("Rot radius   " + viewer.getRotationRadius());
+		//		Settings.LOGGER.warn("zoom to " + zoomable);
+		//		Settings.LOGGER.warn("Superimposed " + superimposed);
+		//		Settings.LOGGER.warn("Center       " + center);
+		//		Settings.LOGGER.warn("Diameter     " + diameter);
+		//		Settings.LOGGER.warn("Rot radius   " + viewer.getRotationRadius());
 
 		int zoom = (int) ((1200 / (10 / viewer.getRotationRadius())) / diameter);
 
@@ -156,7 +157,7 @@ public class View
 			}
 			String cmd = "zoomto " + (speed == AnimationSpeed.SLOW ? 0.66 : 0.33) + " " + Vector3fUtil.toString(center)
 					+ " " + finalZoom;
-			//					Settings.LOGGER.warn("XX zoom> " + cmd);
+			//			Settings.LOGGER.warn("XX zoom> " + cmd);
 			viewer.scriptWait(cmd);
 			if (setAntialiasBackOn)
 				setAntialiasOn(true);
@@ -210,7 +211,7 @@ public class View
 	{
 		//		Settings.LOGGER.warn("XX> selecting bitset with " + bitSet.cardinality() + " atoms, bitset: " + bitSet);
 		viewer.select(bitSet, false, null, false);
-		//Settings.LOGGER.warn("XX> " + viewer.getAtomSetCenter(bitSet));
+		//		Settings.LOGGER.warn("XX> " + viewer.getAtomSetCenter(bitSet));
 	}
 
 	private void evalScript(String script)
