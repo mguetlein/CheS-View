@@ -1200,7 +1200,7 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 				updateAllClustersAndCompounds(false);
 			}
 		});
-		clustering.addListener(new PropertyChangeListener()
+		clustering.addListenerFirst(new PropertyChangeListener()
 		{
 			@Override
 			public void propertyChange(PropertyChangeEvent evt)

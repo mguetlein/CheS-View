@@ -108,6 +108,11 @@ public class ClusteringImpl implements Zoomable, Clustering
 		listeners.add(l);
 	}
 
+	public void addListenerFirst(PropertyChangeListener l)
+	{
+		listeners.insertElementAt(l, 0);
+	}
+
 	public void fire(String event, Object oldValue, Object newValue)
 	{
 		if (!suppresAddEvent)
@@ -509,6 +514,9 @@ public class ClusteringImpl implements Zoomable, Clustering
 		positions = ClusteringUtil.getCompoundPositions(this);
 		nonSuperimposedCenter = Vector3fUtil.centerConvexHull(positions);
 		nonSuperimposedDiameter = Vector3fUtil.maxDist(positions);
+
+		//if all is filtered apart from compounds that share a single position nonSuperimposeDiameter would be 0
+		nonSuperimposedDiameter = Math.max(nonSuperimposedDiameter, superimposedDiameter);
 	}
 
 	/**
