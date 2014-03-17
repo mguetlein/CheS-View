@@ -1096,6 +1096,14 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 				if (matchBitSet.cardinality() > 0)
 				{
 					match = true;
+					if (m.getHighlightedSmarts() != null)
+					{
+						// first draw whole compound red again, to remove old match
+						if (highlightMode == HighlightMode.Spheres)
+							view.scriptWait("color cpk" + getColorSuffixTranslucent(translucency));
+						else
+							view.scriptWait(compoundColor + getColorSuffixTranslucent(translucency));
+					}
 					m.setHighlightedSmarts(smarts);
 					view.select(matchBitSet);
 					view.scriptWait("color " + View.convertColor(matchColor) + getColorSuffixTranslucent(translucency));
