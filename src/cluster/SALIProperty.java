@@ -34,7 +34,7 @@ public class SALIProperty extends NumericDynamicCompoundProperty
 		private Boolean isCliff;
 		private Set<Integer> indices = new HashSet<Integer>();
 
-		public boolean isCliff(double[][] featureDistanceMatrix, Double[] endpointVals)
+		public boolean isCliff(double[][] featureDistanceMatrix, Double[] endpointVals, double minEndpointDiff)
 		{
 			if (isCliff == null)
 			{
@@ -52,7 +52,7 @@ public class SALIProperty extends NumericDynamicCompoundProperty
 						if (featureDistanceMatrix[idx1][idx2] != 0)
 							throw new IllegalStateException("distance measure not transitiv");
 						double endpointDist = Math.abs(endpointVals[idx1] - endpointVals[idx2]);
-						if (endpointDist >= MIN_ENDPOINT_DEV)
+						if (endpointDist >= minEndpointDiff)
 						{
 							isCliff = true;
 							break;
@@ -99,10 +99,11 @@ public class SALIProperty extends NumericDynamicCompoundProperty
 				}
 			}
 		}
+		double minEndpointDiff = MIN_ENDPOINT_DEV;
 		int identicalFeatsCompounds = 0;
 		int identicalFeatsCliffs = 0;
 		for (EqualFeatureTuple n : eqTuplesList)
-			if (n.isCliff(featureDistanceMatrix, endpointVals))
+			if (n.isCliff(featureDistanceMatrix, endpointVals, minEndpointDiff))
 			{
 				n.id = IDENTICAL_FEATURES_SALI + identicalFeatsCliffs;
 				identicalFeatsCliffs++;
@@ -112,7 +113,8 @@ public class SALIProperty extends NumericDynamicCompoundProperty
 		Double salis[] = new Double[endpointVals.length];
 		for (int i = 0; i < salis.length; i++)
 		{
-			if (eqTuplesArray[i] != null && eqTuplesArray[i].isCliff(featureDistanceMatrix, endpointVals))
+			if (eqTuplesArray[i] != null
+					&& eqTuplesArray[i].isCliff(featureDistanceMatrix, endpointVals, minEndpointDiff))
 			{
 				salis[i] = eqTuplesArray[i].id;
 				continue;
@@ -129,7 +131,7 @@ public class SALIProperty extends NumericDynamicCompoundProperty
 				if (endpointVals[i] < 0 || endpointVals[i] > 1)
 					throw new IllegalStateException("please normalize!");
 				double endpointDist = Math.abs(endpointVals[i] - endpointVals[j]);
-				if (endpointDist < MIN_ENDPOINT_DEV)
+				if (endpointDist < minEndpointDiff)
 					continue;
 				if (featureDistanceMatrix[i][j] == 0)
 					throw new IllegalStateException();
