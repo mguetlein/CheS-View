@@ -8,8 +8,6 @@ import gui.util.CompoundPropertyHighlighter;
 import gui.util.Highlighter;
 
 import java.awt.Color;
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -192,27 +190,30 @@ public class LaunchCheSMapper
 			//							.split("-x -d /home/martin/workspace/BMBF-MLC/pct/clusters_VarianceReduction/dataC_noV_Ca15-20c20_FP1.data.csv -o /home/martin/workspace/BMBF-MLC/pct/clusters_VarianceReduction/dataC_noV_Ca15-20c20_FP1.data.ches -f integrated -b \"OB-MACCS:N,OB-MACCS:OCO,OB-MACCS:O=A>1,OB-MACCS:CH3 > 2  (&...),OB-FP3:alkylaryl ether,OB-FP3:carboxylic acid,OB-FP4:Heteroaromatic,OB-MACCS:ACH2AACH2A,OB-FP4:1,3-Tautomerizable,OB-MACCS:Onot%A%A,OB-FP3:aldehyde or ketone,OB-MACCS:A$A!N,OB-FP4:Rotatable_bond,OB-MACCS:ACH2AAACH2A,OB-FP3:aryl,OB-FP4:Amine,OB-MACCS:C=O,OB-FP4:Hetero_N_basic_no_H,OB-FP3:HBD,OB-MACCS:AA(A)(A)A,OB-MACCS:NN,OB-MACCS:X!A$A,OB-MACCS:QA(Q)Q,OB-MACCS:S,OB-MACCS:NA(A)A,OB-MACCS:ACH2N,OB-MACCS:NAAO,OB-MACCS:O > 3 (&...),OB-MACCS:QAAAAA@1,OB-MACCS:N > 1,OB-FP4:Vinylogous_carbonyl_or_carboxyl_derivative,OB-MACCS:XA(A)A,OB-FP4:Primary_carbon,OB-FP4:Imidoylhalide_cyclic,OB-MACCS:NH2,OB-MACCS:Anot%A%Anot%A,OB-MACCS:NC(N)N,OB-FP4:Heterocyclic,OB-MACCS:QH > 1,OB-FP4:1,5-Tautomerizable,OB-MACCS:O > 2,OB-MACCS:CH3,OB-FP3:aniline,OB-FP3:nitro,OB-FP3:Ring,OB-MACCS:ACH2CH2A > 1,OB-MACCS:QO,OB-FP4:Alkylchloride,OB-MACCS:C=C,OB-FP4:Quaternary_carbon,OB-MACCS:C=C(C)C,OB-FP4:Vinylogous_ester,OB-MACCS:CH3AAACH2A,OB-MACCS:CH3AACH2A,OB-MACCS:S=A,OB-FP3:cation,OB-MACCS:8M Ring or larger. This only handles up to ring sizes of 14,OB-MACCS:BR,OB-MACCS:F,OB-MACCS:A!CH2!A,OB-MACCS:CH3CH2A,OB-MACCS:A$A!O > 1 (&...),OB-MACCS:OC(C)C,OB-FP4:Conjugated_double_bond,OB-FP4:Hetero_O,OB-MACCS:A!A$A!A,OB-FP4:Alkene,OB-MACCS:3M Ring,OB-FP4:Aldehyde,OB-MACCS:QCH2A>1 (&...),OB-MACCS:CH3ACH2A,OB-MACCS:ACH2O,OB-MACCS:CL\" -a leaf,level1,level2,level3,level4,level5,level6,level7,level8,level9,level10,level11,level12,level13,level14,level15,level16,level17,level18 -c \"Manual Cluster Assignment\" -q \"property-Cluster feature=leaf\"",
 			//									' '));
 
-			try
-			{
-				File f = File.createTempFile("test", "bla");
-				FileUtil.writeStringToFile(f.getAbsolutePath(), "test");
-				System.out.println("created tmp: " + f);
-				File f2 = new File(System.getProperty("user.home") + File.separator + ".ches-mapper" + File.separator
-						+ "cache" + File.separator + "delme");
-				System.out.println("rename to: " + f2);
-				if (!FileUtil.robustRenameTo(f.getAbsolutePath(), f2.getAbsolutePath()))
-					throw new Error("failed!");
-				if (f.exists() || !f2.exists())
-					throw new Error("failed2!");
-				System.out.println("great, deleting: " + f2);
-				f2.delete();
-				System.out.println("done");
-				System.exit(0);
-			}
-			catch (IOException e)
-			{
-				e.printStackTrace();
-			}
+			args = "--add-obsolete-pc-features -e -m -u -d /home/martin/workspace/BMBF-MLC/predictions/305ff369acf4040ed85912a59924d042.sdf -f ob,obFP3,obFP4,obMACCS -o /home/martin/workspace/BMBF-MLC/predictions/305ff369acf4040ed85912a59924d042_MAN2.csv"
+					.split(" ");
+
+			//			try
+			//			{
+			//				File f = File.createTempFile("test", "bla");
+			//				FileUtil.writeStringToFile(f.getAbsolutePath(), "test");
+			//				System.out.println("created tmp: " + f);
+			//				File f2 = new File(System.getProperty("user.home") + File.separator + ".ches-mapper" + File.separator
+			//						+ "cache" + File.separator + "delme");
+			//				System.out.println("rename to: " + f2);
+			//				if (!FileUtil.robustRenameTo(f.getAbsolutePath(), f2.getAbsolutePath()))
+			//					throw new Error("failed!");
+			//				if (f.exists() || !f2.exists())
+			//					throw new Error("failed2!");
+			//				System.out.println("great, deleting: " + f2);
+			//				f2.delete();
+			//				System.out.println("done");
+			//				System.exit(0);
+			//			}
+			//			catch (IOException e)
+			//			{
+			//				e.printStackTrace();
+			//			}
 		}
 
 		StringLineAdder examples = new StringLineAdder();
@@ -507,8 +508,9 @@ public class LaunchCheSMapper
 					missingRatio = Double.parseDouble(cmd.getOptionValue("rem-missing-above-ratio"));
 
 				List<Integer> compounds = new ArrayList<Integer>();
-				for (String idx : cmd.getOptionValue("distance-to").split(","))
-					compounds.add(Integer.parseInt(idx));
+				if (cmd.hasOption("distance-to"))
+					for (String idx : cmd.getOptionValue("distance-to").split(","))
+						compounds.add(Integer.parseInt(idx));
 				boolean euclidean = true;
 				if (compounds.size() > 0 && cmd.hasOption("distance-measure"))
 				{
