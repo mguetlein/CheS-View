@@ -64,10 +64,15 @@ public class LaunchCheSMapper
 
 	public static void init()
 	{
-		init(Locale.US, ScreenSetup.DEFAULT, true);
+		init(true);
 	}
 
-	public static void init(Locale locale, ScreenSetup screenSetup, boolean loadProps)
+	public static void init(boolean preLoadWeka)
+	{
+		init(Locale.US, ScreenSetup.DEFAULT, true, preLoadWeka);
+	}
+
+	public static void init(Locale locale, ScreenSetup screenSetup, boolean loadProps, boolean preLoadWeka)
 	{
 		if (initialized)
 			throw new IllegalStateException("init only once!");
@@ -88,14 +93,15 @@ public class LaunchCheSMapper
 				CDKDescriptor.getDescriptors();
 			}
 		}).start();
-		new Thread(new Runnable()
-		{
-			public void run()
+		if (preLoadWeka)
+			new Thread(new Runnable()
 			{
-				// takes some time, do this rightaway in extra thread
-				WekaPropertyUtil.initWekaStuff();
-			}
-		}).start();
+				public void run()
+				{
+					// takes some time, do this rightaway in extra thread
+					WekaPropertyUtil.initWekaStuff();
+				}
+			}).start();
 
 		PropHandler.init(loadProps);
 		BinHandler.init();
@@ -466,7 +472,7 @@ public class LaunchCheSMapper
 			if (cmd.hasOption('p'))
 				loadProperties = false;
 
-			init(Locale.US, screenSetup, loadProperties);
+			init(Locale.US, screenSetup, loadProperties, true);
 
 			if (cmd.hasOption("display-no"))
 			{
