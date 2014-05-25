@@ -77,14 +77,14 @@ public class CheSViewer implements GUIControler
 		if (!SwingUtilities.isEventDispatchThread())
 			throw new IllegalStateException("GUI updates only in event dispatch thread plz");
 
-		if (instance == null)
-			instance = new CheSViewer(clusteringData);
-		else
-		{
-			instance.clusterPanel.init(clusteringData);
-			if (!instance.isFullScreen() && !instance.frame.isVisible())
-				instance.frame.setVisible(true);
-		}
+		//		if (instance == null)
+		instance = new CheSViewer(clusteringData);
+		//		else
+		//		{
+		//			instance.clusterPanel.init(clusteringData);
+		//			if (!instance.isFullScreen() && !instance.frame.isVisible())
+		//				instance.frame.setVisible(true);
+		//		}
 		if (mod != null)
 		{
 			Thread th = new Thread(new Runnable()
