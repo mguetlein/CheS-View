@@ -133,7 +133,8 @@ public class ExportData
 				logFeatures.clear();
 		}
 
-		DoubleKeyHashMap<Integer, Object, Object> featureValues = new DoubleKeyHashMap<Integer, Object, Object>();
+		DoubleKeyHashMap<Integer, String, Object> featureValues = new DoubleKeyHashMap<Integer, String, Object>();
+		int count = 0;
 		for (Integer j : compoundOrigIndices)
 		{
 			if (clustering.numClusters() > 1)
@@ -175,6 +176,7 @@ public class ExportData
 			for (CompoundProperty p : selectedProps)
 				if (!p.getName().matches("(?i)smiles"))
 				{
+					String prop = CompoundPropertyUtil.propToExportString(p);
 					Object val;
 					if (p.getType() == Type.NUMERIC)
 					{
@@ -186,21 +188,27 @@ public class ExportData
 						val = clustering.getCompounds().get(j).getStringValue(p);
 					if (val == null)
 						val = "";
-					featureValues.put(j, CompoundPropertyUtil.propToExportString(p), val);
+					featureValues.put(j, prop, val);
 				}
-
 			for (CompoundProperty c : logFeatures)
-				featureValues.put(
-						j,
-						CompoundPropertyUtil.propToExportString(c) + "_log",
-						clustering.getCompounds().get(j).getDoubleValue(c) == null ? "" : Math.log10(clustering
-								.getCompounds().get(j).getDoubleValue(c)));
+			{
+				String prop = CompoundPropertyUtil.propToExportString(c) + "_log";
+				Double val = clustering.getCompounds().get(j).getDoubleValue(c);
+				if (val != null)
+					val = Math.log10(val);
+				featureValues.put(j, prop, val == null ? "" : val);
+			}
+			count++;
 		}
-		List<Object> skipUniform = new ArrayList<Object>();
-		List<Object> skipNull = new ArrayList<Object>();
-		List<Object> skip = new ArrayList<Object>();
+		List<String> skipRedundant = new ArrayList<String>();
+		for (CompoundProperty p : CompoundPropertyUtil.getRedundantFeatures(ArrayUtil.toList(selectedProps),
+				compoundOrigIndices).keySet())
+			skipRedundant.add(CompoundPropertyUtil.propToExportString(p));
+		List<String> skipUniform = new ArrayList<String>();
+		List<String> skipNull = new ArrayList<String>();
+		List<String> skip = new ArrayList<String>();
 		if (featureValues.keySet1().size() > 0 && featureValues.keySet2(compoundOrigIndices[0]).size() > 0)
-			for (Object prop : featureValues.keySet2(compoundOrigIndices[0]))
+			for (String prop : featureValues.keySet2(compoundOrigIndices[0]))
 			{
 				boolean uniform = true;
 				int nullValueCount = 0;
@@ -245,16 +253,21 @@ public class ExportData
 				doSkip = script.skipEqualValues;
 			else
 			{
-				String msg = skipUniform.size() + " feature/s have equal values for each compound.\nSkip from export?";
+				String msg = skipUniform.size()
+						+ "/"
+						+ featureValues.keySet2(compoundOrigIndices[0]).size()
+						+ " feature/s have equal values for each compound.\nThese feature/s contain no information to distiguish between compounds.\nSkip from export?";
 				int sel = JOptionPane.showConfirmDialog(Settings.TOP_LEVEL_FRAME, msg, "Skip feature",
 						JOptionPane.YES_NO_OPTION);
 				doSkip = sel == JOptionPane.YES_OPTION;
 			}
 			if (doSkip)
-				for (Object p : skipUniform)
+				for (String p : skipUniform)
 				{
 					if (skipNull.contains(p))
 						skipNull.remove(p);
+					if (skipRedundant.contains(p))
+						skipRedundant.remove(p);
 					Settings.LOGGER.info("uniform values, skipping from export: " + p + " ");
 					skip.add(p);
 				}
@@ -266,20 +279,48 @@ public class ExportData
 				doSkip = true;
 			else
 			{
-				String msg = skipNull.size() + " feature/s have null values.\nSkip from export?";
+				String msg = skipNull.size()
+						+ "/"
+						+ (featureValues.keySet2(compoundOrigIndices[0]).size() - skip.size())
+						+ " feature/s have missing values.\nMissing values might cause problems when post-processing the exported compounds.\nSkip from export?";
 				int sel = JOptionPane.showConfirmDialog(Settings.TOP_LEVEL_FRAME, msg, "Skip feature",
 						JOptionPane.YES_NO_OPTION);
 				doSkip = sel == JOptionPane.YES_OPTION;
 			}
 			if (doSkip)
-				for (Object p : skipNull)
+				for (String p : skipNull)
 				{
 					if (script == null)
 						Settings.LOGGER.info("null values, skipping from export: " + p + " ");
+					if (skipRedundant.contains(p))
+						skipRedundant.remove(p);
 					skip.add(p);
 				}
 		}
-		for (Object p : skip)
+		if (skipRedundant.size() > 0)
+		{
+			boolean doSkip;
+			if (script != null)
+				doSkip = Settings.SKIP_REDUNDANT_FEATURES;
+			else
+			{
+				String msg = skipRedundant.size()
+						+ "/"
+						+ (featureValues.keySet2(compoundOrigIndices[0]).size() - skip.size())
+						+ " feature/s are redundant.\nThe information encoded in these feature/s is already provided by other feature/s.\nSkip from export?";
+				int sel = JOptionPane.showConfirmDialog(Settings.TOP_LEVEL_FRAME, msg, "Skip feature",
+						JOptionPane.YES_NO_OPTION);
+				doSkip = sel == JOptionPane.YES_OPTION;
+			}
+			if (doSkip)
+				for (String p : skipRedundant)
+				{
+					if (script == null)
+						Settings.LOGGER.info("redundant values, skipping from export: " + p + " ");
+					skip.add(p);
+				}
+		}
+		for (String p : skip)
 		{
 			for (Integer j : compoundOrigIndices)
 				featureValues.remove(j, p);
@@ -315,10 +356,10 @@ public class ExportData
 		DatasetFile.clearFiles(dest);
 		if (csvExport)
 		{
-			List<Object> feats = new ArrayList<Object>();
+			List<String> feats = new ArrayList<String>();
 			for (Integer j : compoundOrigIndices)
 				if (featureValues.keySet1().size() > 0 && featureValues.keySet2(j) != null)
-					for (Object feat : featureValues.keySet2(j))
+					for (String feat : featureValues.keySet2(j))
 						if (!feats.contains(feat))
 							feats.add(feat);
 			File file = new File(dest);
@@ -345,7 +386,7 @@ public class ExportData
 					b.write("\"");
 					b.write(c.getSmiles());
 					b.write("\"");
-					for (Object feat : feats)
+					for (String feat : feats)
 					{
 						b.write(",\"");
 						Object val = featureValues.get(compoundIndex, feat);
@@ -392,6 +433,7 @@ public class ExportData
 				}
 			}
 			SDFUtil.filter(clustering.getOrigSDFile(), dest, compoundOrigIndices, featureValues, true, newTitle);
+			//SDFUtil.filter(clustering.getSDFile(), dest, compoundOrigIndices, featureValues, true, newTitle);
 		}
 
 		String msg = "Successfully exported " + compoundOrigIndices.length + " compounds to\n" + dest;

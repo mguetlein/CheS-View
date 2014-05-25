@@ -803,9 +803,20 @@ public class ChartPanel extends JPanel
 						featureSmartsLabel.setText(fProperty.getSmarts() + "");
 						featureSmartsLabel.setVisible(fProperty.getSmarts() != null);
 						featureSmartsLabelHeader.setVisible(fProperty.getSmarts() != null);
-						featureMappingLabel
-								.setText((fProperty.getCompoundPropertySet().isUsedForMapping() ? "Used for mapping"
-										: "NOT used for mapping"));
+						String usage;
+						if (fProperty.getCompoundPropertySet().isSelectedForMapping())
+						{
+							if (fProperty.numDistinctValuesInMappedDataset() <= 1)
+								usage = "Ignored for mapping (equal value for each compound)";
+							else if (fProperty.getRedundantPropInMappedDataset() != null)
+								usage = "Ignored for mapping (redundant to " + fProperty.getRedundantPropInMappedDataset()
+										+ ")";
+							else
+								usage = "Used for mapping";
+						}
+						else
+							usage = "NOT used for mapping";
+						featureMappingLabel.setText(usage);
 						featureMissingLabelHeader.setVisible(clustering.numMissingValues(fProperty) > 0);
 						featureMissingLabel.setVisible(clustering.numMissingValues(fProperty) > 0);
 						featureMissingLabel.setText(clustering.numMissingValues(fProperty) + "");

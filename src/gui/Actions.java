@@ -46,7 +46,6 @@ import main.Settings;
 import util.ArrayUtil;
 import util.CollectionUtil;
 import util.SwingUtil;
-import weka.Predictor;
 import workflow.MappingWorkflow;
 import cluster.Cluster;
 import cluster.ClusterController;
@@ -1237,14 +1236,7 @@ public class Actions
 				guiControler.block("predict");
 				try
 				{
-					CompoundProperty clazz = null;
-					for (CompoundProperty p : clustering.getProperties())
-						if (p.toString().equals("activity"))
-							clazz = p;
-					if (clazz == null)
-						throw new Error();
-					clustering.addPredictionFeature(clazz,
-							Predictor.predict(clustering.getCompounds(), clustering.getFeatures(), clazz));
+					clustering.predict();
 				}
 				finally
 				{

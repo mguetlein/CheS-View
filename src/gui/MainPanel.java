@@ -1247,14 +1247,14 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 		int fCount = 0;
 		for (CompoundProperty p : props)
 			featureHighlighters[fCount++] = CompoundPropertyHighlighter.create(p);
-		highlighters.put("Features NOT used for mapping", featureHighlighters);
+		highlighters.put("Features NOT selected for mapping", featureHighlighters);
 
 		props = clustering.getFeatures();
 		featureHighlighters = new CompoundPropertyHighlighter[props.size()];
 		fCount = 0;
 		for (CompoundProperty p : props)
 			featureHighlighters[fCount++] = CompoundPropertyHighlighter.create(p);
-		highlighters.put("Features used for mapping", featureHighlighters);
+		highlighters.put("Features selected for mapping", featureHighlighters);
 
 		if (init)
 		{
@@ -2111,9 +2111,9 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 			fireViewChange(PROPERTY_FEATURE_FILTER_CHANGED);
 			if (featureFilter == FeatureFilter.None)
 				guiControler.showMessage("Show all features in feature list.");
-			else if (featureFilter == FeatureFilter.NotUsedByEmbedding)
+			else if (featureFilter == FeatureFilter.NotSelectedForMapping)
 				guiControler.showMessage("Show only features that are NOT used by mapping in feature list.");
-			else if (featureFilter == FeatureFilter.UsedByEmbedding)
+			else if (featureFilter == FeatureFilter.SelectedForMapping)
 				guiControler.showMessage("Show only features that are used by mapping in feature list.");
 			else if (featureFilter == FeatureFilter.Filled)
 				guiControler.showMessage("Show only filled endpoint features (ends with '_filled').");

@@ -9,6 +9,7 @@ import java.util.HashMap;
 
 import javax.swing.JComponent;
 
+import util.ArrayUtil;
 import cluster.Clustering;
 import dataInterface.AbstractCompoundProperty;
 import dataInterface.CompoundProperty;
@@ -191,16 +192,18 @@ public interface ViewControler
 
 	public static enum FeatureFilter
 	{
-		None, NotUsedByEmbedding, UsedByEmbedding, Filled, Real, Endpoints;
+		None, NotSelectedForMapping, SelectedForMapping, UsedForMapping, Filled, Real, Endpoints;
 
 		public static FeatureFilter[] validValues(Clustering clustering)
 		{
+			FeatureFilter f[] = new FeatureFilter[] { None, NotSelectedForMapping, SelectedForMapping };
+			if (clustering.isSkippingRedundantFeatures())
+				f = ArrayUtil.concat(f, new FeatureFilter[] { UsedForMapping });
 			if (clustering.isBMBFRealEndpointDataset(true))
-				return new FeatureFilter[] { None, NotUsedByEmbedding, UsedByEmbedding, Filled, Real, Endpoints };
+				f = ArrayUtil.concat(f, new FeatureFilter[] { Filled, Real, Endpoints });
 			else if (clustering.isBMBFRealEndpointDataset(false))
-				return new FeatureFilter[] { None, NotUsedByEmbedding, UsedByEmbedding, Real, Endpoints };
-			else
-				return new FeatureFilter[] { None, NotUsedByEmbedding, UsedByEmbedding };
+				f = ArrayUtil.concat(f, new FeatureFilter[] { Real, Endpoints });
+			return f;
 		}
 
 		public String niceString()
@@ -209,16 +212,18 @@ public interface ViewControler
 			{
 				case None:
 					return "Show all features (no filter)";
-				case NotUsedByEmbedding:
-					return "Show only features NOT used by mapping";
-				case UsedByEmbedding:
-					return "Show only features used by mapping";
+				case NotSelectedForMapping:
+					return "Show features NOT selected for mapping";
+				case SelectedForMapping:
+					return "Show features selected for mapping";
+				case UsedForMapping:
+					return "Show features acutally used for mapping (ommit redundant/single-valued features)";
 				case Filled:
-					return "Show only '_filled features'";
+					return "Show '_filled' features";
 				case Real:
-					return "Show only '_real features'";
+					return "Show '_real' features";
 				case Endpoints:
-					return "Show only 'endpoint features'";
+					return "Show endpoint features";
 			}
 			throw new IllegalStateException();
 		}

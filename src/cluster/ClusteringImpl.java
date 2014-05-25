@@ -27,6 +27,7 @@ import util.ListUtil;
 import util.SelectionModel;
 import util.Vector3fUtil;
 import util.VectorUtil;
+import weka.Predictor;
 import weka.Predictor.PredictionResult;
 import alg.embed3d.Random3DEmbedder;
 import data.ClusteringData;
@@ -659,6 +660,11 @@ public class ClusteringImpl implements Zoomable, Clustering
 		return clusteringData.getOrigSDF();
 	}
 
+	public String getSDFile()
+	{
+		return clusteringData.getSDF();
+	}
+
 	private void checkNoSelection()
 	{
 		if (compoundActive.getSelected() != -1 || compoundWatched.getSelected() != -1
@@ -1224,6 +1230,26 @@ public class ClusteringImpl implements Zoomable, Clustering
 	CompoundProperty predMis;
 
 	@Override
+	public void predict()
+	{
+		CompoundProperty clazz = null;
+		boolean classification = true;
+		for (CompoundProperty p : getProperties())
+		{
+			if (p.toString().equals("activity"))
+				clazz = p;
+			else if (p.toString().equals("LC50_mmol_log"))
+			{
+				clazz = p;
+				classification = false;
+			}
+		}
+		if (clazz == null)
+			throw new Error();
+		addPredictionFeature(clazz, Predictor.predict(getCompounds(), getFeatures(), clazz, classification));
+	}
+
+	@Override
 	public void addPredictionFeature(CompoundProperty clazz, PredictionResult p)
 	{
 		CompoundProperty pred = p.createFeature();
@@ -1288,4 +1314,9 @@ public class ClusteringImpl implements Zoomable, Clustering
 		return highlightColorText;
 	}
 
+	@Override
+	public boolean isSkippingRedundantFeatures()
+	{
+		return clusteringData.isSkippingRedundantFeatures();
+	}
 }

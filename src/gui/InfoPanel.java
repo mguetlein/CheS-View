@@ -815,8 +815,15 @@ public class InfoPanel extends JPanel
 				propNames.add(p.toString());
 
 		List<CompoundProperty> props = null;
-		if (viewControler.getFeatureFilter() == FeatureFilter.UsedByEmbedding)
+		if (viewControler.getFeatureFilter() == FeatureFilter.SelectedForMapping)
 			props = new ArrayList<CompoundProperty>(clustering.getFeatures());
+		else if (viewControler.getFeatureFilter() == FeatureFilter.UsedForMapping)
+		{
+			props = new ArrayList<CompoundProperty>();
+			for (CompoundProperty p : clustering.getFeatures())
+				if (p.numDistinctValuesInMappedDataset() > 1 && p.getRedundantPropInMappedDataset() == null)
+					props.add(p);
+		}
 		else
 		{
 			props = new ArrayList<CompoundProperty>();

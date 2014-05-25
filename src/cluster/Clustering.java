@@ -69,6 +69,8 @@ public interface Clustering extends CompoundPropertyOwner
 
 	String getOrigSDFile();
 
+	String getSDFile();
+
 	boolean isClusterAlgorithmDisjoint();
 
 	String getClusterAlgorithm();
@@ -144,6 +146,8 @@ public interface Clustering extends CompoundPropertyOwner
 
 	CompoundProperty addSALIFeature(CompoundProperty c, boolean max);
 
+	void predict();
+
 	void addPredictionFeature(CompoundProperty clazz, PredictionResult p);
 
 	public CompoundSelection getCompoundSelection(Compound[] c);
@@ -155,5 +159,7 @@ public interface Clustering extends CompoundPropertyOwner
 	Color getHighlightColorText();
 
 	Double getFeatureDistance(int origIndex, int origIndex2);
+
+	boolean isSkippingRedundantFeatures();
 
 }

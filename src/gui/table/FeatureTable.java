@@ -111,7 +111,19 @@ public class FeatureTable extends DataTable
 			if (h instanceof CompoundPropertyHighlighter)
 			{
 				CompoundProperty p = ((CompoundPropertyHighlighter) h).getProperty();
-				o[i++] = (clustering.getFeatures().contains(p) ? "Yes" : "no");
+				String map;
+				if (clustering.getFeatures().contains(p))
+				{
+					if (p.numDistinctValuesInMappedDataset() <= 1)
+						map = "ignored (single-valued)";
+					else if (p.getRedundantPropInMappedDataset() != null)
+						map = "ignored (redundant)";
+					else
+						map = "yes";
+				}
+				else
+					map = "no";
+				o[i++] = map;
 				o[i++] = p.getType() == CompoundProperty.Type.NUMERIC ? "Numeric"
 						: (p.getType() == CompoundProperty.Type.NOMINAL ? "Nominal" : "undef.");
 				o[i++] = clustering.numMissingValues(p);
@@ -188,7 +200,7 @@ public class FeatureTable extends DataTable
 		};
 		model.addColumn("");
 		model.addColumn("Feature");
-		model.addColumn("Used for Embedding");
+		model.addColumn("Used for Mapping");
 		model.addColumn("Type");
 		model.addColumn("#Missing");
 		model.addColumn("#Distinct");
