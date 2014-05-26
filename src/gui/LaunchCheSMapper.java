@@ -109,6 +109,11 @@ public class LaunchCheSMapper
 		initialized = true;
 	}
 
+	public static long propertyModificationTime()
+	{
+		return PropHandler.modificationTime();
+	}
+
 	@SuppressWarnings("static-access")
 	private static Option option(char charOpt, String longOpt, String description)
 	{
