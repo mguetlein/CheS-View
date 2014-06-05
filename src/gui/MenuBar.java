@@ -162,7 +162,7 @@ public class MenuBar extends JMenuBar
 		this.viewControler = viewControler;
 		this.clustering = clustering;
 
-		Actions a = Actions.getInstance(guiControler, viewControler, clusterControler, clustering);
+		Actions a = new Actions(guiControler, viewControler, clusterControler, clustering);
 
 		MyMenu dataMenu = new MyMenu(DATA_MENU, a.getDataActions());
 		MyMenu fileMenu = new MyMenu("File", a.getFileActions(), new MyMenu[] { dataMenu }, new int[] { 1 });

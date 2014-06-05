@@ -125,9 +125,7 @@ public class CheSViewer implements GUIControler
 			public boolean dispatchKeyEvent(KeyEvent e)
 			{
 				KeyStroke keyStroke = KeyStroke.getKeyStrokeForEvent(e);
-				return Actions.getInstance(CheSViewer.this, clusterPanel.getViewControler(),
-						clusterPanel.getClusterControler(), clustering).performAction(e.getSource(), keyStroke,
-						!frame.isUndecorated());
+				return Actions.instance().performAction(e.getSource(), keyStroke, !frame.isUndecorated());
 			}
 		});
 

@@ -62,12 +62,25 @@ public class Actions
 
 	private static Actions instance;
 
-	public static Actions getInstance(GUIControler guiControler, ViewControler viewControler,
-			ClusterController clusterControler, Clustering clustering)
+	public static Actions instance()
 	{
-		if (instance == null)
-			instance = new Actions(guiControler, viewControler, clusterControler, clustering);
 		return instance;
+	}
+
+	public Actions(GUIControler guiControler, ViewControler viewControler, ClusterController clusterControler,
+			Clustering clustering)
+	{
+		this.guiControler = guiControler;
+		this.viewControler = viewControler;
+		this.clustering = clustering;
+		this.clusterControler = clusterControler;
+
+		buildActions();
+		setAccelerators();
+		update();
+		installListeners();
+
+		instance = this;
 	}
 
 	private GUIControler guiControler;
@@ -249,20 +262,6 @@ public class Actions
 	public static String getFilterFeaturesKey()
 	{
 		return keyStrokeToText(keys.get(HIDDEN_FILTER_FEATURES));
-	}
-
-	private Actions(GUIControler guiControler, ViewControler viewControler, ClusterController clusterControler,
-			Clustering clustering)
-	{
-		this.guiControler = guiControler;
-		this.viewControler = viewControler;
-		this.clustering = clustering;
-		this.clusterControler = clusterControler;
-
-		buildActions();
-		setAccelerators();
-		update();
-		installListeners();
 	}
 
 	private void installListeners()

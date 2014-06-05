@@ -147,6 +147,17 @@ public class LaunchCheSMapper
 
 		if (args != null && args.length == 1 && args[0].equals("debug"))
 		{
+			setExitOnClose(false);
+			init();
+			start();
+			ThreadUtil.sleep(10);
+			SwingUtil.waitWhileVisible(CheSViewer.getFrame());
+			System.err.println("X\nX\nX\nX\nX\nX\nSecond run\nX\nX\nX\nX\nX\nX\n");
+			start();
+			ThreadUtil.sleep(10);
+			SwingUtil.waitWhileVisible(CheSViewer.getFrame());
+			System.exit(0);
+
 			//Settings.CACHING_ENABLED = false;
 			//args = ("-s -d /home/martin/data/caco2.sdf -f integrated -i caco2").split(" ");
 			//args = ("-x -d /home/martin/data/caco2.sdf -f integrated -i caco2 -o /home/martin/data/caco-workflow.ches").split(" ");
