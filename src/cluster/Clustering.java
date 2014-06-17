@@ -162,4 +162,6 @@ public interface Clustering extends CompoundPropertyOwner
 
 	boolean isSkippingRedundantFeatures();
 
+	boolean isBigDataMode();
+
 }

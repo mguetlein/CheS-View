@@ -1319,4 +1319,10 @@ public class ClusteringImpl implements Zoomable, Clustering
 	{
 		return clusteringData.isSkippingRedundantFeatures();
 	}
+
+	@Override
+	public boolean isBigDataMode()
+	{
+		return Settings.BIG_DATA;
+	}
 }

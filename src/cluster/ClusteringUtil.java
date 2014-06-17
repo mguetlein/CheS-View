@@ -62,18 +62,22 @@ public class ClusteringUtil
 		// the smaller the distance, the higher the scale factor
 		// the neigbhor should be on average 30units away
 		float s = 1 / d * 30;
-		//Settings.LOGGER.println("d: " + d + ", s: " + (1 / d * 30));
+		//Settings.LOGGER.debug("min avg distance: " + d + " -> scale: " + s);
 
-		// we want to set a max dist of 350units
-		float max_scale = 100 / Vector3fUtil.maxDist(v);
-		//Settings.LOGGER.println("max_s: " + max_scale);
-		s = Math.min(s, max_scale);
+		// we want to limit the scale based on the max dist
+		float maxD = Vector3fUtil.maxDist(v);
+		float max_scale = 100 / maxD;
+		if (max_scale < s)
+		{
+			//Settings.LOGGER.debug("override scale\nmax distance: " + maxD + " -> scale: " + max_scale);
+			s = max_scale;
+		}
 
 		if (COMPOUND_SIZE < 0 || COMPOUND_SIZE > COMPOUND_SIZE_MAX)
 			throw new Error("illegal compound size");
 		// convert "int range 0 - COMPOUND_SIZE_MAX" to "float range 4.0 - 0.1"  
 		float density = (float) (((1 - COMPOUND_SIZE / ((double) COMPOUND_SIZE_MAX)) * 3.9f) + 0.1f);
-		//		System.err.println(ClusteringUtil.COMPOUND_SIZE + " -> " + density);
+		//Settings.LOGGER.debug("compound size: " + ClusteringUtil.COMPOUND_SIZE + " -> scale multiplier: " + density);
 
 		// scale is multiplied with the DENSITY, which is configurable by the user
 		SCALE = s * density;

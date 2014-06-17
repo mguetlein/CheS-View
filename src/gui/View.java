@@ -131,7 +131,7 @@ public class View
 	{
 		if (superimposed == null)
 			superimposed = zoomable.isSuperimposed();
-		final float diameter = zoomable.getDiameter(superimposed);
+		final float diameter = Math.max(5.0f, zoomable.getDiameter(superimposed));
 		final Vector3f center = zoomable.getCenter(superimposed);
 
 		//		Settings.LOGGER.warn("zoom to " + zoomable);
@@ -140,10 +140,16 @@ public class View
 		//		Settings.LOGGER.warn("Diameter     " + diameter);
 		//		Settings.LOGGER.warn("Rot radius   " + viewer.getRotationRadius());
 
-		int zoom = (int) ((1200 / (10 / viewer.getRotationRadius())) / diameter);
+		// old way of zooming
+		//		int zoom = (int) ((1200 / (10 / viewer.getRotationRadius())) / diameter);
+		//		Settings.LOGGER.warn("zoom          " + zoom);
+		//		zoom = (int) Math.max(5, zoom);
+		//		Settings.LOGGER.warn("zoom A        " + zoom);
 
-		//		Settings.LOGGER.warn("zoom " + zoom);
-		zoom = (int) Math.max(5, zoom);
+		// much better, adjust the rotation radius instead
+		viewer.setRotationRadius(diameter / 10.0f, true);
+		//Settings.LOGGER.warn("Rot radius A " + viewer.getRotationRadius());
+		int zoom = 10;
 
 		if (isAnimated())
 		{

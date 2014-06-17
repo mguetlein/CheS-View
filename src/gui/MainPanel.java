@@ -1279,6 +1279,8 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 				+ view.getCompoundNumberDotted(clustering.numCompounds() - 1));
 
 		setSpinEnabled(isSpinEnabled(), true);
+		if (clustering.isBigDataMode() && style != Style.dots)
+			setStyle(Style.dots);
 
 		initCompoundDescriptor();
 

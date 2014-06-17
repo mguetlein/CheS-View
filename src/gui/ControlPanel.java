@@ -32,6 +32,7 @@ import javax.swing.event.ChangeListener;
 import cluster.ClusterController;
 import cluster.Clustering;
 import cluster.Clustering.SelectionListener;
+import cluster.ClusteringImpl;
 import cluster.Compound;
 
 import com.jgoodies.forms.builder.DefaultFormBuilder;
@@ -82,10 +83,10 @@ public class ControlPanel extends JPanel
 		for (StyleButton b : new StyleButton[] { buttonWire, buttonBalls, buttonDots })
 		{
 			g.add(b);
-			b.setSelected(viewControler.getStyle() == b.style);
 			b.setOpaque(false);
 			b.setFocusable(false);
 		}
+		updateSelectedStyle();
 
 		buttonPlus = ComponentFactory.createPlusViewButton();
 		buttonMinus = ComponentFactory.createMinusViewButton();
@@ -234,6 +235,16 @@ public class ControlPanel extends JPanel
 			}
 		});
 
+		clustering.addListener(new PropertyChangeListener()
+		{
+			@Override
+			public void propertyChange(PropertyChangeEvent evt)
+			{
+				if (evt.getPropertyName().equals(ClusteringImpl.CLUSTER_NEW))
+					updateSelectedStyle();
+			}
+		});
+
 		viewControler.addViewListener(new PropertyChangeListener()
 		{
 			@Override
@@ -265,6 +276,8 @@ public class ControlPanel extends JPanel
 				}
 				else if (evt.getPropertyName().equals(ViewControler.PROPERTY_FONT_SIZE_CHANGED))
 					updateComboSize();
+				else if (evt.getPropertyName().equals(ViewControler.PROPERTY_STYLE_CHANGED))
+					updateSelectedStyle();
 			}
 		});
 
@@ -279,6 +292,20 @@ public class ControlPanel extends JPanel
 				}
 			}
 		});
+	}
+
+	private void updateSelectedStyle()
+	{
+		selfUpdate = true;
+		for (StyleButton b : new StyleButton[] { buttonWire, buttonBalls, buttonDots })
+		{
+			b.setSelected(viewControler.getStyle() == b.style);
+			if (clustering.isBigDataMode())
+				b.setEnabled(b == buttonDots);
+			else
+				b.setEnabled(true);
+		}
+		selfUpdate = false;
 	}
 
 	private void updateComboStuff()
