@@ -5,6 +5,7 @@ import freechart.FreeChartPanel.ChartMouseSelectionListener;
 import freechart.HistogramPanel;
 import freechart.StackedBarPlot;
 import gui.swing.ComponentFactory;
+import gui.swing.ComponentFactory.ClickableLabel;
 import gui.swing.ComponentFactory.DimensionProvider;
 import gui.swing.TransparentViewPanel;
 import gui.util.Highlighter;
@@ -27,7 +28,6 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 
-import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
@@ -103,7 +103,7 @@ public class ChartPanel extends JPanel
 			featureSmartsLabelHeader, featureMappingLabel, featureMappingLabelHeader, featureMissingLabel,
 			featureMissingLabelHeader };
 
-	private JButton clearSelectedFeatureButton;
+	private ClickableLabel clearSelectedFeatureButton;
 
 	HashMap<String, AbstractFreeChartPanel> cardContents = new HashMap<String, AbstractFreeChartPanel>();
 	JPanel cardPanel;
@@ -809,8 +809,8 @@ public class ChartPanel extends JPanel
 							if (fProperty.numDistinctValuesInMappedDataset() <= 1)
 								usage = "Ignored for mapping (equal value for each compound)";
 							else if (fProperty.getRedundantPropInMappedDataset() != null)
-								usage = "Ignored for mapping (redundant to " + fProperty.getRedundantPropInMappedDataset()
-										+ ")";
+								usage = "Ignored for mapping (redundant to "
+										+ fProperty.getRedundantPropInMappedDataset() + ")";
 							else
 								usage = "Used for mapping";
 						}

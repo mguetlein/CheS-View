@@ -3,6 +3,7 @@ package gui;
 import gui.ViewControler.HighlightSorting;
 import gui.ViewControler.Style;
 import gui.swing.ComponentFactory;
+import gui.swing.ComponentFactory.ClickableLabel;
 import gui.swing.ComponentFactory.StyleButton;
 import gui.swing.TransparentViewPanel;
 import gui.util.CompoundPropertyHighlighter;
@@ -19,7 +20,6 @@ import java.util.HashMap;
 
 import javax.swing.ButtonGroup;
 import javax.swing.DefaultComboBoxModel;
-import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -47,14 +47,14 @@ public class ControlPanel extends JPanel
 	StyleButton buttonBalls;
 	StyleButton buttonDots;
 
-	JButton buttonPlus;
-	JButton buttonMinus;
+	ClickableLabel buttonPlus;
+	ClickableLabel buttonMinus;
 
 	JSlider slider;
 
 	JComboBox highlightCombobox;
 	JComboBox highlightMinMaxCombobox;
-	JButton buttonClearFeature;
+	ClickableLabel buttonClearFeature;
 
 	ViewControler viewControler;
 	Clustering clustering;

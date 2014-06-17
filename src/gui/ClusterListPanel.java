@@ -2,6 +2,7 @@ package gui;
 
 import gui.DoubleNameListCellRenderer.DoubleNameElement;
 import gui.swing.ComponentFactory;
+import gui.swing.ComponentFactory.ClickableLabel;
 import gui.swing.TransparentViewPanel;
 
 import java.awt.BorderLayout;
@@ -17,7 +18,6 @@ import java.beans.PropertyChangeListener;
 import java.util.Arrays;
 
 import javax.swing.DefaultListModel;
-import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
@@ -61,7 +61,7 @@ public class ClusterListPanel extends JPanel
 
 	JPanel filterPanel;
 	JLabel filterLabel;
-	JButton filterRemoveButton;
+	ClickableLabel filterRemoveButton;
 
 	public ClusterListPanel(Clustering clustering, ClusterController clusterControler, ViewControler viewControler,
 			GUIControler guiControler)

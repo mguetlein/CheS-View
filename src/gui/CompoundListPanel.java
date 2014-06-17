@@ -1,6 +1,7 @@
 package gui;
 
 import gui.swing.ComponentFactory;
+import gui.swing.ComponentFactory.ClickableLabel;
 import gui.swing.TransparentViewPanel;
 
 import java.awt.BorderLayout;
@@ -51,7 +52,7 @@ public class CompoundListPanel extends JPanel
 	ViewControler viewControler;
 	GUIControler guiControler;
 
-	JButton clearSelectedButton;
+	ClickableLabel clearSelectedButton;
 	JButton filterButton;
 
 	public CompoundListPanel(Clustering clustering, ClusterController clusterControler, ViewControler controler,

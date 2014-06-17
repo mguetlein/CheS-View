@@ -12,6 +12,10 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Insets;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -29,6 +33,7 @@ import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.ScrollPaneConstants;
+import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
@@ -591,37 +596,57 @@ public class ComponentFactory
 		public Dimension getPreferredSize();
 	}
 
-	public static JButton createViewButton(String string)
+	public static ClickableLabel createViewButton(String string)
 	{
 		return createViewButton(string, new Insets(5, 5, 5, 5));
 	}
 
-	public static JButton createViewButton(String string, final Insets insets)
+	public static ClickableLabel createViewButton(String string, final Insets insets)
 	{
 		return createViewButton(string, insets, null);
 	}
 
-	public static JButton createPlusViewButton()
+	public static ClickableLabel createPlusViewButton()
 	{
 		return createViewButton(null, SimpleImageIcon.plusImageIcon(), new Insets(4, 4, 4, 4), null);
 	}
 
-	public static JButton createMinusViewButton()
+	public static ClickableLabel createMinusViewButton()
 	{
 		return createViewButton(null, SimpleImageIcon.minusImageIcon(), new Insets(4, 4, 4, 4), null);
 	}
 
-	public static JButton createCrossViewButton()
+	public static ClickableLabel createCrossViewButton()
 	{
 		return createViewButton(null, SimpleImageIcon.crossImageIcon(), new Insets(4, 4, 4, 4), null);
 	}
 
-	public static JButton createViewButton(String string, final Insets insets, final PreferredSizeProvider prov)
+	public static ClickableLabel createViewButton(String string, final Insets insets, final PreferredSizeProvider prov)
 	{
 		return createViewButton(string, null, insets, prov);
 	}
 
-	public static JButton createViewButton(final String string, final SimpleImageIcon icon, final Insets insets,
+	public static class ClickableLabel extends JLabel
+	{
+		public ClickableLabel(String text, ImageIcon icon, int horizontalAlignment)
+		{
+			super(text, icon, horizontalAlignment);
+		}
+
+		public void addActionListener(final ActionListener l)
+		{
+			addMouseListener(new MouseAdapter()
+			{
+				@Override
+				public void mousePressed(MouseEvent e)
+				{
+					l.actionPerformed(new ActionEvent(ClickableLabel.this, 0, "button clicked"));
+				}
+			});
+		}
+	}
+
+	public static ClickableLabel createViewButton(final String string, final SimpleImageIcon icon, final Insets insets,
 			final PreferredSizeProvider prov)
 	{
 		final BorderImageIcon ic;
@@ -632,7 +657,7 @@ public class ComponentFactory
 		}
 		else
 			ic = null;
-		JButton c = new JButton(string, ic)
+		final ClickableLabel c = new ClickableLabel(string, ic, SwingConstants.LEFT)
 		{
 			public void updateUI()
 			{
