@@ -348,6 +348,7 @@ public abstract class ColorEditorPanel extends JPanel
 		{
 			if (enabled == null)
 			{
+				enabled = false;
 				for (CompoundProperty p : clustering.getFeatures())
 					if (p.isSmartsProperty())
 					{
