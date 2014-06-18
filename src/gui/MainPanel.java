@@ -77,12 +77,8 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 	DisguiseMode disguiseUnHovered = DisguiseMode.solid;
 	DisguiseMode disguiseUnZoomed = DisguiseMode.translucent;
 
-	Color matchColor = Color.ORANGE;
 	CompoundProperty compoundDescriptorProperty = null;
 	List<JComponent> ignoreMouseMovementPanels = new ArrayList<JComponent>();
-
-	private static final ColorGradient DEFAULT_COLOR_GRADIENT = new ColorGradient(
-			CompoundPropertyUtil.getHighValueColor(), Color.WHITE, CompoundPropertyUtil.getLowValueColor());
 
 	private String getStyleString()
 	{
@@ -1106,7 +1102,8 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 					}
 					m.setHighlightedSmarts(smarts);
 					view.select(matchBitSet);
-					view.scriptWait("color " + View.convertColor(matchColor) + getColorSuffixTranslucent(translucency));
+					view.scriptWait("color " + View.convertColor(CompoundPropertyUtil.HIGHILIGHT_MATCH_COLORS[2])
+							+ getColorSuffixTranslucent(translucency));
 				}
 			}
 			if (!match)// || forceUpdate || translucentUpdate)
@@ -1971,24 +1968,6 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 		setFontSize(ScreenSetup.INSTANCE.getFontSize() + (increase ? 1 : -1));
 	}
 
-	@Override
-	public void setMatchColor(Color color)
-	{
-		if (!matchColor.equals(color))
-		{
-			this.matchColor = color;
-			updateAllClustersAndCompounds(true);
-			fireViewChange(PROPERTY_MATCH_COLOR_CHANGED);
-			guiControler.showMessage("Change color to highlight substructure matches.");
-		}
-	}
-
-	@Override
-	public Color getMatchColor()
-	{
-		return matchColor;
-	}
-
 	@SuppressWarnings("unchecked")
 	private void initCompoundDescriptor()
 	{
@@ -2063,20 +2042,6 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 	}
 
 	@Override
-	public ColorGradient getHighlightGradient()
-	{
-		if (selectedHighlightCompoundProperty != null && selectedHighlightCompoundProperty.getType() == Type.NUMERIC)
-		{
-			if (selectedHighlightCompoundProperty.getHighlightColorGradient() == null)
-				return DEFAULT_COLOR_GRADIENT;
-			else
-				return selectedHighlightCompoundProperty.getHighlightColorGradient();
-		}
-		else
-			return DEFAULT_COLOR_GRADIENT;
-	}
-
-	@Override
 	public void setHighlightColors(ColorGradient g, boolean log, CompoundProperty props[])
 	{
 		boolean fire = false;
@@ -2095,6 +2060,57 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 			updateAllClustersAndCompounds(true);
 			fireViewChange(PROPERTY_HIGHLIGHT_COLORS_CHANGED);
 			guiControler.showMessage("Change color gradient or log transformation for highlighting.");
+		}
+	}
+
+	@Override
+	public void setHighlightColors(Color[] g, CompoundProperty[] props)
+	{
+		boolean fire = false;
+		for (CompoundProperty p : props)
+		{
+			if (p.getType() != Type.NOMINAL)
+				throw new IllegalStateException();
+			if (p == selectedHighlightCompoundProperty
+					&& (p.getHighlightColorSequence() == null || !ArrayUtil.equals(g, p.getHighlightColorSequence())))
+				fire = true;
+			p.setHighlightColorSequence(g);
+		}
+		if (fire)
+		{
+			updateAllClustersAndCompounds(true);
+			fireViewChange(PROPERTY_HIGHLIGHT_COLORS_CHANGED);
+			guiControler.showMessage("Change color sequence for highlighting.");
+		}
+	}
+
+	@Override
+	public void setClusterColors(Color[] sequence)
+	{
+		if (!ArrayUtil.equals(CompoundPropertyUtil.CLUSTER_COLORS, sequence))
+		{
+			CompoundPropertyUtil.CLUSTER_COLORS = sequence;
+			if (getHighlighter() == Highlighter.CLUSTER_HIGHLIGHTER)
+			{
+				updateAllClustersAndCompounds(true);
+				fireViewChange(PROPERTY_HIGHLIGHT_COLORS_CHANGED);
+			}
+			guiControler.showMessage("Change color sequence for cluster highlighting.");
+		}
+	}
+
+	@Override
+	public void setHighlightMatchColors(Color[] colors)
+	{
+		if (!ArrayUtil.equals(CompoundPropertyUtil.HIGHILIGHT_MATCH_COLORS, colors))
+		{
+			CompoundPropertyUtil.HIGHILIGHT_MATCH_COLORS = colors;
+			if (selectedHighlightCompoundProperty != null && selectedHighlightCompoundProperty.isSmartsProperty())
+			{
+				updateAllClustersAndCompounds(true);
+				fireViewChange(PROPERTY_HIGHLIGHT_COLORS_CHANGED);
+			}
+			guiControler.showMessage("Change colors for SMARTS match highlighting.");
 		}
 	}
 

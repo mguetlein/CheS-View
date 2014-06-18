@@ -2,8 +2,6 @@ package gui;
 
 import gui.ViewControler.FeatureFilter;
 import gui.ViewControler.HighlightMode;
-import gui.property.ColorGradient;
-import gui.property.ColorGradientChooser;
 import gui.property.IntegerProperty;
 import gui.property.Property;
 import gui.property.PropertyPanel;
@@ -11,13 +9,9 @@ import gui.table.ClusterTable;
 import gui.table.CompoundTable;
 import gui.table.FeatureTable;
 import gui.table.TreeView;
-import gui.util.CompoundPropertyHighlighter;
 import gui.util.HideUnselectedDialog;
-import gui.util.Highlighter;
 import gui.util.SALIDialog;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Desktop;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
@@ -34,8 +28,6 @@ import java.util.List;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
-import javax.swing.JCheckBox;
-import javax.swing.JColorChooser;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -54,7 +46,6 @@ import cluster.Clustering.SelectionListener;
 import cluster.Compound;
 import cluster.ExportData;
 import dataInterface.CompoundProperty;
-import dataInterface.CompoundProperty.Type;
 
 public class Actions
 {
@@ -141,7 +132,6 @@ public class Actions
 			VIEW_FONT_DIALOG };
 
 	private final static String HIGHLIGHT_COLORS = "highlight-colors";
-	private final static String HIGHLIGHT_COLOR_MATCH = "highlight-color-match";
 	private final static String HIGHLIGHT_MODE = "highlight-mode";
 	private final static String HIGHLIGHT_LABELS = "highlight-labels";
 	private final static String HIGHLIGHT_LAST_FEATURE = "highlight-last-feature";
@@ -149,8 +139,8 @@ public class Actions
 	private final static String HIGHLIGHT_INCR_SPHERE_SIZE = "highlight-incr-sphere-size";
 	private final static String HIGHLIGHT_DECR_SPHERE_TRANSLUCENCY = "highlight-decr-sphere-translucency";
 	private final static String HIGHLIGHT_INCR_SPHERE_TRANSLUCENCY = "highlight-incr-sphere-translucency";
-	private final static String[] HIGHLIGHT_ACTIONS = { HIGHLIGHT_COLORS, HIGHLIGHT_COLOR_MATCH, HIGHLIGHT_LABELS,
-			HIGHLIGHT_MODE, HIGHLIGHT_LAST_FEATURE };
+	private final static String[] HIGHLIGHT_ACTIONS = { HIGHLIGHT_COLORS, HIGHLIGHT_LABELS, HIGHLIGHT_MODE,
+			HIGHLIGHT_LAST_FEATURE };
 	private final static String[] HIGHLIGHT_SPHERE_ACTIONS = { HIGHLIGHT_DECR_SPHERE_SIZE, HIGHLIGHT_INCR_SPHERE_SIZE,
 			HIGHLIGHT_DECR_SPHERE_TRANSLUCENCY, HIGHLIGHT_INCR_SPHERE_TRANSLUCENCY };
 
@@ -205,14 +195,13 @@ public class Actions
 		//		keys.put(VIEW_HIDE_UNSELECTED, KeyStroke.getKeyStroke(KeyEvent.VK_V, ActionEvent.ALT_MASK));
 		keys.put(VIEW_SPIN, KeyStroke.getKeyStroke(KeyEvent.VK_S, ActionEvent.ALT_MASK));
 		keys.put(VIEW_BLACK_WHITE, KeyStroke.getKeyStroke(KeyEvent.VK_B, ActionEvent.ALT_MASK));
-		keys.put(HIGHLIGHT_COLOR_MATCH, KeyStroke.getKeyStroke(KeyEvent.VK_C, ActionEvent.ALT_MASK));
 		//		keys.put(VIEW_COMPOUND_DESCRIPTOR, KeyStroke.getKeyStroke(KeyEvent.VK_D, ActionEvent.ALT_MASK));
 		keys.put(HIDDEN_ENABLE_JMOL_POPUP, KeyStroke.getKeyStroke(KeyEvent.VK_R, ActionEvent.ALT_MASK));
 		keys.put(HIDDEN_UPDATE_MOUSE_SELECTION_PRESSED,
 				KeyStroke.getKeyStroke(KeyEvent.VK_SHIFT, ActionEvent.SHIFT_MASK));
 		keys.put(HIDDEN_UPDATE_MOUSE_SELECTION_RELEASED, KeyStroke.getKeyStroke(KeyEvent.VK_SHIFT, 0, true));
 		keys.put(VIEW_ANTIALIAS, KeyStroke.getKeyStroke(KeyEvent.VK_G, ActionEvent.ALT_MASK));
-		keys.put(HIGHLIGHT_COLORS, KeyStroke.getKeyStroke(KeyEvent.VK_L, ActionEvent.ALT_MASK));
+		keys.put(HIGHLIGHT_COLORS, KeyStroke.getKeyStroke(KeyEvent.VK_C, ActionEvent.ALT_MASK));
 		keys.put(HIGHLIGHT_LAST_FEATURE, KeyStroke.getKeyStroke(KeyEvent.VK_F, ActionEvent.ALT_MASK));
 		keys.put(HIGHLIGHT_MODE, KeyStroke.getKeyStroke(KeyEvent.VK_T, ActionEvent.ALT_MASK));
 		keys.put(HIDDEN_DECR_COMPOUND_SIZE, KeyStroke.getKeyStroke(KeyEvent.VK_MINUS, ActionEvent.CTRL_MASK));
@@ -930,74 +919,12 @@ public class Actions
 					viewControler.changeCompoundSize(true);
 			}
 		};
-		new ActionCreator(HIGHLIGHT_COLOR_MATCH, ViewControler.PROPERTY_MATCH_COLOR_CHANGED)
-		{
-			@Override
-			public void action()
-			{
-				Color col = JColorChooser.showDialog(Settings.TOP_LEVEL_FRAME, "Select Color",
-						viewControler.getMatchColor());
-				if (col != null)
-					viewControler.setMatchColor(col);
-			}
-		};
 		new ActionCreator(HIGHLIGHT_COLORS)
 		{
-			@SuppressWarnings("unchecked")
 			@Override
 			public void action()
 			{
-				ArrayList<CompoundProperty> numeric = new ArrayList<CompoundProperty>();
-				int currentPropIdx = -1;
-				CompoundProperty currentNumProp = viewControler.getHighlightedProperty();
-				for (Highlighter hs[] : viewControler.getHighlighters().values())
-					for (Highlighter h : hs)
-						if (h instanceof CompoundPropertyHighlighter)
-						{
-							CompoundProperty p = ((CompoundPropertyHighlighter) h).getProperty();
-							if (p.getType() == Type.NUMERIC)
-							{
-								if (p.equals(currentNumProp))
-									currentPropIdx = numeric.size();
-								numeric.add(p);
-							}
-						}
-				if (numeric.size() == 0)
-				{
-					JOptionPane
-							.showMessageDialog(
-									Settings.TOP_LEVEL_FRAME,
-									"Currently only highlighting colors of numeric features can be configured.\nThere are no numeric features available.",
-									"Message", JOptionPane.WARNING_MESSAGE);
-					return;
-				}
-
-				//				for (CompoundProperty p : ListUtil.concat(clustering.getProperties(), clustering.getFeatures()))
-				//					if (p.getType() == Type.NUMERIC)
-				//					{
-				//						if (p.equals(currentProp))
-				//							currentPropIdx = numeric.size();
-				//						numeric.add(p);
-				//					}
-				boolean selected[] = new boolean[numeric.size()];
-				if (currentPropIdx != -1)
-					selected[currentPropIdx] = true;
-				CheckBoxSelectPanel features = new CheckBoxSelectPanel(null, ArrayUtil.toArray(CompoundProperty.class,
-						numeric), selected);
-
-				JCheckBox logHighlighting = new JCheckBox(Settings.text("action.highlight-colors.log"),
-						viewControler.isHighlightLogEnabled());
-				logHighlighting.setToolTipText(Settings.text("action.highlight-colors.log.description"));
-
-				JPanel p = new JPanel(new BorderLayout(10, 10));
-				p.add(logHighlighting, BorderLayout.SOUTH);
-				p.add(features, BorderLayout.NORTH);
-
-				ColorGradient grad = ColorGradientChooser.show(Settings.TOP_LEVEL_FRAME,
-						Settings.text("action.highlight-grad"), viewControler.getHighlightGradient(), p);
-				CompoundProperty props[] = ArrayUtil.cast(CompoundProperty.class, features.getSelectedValues());
-				if (grad != null && props.length > 0)
-					viewControler.setHighlightColors(grad, logHighlighting.isSelected(), props);
+				ColorEditor.start(viewControler, clustering);
 			}
 		};
 

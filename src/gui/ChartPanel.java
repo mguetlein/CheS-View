@@ -21,7 +21,6 @@ import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -68,11 +67,8 @@ public class ChartPanel extends JPanel
 	ViewControler viewControler;
 	GUIControler guiControler;
 
-	Cluster cluster;
-	Compound compounds[];
+	String plotKey;
 	CompoundProperty property;
-	CompoundFilter filter;
-	int fontSize;
 
 	private DimensionProvider maxLabelWidth = new DimensionProvider()
 	{
@@ -198,6 +194,7 @@ public class ChartPanel extends JPanel
 			{
 				if (evt.getPropertyName().equals(ViewControler.PROPERTY_HIGHLIGHT_CHANGED)
 						|| evt.getPropertyName().equals(ViewControler.PROPERTY_HIGHLIGHT_CHANGED)
+						|| evt.getPropertyName().equals(ViewControler.PROPERTY_HIGHLIGHT_COLORS_CHANGED)
 						|| evt.getPropertyName().equals(ViewControler.PROPERTY_COMPOUND_FILTER_CHANGED))
 				{
 					update(false);
@@ -287,7 +284,13 @@ public class ChartPanel extends JPanel
 		String mString = "";
 		for (Compound compound : m)
 			mString = mString.concat(compound.toString());
-		return (c == null ? "null" : c.getName()) + "_" + p.toString() + "_" + mString.hashCode() + "_"
+		String cString = "";
+		if (p.getType() == Type.NOMINAL)
+			if (p.isSmartsProperty())
+				cString += CompoundPropertyUtil.HIGHILIGHT_MATCH_COLORS;
+			else
+				cString += p.getHighlightColorSequence();
+		return (c == null ? "null" : c.getName()) + "_" + p.toString() + "_" + cString + " " + mString.hashCode() + "_"
 				+ (f == null ? "" : f.hashCode()) + "_" + fontSize;
 	}
 
@@ -741,34 +744,35 @@ public class ChartPanel extends JPanel
 			comps = new Compound[0];
 		}
 
-		if (force || cluster != c || property != prop || !Arrays.equals(compounds, comps)
-				|| filter != clusterControler.getCompoundFilter() || fontSize != ScreenSetup.INSTANCE.getFontSize())
+		String key;
+		if (prop == null)
+			key = "";
+		else
+			key = getKey(c, prop, comps, clusterControler.getCompoundFilter(), ScreenSetup.INSTANCE.getFontSize());
+
+		if (force || property != prop || !plotKey.equals(key))
 		{
-			cluster = c;
 			property = prop;
-			compounds = comps;
-			filter = clusterControler.getCompoundFilter();
-			fontSize = ScreenSetup.INSTANCE.getFontSize();
+			plotKey = key;
 
 			if (property == null)
 				setVisible(false);
 			else
 			{
-				final Cluster fCluster = this.cluster;
-				final CompoundProperty fProperty = this.property;
-				final Compound fCompounds[] = this.compounds;
-				final CompoundFilter fFilter = filter;
-				final int fFontSize = fontSize;
+				final CompoundProperty fProperty = property;
+				final String fPlotKey = plotKey;
+
+				final Cluster fCluster = c;
+				final Compound fCompounds[] = comps;
+				final int fFontSize = ScreenSetup.INSTANCE.getFontSize();
 
 				workerThread.addJob(new Runnable()
 				{
 					public void run()
 					{
-						if (fCluster != cluster || fProperty != property || fCompounds != compounds
-								|| fFontSize != fontSize)
+						if (fProperty != property || !fPlotKey.equals(plotKey))
 							return;
 
-						String plotKey = getKey(fCluster, fProperty, fCompounds, fFilter, fFontSize);
 						if (force && cardContents.containsKey(plotKey))
 							cardContents.remove(plotKey);
 						if (!cardContents.containsKey(plotKey))
@@ -786,8 +790,7 @@ public class ChartPanel extends JPanel
 							}
 						}
 
-						if (fCluster != cluster || fProperty != property || fCompounds != compounds
-								|| fFontSize != fontSize)
+						if (fProperty != property || !fPlotKey.equals(plotKey))
 							return;
 						setIgnoreRepaint(true);
 

@@ -14,6 +14,7 @@ import cluster.Clustering;
 import dataInterface.AbstractCompoundProperty;
 import dataInterface.CompoundProperty;
 import dataInterface.CompoundPropertySet;
+import dataInterface.CompoundPropertyUtil;
 import dataInterface.SubstructureSmartsType;
 
 public interface ViewControler
@@ -32,6 +33,9 @@ public interface ViewControler
 	{
 		ColorCompounds, Spheres;
 	}
+
+	public static final ColorGradient DEFAULT_COLOR_GRADIENT = new ColorGradient(
+			CompoundPropertyUtil.getHighValueColor(), Color.WHITE, CompoundPropertyUtil.getLowValueColor());
 
 	public DisguiseMode getDisguiseUnHovered();
 
@@ -106,7 +110,6 @@ public interface ViewControler
 	public static final String PROPERTY_SPIN_CHANGED = "propertySpinChanged";
 	public static final String PROPERTY_BACKGROUND_CHANGED = "propertyBackgroundChanged";
 	public static final String PROPERTY_FONT_SIZE_CHANGED = "propertyFontSizeChanged";
-	public static final String PROPERTY_MATCH_COLOR_CHANGED = "propertyMatchColorChanged";
 	public static final String PROPERTY_COMPOUND_DESCRIPTOR_CHANGED = "propertyCompoundDescriptorChanged";
 	public static final String PROPERTY_HIGHLIGHT_MODE_CHANGED = "propertyHighlightModeChanged";
 	public static final String PROPERTY_HIGHLIGHT_COLORS_CHANGED = "propertyHighlightColorsChanged";
@@ -143,10 +146,6 @@ public interface ViewControler
 
 	public int getFontSize();
 
-	public void setMatchColor(Color color);
-
-	public Color getMatchColor();
-
 	static final CompoundProperty COMPOUND_INDEX_PROPERTY = new AbstractCompoundProperty("Compound Index", "no-desc")
 	{
 		@Override
@@ -174,9 +173,13 @@ public interface ViewControler
 
 	public Boolean isHighlightLogEnabled();
 
-	public ColorGradient getHighlightGradient();
-
 	public void setHighlightColors(ColorGradient g, boolean log, CompoundProperty props[]);
+
+	public void setHighlightColors(Color g[], CompoundProperty props[]);
+
+	public void setClusterColors(Color[] sequence);
+
+	void setHighlightMatchColors(Color[] colors);
 
 	public void setSelectLastSelectedHighlighter();
 
