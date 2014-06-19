@@ -120,6 +120,7 @@ public interface ViewControler
 	public static final String PROPERTY_FEATURE_SORTING_CHANGED = "propertyFeatureSortingChanged";
 	public static final String PROPERTY_COMPOUND_FILTER_CHANGED = "propertyCompoundFilterChanged";
 	public static final String PROPERTY_SINGLE_COMPOUND_SELECTION_ENABLED = "propertySingleCompoundSelectionEnabled";
+	public static final String PROPERTY_2D_ICON_SIZE_CHANGED = "property2DIconSizeChanged";
 
 	public boolean isHighlighterLabelsVisible();
 
@@ -251,6 +252,10 @@ public interface ViewControler
 	public void doMouseMoveWatchUpdates(Runnable runnable);
 
 	public void clearMouseMoveWatchUpdates(boolean clearWatched);
+
+	public void increase2DIconSize(boolean increase);
+
+	public void set2DIconSize(int size);
 
 	// to remove
 

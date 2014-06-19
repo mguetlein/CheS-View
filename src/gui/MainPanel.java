@@ -426,7 +426,7 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 							if (mouseMoveUpdate)
 								r = mouseMoveRunnable;
 						}
-						ThreadUtil.sleep(100);
+						ThreadUtil.sleep(35);
 						synchronized (mouseMoveUpdateThread)
 						{
 							if (mouseMoveUpdate && r == mouseMoveRunnable)//check for override by new event 
@@ -535,6 +535,13 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 			this.style = style;
 			updateAllClustersAndCompounds(false);
 			fireViewChange(PROPERTY_STYLE_CHANGED);
+			if (InfoPanel.ICON_SIZE_AUTOMATIC)
+			{
+				if (style == Style.dots)
+					set2DIconSize(InfoPanel.DEFAULT_ICON_SIZE_DOTS, false);
+				else
+					set2DIconSize(InfoPanel.DEFAULT_ICON_SIZE, false);
+			}
 			if (style == Style.ballsAndSticks)
 				guiControler.showMessage("Draw compounds with balls (atoms) and sticks (bonds).");
 			else if (style == Style.wireframe)
@@ -2717,5 +2724,36 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 	public boolean isShowClusteringPropsEnabled()
 	{
 		return true;
+	}
+
+	@Override
+	public void increase2DIconSize(boolean increase)
+	{
+		int newSize = InfoPanel.ICON_SIZE + (InfoPanel.ICON_SIZE_MODIFIER * (increase ? 1 : -1));
+		set2DIconSize(newSize, true);
+	}
+
+	@Override
+	public void set2DIconSize(int size)
+	{
+		set2DIconSize(size, true);
+	}
+
+	private void set2DIconSize(int newSize, boolean manually)
+	{
+		newSize = Math.min(Math.max(newSize, InfoPanel.ICON_SIZE_MIN), InfoPanel.ICON_SIZE_MAX);
+		if (newSize != InfoPanel.ICON_SIZE)
+		{
+			boolean increase = newSize > InfoPanel.ICON_SIZE;
+			InfoPanel.ICON_SIZE = newSize;
+			fireViewChange(PROPERTY_2D_ICON_SIZE_CHANGED);
+			if (manually)
+			{
+				InfoPanel.ICON_SIZE_AUTOMATIC = false;
+				guiControler.showMessage((increase ? "Increase" : "Decrease") + " 2D compound image size to "
+						+ InfoPanel.ICON_SIZE + ".");
+			}
+		}
+
 	}
 }

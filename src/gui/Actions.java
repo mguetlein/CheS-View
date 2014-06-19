@@ -127,9 +127,10 @@ public class Actions
 	private final static String VIEW_HIDE_UNSELECTED_DIALOG = "view-hide-unselected";
 	private final static String VIEW_OPEN_SORT_FILTER_DIALOG = "view-open-sort-filter-dialog";
 	private final static String VIEW_FONT_DIALOG = "view-font-dialog";
+	private final static String VIEW_2D_ICON_DIALOG = "view-2d-icon-dialog";
 	private final static String[] VIEW_ACTIONS = { VIEW_FULL_SCREEN, VIEW_DRAW_HYDROGENS, VIEW_SPIN, VIEW_BLACK_WHITE,
 			VIEW_ANTIALIAS, VIEW_COMPOUND_DESCRIPTOR, VIEW_OPEN_SORT_FILTER_DIALOG, VIEW_HIDE_UNSELECTED_DIALOG,
-			VIEW_FONT_DIALOG };
+			VIEW_FONT_DIALOG, VIEW_2D_ICON_DIALOG };
 
 	private final static String HIGHLIGHT_COLORS = "highlight-colors";
 	private final static String HIGHLIGHT_MODE = "highlight-mode";
@@ -162,11 +163,13 @@ public class Actions
 	private final static String HIDDEN_TREE = "tree";
 	private final static String HIDDEN_COPY = "copy";
 	private final static String HIDDEN_PREDICT = "predict";
+	private final static String HIDDEN_INCR_2D_ICON_SIZE = "incr-icon-size";
+	private final static String HIDDEN_DECR_2D_ICON_SIZE = "decr-icon-size";
 	private final static String[] HIDDEN_ACTIONS = { HIDDEN_UPDATE_MOUSE_SELECTION_PRESSED,
 			HIDDEN_UPDATE_MOUSE_SELECTION_RELEASED, HIDDEN_DECR_COMPOUND_SIZE, HIDDEN_INCR_COMPOUND_SIZE,
 			HIDDEN_ENABLE_JMOL_POPUP, HIDDEN_INCR_SPIN_SPEED, HIDDEN_DECR_SPIN_SPEED, HIDDEN_INCR_FONT_SIZE,
 			HIDDEN_DECR_FONT_SIZE, HIDDEN_FILTER_FEATURES, HIDDEN_TOGGLE_SORTING, HIDDEN_TREE, HIDDEN_COPY,
-			HIDDEN_PREDICT };
+			HIDDEN_PREDICT, HIDDEN_INCR_2D_ICON_SIZE, HIDDEN_DECR_2D_ICON_SIZE };
 
 	private HashMap<String, Action> actions = new LinkedHashMap<String, Action>();
 
@@ -223,6 +226,9 @@ public class Actions
 		keys.put(HIDDEN_TREE, KeyStroke.getKeyStroke(KeyEvent.VK_4, ActionEvent.ALT_MASK));
 		keys.put(HIDDEN_COPY, KeyStroke.getKeyStroke(KeyEvent.VK_C, ActionEvent.CTRL_MASK));
 		keys.put(HIDDEN_PREDICT, KeyStroke.getKeyStroke(KeyEvent.VK_P, ActionEvent.ALT_MASK));
+		keys.put(HIDDEN_INCR_2D_ICON_SIZE, KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, ActionEvent.ALT_MASK));// | ActionEvent.ALT_MASK));
+		keys.put(HIDDEN_DECR_2D_ICON_SIZE, KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, ActionEvent.ALT_MASK));// | ActionEvent.ALT_MASK));
+
 	}
 
 	public static String keyStrokeToText(KeyStroke keystroke)
@@ -238,6 +244,19 @@ public class Actions
 				&& keys.get(HIDDEN_INCR_FONT_SIZE).getModifiers() == keys.get(HIDDEN_DECR_FONT_SIZE).getModifiers())
 		{
 			return KeyEvent.getKeyModifiersText(keys.get(HIDDEN_INCR_FONT_SIZE).getModifiers()) + " +/-";
+		}
+		else
+			throw new IllegalStateException();
+	}
+
+	public static String getIncrDecr2DIconKeys()
+	{
+		if (keys.get(HIDDEN_INCR_2D_ICON_SIZE).getKeyCode() == KeyEvent.VK_LEFT
+				&& keys.get(HIDDEN_DECR_2D_ICON_SIZE).getKeyCode() == KeyEvent.VK_RIGHT
+				&& keys.get(HIDDEN_INCR_2D_ICON_SIZE).getModifiers() == keys.get(HIDDEN_DECR_2D_ICON_SIZE)
+						.getModifiers())
+		{
+			return KeyEvent.getKeyModifiersText(keys.get(HIDDEN_INCR_2D_ICON_SIZE).getModifiers()) + " left/right";
 		}
 		else
 			throw new IllegalStateException();
@@ -791,6 +810,39 @@ public class Actions
 						String.valueOf(action.getValue(Action.NAME)));
 			}
 		};
+		new ActionCreator(VIEW_2D_ICON_DIALOG)
+		{
+			IntegerProperty size;
+
+			@Override
+			public void action()
+			{
+				if (size == null)
+				{
+					size = new IntegerProperty("Font size (" + getIncrDecr2DIconKeys() + ")", InfoPanel.ICON_SIZE,
+							InfoPanel.ICON_SIZE_MIN, InfoPanel.ICON_SIZE_MAX);
+					viewControler.addViewListener(new PropertyChangeListener()
+					{
+						@Override
+						public void propertyChange(PropertyChangeEvent e)
+						{
+							if (e.getPropertyName().equals(ViewControler.PROPERTY_2D_ICON_SIZE_CHANGED))
+								size.setValue(InfoPanel.ICON_SIZE);
+						}
+					});
+					size.addPropertyChangeListener(new PropertyChangeListener()
+					{
+						@Override
+						public void propertyChange(PropertyChangeEvent evt)
+						{
+							viewControler.set2DIconSize(size.getValue());
+						}
+					});
+				}
+				SwingUtil.showInDialog(new PropertyPanel(new Property[] { size }),
+						String.valueOf(action.getValue(Action.NAME)));
+			}
+		};
 
 		new ActionCreator(VIEW_SPIN, ViewControler.PROPERTY_SPIN_CHANGED)
 		{
@@ -875,6 +927,22 @@ public class Actions
 			public void action()
 			{
 				showAboutDialog();
+			}
+		};
+		new ActionCreator(HIDDEN_INCR_2D_ICON_SIZE)
+		{
+			@Override
+			public void action()
+			{
+				viewControler.increase2DIconSize(true);
+			}
+		};
+		new ActionCreator(HIDDEN_DECR_2D_ICON_SIZE)
+		{
+			@Override
+			public void action()
+			{
+				viewControler.increase2DIconSize(false);
 			}
 		};
 		new ActionCreator(HIDDEN_ENABLE_JMOL_POPUP)

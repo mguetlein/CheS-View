@@ -68,7 +68,14 @@ public class InfoPanel extends JPanel
 	private static final double FIXED_MAX_SIZE_COL_1 = INTERACTIVE_MAX_SIZE_TOTAL * 0.5;
 	private static final boolean USE_GLOBAL_MIN_WIDTH = true;
 
-	public static final double ICON_SIZE = 0.12;//FIXED_MAX_SIZE_TOTAL;
+	public static final int ICON_SIZE_MIN = 5;
+	public static final int ICON_SIZE_MAX = 40;
+	public static final int ICON_SIZE_MODIFIER = 1;
+	public static int ICON_SIZE = 15;//FIXED_MAX_SIZE_TOTAL;
+
+	public static boolean ICON_SIZE_AUTOMATIC = true;
+	public static final int DEFAULT_ICON_SIZE = 15;
+	public static final int DEFAULT_ICON_SIZE_DOTS = 25;
 
 	Clustering clustering;
 	ClusterController clusterControler;
@@ -619,7 +626,7 @@ public class InfoPanel extends JPanel
 									if (currentCard == CARD_COMPOUND
 											&& cardToPanel.get(currentCard).selected == fCompound)
 									{
-										int size = guiControler.getComponentMaxWidth(ICON_SIZE);
+										int size = guiControler.getComponentMaxWidth(ICON_SIZE / 100.0);
 										icon = fCompound.getIcon(viewControler.isBlackgroundBlack(), size, size, true);
 									}
 									if (currentCard == CARD_COMPOUND
@@ -702,7 +709,8 @@ public class InfoPanel extends JPanel
 			{
 				if (evt.getPropertyName().equals(ViewControler.PROPERTY_HIGHLIGHT_CHANGED)
 						|| evt.getPropertyName().equals(ViewControler.PROPERTY_NEW_HIGHLIGHTERS)
-						|| evt.getPropertyName().equals(ViewControler.PROPERTY_BACKGROUND_CHANGED))
+						|| evt.getPropertyName().equals(ViewControler.PROPERTY_BACKGROUND_CHANGED)
+						|| evt.getPropertyName().equals(ViewControler.PROPERTY_2D_ICON_SIZE_CHANGED))
 				{
 					update(true);
 				}
@@ -871,6 +879,7 @@ public class InfoPanel extends JPanel
 		{
 			preferredTableHeight = Math.max(preferredTableHeight, cardToPanel.get(currentCard)
 					.getPreferredTableHeight());
+			preferredTableHeight = Math.max(preferredTableHeight, compoundIconLabel.getHeight());
 			return preferredTableHeight;
 		}
 		else

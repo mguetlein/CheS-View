@@ -390,7 +390,7 @@ public abstract class ColorEditorPanel extends JPanel
 			noMatch = new ColorProperty("no-match", UUID.randomUUID().toString(), cols[0], dCols[0]);
 			match = new ColorProperty("match", UUID.randomUUID().toString(), cols[1], dCols[1]);
 			matchingAtoms = new ColorProperty("matching fragment", UUID.randomUUID().toString(), cols[2], dCols[2]);
-			add(new PropertyPanel(noMatch, match, matchingAtoms), BorderLayout.CENTER);
+			add(new PropertyPanel(noMatch, match, matchingAtoms), BorderLayout.WEST);
 		}
 	}
 }
