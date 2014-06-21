@@ -2750,7 +2750,7 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 			if (manually)
 			{
 				InfoPanel.ICON_SIZE_AUTOMATIC = false;
-				guiControler.showMessage((increase ? "Increase" : "Decrease") + " 2D compound image size to "
+				guiControler.showMessage((increase ? "Increase" : "Decrease") + " maximum 2D compound image size to "
 						+ InfoPanel.ICON_SIZE + ".");
 			}
 		}
