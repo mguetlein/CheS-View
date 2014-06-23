@@ -147,16 +147,19 @@ public class LaunchCheSMapper
 
 		if (args != null && args.length == 1 && args[0].equals("debug"))
 		{
-			setExitOnClose(false);
-			init();
-			start();
-			ThreadUtil.sleep(10);
-			SwingUtil.waitWhileVisible(CheSViewer.getFrame());
-			System.err.println("X\nX\nX\nX\nX\nX\nSecond run\nX\nX\nX\nX\nX\nX\n");
-			start();
-			ThreadUtil.sleep(10);
-			SwingUtil.waitWhileVisible(CheSViewer.getFrame());
-			System.exit(0);
+			//			setExitOnClose(false);
+			//			init();
+			//			start();
+			//			ThreadUtil.sleep(10);
+			//			SwingUtil.waitWhileVisible(CheSViewer.getFrame());
+			//			System.err.println("X\nX\nX\nX\nX\nX\nSecond run\nX\nX\nX\nX\nX\nX\n");
+			//			start();
+			//			ThreadUtil.sleep(10);
+			//			SwingUtil.waitWhileVisible(CheSViewer.getFrame());
+			//			System.exit(0);
+
+			args = "-s -f ob -d /home/martin/data/Tox21/TOX21S_v2a_8193_22Mar2012_cleanded.half2.sdf --big-data"
+					.split(" ");
 
 			//Settings.CACHING_ENABLED = false;
 			//args = ("-s -d /home/martin/data/caco2.sdf -f integrated -i caco2").split(" ");
@@ -221,8 +224,8 @@ public class LaunchCheSMapper
 			//					.split(" ");
 			//			args = "-y sxga+ -w /media/martin/Windows7_OS/Users/martin/Downloads/ches-mapper-presentation/demo-ob-descriptors.ches --font-size 18 --compound-style ballsAndSticks --compound-size 35 --highlight-mode Spheres --hide-compounds none"
 			//					.split(" ");
-			args = "-y sxga+ -w /media/martin/Windows7_OS/Users/martin/Downloads/ches-mapper-presentation/hamster.ches --font-size 18 --predict"
-					.split(" ");
+			//			args = "-y sxga+ -w /media/martin/Windows7_OS/Users/martin/Downloads/ches-mapper-presentation/hamster.ches --font-size 18 --predict"
+			//					.split(" ");
 
 			//			try
 			//			{
@@ -341,6 +344,9 @@ public class LaunchCheSMapper
 		//		options.addOption(longParamOption("dimension", "viewer dimension (<width>x<height>)", "viewer dimension"));
 		options.addOption(longOption("background-white", "set background to white"));
 		options.addOption(longOption("full-screen", "start in full-screen"));
+		options.addOption(longOption("big-data",
+				"start in big-data mode (show data points instead of compound structures)"));
+		options.addOption(longOption("no-cache", "disable caching of embedding results"));
 
 		options.addOption(longParamOption("display-no", "set number of display to start application on",
 				"number of display"));
@@ -569,7 +575,20 @@ public class LaunchCheSMapper
 			}
 
 			if (cmd.hasOption('r'))
+			{
 				Settings.DESC_MIXTURE_HANDLING = true;
+				Settings.LOGGER.warn("mixture handling enabled");
+			}
+			if (cmd.hasOption("big-data"))
+			{
+				Settings.BIG_DATA = true;
+				Settings.LOGGER.warn("big data mode enabled");
+			}
+			if (cmd.hasOption("no-cache"))
+			{
+				Settings.CACHING_ENABLED = false;
+				Settings.LOGGER.warn("caching disabled");
+			}
 
 			if (cmd.hasOption('e'))
 			{
