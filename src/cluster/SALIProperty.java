@@ -1,6 +1,7 @@
 package cluster;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -14,13 +15,42 @@ import dataInterface.NumericDynamicCompoundProperty;
 public class SALIProperty extends NumericDynamicCompoundProperty
 {
 	String target;
-	boolean max;
+	Type type;
 
-	public SALIProperty(Double[] endpointVals, double[][] featureDistanceMatrix, String target, boolean max)
+	public static enum Type
 	{
-		super(computeMaxSali(endpointVals, featureDistanceMatrix, max));
+		Mean, Max, StdDev;
+
+		public String nice()
+		{
+			switch (this)
+			{
+				case StdDev:
+					return "Standard-Deviation";
+				case Mean:
+					return "Mean";
+				case Max:
+					return "Maximum";
+				default:
+					return null;
+			}
+		}
+	}
+
+	private SALIProperty(Double[] values, String target, Type type)
+	{
+		super(values);
 		this.target = target;
-		this.max = max;
+		this.type = type;
+	}
+
+	public static List<SALIProperty> create(Double[] endpointVals, double[][] featureDistanceMatrix, String target)
+	{
+		List<SALIProperty> l = new ArrayList<SALIProperty>();
+		HashMap<Type, Double[]> vals = computeSali(endpointVals, featureDistanceMatrix);
+		for (Type t : Type.values())
+			l.add(new SALIProperty(vals.get(t), target, t));
+		return l;
 	}
 
 	public static final double MIN_ENDPOINT_DEV = 0.1;
@@ -66,7 +96,7 @@ public class SALIProperty extends NumericDynamicCompoundProperty
 		}
 	}
 
-	private static Double[] computeMaxSali(Double[] endpointVals, double[][] featureDistanceMatrix, boolean max)
+	private static HashMap<Type, Double[]> computeSali(Double[] endpointVals, double[][] featureDistanceMatrix)
 	{
 		if (endpointVals.length != featureDistanceMatrix.length
 				|| endpointVals.length != featureDistanceMatrix[0].length)
@@ -110,19 +140,23 @@ public class SALIProperty extends NumericDynamicCompoundProperty
 				identicalFeatsCompounds += n.indices.size();
 			}
 
-		Double salis[] = new Double[endpointVals.length];
-		for (int i = 0; i < salis.length; i++)
+		HashMap<Type, Double[]> res = new HashMap<Type, Double[]>();
+		for (Type t : Type.values())
+			res.put(t, new Double[endpointVals.length]);
+
+		for (int i = 0; i < endpointVals.length; i++)
 		{
 			if (eqTuplesArray[i] != null
 					&& eqTuplesArray[i].isCliff(featureDistanceMatrix, endpointVals, minEndpointDiff))
 			{
-				salis[i] = eqTuplesArray[i].id;
+				for (Type t : Type.values())
+					res.get(t)[i] = eqTuplesArray[i].id;
 				continue;
 			}
 			if (endpointVals[i] == null)
 				continue;
 			List<Double> allSalis = new ArrayList<Double>();
-			for (int j = 0; j < salis.length; j++)
+			for (int j = 0; j < endpointVals.length; j++)
 			{
 				if (i == j)
 					continue;
@@ -138,10 +172,21 @@ public class SALIProperty extends NumericDynamicCompoundProperty
 				double tmpSali = endpointDist / featureDistanceMatrix[i][j];
 				allSalis.add(tmpSali);
 			}
-			if (max)
-				salis[i] = DoubleArraySummary.create(allSalis).getMax();
-			else
-				salis[i] = DoubleArraySummary.create(allSalis).getMean();
+
+			DoubleArraySummary stats = DoubleArraySummary.create(allSalis);
+			for (Type t : Type.values())
+				switch (t)
+				{
+					case Max:
+						res.get(t)[i] = stats.getMax();
+						break;
+					case Mean:
+						res.get(t)[i] = stats.getMean();
+						break;
+					case StdDev:
+						res.get(t)[i] = stats.getStdev();
+						break;
+				}
 		}
 
 		if (identicalFeatsCompounds > 0)
@@ -152,19 +197,24 @@ public class SALIProperty extends NumericDynamicCompoundProperty
 			warning += Settings.text("props.sali.detail", MIN_ENDPOINT_DEV_STR);
 			JOptionPane.showMessageDialog(Settings.TOP_LEVEL_FRAME, warning, "Warning", JOptionPane.WARNING_MESSAGE);
 		}
-		return salis;
+		return res;
 	}
 
 	@Override
 	public String getName()
 	{
-		return Settings.text("props.sali");
+		return Settings.text("props.sali", type.nice());
 	}
 
 	@Override
 	public String getDescription()
 	{
-		return Settings.text("props.sali.desc", max ? "Max" : "Mean", target);
+		return Settings.text("props.sali.desc", type.nice(), target);
+	}
+
+	public SALIProperty.Type getSALIPropertyType()
+	{
+		return type;
 	}
 
 }

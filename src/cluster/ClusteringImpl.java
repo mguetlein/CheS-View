@@ -1149,15 +1149,12 @@ public class ClusteringImpl implements Zoomable, Clustering
 	}
 
 	@Override
-	public CompoundProperty addSALIFeature(CompoundProperty p, boolean max)
+	public CompoundProperty addSALIFeatures(CompoundProperty p)
 	{
-		CompoundProperty old = null;
+		CompoundProperty oldProps[] = new CompoundProperty[0];
 		for (CompoundProperty prop : getAdditionalProperties())
 			if (prop instanceof SALIProperty)
-			{
-				old = prop;
-				break;
-			}
+				oldProps = ArrayUtil.push(CompoundProperty.class, oldProps, prop);
 
 		boolean log = false;
 		if (p.getType() == Type.NUMERIC && p.isLogHighlightingEnabled())
@@ -1197,10 +1194,10 @@ public class ClusteringImpl implements Zoomable, Clustering
 			count++;
 		}
 
-		SALIProperty s = new SALIProperty(d, clusteringData.getFeatureDistanceMatrix().getValues(),
-				(log ? "Log-transformed " : "") + p, max);
-		addNewAdditionalProperty(s, old);
-		return s;
+		List<SALIProperty> l = SALIProperty.create(d, clusteringData.getFeatureDistanceMatrix().getValues(),
+				(log ? "Log-transformed " : "") + p);
+		addNewAdditionalProperties(ListUtil.toArray(l), oldProps);
+		return l.get(0);
 	}
 
 	@Override
@@ -1263,17 +1260,27 @@ public class ClusteringImpl implements Zoomable, Clustering
 
 	private void addNewAdditionalProperty(CompoundProperty p, CompoundProperty old)
 	{
-		int i = 0;
-		for (CompoundData cc : getCompounds())
+		addNewAdditionalProperties(new CompoundProperty[] { p }, new CompoundProperty[] { old });
+	}
+
+	private void addNewAdditionalProperties(CompoundProperty props[], CompoundProperty oldProps[])
+	{
+		for (CompoundProperty p : props)
 		{
-			CompoundDataImpl c = (CompoundDataImpl) cc;
-			c.setDoubleValue(p, p.getDoubleValuesInCompleteMappedDataset()[i]);
-			c.setNormalizedValueCompleteDataset(p, p.getNormalizedValuesInCompleteMappedDataset()[i]);
-			i++;
+			int i = 0;
+			for (CompoundData cc : getCompounds())
+			{
+				CompoundDataImpl c = (CompoundDataImpl) cc;
+				c.setDoubleValue(p, p.getDoubleValuesInCompleteMappedDataset()[i]);
+				c.setNormalizedValueCompleteDataset(p, p.getNormalizedValuesInCompleteMappedDataset()[i]);
+				i++;
+			}
 		}
-		if (old != null)
-			clusteringData.getAdditionalProperties().remove(old);
-		clusteringData.getAdditionalProperties().add(p);
+		if (oldProps != null)
+			for (CompoundProperty old : oldProps)
+				clusteringData.getAdditionalProperties().remove(old);
+		for (CompoundProperty p : props)
+			clusteringData.getAdditionalProperties().add(p);
 		dirty = true;
 		if (View.instance != null) // for export
 			fire(PROPERTY_ADDED, true, false);

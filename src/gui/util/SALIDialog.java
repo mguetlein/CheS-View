@@ -4,18 +4,15 @@ import gui.TextPanel;
 import gui.ViewControler;
 
 import java.awt.BorderLayout;
-import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.swing.DefaultListCellRenderer;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
-import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.border.EmptyBorder;
 
@@ -36,10 +33,11 @@ public class SALIDialog extends JDialog
 	{
 		super(Settings.TOP_LEVEL_FRAME, Settings.text("action.edit-show-sali"), true);
 
-		DefaultFormBuilder builder = new DefaultFormBuilder(new FormLayout("fill:p:grow,10px,fill:p:grow"));
+		DefaultFormBuilder builder = new DefaultFormBuilder(new FormLayout("p,10px,fill:p:grow"));
 
 		TextPanel tp1 = new TextPanel(Settings.text("props.sali.detail", SALIProperty.MIN_ENDPOINT_DEV_STR));
 		builder.append(tp1, 3);
+		builder.nextLine();
 
 		final JComboBox<CompoundProperty> propCombo = new JComboBox<CompoundProperty>(ArrayUtil.toArray(list));
 		if (viewControler.getHighlightedProperty() != null)
@@ -51,21 +49,7 @@ public class SALIDialog extends JDialog
 		JLabel label = new JLabel("Endpoint:");
 		builder.append(label);
 		builder.append(propCombo);
-
-		final JComboBox<Boolean> maxCombo = new JComboBox<Boolean>(new Boolean[] { false, true });
-		maxCombo.setRenderer(new DefaultListCellRenderer()
-		{
-			@Override
-			public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected,
-					boolean cellHasFocus)
-			{
-				return super.getListCellRendererComponent(list, ((Boolean) value) ? "Max" : "Mean", index, isSelected,
-						cellHasFocus);
-			}
-		});
-		JLabel label2 = new JLabel("Convert pairwise values with:");
-		builder.append(label2);
-		builder.append(maxCombo);
+		builder.nextLine();
 
 		JButton ok = new JButton("OK");
 		JButton close = new JButton("Cancel");
@@ -75,8 +59,7 @@ public class SALIDialog extends JDialog
 			public void actionPerformed(ActionEvent e)
 			{
 				SALIDialog.this.setVisible(false);
-				CompoundProperty p = clustering.addSALIFeature((CompoundProperty) propCombo.getSelectedItem(),
-						(Boolean) maxCombo.getSelectedItem());
+				CompoundProperty p = clustering.addSALIFeatures((CompoundProperty) propCombo.getSelectedItem());
 				if (p != null)
 					viewControler.setHighlighter(p);
 			}
@@ -90,14 +73,15 @@ public class SALIDialog extends JDialog
 			}
 		});
 		builder.append(" ");//add gap
-		builder.append(ButtonBarFactory.buildOKCancelBar(ok, close));
+		builder.nextLine();
+		builder.append(ButtonBarFactory.buildOKCancelBar(ok, close), 3);
 		builder.setBorder(new EmptyBorder(10, 10, 10, 10));
 
 		setLayout(new BorderLayout());
 		add(builder.getPanel());
 
 		pack();
-		tp1.setPreferredWith(Math.max(300, label2.getPreferredSize().width + 10 + propCombo.getPreferredSize().width));
+		tp1.setPreferredWith(Math.max(300, label.getPreferredSize().width + 10 + propCombo.getPreferredSize().width));
 		pack();
 		setLocationRelativeTo(getOwner());
 	}
