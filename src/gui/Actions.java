@@ -118,6 +118,7 @@ public class Actions
 	private final static String[] EXPORT_ACTIONS = { EXPORT_SELECTED, EXPORT_UNSELECTED, EXPORT_CLUSTERS,
 			EXPORT_COMPOUNDS, EXPORT_IMAGE, EXPORT_WORKFLOW };
 
+	private final static String VIEW_HOME = "view-home";
 	private final static String VIEW_FULL_SCREEN = "view-full-screen";
 	private final static String VIEW_DRAW_HYDROGENS = "view-draw-hydrogens";
 	private final static String VIEW_SPIN = "view-spin";
@@ -128,9 +129,9 @@ public class Actions
 	private final static String VIEW_OPEN_SORT_FILTER_DIALOG = "view-open-sort-filter-dialog";
 	private final static String VIEW_FONT_DIALOG = "view-font-dialog";
 	private final static String VIEW_2D_ICON_DIALOG = "view-2d-icon-dialog";
-	private final static String[] VIEW_ACTIONS = { VIEW_FULL_SCREEN, VIEW_DRAW_HYDROGENS, VIEW_SPIN, VIEW_BLACK_WHITE,
-			VIEW_ANTIALIAS, VIEW_COMPOUND_DESCRIPTOR, VIEW_OPEN_SORT_FILTER_DIALOG, VIEW_HIDE_UNSELECTED_DIALOG,
-			VIEW_FONT_DIALOG, VIEW_2D_ICON_DIALOG };
+	private final static String[] VIEW_ACTIONS = { VIEW_HOME, VIEW_FULL_SCREEN, VIEW_DRAW_HYDROGENS, VIEW_SPIN,
+			VIEW_BLACK_WHITE, VIEW_ANTIALIAS, VIEW_COMPOUND_DESCRIPTOR, VIEW_OPEN_SORT_FILTER_DIALOG,
+			VIEW_HIDE_UNSELECTED_DIALOG, VIEW_FONT_DIALOG, VIEW_2D_ICON_DIALOG };
 
 	private final static String HIGHLIGHT_COLORS = "highlight-colors";
 	private final static String HIGHLIGHT_MODE = "highlight-mode";
@@ -163,13 +164,14 @@ public class Actions
 	private final static String HIDDEN_TREE = "tree";
 	private final static String HIDDEN_COPY = "copy";
 	private final static String HIDDEN_PREDICT = "predict";
+	private final static String HIDDEN_APP_DOMAIN = "app-domain";
 	private final static String HIDDEN_INCR_2D_ICON_SIZE = "incr-icon-size";
 	private final static String HIDDEN_DECR_2D_ICON_SIZE = "decr-icon-size";
 	private final static String[] HIDDEN_ACTIONS = { HIDDEN_UPDATE_MOUSE_SELECTION_PRESSED,
 			HIDDEN_UPDATE_MOUSE_SELECTION_RELEASED, HIDDEN_DECR_COMPOUND_SIZE, HIDDEN_INCR_COMPOUND_SIZE,
 			HIDDEN_ENABLE_JMOL_POPUP, HIDDEN_INCR_SPIN_SPEED, HIDDEN_DECR_SPIN_SPEED, HIDDEN_INCR_FONT_SIZE,
 			HIDDEN_DECR_FONT_SIZE, HIDDEN_FILTER_FEATURES, HIDDEN_TOGGLE_SORTING, HIDDEN_TREE, HIDDEN_COPY,
-			HIDDEN_PREDICT, HIDDEN_INCR_2D_ICON_SIZE, HIDDEN_DECR_2D_ICON_SIZE };
+			HIDDEN_PREDICT, HIDDEN_APP_DOMAIN, HIDDEN_INCR_2D_ICON_SIZE, HIDDEN_DECR_2D_ICON_SIZE };
 
 	private HashMap<String, Action> actions = new LinkedHashMap<String, Action>();
 
@@ -193,6 +195,7 @@ public class Actions
 		keys.put(EXPORT_IMAGE, KeyStroke.getKeyStroke(KeyEvent.VK_I, ActionEvent.ALT_MASK));
 		keys.put(EXPORT_WORKFLOW, KeyStroke.getKeyStroke(KeyEvent.VK_W, ActionEvent.ALT_MASK));
 
+		keys.put(VIEW_HOME, KeyStroke.getKeyStroke("HOME"));
 		keys.put(VIEW_FULL_SCREEN, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, ActionEvent.ALT_MASK));
 		keys.put(VIEW_DRAW_HYDROGENS, KeyStroke.getKeyStroke(KeyEvent.VK_H, ActionEvent.ALT_MASK));
 		//		keys.put(VIEW_HIDE_UNSELECTED, KeyStroke.getKeyStroke(KeyEvent.VK_V, ActionEvent.ALT_MASK));
@@ -226,6 +229,7 @@ public class Actions
 		keys.put(HIDDEN_TREE, KeyStroke.getKeyStroke(KeyEvent.VK_4, ActionEvent.ALT_MASK));
 		keys.put(HIDDEN_COPY, KeyStroke.getKeyStroke(KeyEvent.VK_C, ActionEvent.CTRL_MASK));
 		keys.put(HIDDEN_PREDICT, KeyStroke.getKeyStroke(KeyEvent.VK_P, ActionEvent.ALT_MASK));
+		keys.put(HIDDEN_APP_DOMAIN, KeyStroke.getKeyStroke(KeyEvent.VK_Z, ActionEvent.ALT_MASK));
 		keys.put(HIDDEN_INCR_2D_ICON_SIZE, KeyStroke.getKeyStroke(KeyEvent.VK_LEFT, ActionEvent.ALT_MASK));// | ActionEvent.ALT_MASK));
 		keys.put(HIDDEN_DECR_2D_ICON_SIZE, KeyStroke.getKeyStroke(KeyEvent.VK_RIGHT, ActionEvent.ALT_MASK));// | ActionEvent.ALT_MASK));
 
@@ -733,6 +737,14 @@ public class Actions
 				MappingWorkflow.exportMappingWorkflowToFile(MappingWorkflow.exportSettingsToMappingWorkflow());
 			}
 		};
+		new ActionCreator(VIEW_HOME)
+		{
+			@Override
+			public void action()
+			{
+				viewControler.resetView();
+			}
+		};
 		new ActionCreator(VIEW_FULL_SCREEN, GUIControler.PROPERTY_FULLSCREEN_CHANGED)
 		{
 			@Override
@@ -1235,6 +1247,22 @@ public class Actions
 				finally
 				{
 					guiControler.unblock("predict");
+				}
+			}
+		};
+		new ActionCreator(HIDDEN_APP_DOMAIN)
+		{
+			@Override
+			public void action()
+			{
+				guiControler.block("app-domain");
+				try
+				{
+					clustering.computeAppDomain();
+				}
+				finally
+				{
+					guiControler.unblock("app-domain");
 				}
 			}
 		};

@@ -30,6 +30,7 @@ import util.VectorUtil;
 import weka.Predictor;
 import weka.Predictor.PredictionResult;
 import alg.embed3d.Random3DEmbedder;
+import appdomain.AppDomainComputer;
 import data.ClusteringData;
 import data.CompoundDataImpl;
 import dataInterface.ClusterData;
@@ -1247,6 +1248,33 @@ public class ClusteringImpl implements Zoomable, Clustering
 	}
 
 	@Override
+	public void computeAppDomain()
+	{
+		List<CompoundProperty> feats = new ArrayList<CompoundProperty>();
+		for (CompoundProperty p : getFeatures())
+			if (p.getType() == Type.NUMERIC && p.numMissingValuesInMappedDataset() == 0
+					&& p.numDistinctValuesInMappedDataset() >= 2)
+				feats.add(p);
+
+		//AppDomainComputer appDomain[] = new AppDomainComputer[] { AppDomainHelper.select() };
+
+		List<CompoundProperty> props = new ArrayList<CompoundProperty>();
+
+		AppDomainComputer appDomain[] = AppDomainComputer.APP_DOMAIN_COMPUTERS;
+		if (appDomain != null && appDomain.length > 0)
+		{
+			for (AppDomainComputer ad : appDomain)
+			{
+				ad.computeAppDomain(getCompounds(), feats, clusteringData.getFeatureDistanceMatrix().getValues());
+				props.add(ad.getInsideAppDomainProperty());
+				props.add(ad.getPropabilityAppDomainProperty());
+			}
+		}
+
+		addNewAdditionalProperties(ListUtil.toArray(CompoundProperty.class, props), null);
+	}
+
+	@Override
 	public void addPredictionFeature(CompoundProperty clazz, PredictionResult p)
 	{
 		CompoundProperty pred = p.createFeature();
@@ -1271,8 +1299,15 @@ public class ClusteringImpl implements Zoomable, Clustering
 			for (CompoundData cc : getCompounds())
 			{
 				CompoundDataImpl c = (CompoundDataImpl) cc;
-				c.setDoubleValue(p, p.getDoubleValuesInCompleteMappedDataset()[i]);
-				c.setNormalizedValueCompleteDataset(p, p.getNormalizedValuesInCompleteMappedDataset()[i]);
+				if (p.getType() == Type.NUMERIC)
+				{
+					c.setDoubleValue(p, p.getDoubleValuesInCompleteMappedDataset()[i]);
+					c.setNormalizedValueCompleteDataset(p, p.getNormalizedValuesInCompleteMappedDataset()[i]);
+				}
+				else if (p.getType() == Type.NOMINAL)
+				{
+					c.setStringValue(p, p.getStringValuesInCompleteMappedDataset()[i]);
+				}
 				i++;
 			}
 		}

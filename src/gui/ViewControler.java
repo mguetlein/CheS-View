@@ -45,6 +45,8 @@ public interface ViewControler
 
 	public void setDisguiseUnZoomed(DisguiseMode hide);
 
+	public void resetView();
+
 	public boolean isSpinEnabled();
 
 	public void setSpinEnabled(boolean spinEnabled);

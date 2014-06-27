@@ -164,4 +164,6 @@ public interface Clustering extends CompoundPropertyOwner
 
 	boolean isBigDataMode();
 
+	void computeAppDomain();
+
 }

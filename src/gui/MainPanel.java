@@ -2754,6 +2754,41 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 						+ InfoPanel.ICON_SIZE + ".");
 			}
 		}
+	}
 
+	@Override
+	public void resetView()
+	{
+		guiControler.block("zooming home");
+		Thread th = new Thread(new Runnable()
+		{
+			public void run()
+			{
+				if (clustering.getActiveCluster() != null)
+					clearClusterActive(true, true);
+				else if (clustering.getActiveCompound() != null)
+					clearCompoundActive(true);
+				else
+					view.zoomTo(clustering, AnimationSpeed.SLOW);
+
+				SwingUtilities.invokeLater(new Runnable()
+				{
+					public void run()
+					{
+						if (clustering.getNumClusters() > 1)
+						{
+							setHighlighter(Highlighter.CLUSTER_HIGHLIGHTER);
+							highlightAutomatic.init();
+						}
+						else
+							setHighlighter(Highlighter.DEFAULT_HIGHLIGHTER);
+						//				else
+						//					guiControler.setFullScreen(!guiControler.isFullScreen());
+						guiControler.unblock("zooming home");
+					}
+				});
+			}
+		});
+		th.start();
 	}
 }
