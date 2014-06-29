@@ -52,8 +52,8 @@ public class ControlPanel extends JPanel
 
 	JSlider slider;
 
-	JComboBox highlightCombobox;
-	JComboBox highlightMinMaxCombobox;
+	JComboBox<Highlighter> highlightCombobox;
+	JComboBox<HighlightSorting> highlightMinMaxCombobox;
 	ClickableLabel buttonClearFeature;
 
 	ViewControler viewControler;
@@ -95,7 +95,7 @@ public class ControlPanel extends JPanel
 				viewControler.getCompoundSize());
 		slider.setPreferredSize(new Dimension(100, slider.getPreferredSize().height));
 
-		highlightCombobox = ComponentFactory.createViewComboBox();
+		highlightCombobox = ComponentFactory.createViewComboBox(Highlighter.class);
 		loadHighlighters();
 
 		highlightCombobox.setSelectedItem(viewControler.getHighlighter());
@@ -314,7 +314,8 @@ public class ControlPanel extends JPanel
 			throw new IllegalStateException("GUI updates only in event dispatch thread plz");
 
 		selfUpdate = true;
-		if (((DefaultComboBoxModel) highlightCombobox.getModel()).getIndexOf(viewControler.getHighlighter()) == -1)
+		if (((DefaultComboBoxModel<Highlighter>) highlightCombobox.getModel()).getIndexOf(viewControler
+				.getHighlighter()) == -1)
 			new IllegalStateException("cannot find " + viewControler.getHighlighter() + " in highlighter combo box")
 					.printStackTrace();
 		highlightCombobox.setSelectedItem(viewControler.getHighlighter());
@@ -329,7 +330,7 @@ public class ControlPanel extends JPanel
 	private void loadHighlighters()
 	{
 		selfUpdate = true;
-		((DefaultComboBoxModel) highlightCombobox.getModel()).removeAllElements();
+		((DefaultComboBoxModel<Highlighter>) highlightCombobox.getModel()).removeAllElements();
 		(((DescriptionListCellRenderer) highlightCombobox.getRenderer())).clearDescriptions();
 
 		HashMap<String, Highlighter[]> h = viewControler.getHighlighters();

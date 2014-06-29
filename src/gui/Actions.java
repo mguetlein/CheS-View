@@ -558,23 +558,23 @@ public class Actions
 		}
 	}
 
-	private abstract class RadioActionCreator extends ActionCreator
-	{
-		public RadioActionCreator(String s, String valueProperty)
-		{
-			super(s, valueProperty);
-		}
-
-		public RadioActionCreator(String s, String valueProperty, String enabledProperty)
-		{
-			super(s, valueProperty, enabledProperty);
-		}
-
-		protected boolean isRadio()
-		{
-			return true;
-		}
-	}
+	//	private abstract class RadioActionCreator extends ActionCreator
+	//	{
+	//		public RadioActionCreator(String s, String valueProperty)
+	//		{
+	//			super(s, valueProperty);
+	//		}
+	//
+	//		public RadioActionCreator(String s, String valueProperty, String enabledProperty)
+	//		{
+	//			super(s, valueProperty, enabledProperty);
+	//		}
+	//
+	//		protected boolean isRadio()
+	//		{
+	//			return true;
+	//		}
+	//	}
 
 	private void buildActions()
 	{

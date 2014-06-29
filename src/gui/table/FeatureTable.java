@@ -25,6 +25,8 @@ import util.StringUtil;
 import cluster.ClusterController;
 import cluster.Clustering;
 import dataInterface.CompoundProperty;
+import dataInterface.NominalProperty;
+import dataInterface.NumericProperty;
 
 public class FeatureTable extends DataTable
 {
@@ -114,7 +116,7 @@ public class FeatureTable extends DataTable
 				String map;
 				if (clustering.getFeatures().contains(p))
 				{
-					if (p.numDistinctValuesInCompleteDataset() <= 1)
+					if (p.numDistinctValues() <= 1)
 						map = "ignored (single-valued)";
 					else if (p.getRedundantProp() != null)
 						map = "ignored (redundant)";
@@ -124,13 +126,14 @@ public class FeatureTable extends DataTable
 				else
 					map = "no";
 				o[i++] = map;
-				o[i++] = p.getType() == CompoundProperty.Type.NUMERIC ? "Numeric"
-						: (p.getType() == CompoundProperty.Type.NOMINAL ? "Nominal" : "undef.");
+				o[i++] = p instanceof NumericProperty ? "Numeric"
+						: (p.getCompoundPropertySet().getType() != null ? "Nominal" : "undef.");
 				o[i++] = clustering.numMissingValues(p);
 				o[i++] = clustering.numDistinctValues(p);
-				if (p.getType() == CompoundProperty.Type.NUMERIC)
+				if (p instanceof NumericProperty)
 				{
-					DoubleArraySummary s = DoubleArraySummary.create(clustering.getDoubleValues(p));
+					DoubleArraySummary s = DoubleArraySummary.create(clustering
+							.getDoubleValues((NumericProperty) p));
 					o[i++] = Double.isNaN(s.getMin()) ? null : s.getMin();
 					o[i++] = Double.isNaN(s.getMedian()) ? null : s.getMedian();
 					o[i++] = Double.isNaN(s.getStdev()) ? null : s.getStdev();
@@ -143,7 +146,8 @@ public class FeatureTable extends DataTable
 					o[i++] = null;
 					o[i++] = null;
 					o[i++] = null;
-					CountedSet<String> set = CountedSet.fromArray(clustering.getStringValues(p, null));
+					CountedSet<String> set = CountedSet.fromArray(clustering.getStringValues(
+							(NominalProperty) p, null));
 					o[i++] = set.toString();
 				}
 				//			for (Dimensions d : Dimensions.values())

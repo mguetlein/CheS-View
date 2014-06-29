@@ -57,8 +57,10 @@ import com.jgoodies.forms.layout.FormLayout;
 import com.jgoodies.forms.layout.Sizes;
 
 import dataInterface.CompoundProperty;
-import dataInterface.CompoundProperty.Type;
 import dataInterface.CompoundPropertyUtil;
+import dataInterface.FragmentProperty;
+import dataInterface.NominalProperty;
+import dataInterface.NumericProperty;
 
 public class ChartPanel extends JPanel
 {
@@ -261,9 +263,9 @@ public class ChartPanel extends JPanel
 			@Override
 			public void mouseClicked(MouseEvent e)
 			{
-				if (property != null && property.getSmarts() != null)
+				if (property instanceof FragmentProperty)
 				{
-					SmartsViewDialog.show(Settings.TOP_LEVEL_FRAME, property.getSmarts(),
+					SmartsViewDialog.show(Settings.TOP_LEVEL_FRAME, ((FragmentProperty) property).getSmarts(),
 							Settings.TOP_LEVEL_FRAME.getWidth(), Settings.TOP_LEVEL_FRAME.getHeight());
 				}
 			}
@@ -285,11 +287,10 @@ public class ChartPanel extends JPanel
 		for (Compound compound : m)
 			mString = mString.concat(compound.toString());
 		String cString = "";
-		if (p.getType() == Type.NOMINAL)
-			if (p.isSmartsProperty())
-				cString += CompoundPropertyUtil.HIGHILIGHT_MATCH_COLORS;
-			else
-				cString += p.getHighlightColorSequence();
+		if (p instanceof FragmentProperty)
+			cString += CompoundPropertyUtil.HIGHILIGHT_MATCH_COLORS;
+		if (p instanceof NominalProperty)
+			cString += ((NominalProperty) p).getHighlightColorSequence();
 		return (c == null ? "null" : c.getName()) + "_" + p.toString() + "_" + cString + " " + mString.hashCode() + "_"
 				+ (f == null ? "" : f.hashCode()) + "_" + fontSize;
 	}
@@ -455,7 +456,7 @@ public class ChartPanel extends JPanel
 		@Override
 		protected boolean isSelected(Compound m, CompoundProperty p)
 		{
-			Double d = m.getDoubleValue(p);
+			Double d = m.getDoubleValue((NumericProperty) p);
 			return d != null && d >= selectedMin && d <= selectedMax;
 		}
 	}
@@ -475,7 +476,7 @@ public class ChartPanel extends JPanel
 		List<String> captions;
 		List<double[]> vals;
 
-		public NumericPlotData(Cluster c, CompoundProperty p, Compound m[], int fontsize)
+		public NumericPlotData(Cluster c, NumericProperty p, Compound m[], int fontsize)
 		{
 			Double v[] = clustering.getDoubleValues(p);
 			captions = new ArrayList<String>();
@@ -564,7 +565,7 @@ public class ChartPanel extends JPanel
 		LinkedHashMap<String, List<Double>> data;
 		String vals[];
 
-		public NominalPlotData(Cluster c, CompoundProperty p, Compound ms[], int fontsize)
+		public NominalPlotData(Cluster c, NominalProperty p, Compound ms[], int fontsize)
 		{
 			Compound m = ms.length > 0 ? ms[0] : null;
 
@@ -677,7 +678,7 @@ public class ChartPanel extends JPanel
 				throw new IllegalArgumentException(
 						"does NOT help much in terms of visualisation (color code should be enough), difficult to realize in terms of color brightness");
 
-			Color cols[] = CompoundPropertyUtil.getNominalColors(property);
+			Color cols[] = CompoundPropertyUtil.getNominalColors((NominalProperty) property);
 			if (cIndex == -1)
 			{
 				chartPanel.setSeriesColor(dIndex, ColorUtil.grayscale(cols[0]));
@@ -738,7 +739,7 @@ public class ChartPanel extends JPanel
 		if (comps.length == 0)
 			comps = clustering.getWatchedCompounds();
 
-		if (prop != null && prop.getType() == Type.NOMINAL)
+		if (prop instanceof NominalProperty)
 		{
 			//does NOT help much in terms of visualisation (color code should be enough), difficult to realize in terms of color brightness
 			comps = new Compound[0];
@@ -777,12 +778,14 @@ public class ChartPanel extends JPanel
 							cardContents.remove(plotKey);
 						if (!cardContents.containsKey(plotKey))
 						{
-							CompoundProperty.Type type = fProperty.getType();
 							PlotData d = null;
-							if (type == Type.NOMINAL)
-								d = new NominalPlotData(fCluster, fProperty, fCompounds, fFontSize);
-							else if (type == Type.NUMERIC)
-								d = new NumericPlotData(fCluster, fProperty, fCompounds, fFontSize);
+							if (fProperty instanceof NominalProperty
+									&& fProperty.getCompoundPropertySet().getType() != null)
+								d = new NominalPlotData(fCluster, (NominalProperty) fProperty, fCompounds,
+										fFontSize);
+							else if (fProperty instanceof NumericProperty)
+								d = new NumericPlotData(fCluster, (NumericProperty) fProperty, fCompounds,
+										fFontSize);
 							if (d != null)
 							{
 								cardContents.put(plotKey, d.getPlot());
@@ -803,13 +806,21 @@ public class ChartPanel extends JPanel
 						featureDescriptionLabel.setText(fProperty.getDescription() + "");
 						featureDescriptionLabel.setVisible(fProperty.getDescription() != null);
 						featureDescriptionLabelHeader.setVisible(fProperty.getDescription() != null);
-						featureSmartsLabel.setText(fProperty.getSmarts() + "");
-						featureSmartsLabel.setVisible(fProperty.getSmarts() != null);
-						featureSmartsLabelHeader.setVisible(fProperty.getSmarts() != null);
+						if (fProperty instanceof FragmentProperty)
+						{
+							featureSmartsLabel.setText(((FragmentProperty) fProperty).getSmarts() + "");
+							featureSmartsLabel.setVisible(true);
+							featureSmartsLabelHeader.setVisible(true);
+						}
+						else
+						{
+							featureSmartsLabel.setVisible(false);
+							featureSmartsLabelHeader.setVisible(false);
+						}
 						String usage;
 						if (fProperty.getCompoundPropertySet().isSelectedForMapping())
 						{
-							if (fProperty.numDistinctValuesInCompleteDataset() <= 1)
+							if (fProperty.numDistinctValues() <= 1)
 								usage = "Ignored for mapping (equal value for each compound)";
 							else if (fProperty.getRedundantProp() != null)
 								usage = "Ignored for mapping (redundant to " + fProperty.getRedundantProp() + ")";

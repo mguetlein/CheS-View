@@ -22,7 +22,8 @@ import cluster.Compound.DisplayName;
 import dataInterface.ClusterData;
 import dataInterface.CompoundData;
 import dataInterface.CompoundProperty;
-import dataInterface.CompoundProperty.Type;
+import dataInterface.NominalProperty;
+import dataInterface.NumericProperty;
 import dataInterface.SubstructureSmartsType;
 
 public class Cluster extends ZoomableCompoundGroup implements CompoundGroupWithProperties, DoubleNameElement,
@@ -143,7 +144,7 @@ public class Cluster extends ZoomableCompoundGroup implements CompoundGroupWithP
 		return clusterData.getSummaryStringValue(property, html);
 	}
 
-	public CountedSet<String> getNominalSummary(CompoundProperty p)
+	public CountedSet<String> getNominalSummary(NominalProperty p)
 	{
 		return clusterData.getNominalSummary(p);
 	}
@@ -190,10 +191,10 @@ public class Cluster extends ZoomableCompoundGroup implements CompoundGroupWithP
 					}
 					else if (o2 == null)
 						res = -1;
-					else if (property.getType() == Type.NUMERIC)
+					else if (property instanceof NumericProperty)
 					{
-						Double d1 = o1.getDoubleValue(property);
-						Double d2 = o2.getDoubleValue(property);
+						Double d1 = o1.getDoubleValue((NumericProperty) property);
+						Double d2 = o2.getDoubleValue((NumericProperty) property);
 						if (d1 == null)
 						{
 							if (d2 == null)
@@ -207,7 +208,8 @@ public class Cluster extends ZoomableCompoundGroup implements CompoundGroupWithP
 							res = d1.compareTo(d2);
 					}
 					else
-						res = (o1.getStringValue(property) + "").compareTo(o2.getStringValue(property) + "");
+						res = (o1.getStringValue((NominalProperty) property) + "").compareTo(o2
+								.getStringValue((NominalProperty) property) + "");
 					return (finalSorting == HighlightSorting.Max ? -1 : 1) * res;
 				}
 			});
@@ -226,12 +228,12 @@ public class Cluster extends ZoomableCompoundGroup implements CompoundGroupWithP
 				Compound medianCompound = c.get(c.size() / 2);
 				//				Settings.LOGGER.warn(medianCompound.getStringValue(property));
 				double distToMedian[] = new double[c.size()];
-				if (property.getType() == Type.NUMERIC)
+				if (property instanceof NumericProperty)
 				{
-					Double med = medianCompound.getDoubleValue(property);
+					Double med = medianCompound.getDoubleValue((NumericProperty) property);
 					for (int i = 0; i < distToMedian.length; i++)
 					{
-						Double d = c.get(i).getDoubleValue(property);
+						Double d = c.get(i).getDoubleValue((NumericProperty) property);
 						if (med == null)
 						{
 							if (d == null)
@@ -247,9 +249,10 @@ public class Cluster extends ZoomableCompoundGroup implements CompoundGroupWithP
 				}
 				else
 				{
-					String medStr = medianCompound.getStringValue(property);
+					String medStr = medianCompound.getStringValue((NominalProperty) property);
 					for (int i = 0; i < distToMedian.length; i++)
-						distToMedian[i] = Math.abs((c.get(i).getStringValue(property) + "").compareTo(medStr + ""));
+						distToMedian[i] = Math.abs((c.get(i).getStringValue((NominalProperty) property) + "")
+								.compareTo(medStr + ""));
 				}
 				int order[] = ArrayUtil.getOrdering(distToMedian, true);
 				Compound a[] = new Compound[c.size()];
@@ -324,16 +327,16 @@ public class Cluster extends ZoomableCompoundGroup implements CompoundGroupWithP
 		displayName.valCompare = null;
 		if (highlightProp != null)
 		{
-			if (highlightProp.getType() == Type.NUMERIC)
-				displayName.valCompare = new Double[] { getDoubleValue(highlightProp) };
+			if (highlightProp instanceof NumericProperty)
+				displayName.valCompare = new Double[] { getDoubleValue((NumericProperty) highlightProp) };
 			else
 			{
-				String mode = getNominalSummary(highlightProp).getMode(false);
-				String domain[] = highlightProp.getNominalDomain();
+				String mode = getNominalSummary((NominalProperty) highlightProp).getMode(false);
+				String domain[] = ((NominalProperty) highlightProp).getDomain();
 				boolean invertSecondBinaryVal = false;
 				if (domain.length == 2 && ArrayUtil.indexOf(domain, mode) == 1)
 					invertSecondBinaryVal = true;
-				CountedSet<String> set = getNominalSummary(highlightProp);
+				CountedSet<String> set = getNominalSummary((NominalProperty) highlightProp);
 				/**
 				 * Clusters with nominal feature values should be sorted as follows:
 				 * 1. according to the mode (the most common feature value)
@@ -364,12 +367,12 @@ public class Cluster extends ZoomableCompoundGroup implements CompoundGroupWithP
 		return highlightSorting;
 	}
 
-	public String[] getStringValues(CompoundProperty property, Compound excludeCompound)
+	public String[] getStringValues(NominalProperty property, Compound excludeCompound)
 	{
 		return getStringValues(property, excludeCompound, false);
 	}
 
-	public String[] getStringValues(CompoundProperty property, Compound excludeCompound, boolean formatted)
+	public String[] getStringValues(NominalProperty property, Compound excludeCompound, boolean formatted)
 	{
 		List<String> l = new ArrayList<String>();
 		for (Compound c : getCompounds())
@@ -379,7 +382,7 @@ public class Cluster extends ZoomableCompoundGroup implements CompoundGroupWithP
 		return l.toArray(v);
 	}
 
-	public Double[] getDoubleValues(CompoundProperty property)
+	public Double[] getDoubleValues(NumericProperty property)
 	{
 		Double v[] = new Double[getCompounds().size()];
 		for (int i = 0; i < v.length; i++)
@@ -408,7 +411,7 @@ public class Cluster extends ZoomableCompoundGroup implements CompoundGroupWithP
 	}
 
 	@Override
-	public Double getDoubleValue(CompoundProperty p)
+	public Double getDoubleValue(NumericProperty p)
 	{
 		return clusterData.getDoubleValue(p);
 	}
@@ -420,7 +423,7 @@ public class Cluster extends ZoomableCompoundGroup implements CompoundGroupWithP
 	}
 
 	@Override
-	public String getStringValue(CompoundProperty p)
+	public String getStringValue(NominalProperty p)
 	{
 		return clusterData.getStringValue(p);
 	}

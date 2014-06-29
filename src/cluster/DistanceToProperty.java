@@ -1,21 +1,18 @@
 package cluster;
 
 import alg.DistanceMeasure;
-import dataInterface.DefaultCompoundProperty;
+import dataInterface.DefaultNumericProperty;
 
-public class DistanceToProperty extends DefaultCompoundProperty// NumericDynamicCompoundProperty
+public class DistanceToProperty extends DefaultNumericProperty
 {
-
 	Compound comp;
 	DistanceMeasure measure;
 
 	public DistanceToProperty(Compound comp, DistanceMeasure measure, Double[] vals)
 	{
-		super();
+		super(null, "Distance based on features and distance mesure that have been used for embedding", vals);
 		this.comp = comp;
 		this.measure = measure;
-		setType(Type.NUMERIC);
-		setDoubleValues(vals);
 	}
 
 	@Override
@@ -31,11 +28,4 @@ public class DistanceToProperty extends DefaultCompoundProperty// NumericDynamic
 	{
 		return comp;
 	}
-
-	@Override
-	public String getDescription()
-	{
-		return "Distance based on features and distance mesure that have been used for embedding";
-	}
-
 }

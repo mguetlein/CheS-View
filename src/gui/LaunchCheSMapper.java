@@ -55,8 +55,8 @@ import cluster.ExportData;
 import data.CDKCompoundIcon;
 import data.ClusteringData;
 import data.cdk.CDKDescriptor;
-import dataInterface.CompoundProperty;
 import dataInterface.CompoundPropertyUtil;
+import dataInterface.NumericProperty;
 
 public class LaunchCheSMapper
 {
@@ -453,17 +453,17 @@ public class LaunchCheSMapper
 					}
 					if (cmd.hasOption("endpoint-highlight"))
 					{
-						CompoundProperty p = null;
+						NumericProperty p = null;
 						for (Highlighter h[] : view.getHighlighters().values())
 							for (Highlighter hi : h)
 								if (hi instanceof CompoundPropertyHighlighter)
 									if (((CompoundPropertyHighlighter) hi).getProperty().toString()
 											.equals(cmd.getOptionValue("endpoint-highlight")))
-										p = ((CompoundPropertyHighlighter) hi).getProperty();
+										p = (NumericProperty) ((CompoundPropertyHighlighter) hi).getProperty();
 						if (p == null)
 							throw new Error("feature not found: " + cmd.getOptionValue("endpoint-highlight"));
 						view.setHighlightColors(new ColorGradient(new Color(100, 255, 100), Color.WHITE,
-								CompoundPropertyUtil.getHighValueColor()), true, new CompoundProperty[] { p });
+								CompoundPropertyUtil.getHighValueColor()), true, new NumericProperty[] { p });
 						ThreadUtil.sleep(2000);
 					}
 					if (cmd.hasOption("full-screen"))

@@ -35,8 +35,9 @@ import data.ClusteringData;
 import data.DatasetFile;
 import dataInterface.CompoundData;
 import dataInterface.CompoundProperty;
-import dataInterface.CompoundProperty.Type;
 import dataInterface.CompoundPropertyUtil;
+import dataInterface.NominalProperty;
+import dataInterface.NumericProperty;
 
 public class ExportData
 {
@@ -123,7 +124,7 @@ public class ExportData
 		}
 		List<CompoundProperty> logFeatures = new ArrayList<CompoundProperty>();
 		for (CompoundProperty p : selectedProps)
-			if (p.getType() == Type.NUMERIC && p.isLogHighlightingEnabled())
+			if (p instanceof NumericProperty && ((NumericProperty) p).isLogHighlightingEnabled())
 				logFeatures.add(p);
 		if (logFeatures.size() > 0)
 		{
@@ -134,7 +135,6 @@ public class ExportData
 		}
 
 		DoubleKeyHashMap<Integer, String, Object> featureValues = new DoubleKeyHashMap<Integer, String, Object>();
-		int count = 0;
 		for (Integer j : compoundOrigIndices)
 		{
 			if (clustering.numClusters() > 1)
@@ -178,14 +178,14 @@ public class ExportData
 				{
 					String prop = CompoundPropertyUtil.propToExportString(p);
 					Object val;
-					if (p.getType() == Type.NUMERIC)
+					if (p instanceof NumericProperty)
 					{
-						val = clustering.getCompounds().get(j).getDoubleValue(p);
-						if (val != null && p.isInteger())
+						val = clustering.getCompounds().get(j).getDoubleValue((NumericProperty) p);
+						if (val != null && ((NumericProperty) p).isInteger())
 							val = StringUtil.formatDouble((Double) val, 0);
 					}
 					else
-						val = clustering.getCompounds().get(j).getStringValue(p);
+						val = clustering.getCompounds().get(j).getStringValue((NominalProperty) p);
 					if (val == null)
 						val = "";
 					featureValues.put(j, prop, val);
@@ -193,12 +193,11 @@ public class ExportData
 			for (CompoundProperty c : logFeatures)
 			{
 				String prop = CompoundPropertyUtil.propToExportString(c) + "_log";
-				Double val = clustering.getCompounds().get(j).getDoubleValue(c);
+				Double val = clustering.getCompounds().get(j).getDoubleValue((NumericProperty) c);
 				if (val != null)
 					val = Math.log10(val);
 				featureValues.put(j, prop, val == null ? "" : val);
 			}
-			count++;
 		}
 		List<String> skipRedundant = new ArrayList<String>();
 		for (CompoundProperty p : CompoundPropertyUtil.getRedundantFeatures(ArrayUtil.toList(selectedProps),
@@ -418,14 +417,16 @@ public class ExportData
 				for (Integer j : compoundOrigIndices)
 				{
 					Object val;
-					if (compoundDescriptorFeature.getType() == Type.NUMERIC)
+					if (compoundDescriptorFeature instanceof NumericProperty)
 					{
-						val = clustering.getCompounds().get(j).getDoubleValue(compoundDescriptorFeature);
-						if (val != null && compoundDescriptorFeature.isInteger())
+						val = clustering.getCompounds().get(j)
+								.getDoubleValue((NumericProperty) compoundDescriptorFeature);
+						if (val != null && ((NumericProperty) compoundDescriptorFeature).isInteger())
 							val = StringUtil.formatDouble((Double) val, 0);
 					}
 					else
-						val = clustering.getCompounds().get(j).getStringValue(compoundDescriptorFeature);
+						val = clustering.getCompounds().get(j)
+								.getStringValue((NominalProperty) compoundDescriptorFeature);
 					if (val == null)
 						val = "";
 					featureValues.put(j, CompoundPropertyUtil.propToExportString(compoundDescriptorFeature), val);

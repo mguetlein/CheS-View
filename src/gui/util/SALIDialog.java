@@ -26,6 +26,8 @@ import com.jgoodies.forms.factories.ButtonBarFactory;
 import com.jgoodies.forms.layout.FormLayout;
 
 import dataInterface.CompoundProperty;
+import dataInterface.NominalProperty;
+import dataInterface.NumericProperty;
 
 public class SALIDialog extends JDialog
 {
@@ -91,7 +93,7 @@ public class SALIDialog extends JDialog
 		List<CompoundProperty> list = new ArrayList<CompoundProperty>();
 		for (CompoundProperty p : clustering.getProperties())
 		{
-			if (p.getType() == dataInterface.CompoundProperty.Type.NUMERIC || p.getNominalDomain().length == 2)
+			if (p instanceof NumericProperty || ((NominalProperty) p).getDomain().length == 2)
 				list.add(p);
 		}
 		if (list.size() == 0)

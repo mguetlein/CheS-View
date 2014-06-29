@@ -26,6 +26,8 @@ import cluster.ClusterController;
 import cluster.Clustering;
 import cluster.Clustering.SelectionListener;
 import dataInterface.CompoundProperty;
+import dataInterface.NominalProperty;
+import dataInterface.NumericProperty;
 
 public class ClusterTable extends CCDataTable
 {
@@ -66,10 +68,10 @@ public class ClusterTable extends CCDataTable
 			if (i != nonPropColumns)
 				throw new Error();
 			for (CompoundProperty p : props)
-				if (p.getType() == CompoundProperty.Type.NUMERIC)
-					o[i++] = c.getDoubleValue(p);
+				if (p instanceof NumericProperty)
+					o[i++] = c.getDoubleValue((NumericProperty) p);
 				else
-					o[i++] = c.getStringValue(p);
+					o[i++] = c.getStringValue((NominalProperty) p);
 			tableModel.addRow(o);
 		}
 

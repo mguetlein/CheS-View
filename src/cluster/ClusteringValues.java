@@ -12,14 +12,15 @@ import util.DoubleArraySummary;
 import util.DoubleKeyHashMap;
 import util.ListUtil;
 import dataInterface.CompoundProperty;
-import dataInterface.CompoundProperty.Type;
 import dataInterface.CompoundPropertyOwner;
 import dataInterface.CompoundPropertySpecificity;
+import dataInterface.NominalProperty;
+import dataInterface.NumericProperty;
 
 public class ClusteringValues
 {
 	HashMap<CompoundProperty, ArraySummary> summarys = new HashMap<CompoundProperty, ArraySummary>();
-	HashMap<CompoundProperty, ArraySummary> formattedSummarys = new HashMap<CompoundProperty, ArraySummary>();
+	HashMap<NominalProperty, ArraySummary> formattedSummarys = new HashMap<NominalProperty, ArraySummary>();
 	DoubleKeyHashMap<CompoundPropertyOwner, CompoundProperty, Double> normalizedValues = new DoubleKeyHashMap<CompoundPropertyOwner, CompoundProperty, Double>();
 	DoubleKeyHashMap<CompoundPropertyOwner, CompoundProperty, Double> specificity = new DoubleKeyHashMap<CompoundPropertyOwner, CompoundProperty, Double>();
 	DoubleKeyHashMap<CompoundPropertyOwner, CompoundProperty, Double> normalizedLogValues = new DoubleKeyHashMap<CompoundPropertyOwner, CompoundProperty, Double>();
@@ -43,7 +44,7 @@ public class ClusteringValues
 		formattedSummarys.clear();
 	}
 
-	private synchronized void updateNormalizedNumericValues(final CompoundProperty p)
+	private synchronized void updateNormalizedNumericValues(final NumericProperty p)
 	{
 		Double d[] = new Double[clustering.getCompounds(true).size()];
 		int i = 0;
@@ -85,7 +86,7 @@ public class ClusteringValues
 		}
 	}
 
-	private synchronized void updateNormalizedNumericSelectionValues(CompoundProperty p, CompoundSelection s)
+	private synchronized void updateNormalizedNumericSelectionValues(NumericProperty p, CompoundSelection s)
 	{
 		if (!normalizedValues.containsKeyPair(s.getCompounds()[0], p))
 			updateNormalizedValues(p);
@@ -105,7 +106,7 @@ public class ClusteringValues
 		specNumClusterVals.put(s, p, ArrayUtil.toPrimitiveDoubleArray(clusterVals));
 	}
 
-	private synchronized double numericClusterSpec(CompoundGroupWithProperties c, CompoundProperty p)
+	private synchronized double numericClusterSpec(CompoundGroupWithProperties c, NumericProperty p)
 	{
 		if (!specificity.containsKeyPair(c, p))
 		{
@@ -123,7 +124,7 @@ public class ClusteringValues
 		return specificity.get(c, p);
 	}
 
-	private synchronized double numericCompoundSpec(Compound m, CompoundProperty p)
+	private synchronized double numericCompoundSpec(Compound m, NumericProperty p)
 	{
 		if (!specificity.containsKeyPair(m, p))
 		{
@@ -144,7 +145,7 @@ public class ClusteringValues
 	HashMap<CompoundProperty, List<String>> specNomVals = new HashMap<CompoundProperty, List<String>>();
 	HashMap<CompoundProperty, long[]> specNomCounts = new HashMap<CompoundProperty, long[]>();
 
-	private synchronized void updateNormalizedNominalValues(final CompoundProperty p)
+	private synchronized void updateNormalizedNominalValues(final NominalProperty p)
 	{
 		String s[] = new String[clustering.getCompounds(true).size()];
 		int i = 0;
@@ -162,7 +163,7 @@ public class ClusteringValues
 		specNomCounts.put(p, CompoundPropertySpecificity.nominalCounts(specNomVals.get(p), set));
 	}
 
-	private synchronized double nominalClusterSpec(CompoundGroupWithProperties c, CompoundProperty p)
+	private synchronized double nominalClusterSpec(CompoundGroupWithProperties c, NominalProperty p)
 	{
 		if (!specificity.containsKeyPair(c, p))
 		{
@@ -178,7 +179,7 @@ public class ClusteringValues
 		return specificity.get(c, p);
 	}
 
-	private synchronized double nominalCompoundSpec(Compound m, CompoundProperty p)
+	private synchronized double nominalCompoundSpec(Compound m, NominalProperty p)
 	{
 		if (!specificity.containsKeyPair(m, p))
 		{
@@ -193,41 +194,41 @@ public class ClusteringValues
 
 	private void updateNormalizedValues(CompoundProperty p)
 	{
-		if (p.getType() == Type.NUMERIC)
-			updateNormalizedNumericValues(p);
+		if (p instanceof NumericProperty)
+			updateNormalizedNumericValues((NumericProperty) p);
 		else
-			updateNormalizedNominalValues(p);
+			updateNormalizedNominalValues((NominalProperty) p);
 	}
 
 	private void updateNormalizedSelectionValues(CompoundProperty p, CompoundSelection s)
 	{
-		if (p.getType() == Type.NUMERIC)
-			updateNormalizedNumericSelectionValues(p, s);
+		if (p instanceof NumericProperty)
+			updateNormalizedNumericSelectionValues((NumericProperty) p, s);
 		//		else
 		//			updateNormalizedNominalSelectionValues(p, s);
 	}
 
 	public synchronized double getSpecificity(CompoundGroupWithProperties c, CompoundProperty p)
 	{
-		if (p.getType() == Type.NUMERIC)
-			return numericClusterSpec(c, p);
+		if (p instanceof NumericProperty)
+			return numericClusterSpec(c, (NumericProperty) p);
 		else
-			return nominalClusterSpec(c, p);
+			return nominalClusterSpec(c, (NominalProperty) p);
 	}
 
 	public synchronized double getSpecificity(Compound m, CompoundProperty p)
 	{
-		if (p.getType() == Type.NUMERIC)
-			return numericCompoundSpec(m, p);
+		if (p instanceof NumericProperty)
+			return numericCompoundSpec(m, (NumericProperty) p);
 		else
-			return nominalCompoundSpec(m, p);
+			return nominalCompoundSpec(m, (NominalProperty) p);
 	}
 
 	public synchronized String getSummaryStringValue(CompoundProperty p, boolean html)
 	{
 		if (!summarys.containsKey(p))
 			updateNormalizedValues(p);
-		if (p.getType() == Type.NOMINAL)
+		if (p instanceof NominalProperty)
 			return formattedSummarys.get(p).toString(html);
 		else
 			return summarys.get(p).toString(html);
@@ -251,38 +252,30 @@ public class ClusteringValues
 			updateNormalizedSelectionValues(p, s);
 	}
 
-	public synchronized Double getNormalizedDoubleValue(CompoundPropertyOwner m, CompoundProperty p)
+	public synchronized Double getNormalizedDoubleValue(CompoundPropertyOwner m, NumericProperty p)
 	{
-		if (p.getType() != Type.NUMERIC)
-			throw new IllegalStateException();
 		if (!normalizedValues.containsKeyPair(m, p))
 			updateNormalizedValues(p);
 		return normalizedValues.get(m, p);
 	}
 
-	public synchronized Double getNormalizedLogDoubleValue(CompoundPropertyOwner m, CompoundProperty p)
+	public synchronized Double getNormalizedLogDoubleValue(CompoundPropertyOwner m, NumericProperty p)
 	{
-		if (p.getType() != Type.NUMERIC)
-			throw new IllegalStateException();
 		if (!normalizedLogValues.containsKeyPair(m, p))
 			updateNormalizedValues(p);
 		return normalizedLogValues.get(m, p);
 	}
 
-	public Double getDoubleValue(CompoundProperty p)
+	public Double getDoubleValue(NumericProperty p)
 	{
-		if (p.getType() != Type.NUMERIC)
-			throw new IllegalStateException();
 		if (!summarys.containsKey(p))
 			updateNormalizedValues(p);
 		return ((DoubleArraySummary) summarys.get(p)).getMean();
 	}
 
 	@SuppressWarnings("unchecked")
-	public String getStringValue(CompoundProperty p)
+	public String getStringValue(NominalProperty p)
 	{
-		if (p.getType() == Type.NUMERIC)
-			throw new IllegalStateException();
 		if (!summarys.containsKey(p))
 			updateNormalizedValues(p);
 		CountedSet<String> set = (CountedSet<String>) summarys.get(p);

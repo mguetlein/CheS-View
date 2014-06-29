@@ -45,6 +45,7 @@ import cluster.CompoundFilterImpl;
 import data.DistanceUtil;
 import dataInterface.CompoundData;
 import dataInterface.CompoundProperty;
+import dataInterface.NominalProperty;
 import dist.NonNullSimilartiy;
 import dist.SimilarityMeasure;
 import dist.SimpleMatchingSimilartiy;
@@ -208,7 +209,7 @@ public class TreeView extends BlockableFrame
 					//if (p.toString().endsWith("_filled"))
 					CountedSet<String> set = new CountedSet<String>();
 					for (Compound comp : getLeafs())
-						set.add(comp.getStringValue(p));
+						set.add(comp.getStringValue((NominalProperty) p));
 					if (set.getNumValues() != 3 && set.getNumValues() != 2 && set.getNumValues() != 1)
 						throw new Error(set.toString());
 					countNull += set.getNullCount();
@@ -710,7 +711,7 @@ public class TreeView extends BlockableFrame
 
 			List<String> vals = new ArrayList<String>();
 			for (Compound cc : c)
-				vals.add(cc.getStringValue(prop));
+				vals.add(cc.getStringValue((NominalProperty) prop));
 			CountedSet<String> set = CountedSet.create(vals);
 			for (final String s : set.values())
 			{
@@ -724,7 +725,7 @@ public class TreeView extends BlockableFrame
 				MyNode child = new MyNode(prop + "=" + featureWithoutIndex, featureWithoutIndex);
 				List<Compound> ccc = new ArrayList<Compound>();
 				for (Compound cc : c)
-					if (ObjectUtil.equals(cc.getStringValue(prop), s))
+					if (ObjectUtil.equals(cc.getStringValue((NominalProperty) prop), s))
 						ccc.add(cc);
 				if (set.getNumValues() == 1)
 					addNodes(node, pp, ccc);

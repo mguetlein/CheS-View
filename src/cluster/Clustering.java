@@ -8,6 +8,8 @@ import weka.Predictor.PredictionResult;
 import dataInterface.CompoundData;
 import dataInterface.CompoundProperty;
 import dataInterface.CompoundPropertyOwner;
+import dataInterface.NominalProperty;
+import dataInterface.NumericProperty;
 
 public interface Clustering extends CompoundPropertyOwner
 {
@@ -83,9 +85,9 @@ public interface Clustering extends CompoundPropertyOwner
 
 	void chooseCompoundsToExport(CompoundProperty compoundDescriptor);
 
-	Double[] getDoubleValues(CompoundProperty p);
+	Double[] getDoubleValues(NumericProperty p);
 
-	String[] getStringValues(CompoundProperty p, Compound m);
+	String[] getStringValues(NominalProperty p, Compound m);
 
 	String getSummaryStringValue(CompoundProperty p, boolean b);
 
@@ -93,9 +95,9 @@ public interface Clustering extends CompoundPropertyOwner
 
 	String getName();
 
-	Double getNormalizedLogDoubleValue(CompoundPropertyOwner m, CompoundProperty p);
+	Double getNormalizedLogDoubleValue(CompoundPropertyOwner m, NumericProperty p);
 
-	Double getNormalizedDoubleValue(CompoundPropertyOwner m, CompoundProperty p);
+	Double getNormalizedDoubleValue(CompoundPropertyOwner m, NumericProperty p);
 
 	double getSpecificity(Compound compound, CompoundProperty p);
 

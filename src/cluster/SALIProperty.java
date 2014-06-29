@@ -10,9 +10,9 @@ import javax.swing.JOptionPane;
 
 import main.Settings;
 import util.DoubleArraySummary;
-import dataInterface.DefaultCompoundProperty;
+import dataInterface.DefaultNumericProperty;
 
-public class SALIProperty extends DefaultCompoundProperty
+public class SALIProperty extends DefaultNumericProperty
 {
 	String target;
 	Type type;

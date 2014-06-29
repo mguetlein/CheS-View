@@ -354,6 +354,9 @@ public class View
 				break;
 			case Strong:
 				trans = 0.6 + 0.35 * sphereTranslucency;
+				break;
+			case None:
+				//do nothing
 		}
 		scriptWait("ellipsoid ID " + id + " " + m.getHighlightColorString() + " color translucent " + trans);
 		if (showLastHighlightColor && m.getLastHighlightColorString() != null)

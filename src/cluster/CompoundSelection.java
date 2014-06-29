@@ -6,7 +6,8 @@ import util.ArraySummary;
 import util.CountedSet;
 import util.DoubleArraySummary;
 import dataInterface.CompoundProperty;
-import dataInterface.CompoundProperty.Type;
+import dataInterface.NominalProperty;
+import dataInterface.NumericProperty;
 
 public class CompoundSelection implements CompoundGroupWithProperties
 {
@@ -31,16 +32,14 @@ public class CompoundSelection implements CompoundGroupWithProperties
 	}
 
 	@Override
-	public Double getDoubleValue(CompoundProperty p)
+	public Double getDoubleValue(NumericProperty p)
 	{
-		if (p.getType() != Type.NUMERIC)
-			throw new IllegalStateException();
 		if (!summarys.containsKey(p))
 			updateNumeric(p);
 		return ((DoubleArraySummary) summarys.get(p)).getMean();
 	}
 
-	private void updateNumeric(CompoundProperty p)
+	private void updateNumeric(NumericProperty p)
 	{
 		Double d[] = new Double[size()];
 		int i = 0;
@@ -49,7 +48,7 @@ public class CompoundSelection implements CompoundGroupWithProperties
 		summarys.put(p, DoubleArraySummary.create(d));
 	}
 
-	private void updateNominal(CompoundProperty p)
+	private void updateNominal(NominalProperty p)
 	{
 		String s[] = new String[size()];
 		int i = 0;
@@ -65,10 +64,8 @@ public class CompoundSelection implements CompoundGroupWithProperties
 	}
 
 	@Override
-	public String getStringValue(CompoundProperty p)
+	public String getStringValue(NominalProperty p)
 	{
-		if (p.getType() == Type.NUMERIC)
-			throw new IllegalStateException();
 		if (!summarys.containsKey(p))
 			updateNominal(p);
 		@SuppressWarnings("unchecked")
@@ -82,10 +79,8 @@ public class CompoundSelection implements CompoundGroupWithProperties
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public CountedSet<String> getNominalSummary(CompoundProperty p)
+	public CountedSet<String> getNominalSummary(NominalProperty p)
 	{
-		if (p.getType() == Type.NUMERIC)
-			throw new IllegalStateException();
 		if (!summarys.containsKey(p))
 			updateNominal(p);
 		return (CountedSet<String>) summarys.get(p);
@@ -95,11 +90,11 @@ public class CompoundSelection implements CompoundGroupWithProperties
 	public String getFormattedValue(CompoundProperty p)
 	{
 		if (!summarys.containsKey(p))
-			if (p.getType() == Type.NUMERIC)
-				updateNumeric(p);
+			if (p instanceof NumericProperty)
+				updateNumeric((NumericProperty) p);
 			else
-				updateNominal(p);
-		if (p.getType() == Type.NUMERIC)
+				updateNominal((NominalProperty) p);
+		if (p instanceof NumericProperty)
 			return summarys.get(p).toString(false);
 		else
 			return formattedSummarys.get(p).toString(false);

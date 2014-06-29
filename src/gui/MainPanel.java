@@ -59,9 +59,11 @@ import cluster.CompoundFilter;
 import cluster.CompoundFilterImpl;
 import data.ClusteringData;
 import dataInterface.CompoundProperty;
-import dataInterface.CompoundProperty.Type;
 import dataInterface.CompoundPropertyOwner;
 import dataInterface.CompoundPropertyUtil;
+import dataInterface.FragmentProperty;
+import dataInterface.NominalProperty;
+import dataInterface.NumericProperty;
 import dataInterface.SubstructureSmartsType;
 
 public class MainPanel extends JPanel implements ViewControler, ClusterController
@@ -135,29 +137,30 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 
 		if (p == null)
 			return textColor ? ComponentFactory.FOREGROUND : null;
-		else if (p.getType() == Type.NOMINAL)
+		else if (p instanceof NominalProperty && p.getCompoundPropertySet().getType() != null)
 		{
-			if (m.getStringValue(p) == null)
+			if (m.getStringValue((NominalProperty) p) == null)
 				return textColor ? ComponentFactory.FOREGROUND : CompoundPropertyUtil.getNullValueColor();
 			else
-				return CompoundPropertyUtil.getNominalColor(p, m.getStringValue(p));
+				return CompoundPropertyUtil.getNominalColor((NominalProperty) p,
+						m.getStringValue((NominalProperty) p));
 		}
-		else if (p.getType() == Type.NUMERIC)
+		else if (p instanceof NumericProperty)
 		{
 			try
 			{
-				if (m.getDoubleValue(p) == null)
+				if (m.getDoubleValue((NumericProperty) p) == null)
 					return textColor ? ComponentFactory.FOREGROUND : CompoundPropertyUtil.getNullValueColor();
 				double val;
-				if (p.getType() == Type.NUMERIC && p.isLogHighlightingEnabled())
-					val = clustering.getNormalizedLogDoubleValue(m, p);
+				if (((NumericProperty) p).isLogHighlightingEnabled())
+					val = clustering.getNormalizedLogDoubleValue(m, (NumericProperty) p);
 				else
-					val = clustering.getNormalizedDoubleValue(m, p);
+					val = clustering.getNormalizedDoubleValue(m, (NumericProperty) p);
 				if (Double.isNaN(val) || Double.isInfinite(val))
 					throw new NullPointerException("not null, but nan or infinite");
 				ColorGradient grad;
-				if (p.getType() == Type.NUMERIC && p.getHighlightColorGradient() != null)
-					grad = p.getHighlightColorGradient();
+				if (((NumericProperty) p).getHighlightColorGradient() != null)
+					grad = ((NumericProperty) p).getHighlightColorGradient();
 				else
 					grad = DEFAULT_COLOR_GRADIENT;
 				if (!viewControler.isBlackgroundBlack() && grad.getMed().equals(Color.WHITE))
@@ -174,9 +177,11 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 			catch (NullPointerException e)
 			{
 				System.err.println("Nullpointer exception in getHighlightColor: " + e.getMessage() + "\nproperty: " + p
-						+ " prop-owner: " + m + " get-double-value:" + m.getDoubleValue(p)
-						+ " get-normalized-double-value: " + clustering.getNormalizedDoubleValue(m, p)
-						+ " get-log-normalized-double-value: " + clustering.getNormalizedLogDoubleValue(m, p));
+						+ " prop-owner: " + m + " get-double-value:" + m.getDoubleValue((NumericProperty) p)
+						+ " get-normalized-double-value: "
+						+ clustering.getNormalizedDoubleValue(m, (NumericProperty) p)
+						+ " get-log-normalized-double-value: "
+						+ clustering.getNormalizedLogDoubleValue(m, (NumericProperty) p));
 				e.printStackTrace();
 				return null;
 			}
@@ -928,8 +933,9 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 			if (selectedHighlighter instanceof SubstructureHighlighter)
 				smarts = c.getSubstructureSmarts(((SubstructureHighlighter) selectedHighlighter).getType());
 			else if (selectedHighlighter instanceof CompoundPropertyHighlighter
-					&& ((CompoundPropertyHighlighter) selectedHighlighter).getProperty().isSmartsProperty())
-				smarts = ((CompoundPropertyHighlighter) selectedHighlighter).getProperty().getSmarts();
+					&& ((CompoundPropertyHighlighter) selectedHighlighter).getProperty() instanceof FragmentProperty)
+				smarts = ((FragmentProperty) ((CompoundPropertyHighlighter) selectedHighlighter).getProperty())
+						.getSmarts();
 		}
 
 		if (!highlighterLabelsVisible)
@@ -2001,7 +2007,8 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 						if (p.toString().matches(names)
 								&& clustering.numDistinctValues(p) > (clustering.numCompounds() * 3 / 4.0)
 								&& (!names.equals("(?i)^id$") || !names.equals("(?i).*id.*")
-										|| p.getType() != Type.NUMERIC || p.isInteger()))
+										|| !(p instanceof NumericProperty) || ((NumericProperty) p)
+											.isInteger()))
 						{
 							compoundDescriptorProperty = p;
 							break;
@@ -2042,20 +2049,18 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 	@Override
 	public Boolean isHighlightLogEnabled()
 	{
-		if (selectedHighlightCompoundProperty != null && selectedHighlightCompoundProperty.getType() == Type.NUMERIC)
-			return selectedHighlightCompoundProperty.isLogHighlightingEnabled();
+		if (selectedHighlightCompoundProperty instanceof NumericProperty)
+			return ((NumericProperty) selectedHighlightCompoundProperty).isLogHighlightingEnabled();
 		else
 			return false;
 	}
 
 	@Override
-	public void setHighlightColors(ColorGradient g, boolean log, CompoundProperty props[])
+	public void setHighlightColors(ColorGradient g, boolean log, NumericProperty props[])
 	{
 		boolean fire = false;
-		for (CompoundProperty p : props)
+		for (NumericProperty p : props)
 		{
-			if (p.getType() != Type.NUMERIC)
-				throw new IllegalStateException();
 			if (p == selectedHighlightCompoundProperty
 					&& (!g.equals(p.getHighlightColorGradient()) || p.isLogHighlightingEnabled() != log))
 				fire = true;
@@ -2071,13 +2076,11 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 	}
 
 	@Override
-	public void setHighlightColors(Color[] g, CompoundProperty[] props)
+	public void setHighlightColors(Color[] g, NominalProperty[] props)
 	{
 		boolean fire = false;
-		for (CompoundProperty p : props)
+		for (NominalProperty p : props)
 		{
-			if (p.getType() != Type.NOMINAL)
-				throw new IllegalStateException();
 			if (p == selectedHighlightCompoundProperty
 					&& (p.getHighlightColorSequence() == null || !ArrayUtil.equals(g, p.getHighlightColorSequence())))
 				fire = true;
@@ -2112,7 +2115,7 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 		if (!ArrayUtil.equals(CompoundPropertyUtil.HIGHILIGHT_MATCH_COLORS, colors))
 		{
 			CompoundPropertyUtil.HIGHILIGHT_MATCH_COLORS = colors;
-			if (selectedHighlightCompoundProperty != null && selectedHighlightCompoundProperty.isSmartsProperty())
+			if (selectedHighlightCompoundProperty instanceof FragmentProperty)
 			{
 				updateAllClustersAndCompounds(true);
 				fireViewChange(PROPERTY_HIGHLIGHT_COLORS_CHANGED);

@@ -11,10 +11,11 @@ import javax.swing.JComponent;
 
 import util.ArrayUtil;
 import cluster.Clustering;
-import dataInterface.DefaultCompoundProperty;
 import dataInterface.CompoundProperty;
-import dataInterface.CompoundPropertySet;
 import dataInterface.CompoundPropertyUtil;
+import dataInterface.DefaultNominalProperty;
+import dataInterface.NominalProperty;
+import dataInterface.NumericProperty;
 import dataInterface.SubstructureSmartsType;
 
 public interface ViewControler
@@ -149,22 +150,10 @@ public interface ViewControler
 
 	public int getFontSize();
 
-	static final CompoundProperty COMPOUND_INDEX_PROPERTY = new DefaultCompoundProperty("Compound Index", "no-desc")
-	{
-		@Override
-		public CompoundPropertySet getCompoundPropertySet()
-		{
-			return null;
-		}
-	};
-	static final CompoundProperty COMPOUND_SMILES_PROPERTY = new DefaultCompoundProperty("Compound SMILES", "no-desc")
-	{
-		@Override
-		public CompoundPropertySet getCompoundPropertySet()
-		{
-			return null;
-		}
-	};
+	static final CompoundProperty COMPOUND_INDEX_PROPERTY = new DefaultNominalProperty(null, "Compound Index",
+			"no-desc");
+	static final CompoundProperty COMPOUND_SMILES_PROPERTY = new DefaultNominalProperty(null,
+			"Compound SMILES", "no-desc");
 
 	public void setCompoundDescriptor(CompoundProperty prop);
 
@@ -176,9 +165,9 @@ public interface ViewControler
 
 	public Boolean isHighlightLogEnabled();
 
-	public void setHighlightColors(ColorGradient g, boolean log, CompoundProperty props[]);
+	public void setHighlightColors(ColorGradient g, boolean log, NumericProperty props[]);
 
-	public void setHighlightColors(Color g[], CompoundProperty props[]);
+	public void setHighlightColors(Color g[], NominalProperty props[]);
 
 	public void setClusterColors(Color[] sequence);
 

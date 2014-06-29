@@ -22,8 +22,9 @@ import util.ColorUtil;
 import util.ObjectUtil;
 import dataInterface.CompoundData;
 import dataInterface.CompoundProperty;
-import dataInterface.CompoundProperty.Type;
 import dataInterface.CompoundPropertyOwner;
+import dataInterface.NominalProperty;
+import dataInterface.NumericProperty;
 
 public class Compound implements Zoomable, Comparable<Compound>, DoubleNameElement, CompoundPropertyOwner
 {
@@ -88,12 +89,12 @@ public class Compound implements Zoomable, Comparable<Compound>, DoubleNameEleme
 		return compoundData.getFormattedValue(property);
 	}
 
-	public String getStringValue(CompoundProperty property)
+	public String getStringValue(NominalProperty property)
 	{
 		return compoundData.getStringValue(property);
 	}
 
-	public Double getDoubleValue(CompoundProperty property)
+	public Double getDoubleValue(NumericProperty property)
 	{
 		return compoundData.getDoubleValue(property);
 	}
@@ -343,10 +344,10 @@ public class Compound implements Zoomable, Comparable<Compound>, DoubleNameEleme
 			displayName.valCompare = null;
 			if (highlightCompoundProperty != null)
 			{
-				if (highlightCompoundProperty.getType() == Type.NUMERIC)
-					displayName.valCompare = new Double[] { getDoubleValue(highlightCompoundProperty) };
+				if (highlightCompoundProperty instanceof NumericProperty)
+					displayName.valCompare = new Double[] { getDoubleValue((NumericProperty) highlightCompoundProperty) };
 				else
-					displayName.valCompare = new String[] { getStringValue(highlightCompoundProperty) };
+					displayName.valCompare = new String[] { getStringValue((NominalProperty) highlightCompoundProperty) };
 				displayName.valDisplay = getFormattedValue(highlightCompoundProperty);
 			}
 			this.highlightCompoundProperty = highlightCompoundProperty;

@@ -16,6 +16,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.lang.reflect.Array;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -321,16 +322,18 @@ public class ComponentFactory
 		}
 	}
 
-	public static JComboBox createViewComboBox()
+	@SuppressWarnings("unchecked")
+	public static <T> JComboBox<T> createViewComboBox(Class<T> type)
 	{
-		return createViewComboBox(new Object[0]);
+		return createViewComboBox((T[]) Array.newInstance(type, 0));
 	}
 
-	public static JComboBox createViewComboBox(Object[] items)
+	public static <T> JComboBox<T> createViewComboBox(T[] items)
 	{
 		final Font f = new JLabel().getFont();
 		DescriptionListCellRenderer r = new DescriptionListCellRenderer()
 		{
+			@SuppressWarnings("rawtypes")
 			@Override
 			public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected,
 					boolean cellHasFocus)
@@ -344,7 +347,7 @@ public class ComponentFactory
 			}
 		};
 
-		JComboBox c = new JComboBox()
+		JComboBox<T> c = new JComboBox<T>()
 		{
 			public void updateUI()
 			{
@@ -396,7 +399,7 @@ public class ComponentFactory
 							.setDescriptionForeground(FOREGROUND.darker().darker());
 			}
 		};
-		for (Object object : items)
+		for (T object : items)
 			c.addItem(object);
 		c.setOpaque(false);
 		c.setForeground(FOREGROUND);

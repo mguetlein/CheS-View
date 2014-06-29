@@ -23,8 +23,10 @@ import main.Settings;
 import util.ArrayUtil;
 import cluster.Clustering;
 import dataInterface.CompoundProperty;
-import dataInterface.CompoundProperty.Type;
 import dataInterface.CompoundPropertyUtil;
+import dataInterface.FragmentProperty;
+import dataInterface.NominalProperty;
+import dataInterface.NumericProperty;
 
 public abstract class ColorEditorPanel extends JPanel
 {
@@ -124,7 +126,7 @@ public abstract class ColorEditorPanel extends JPanel
 		@Override
 		public boolean accept(CompoundProperty p)
 		{
-			return p.getType() == Type.NUMERIC;
+			return p instanceof NumericProperty;
 		}
 
 		@Override
@@ -148,7 +150,7 @@ public abstract class ColorEditorPanel extends JPanel
 		@Override
 		public void applyChanges()
 		{
-			CompoundProperty props[] = selector.getSelected();
+			NumericProperty props[] = ArrayUtil.cast(NumericProperty.class, selector.getSelected());
 			if (props.length > 0)
 				viewControler.setHighlightColors(colorGradientProperty.getValue(), logHighlighting.isSelected(), props);
 		}
@@ -173,8 +175,8 @@ public abstract class ColorEditorPanel extends JPanel
 
 			ColorGradient grad;
 			if (isPropertySelectedInViewer()
-					&& viewControler.getHighlightedProperty().getHighlightColorGradient() != null)
-				grad = viewControler.getHighlightedProperty().getHighlightColorGradient();
+					&& ((NumericProperty) viewControler.getHighlightedProperty()).getHighlightColorGradient() != null)
+				grad = ((NumericProperty) viewControler.getHighlightedProperty()).getHighlightColorGradient();
 			else
 				grad = ViewControler.DEFAULT_COLOR_GRADIENT;
 			colorGradientProperty = new ColorGradientProperty("Color gradient", "Color gradient"
@@ -196,7 +198,7 @@ public abstract class ColorEditorPanel extends JPanel
 		@Override
 		public boolean accept(CompoundProperty p)
 		{
-			return p.getType() == Type.NOMINAL && !p.isSmartsProperty();
+			return p instanceof NominalProperty && !(p instanceof FragmentProperty);
 		}
 
 		@Override
@@ -220,7 +222,7 @@ public abstract class ColorEditorPanel extends JPanel
 		@Override
 		public void applyChanges()
 		{
-			CompoundProperty props[] = selector.getSelected();
+			NominalProperty props[] = ArrayUtil.cast(NominalProperty.class, selector.getSelected());
 			if (props.length > 0)
 				viewControler.setHighlightColors(seq.getSequence(), props);
 		}
@@ -238,10 +240,10 @@ public abstract class ColorEditorPanel extends JPanel
 			Color cols[];
 			String labels[] = null;
 			if (isPropertySelectedInViewer())
-				labels = viewControler.getHighlightedProperty().getNominalDomain();
+				labels = ((NominalProperty) viewControler.getHighlightedProperty()).getDomain();
 			if (isPropertySelectedInViewer()
-					&& viewControler.getHighlightedProperty().getHighlightColorSequence() != null)
-				cols = viewControler.getHighlightedProperty().getHighlightColorSequence();
+					&& ((NominalProperty) viewControler.getHighlightedProperty()).getHighlightColorSequence() != null)
+				cols = ((NominalProperty) viewControler.getHighlightedProperty()).getHighlightColorSequence();
 			else
 				cols = CompoundPropertyUtil.AVAILABLE_COLORS;
 			seq = new ColorSequenceEditor(cols, labels);
@@ -254,7 +256,8 @@ public abstract class ColorEditorPanel extends JPanel
 						return;
 					String labels[] = null;
 					if (isPropertySelectedInViewer())
-						labels = selector.getSelected()[selector.getSelected().length - 1].getNominalDomain();
+						labels = ((NominalProperty) selector.getSelected()[selector.getSelected().length - 1])
+								.getDomain();
 					seq.updateLabels(labels);
 				}
 			});
@@ -349,7 +352,7 @@ public abstract class ColorEditorPanel extends JPanel
 			{
 				enabled = false;
 				for (CompoundProperty p : clustering.getFeatures())
-					if (p.isSmartsProperty())
+					if (p instanceof FragmentProperty)
 					{
 						enabled = true;
 						break;
@@ -361,8 +364,7 @@ public abstract class ColorEditorPanel extends JPanel
 		@Override
 		public boolean isPropertySelectedInViewer()
 		{
-			return viewControler.getHighlightedProperty() != null
-					&& viewControler.getHighlightedProperty().isSmartsProperty();
+			return viewControler.getHighlightedProperty() instanceof FragmentProperty;
 		}
 
 		@Override

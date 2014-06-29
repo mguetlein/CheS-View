@@ -36,9 +36,10 @@ import data.CompoundDataImpl;
 import dataInterface.ClusterData;
 import dataInterface.CompoundData;
 import dataInterface.CompoundProperty;
-import dataInterface.CompoundProperty.Type;
 import dataInterface.CompoundPropertyOwner;
 import dataInterface.CompoundPropertyUtil;
+import dataInterface.NominalProperty;
+import dataInterface.NumericProperty;
 import dataInterface.SubstructureSmartsType;
 
 public class ClusteringImpl implements Zoomable, Clustering
@@ -319,8 +320,11 @@ public class ClusteringImpl implements Zoomable, Clustering
 		update();
 		if (!numDistinctValues.containsKey(p))
 		{
-			int numDistinct = p.getType() == Type.NUMERIC ? CompoundPropertyUtil.computeNumDistinct(getDoubleValues(p))
-					: CompoundPropertyUtil.computeNumDistinct(getStringValues(p, null));
+			int numDistinct;
+			if (p instanceof NumericProperty)
+				numDistinct = CompoundPropertyUtil.computeNumDistinct(getDoubleValues((NumericProperty) p));
+			else
+				numDistinct = CompoundPropertyUtil.computeNumDistinct(getStringValues((NominalProperty) p, null));
 			numDistinctValues.put(p, numDistinct);
 		}
 		return numDistinctValues.get(p);
@@ -761,12 +765,12 @@ public class ClusteringImpl implements Zoomable, Clustering
 			return filteredCompoundList;
 	}
 
-	public String[] getStringValues(CompoundProperty property, Compound excludeCompound)
+	public String[] getStringValues(NominalProperty property, Compound excludeCompound)
 	{
 		return getStringValues(property, excludeCompound, false);
 	}
 
-	public String[] getStringValues(CompoundProperty property, Compound excludeCompound, boolean formatted)
+	public String[] getStringValues(NominalProperty property, Compound excludeCompound, boolean formatted)
 	{
 		List<String> l = new ArrayList<String>();
 		for (Compound m : getCompounds(false))
@@ -776,7 +780,7 @@ public class ClusteringImpl implements Zoomable, Clustering
 		return l.toArray(v);
 	}
 
-	public Double[] getDoubleValues(CompoundProperty property)
+	public Double[] getDoubleValues(NumericProperty property)
 	{
 		Double v[] = new Double[getNumCompounds(false)];
 		int i = 0;
@@ -840,25 +844,24 @@ public class ClusteringImpl implements Zoomable, Clustering
 		this.superimposed = superimposed;
 	}
 
-	public synchronized Double getNormalizedDoubleValue(CompoundPropertyOwner m, CompoundProperty p)
+	public synchronized Double getNormalizedDoubleValue(CompoundPropertyOwner m, NumericProperty p)
 	{
 		return clusteringValues.getNormalizedDoubleValue(m, p);
 	}
 
-	public synchronized Double getNormalizedLogDoubleValue(CompoundPropertyOwner m, CompoundProperty p)
+	public synchronized Double getNormalizedLogDoubleValue(CompoundPropertyOwner m, NumericProperty p)
 	{
 		return clusteringValues.getNormalizedLogDoubleValue(m, p);
 	}
 
 	@Override
-	public Double getDoubleValue(CompoundProperty p)
+	public Double getDoubleValue(NumericProperty p)
 	{
 		return clusteringValues.getDoubleValue(p);
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
-	public String getStringValue(CompoundProperty p)
+	public String getStringValue(NominalProperty p)
 	{
 		return clusteringValues.getStringValue(p);
 	}
@@ -1158,7 +1161,7 @@ public class ClusteringImpl implements Zoomable, Clustering
 				oldProps = ArrayUtil.push(CompoundProperty.class, oldProps, prop);
 
 		boolean log = false;
-		if (p.getType() == Type.NUMERIC && p.isLogHighlightingEnabled())
+		if (p instanceof NumericProperty && ((NumericProperty) p).isLogHighlightingEnabled())
 		{
 			int ret = JOptionPane.showConfirmDialog(Settings.TOP_LEVEL_FRAME,
 					"Use log-transformated value for computation of activity cliffs (maximum SALI values)?",
@@ -1167,32 +1170,38 @@ public class ClusteringImpl implements Zoomable, Clustering
 		}
 
 		Double d[] = new Double[getNumCompounds(true)];
-		int count = 0;
 		String domain[] = null;
-		if (p.getType() != Type.NUMERIC)
+		if (p instanceof NominalProperty)
 		{
-			domain = p.getNominalDomain();
+			domain = ((NominalProperty) p).getDomain();
 			if (domain.length != 2)
 				throw new IllegalArgumentException("not yet implemented");
 		}
-		for (Compound comp : getCompounds(false))
+
+		if (p instanceof NumericProperty)
 		{
-			if (p.getType() == Type.NUMERIC)
+			int count = 0;
+			for (Compound comp : getCompounds(false))
 			{
-				if (comp.getDoubleValue(p) != null)
+				if (comp.getDoubleValue((NumericProperty) p) != null)
 				{
 					if (!log)
-						d[count] = getNormalizedDoubleValue(comp, p);
+						d[count] = getNormalizedDoubleValue(comp, (NumericProperty) p);
 					else
-						d[count] = getNormalizedLogDoubleValue(comp, p);
+						d[count] = getNormalizedLogDoubleValue(comp, (NumericProperty) p);
 				}
+				count++;
 			}
-			else
+		}
+		else
+		{
+			int count = 0;
+			for (Compound comp : getCompounds(false))
 			{
-				if (comp.getStringValue(p) != null)
-					d[count] = (double) ArrayUtil.indexOf(domain, comp.getStringValue(p));
+				if (comp.getStringValue((NominalProperty) p) != null)
+					d[count] = (double) ArrayUtil.indexOf(domain, comp.getStringValue((NominalProperty) p));
+				count++;
 			}
-			count++;
 		}
 
 		List<SALIProperty> l = SALIProperty.create(d, clusteringData.getFeatureDistanceMatrix().getValues(),
@@ -1250,11 +1259,10 @@ public class ClusteringImpl implements Zoomable, Clustering
 	@Override
 	public void computeAppDomain()
 	{
-		List<CompoundProperty> feats = new ArrayList<CompoundProperty>();
+		List<NumericProperty> feats = new ArrayList<NumericProperty>();
 		for (CompoundProperty p : getFeatures())
-			if (p.getType() == Type.NUMERIC && p.numMissingValuesInCompleteDataset() == 0
-					&& p.numDistinctValuesInCompleteDataset() >= 2)
-				feats.add(p);
+			if (p instanceof NumericProperty && p.numMissingValues() == 0 && p.numDistinctValues() >= 2)
+				feats.add((NumericProperty) p);
 
 		//AppDomainComputer appDomain[] = new AppDomainComputer[] { AppDomainHelper.select() };
 
@@ -1299,14 +1307,14 @@ public class ClusteringImpl implements Zoomable, Clustering
 			for (CompoundData cc : getCompounds())
 			{
 				CompoundDataImpl c = (CompoundDataImpl) cc;
-				if (p.getType() == Type.NUMERIC)
+				if (p instanceof NumericProperty)
 				{
-					c.setDoubleValue(p, p.getDoubleValuesInCompleteDataset()[i]);
-					c.setNormalizedValueCompleteDataset(p, p.getNormalizedValuesInCompleteDataset()[i]);
+					c.setDoubleValue(p, ((NumericProperty) p).getDoubleValues()[i]);
+					c.setNormalizedValueCompleteDataset(p, ((NumericProperty) p).getNormalizedValues()[i]);
 				}
-				else if (p.getType() == Type.NOMINAL)
+				else if (p instanceof NominalProperty)
 				{
-					c.setStringValue(p, p.getStringValuesInCompleteDataset()[i]);
+					c.setStringValue(p, ((NominalProperty) p).getStringValues()[i]);
 				}
 				i++;
 			}
