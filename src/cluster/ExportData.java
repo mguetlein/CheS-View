@@ -181,7 +181,7 @@ public class ExportData
 					if (p.getType() == Type.NUMERIC)
 					{
 						val = clustering.getCompounds().get(j).getDoubleValue(p);
-						if (val != null && p.isIntegerInMappedDataset())
+						if (val != null && p.isInteger())
 							val = StringUtil.formatDouble((Double) val, 0);
 					}
 					else
@@ -421,7 +421,7 @@ public class ExportData
 					if (compoundDescriptorFeature.getType() == Type.NUMERIC)
 					{
 						val = clustering.getCompounds().get(j).getDoubleValue(compoundDescriptorFeature);
-						if (val != null && compoundDescriptorFeature.isIntegerInMappedDataset())
+						if (val != null && compoundDescriptorFeature.isInteger())
 							val = StringUtil.formatDouble((Double) val, 0);
 					}
 					else

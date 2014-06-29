@@ -114,9 +114,9 @@ public class FeatureTable extends DataTable
 				String map;
 				if (clustering.getFeatures().contains(p))
 				{
-					if (p.numDistinctValuesInMappedDataset() <= 1)
+					if (p.numDistinctValuesInCompleteDataset() <= 1)
 						map = "ignored (single-valued)";
-					else if (p.getRedundantPropInMappedDataset() != null)
+					else if (p.getRedundantProp() != null)
 						map = "ignored (redundant)";
 					else
 						map = "yes";

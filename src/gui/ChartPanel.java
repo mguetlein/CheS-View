@@ -623,7 +623,7 @@ public class ChartPanel extends JPanel
 			vals = new String[datasetValues.size()];
 			//			datasetValues.toArray(vals);
 			for (int i = 0; i < vals.length; i++)
-				vals[i] = p.getFormattedValueInMappedDataset(datasetValues.get(i));
+				vals[i] = p.getFormattedValue(datasetValues.get(i));
 
 			plot = new StackedBarPlot(null, null, "#compounds", StackedBarPlot.convertTotalToAdditive(data), vals);
 			configurePlotColors(plot, c, ms, p, fontsize);
@@ -809,11 +809,10 @@ public class ChartPanel extends JPanel
 						String usage;
 						if (fProperty.getCompoundPropertySet().isSelectedForMapping())
 						{
-							if (fProperty.numDistinctValuesInMappedDataset() <= 1)
+							if (fProperty.numDistinctValuesInCompleteDataset() <= 1)
 								usage = "Ignored for mapping (equal value for each compound)";
-							else if (fProperty.getRedundantPropInMappedDataset() != null)
-								usage = "Ignored for mapping (redundant to "
-										+ fProperty.getRedundantPropInMappedDataset() + ")";
+							else if (fProperty.getRedundantProp() != null)
+								usage = "Ignored for mapping (redundant to " + fProperty.getRedundantProp() + ")";
 							else
 								usage = "Used for mapping";
 						}

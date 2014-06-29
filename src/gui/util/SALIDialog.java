@@ -91,8 +91,7 @@ public class SALIDialog extends JDialog
 		List<CompoundProperty> list = new ArrayList<CompoundProperty>();
 		for (CompoundProperty p : clustering.getProperties())
 		{
-			if (p.getType() == dataInterface.CompoundProperty.Type.NUMERIC
-					|| p.getNominalDomainInMappedDataset().length == 2)
+			if (p.getType() == dataInterface.CompoundProperty.Type.NUMERIC || p.getNominalDomain().length == 2)
 				list.add(p);
 		}
 		if (list.size() == 0)

@@ -829,7 +829,7 @@ public class InfoPanel extends JPanel
 		{
 			props = new ArrayList<CompoundProperty>();
 			for (CompoundProperty p : clustering.getFeatures())
-				if (p.numDistinctValuesInMappedDataset() > 1 && p.getRedundantPropInMappedDataset() == null)
+				if (p.numDistinctValuesInCompleteDataset() > 1 && p.getRedundantProp() == null)
 					props.add(p);
 		}
 		else

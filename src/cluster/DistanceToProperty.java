@@ -1,9 +1,9 @@
 package cluster;
 
 import alg.DistanceMeasure;
-import dataInterface.NumericDynamicCompoundProperty;
+import dataInterface.DefaultCompoundProperty;
 
-public class DistanceToProperty extends NumericDynamicCompoundProperty
+public class DistanceToProperty extends DefaultCompoundProperty// NumericDynamicCompoundProperty
 {
 
 	Compound comp;
@@ -11,9 +11,11 @@ public class DistanceToProperty extends NumericDynamicCompoundProperty
 
 	public DistanceToProperty(Compound comp, DistanceMeasure measure, Double[] vals)
 	{
-		super(vals);
+		super();
 		this.comp = comp;
 		this.measure = measure;
+		setType(Type.NUMERIC);
+		setDoubleValues(vals);
 	}
 
 	@Override

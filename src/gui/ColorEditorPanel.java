@@ -238,7 +238,7 @@ public abstract class ColorEditorPanel extends JPanel
 			Color cols[];
 			String labels[] = null;
 			if (isPropertySelectedInViewer())
-				labels = viewControler.getHighlightedProperty().getNominalDomainInMappedDataset();
+				labels = viewControler.getHighlightedProperty().getNominalDomain();
 			if (isPropertySelectedInViewer()
 					&& viewControler.getHighlightedProperty().getHighlightColorSequence() != null)
 				cols = viewControler.getHighlightedProperty().getHighlightColorSequence();
@@ -254,8 +254,7 @@ public abstract class ColorEditorPanel extends JPanel
 						return;
 					String labels[] = null;
 					if (isPropertySelectedInViewer())
-						labels = selector.getSelected()[selector.getSelected().length - 1]
-								.getNominalDomainInMappedDataset();
+						labels = selector.getSelected()[selector.getSelected().length - 1].getNominalDomain();
 					seq.updateLabels(labels);
 				}
 			});

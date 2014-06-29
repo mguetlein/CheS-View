@@ -154,7 +154,7 @@ public class ClusteringValues
 		summarys.put(p, set);
 		CountedSet<String> fSet = set.copy();
 		for (String key : fSet.values())
-			fSet.rename(key, p.getFormattedValueInMappedDataset(key));
+			fSet.rename(key, p.getFormattedValue(key));
 		fSet.setToBack(p.getFormattedNullValue());
 		formattedSummarys.put(p, fSet);
 

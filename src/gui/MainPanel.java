@@ -2001,7 +2001,7 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 						if (p.toString().matches(names)
 								&& clustering.numDistinctValues(p) > (clustering.numCompounds() * 3 / 4.0)
 								&& (!names.equals("(?i)^id$") || !names.equals("(?i).*id.*")
-										|| p.getType() != Type.NUMERIC || p.isIntegerInMappedDataset()))
+										|| p.getType() != Type.NUMERIC || p.isInteger()))
 						{
 							compoundDescriptorProperty = p;
 							break;

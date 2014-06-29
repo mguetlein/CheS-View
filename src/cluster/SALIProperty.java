@@ -10,9 +10,9 @@ import javax.swing.JOptionPane;
 
 import main.Settings;
 import util.DoubleArraySummary;
-import dataInterface.NumericDynamicCompoundProperty;
+import dataInterface.DefaultCompoundProperty;
 
-public class SALIProperty extends NumericDynamicCompoundProperty
+public class SALIProperty extends DefaultCompoundProperty
 {
 	String target;
 	Type type;
@@ -39,7 +39,7 @@ public class SALIProperty extends NumericDynamicCompoundProperty
 
 	private SALIProperty(Double[] values, String target, Type type)
 	{
-		super(values);
+		super(Settings.text("props.sali", type.nice()), Settings.text("props.sali.desc", type.nice(), target), values);
 		this.target = target;
 		this.type = type;
 	}
@@ -198,18 +198,6 @@ public class SALIProperty extends NumericDynamicCompoundProperty
 			JOptionPane.showMessageDialog(Settings.TOP_LEVEL_FRAME, warning, "Warning", JOptionPane.WARNING_MESSAGE);
 		}
 		return res;
-	}
-
-	@Override
-	public String getName()
-	{
-		return Settings.text("props.sali", type.nice());
-	}
-
-	@Override
-	public String getDescription()
-	{
-		return Settings.text("props.sali.desc", type.nice(), target);
 	}
 
 	public SALIProperty.Type getSALIPropertyType()

@@ -329,7 +329,7 @@ public class Cluster extends ZoomableCompoundGroup implements CompoundGroupWithP
 			else
 			{
 				String mode = getNominalSummary(highlightProp).getMode(false);
-				String domain[] = highlightProp.getNominalDomainInMappedDataset();
+				String domain[] = highlightProp.getNominalDomain();
 				boolean invertSecondBinaryVal = false;
 				if (domain.length == 2 && ArrayUtil.indexOf(domain, mode) == 1)
 					invertSecondBinaryVal = true;

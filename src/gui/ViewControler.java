@@ -11,7 +11,7 @@ import javax.swing.JComponent;
 
 import util.ArrayUtil;
 import cluster.Clustering;
-import dataInterface.AbstractCompoundProperty;
+import dataInterface.DefaultCompoundProperty;
 import dataInterface.CompoundProperty;
 import dataInterface.CompoundPropertySet;
 import dataInterface.CompoundPropertyUtil;
@@ -149,7 +149,7 @@ public interface ViewControler
 
 	public int getFontSize();
 
-	static final CompoundProperty COMPOUND_INDEX_PROPERTY = new AbstractCompoundProperty("Compound Index", "no-desc")
+	static final CompoundProperty COMPOUND_INDEX_PROPERTY = new DefaultCompoundProperty("Compound Index", "no-desc")
 	{
 		@Override
 		public CompoundPropertySet getCompoundPropertySet()
@@ -157,7 +157,7 @@ public interface ViewControler
 			return null;
 		}
 	};
-	static final CompoundProperty COMPOUND_SMILES_PROPERTY = new AbstractCompoundProperty("Compound SMILES", "no-desc")
+	static final CompoundProperty COMPOUND_SMILES_PROPERTY = new DefaultCompoundProperty("Compound SMILES", "no-desc")
 	{
 		@Override
 		public CompoundPropertySet getCompoundPropertySet()

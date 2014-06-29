@@ -1171,7 +1171,7 @@ public class ClusteringImpl implements Zoomable, Clustering
 		String domain[] = null;
 		if (p.getType() != Type.NUMERIC)
 		{
-			domain = p.getNominalDomainInMappedDataset();
+			domain = p.getNominalDomain();
 			if (domain.length != 2)
 				throw new IllegalArgumentException("not yet implemented");
 		}
@@ -1252,8 +1252,8 @@ public class ClusteringImpl implements Zoomable, Clustering
 	{
 		List<CompoundProperty> feats = new ArrayList<CompoundProperty>();
 		for (CompoundProperty p : getFeatures())
-			if (p.getType() == Type.NUMERIC && p.numMissingValuesInMappedDataset() == 0
-					&& p.numDistinctValuesInMappedDataset() >= 2)
+			if (p.getType() == Type.NUMERIC && p.numMissingValuesInCompleteDataset() == 0
+					&& p.numDistinctValuesInCompleteDataset() >= 2)
 				feats.add(p);
 
 		//AppDomainComputer appDomain[] = new AppDomainComputer[] { AppDomainHelper.select() };
@@ -1301,12 +1301,12 @@ public class ClusteringImpl implements Zoomable, Clustering
 				CompoundDataImpl c = (CompoundDataImpl) cc;
 				if (p.getType() == Type.NUMERIC)
 				{
-					c.setDoubleValue(p, p.getDoubleValuesInCompleteMappedDataset()[i]);
-					c.setNormalizedValueCompleteDataset(p, p.getNormalizedValuesInCompleteMappedDataset()[i]);
+					c.setDoubleValue(p, p.getDoubleValuesInCompleteDataset()[i]);
+					c.setNormalizedValueCompleteDataset(p, p.getNormalizedValuesInCompleteDataset()[i]);
 				}
 				else if (p.getType() == Type.NOMINAL)
 				{
-					c.setStringValue(p, p.getStringValuesInCompleteMappedDataset()[i]);
+					c.setStringValue(p, p.getStringValuesInCompleteDataset()[i]);
 				}
 				i++;
 			}
