@@ -33,6 +33,9 @@ import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
+import property.CDKDescriptor;
+import property.PropertySetProvider;
+import property.PropertySetProvider.PropertySetShortcut;
 import task.Task;
 import task.TaskDialog;
 import util.ArrayUtil;
@@ -54,7 +57,7 @@ import cluster.Compound;
 import cluster.ExportData;
 import data.CDKCompoundIcon;
 import data.ClusteringData;
-import data.cdk.CDKDescriptor;
+import data.fragments.MatchEngine;
 import dataInterface.CompoundPropertyUtil;
 import dataInterface.NumericProperty;
 
@@ -72,11 +75,14 @@ public class LaunchCheSMapper
 		init(Locale.US, ScreenSetup.DEFAULT, true, preLoadWeka);
 	}
 
-	public static void init(Locale locale, ScreenSetup screenSetup, boolean loadProps, boolean preLoadWeka)
+	public static synchronized void init(Locale locale, ScreenSetup screenSetup, boolean loadProps, boolean preLoadWeka)
 	{
 		if (initialized)
-			throw new IllegalStateException("init only once!");
-
+		{
+			System.err.println("init only once!");
+			return;
+		}
+		initialized = true;
 		ScreenSetup.INSTANCE = screenSetup;
 
 		Settings.LOGGER.info("Starting CheS-Mapper at " + new Date());
@@ -90,7 +96,7 @@ public class LaunchCheSMapper
 			public void run()
 			{
 				// takes some time, do this rightaway in extra thread
-				CDKDescriptor.getDescriptors();
+				CDKDescriptor.loadDescriptors();
 			}
 		}).start();
 		if (preLoadWeka)
@@ -105,8 +111,6 @@ public class LaunchCheSMapper
 
 		PropHandler.init(loadProps);
 		BinHandler.init();
-
-		initialized = true;
 	}
 
 	public static long propertyModificationTime()
@@ -157,9 +161,11 @@ public class LaunchCheSMapper
 			//			ThreadUtil.sleep(10);
 			//			SwingUtil.waitWhileVisible(CheSViewer.getFrame());
 			//			System.exit(0);
+			args = new String[] { "-e", "-d", "/home/martin/workspace/CheS-Map-Test/data/3compounds.sdf", "-f", "ob",
+					"--rem-missing-above-ratio", "1", "-o", "/tmp/test.csv" };
 
-			args = "-s -f ob -d /home/martin/data/Tox21/TOX21S_v2a_8193_22Mar2012_cleanded.half2.sdf --big-data"
-					.split(" ");
+			//			args = "-s -f ob -d /home/martin/data/Tox21/TOX21S_v2a_8193_22Mar2012_cleanded.half2.sdf --big-data"
+			//					.split(" ");
 
 			//Settings.CACHING_ENABLED = false;
 			//args = ("-s -d /home/martin/data/caco2.sdf -f integrated -i caco2").split(" ");
@@ -299,12 +305,16 @@ public class LaunchCheSMapper
 				'f',
 				"features",
 				"specify features (comma seperated) : "
-						+ ArrayUtil.toString(MappingWorkflow.DescriptorCategory.values(), ",", "", "", ""), "features"));
-		options.addOption(paramOption('b', "integrated-features",
+						+ ArrayUtil.toString(PropertySetProvider.PropertySetShortcut.values(), ",", "", "", ""), "features"));
+		options.addOption(longParamOption("integrated-features",
 				"comma seperated list of feature-names that should be used (from features -f)", "integrated-features"));
-		options.addOption(paramOption('i', "ignore-features",
-				"comma seperated list of feature-names that should be ignored (from features -f)", "ignored-features"));
-		options.addOption(paramOption('a', "nominal-features",
+		options.addOption(longParamOption("ignore-features",
+				"comma seperated list of integrated feature-names that should be ignored (from features -f)",
+				"ignored-features"));
+		options.addOption(longParamOption("numeric-features",
+				"comma seperated list of integrated feature-names that should be interpreted as numeric",
+				"numeric-features"));
+		options.addOption(longParamOption("nominal-features",
 				"comma seperated list of integrated feature-names that should be interpreted as nominal",
 				"nominal-features"));
 		//		List<String> clusterNames = new ArrayList<String>();
@@ -590,7 +600,7 @@ public class LaunchCheSMapper
 				Settings.LOGGER.warn("caching disabled");
 			}
 
-			if (cmd.hasOption('e'))
+			if (cmd.hasOption('e')) // export features
 			{
 				if (cmd.hasOption("add-obsolete-pc-features"))
 					Settings.CDK_SKIP_SOME_DESCRIPTORS = false;
@@ -602,15 +612,17 @@ public class LaunchCheSMapper
 					throw new ParseException(
 							"please give dataset-file (-d) and features (-f) and outfile (-o) for feature export");
 				DescriptorSelection features = new DescriptorSelection(cmd.getOptionValue('f'),
-						cmd.getOptionValue('b'), cmd.getOptionValue('i'), cmd.getOptionValue('a'));
+						cmd.getOptionValue("integrated-features"), cmd.getOptionValue("ignore-features"),
+						cmd.getOptionValue("numeric-features"), cmd.getOptionValue("nominal-features"));
 				if (cmd.hasOption('m'))
 				{
 					if (cmd.hasOption('n'))
 						throw new IllegalArgumentException("exclusive settings n + m");
-					features.setFingerprintSettings(1, false);
+					features.setFingerprintSettings(1, false, MatchEngine.OpenBabel);
 				}
 				else if (cmd.hasOption('n'))
-					features.setFingerprintSettings(Integer.parseInt(cmd.getOptionValue('n')), true);
+					features.setFingerprintSettings(Integer.parseInt(cmd.getOptionValue('n')), true,
+							MatchEngine.OpenBabel);
 				double missingRatio = 0;
 				if (cmd.hasOption("rem-missing-above-ratio"))
 					missingRatio = Double.parseDouble(cmd.getOptionValue("rem-missing-above-ratio"));
@@ -642,7 +654,8 @@ public class LaunchCheSMapper
 					throw new ParseException(
 							"please give dataset-file (-d) and features (-f) and outfile (-o) for workflow export");
 				DescriptorSelection features = new DescriptorSelection(cmd.getOptionValue('f'),
-						cmd.getOptionValue('b'), cmd.getOptionValue('i'), cmd.getOptionValue('a'));
+						cmd.getOptionValue("integrated-features"), cmd.getOptionValue("ignore-features"),
+						cmd.getOptionValue("numeric-features"), cmd.getOptionValue("nominal-features"));
 				MappingWorkflow.createAndStoreMappingWorkflow(infile, outfile, features,
 						MappingWorkflow.clustererFromName(cmd.getOptionValue('c')), cmd.getOptionValue('q'));
 			}
@@ -665,7 +678,8 @@ public class LaunchCheSMapper
 					if (infile == null || featureNames == null)
 						throw new ParseException("please give dataset-file (-d) and features (-f) to start viewer");
 					DescriptorSelection features = new DescriptorSelection(cmd.getOptionValue('f'),
-							cmd.getOptionValue('b'), cmd.getOptionValue('i'), cmd.getOptionValue('a'));
+							cmd.getOptionValue("integrated-features"), cmd.getOptionValue("ignore-features"),
+							cmd.getOptionValue("numeric-features"), cmd.getOptionValue("nominal-features"));
 					Properties workflow = MappingWorkflow.createMappingWorkflow(infile, features);
 					mapping = MappingWorkflow.createMappingFromMappingWorkflow(workflow);
 				}

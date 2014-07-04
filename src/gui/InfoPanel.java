@@ -50,7 +50,6 @@ import cluster.SALIProperty;
 import dataInterface.CompoundProperty;
 import dataInterface.CompoundPropertyOwner;
 import dataInterface.CompoundPropertyUtil;
-import dataInterface.NominalProperty;
 import dataInterface.SubstructureSmartsType;
 
 public class InfoPanel extends JPanel
@@ -837,7 +836,7 @@ public class InfoPanel extends JPanel
 		{
 			props = new ArrayList<CompoundProperty>();
 			for (CompoundProperty p : clustering.getProperties())
-				if (!(p instanceof NominalProperty && ((NominalProperty) p).isSmiles()))
+				if (p.getCompoundPropertySet() == null || !p.getCompoundPropertySet().isSmiles())
 					props.add(p);
 			for (CompoundProperty p : clustering.getAdditionalProperties())
 				if (p instanceof SALIProperty)

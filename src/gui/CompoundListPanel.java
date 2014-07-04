@@ -278,7 +278,10 @@ public class CompoundListPanel extends JPanel
 				{
 					public void run()
 					{
-						if (clustering.isCompoundActive())
+						if (clustering.isClusterActive() && clustering.getNumClusters() > 1
+								&& clustering.getActiveCluster().getCompounds().size() == 1)
+							clusterControler.clearClusterActive(true, true);
+						else if (clustering.isCompoundActive())
 							clusterControler.clearCompoundActive(true);
 						else if (clustering.isClusterActive() && clustering.getNumClusters() > 1)
 							clusterControler.clearClusterActive(true, true);

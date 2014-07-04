@@ -459,15 +459,18 @@ public class ExportData
 
 		Properties props = MappingWorkflow.createMappingWorkflow(datasetFile, features, null, embed);
 		CheSMapping mapping = MappingWorkflow.createMappingFromMappingWorkflow(props, "");
-
 		ClusteringData clusteringData = mapping.doMapping();
 		ClusteringImpl clustering = new ClusteringImpl();
 		clustering.newClustering(clusteringData);
-
 		if (distanceToCompounds != null)
 			for (Integer i : distanceToCompounds)
 				clustering.addDistanceToCompoundFeature(clustering.getCompoundWithJmolIndex(i));
 
+		scriptExport(clustering, outfile, keepUniform, missingRatio);
+	}
+
+	public static void scriptExport(Clustering clustering, String outfile, boolean keepUniform, double missingRatio)
+	{
 		//		LaunchCheSMapper.start(mapping);
 		//		while (CheSViewer.getFrame() == null || CheSViewer.getClustering() == null)
 		//			ThreadUtil.sleep(100);

@@ -15,7 +15,6 @@ import cluster.ClusterController;
 import cluster.Clustering;
 import cluster.Compound;
 import dataInterface.CompoundProperty;
-import dataInterface.NominalProperty;
 import dataInterface.NumericProperty;
 
 public abstract class CCDataTable extends DataTable
@@ -66,8 +65,7 @@ public abstract class CCDataTable extends DataTable
 					return Integer.class;
 				if (columnIndex == 1)
 					return Compound.class;
-				if (columnIndex >= nonPropColumns
-						&& props.get(columnIndex - nonPropColumns) instanceof NumericProperty)
+				if (columnIndex >= nonPropColumns && props.get(columnIndex - nonPropColumns) instanceof NumericProperty)
 					return Double.class;
 				return String.class;
 			}
@@ -88,7 +86,7 @@ public abstract class CCDataTable extends DataTable
 			for (CompoundProperty p : clustering.getAdditionalProperties())
 				props.add(p);
 		for (CompoundProperty p : clustering.getProperties())
-			if (!(p instanceof NominalProperty && ((NominalProperty) p).isSmiles()))
+			if (p.getCompoundPropertySet() == null || !p.getCompoundPropertySet().isSmiles())
 				props.add(p);
 		for (CompoundProperty p : clustering.getFeatures())
 			props.add(p);
