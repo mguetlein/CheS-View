@@ -35,7 +35,6 @@ import org.apache.commons.cli.ParseException;
 
 import property.CDKDescriptor;
 import property.PropertySetProvider;
-import property.PropertySetProvider.PropertySetShortcut;
 import task.Task;
 import task.TaskDialog;
 import util.ArrayUtil;
@@ -57,6 +56,7 @@ import cluster.Compound;
 import cluster.ExportData;
 import data.CDKCompoundIcon;
 import data.ClusteringData;
+import data.DatasetFile;
 import data.fragments.MatchEngine;
 import dataInterface.CompoundPropertyUtil;
 import dataInterface.NumericProperty;
@@ -305,7 +305,8 @@ public class LaunchCheSMapper
 				'f',
 				"features",
 				"specify features (comma seperated) : "
-						+ ArrayUtil.toString(PropertySetProvider.PropertySetShortcut.values(), ",", "", "", ""), "features"));
+						+ ArrayUtil.toString(PropertySetProvider.PropertySetShortcut.values(), ",", "", "", ""),
+				"features"));
 		options.addOption(longParamOption("integrated-features",
 				"comma seperated list of feature-names that should be used (from features -f)", "integrated-features"));
 		options.addOption(longParamOption("ignore-features",
@@ -709,12 +710,11 @@ public class LaunchCheSMapper
 				if (infile == null || outfile == null)
 					throw new ParseException("please give dataset-file (-d) and outfile (-o) for compute-3d");
 
-				DatasetWizardPanel p = new DatasetWizardPanel(false);
-				p.load(infile, true);
-				if (p.getDatasetFile() == null)
+				DatasetFile d = new DatasetLoader(false).load(infile);
+				if (d == null)
 					throw new Error("Could not load dataset file " + infile);
 				if (cmd.hasOption('k'))
-					CDKCompoundIcon.createIcons(p.getDatasetFile(), cmd.getOptionValue('k'));
+					CDKCompoundIcon.createIcons(d, cmd.getOptionValue('k'));
 
 				OpenBabel3DBuilder builder = OpenBabel3DBuilder.INSTANCE;
 				if (cmd.hasOption("autocorrect-3d"))
@@ -723,7 +723,7 @@ public class LaunchCheSMapper
 					builder.setAutoCorrect(AutoCorrect.disabled);
 				try
 				{
-					builder.build3D(p.getDatasetFile());
+					builder.build3D(d);
 					if (!FileUtil.copy(builder.get3DSDFile(), outfile))
 						throw new Error("Could not copy 3D-File to outfile " + outfile);
 				}
@@ -737,11 +737,10 @@ public class LaunchCheSMapper
 				String infile = cmd.getOptionValue('d');
 				if (infile == null)
 					throw new ParseException("please give dataset-file (-d) for depict-2d");
-				DatasetWizardPanel p = new DatasetWizardPanel(false);
-				p.load(infile, true);
-				if (p.getDatasetFile() == null)
+				DatasetFile d = new DatasetLoader(false).load(infile);
+				if (d == null)
 					throw new Error("Could not load dataset file " + infile);
-				CDKCompoundIcon.createIcons(p.getDatasetFile(), cmd.getOptionValue('k'));
+				CDKCompoundIcon.createIcons(d, cmd.getOptionValue('k'));
 			}
 			//			else if (cmd.hasOption('n'))
 			//			{
