@@ -45,6 +45,7 @@ import util.StringLineAdder;
 import util.SwingUtil;
 import util.ThreadUtil;
 import weka.WekaPropertyUtil;
+import workflow.DatasetLoader;
 import workflow.MappingWorkflow;
 import workflow.MappingWorkflow.DescriptorSelection;
 import alg.build3d.AbstractReal3DBuilder;
