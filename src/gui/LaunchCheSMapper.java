@@ -48,6 +48,7 @@ import weka.WekaPropertyUtil;
 import workflow.DatasetLoader;
 import workflow.MappingWorkflow;
 import workflow.MappingWorkflow.DescriptorSelection;
+import workflow.MappingWorkflow.FragmentSettings;
 import alg.build3d.AbstractReal3DBuilder;
 import alg.build3d.AbstractReal3DBuilder.AutoCorrect;
 import alg.build3d.OpenBabel3DBuilder;
@@ -616,14 +617,15 @@ public class LaunchCheSMapper
 				DescriptorSelection features = new DescriptorSelection(cmd.getOptionValue('f'),
 						cmd.getOptionValue("integrated-features"), cmd.getOptionValue("ignore-features"),
 						cmd.getOptionValue("numeric-features"), cmd.getOptionValue("nominal-features"));
+				FragmentSettings fragmentSettings = null;
 				if (cmd.hasOption('m'))
 				{
 					if (cmd.hasOption('n'))
 						throw new IllegalArgumentException("exclusive settings n + m");
-					features.setFingerprintSettings(1, false, MatchEngine.OpenBabel);
+					fragmentSettings = new FragmentSettings(1, false, MatchEngine.OpenBabel);
 				}
 				else if (cmd.hasOption('n'))
-					features.setFingerprintSettings(Integer.parseInt(cmd.getOptionValue('n')), true,
+					fragmentSettings = new FragmentSettings(Integer.parseInt(cmd.getOptionValue('n')), true,
 							MatchEngine.OpenBabel);
 				double missingRatio = 0;
 				if (cmd.hasOption("rem-missing-above-ratio"))
@@ -644,8 +646,8 @@ public class LaunchCheSMapper
 						throw new IllegalAccessError("unknown distance measure: "
 								+ cmd.getOptionValue("distance-measure"));
 				}
-				ExportData.scriptExport(infile, features, outfile, cmd.hasOption('u'), missingRatio, compounds,
-						euclidean);
+				ExportData.scriptExport(infile, features, fragmentSettings, outfile, cmd.hasOption('u'), missingRatio,
+						compounds, euclidean);
 			}
 			else if (cmd.hasOption('x')) // export workflow
 			{
@@ -658,7 +660,7 @@ public class LaunchCheSMapper
 				DescriptorSelection features = new DescriptorSelection(cmd.getOptionValue('f'),
 						cmd.getOptionValue("integrated-features"), cmd.getOptionValue("ignore-features"),
 						cmd.getOptionValue("numeric-features"), cmd.getOptionValue("nominal-features"));
-				MappingWorkflow.createAndStoreMappingWorkflow(infile, outfile, features,
+				MappingWorkflow.createAndStoreMappingWorkflow(infile, outfile, features, null,
 						MappingWorkflow.clustererFromName(cmd.getOptionValue('c')), cmd.getOptionValue('q'));
 			}
 			else if (cmd.hasOption('w'))
@@ -682,7 +684,7 @@ public class LaunchCheSMapper
 					DescriptorSelection features = new DescriptorSelection(cmd.getOptionValue('f'),
 							cmd.getOptionValue("integrated-features"), cmd.getOptionValue("ignore-features"),
 							cmd.getOptionValue("numeric-features"), cmd.getOptionValue("nominal-features"));
-					Properties workflow = MappingWorkflow.createMappingWorkflow(infile, features);
+					Properties workflow = MappingWorkflow.createMappingWorkflow(infile, features, null);
 					mapping = MappingWorkflow.createMappingFromMappingWorkflow(workflow);
 				}
 				start(mapping, mod);

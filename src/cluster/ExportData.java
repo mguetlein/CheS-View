@@ -28,6 +28,7 @@ import util.ObjectUtil;
 import util.StringUtil;
 import workflow.MappingWorkflow;
 import workflow.MappingWorkflow.DescriptorSelection;
+import workflow.MappingWorkflow.FragmentSettings;
 import alg.embed3d.ThreeDEmbedder;
 import alg.embed3d.WekaPCA3DEmbedder;
 import alg.embed3d.r.Sammon3DEmbedder;
@@ -445,8 +446,9 @@ public class ExportData
 					.showMessageDialog(Settings.TOP_LEVEL_FRAME, msg, "Export done", JOptionPane.INFORMATION_MESSAGE);
 	}
 
-	public static void scriptExport(String datasetFile, DescriptorSelection features, String outfile,
-			boolean keepUniform, double missingRatio, List<Integer> distanceToCompounds, boolean euclideanDistance)
+	public static void scriptExport(String datasetFile, DescriptorSelection features,
+			FragmentSettings fragmentSettings, String outfile, boolean keepUniform, double missingRatio,
+			List<Integer> distanceToCompounds, boolean euclideanDistance)
 	{
 		ThreeDEmbedder embed = null;
 		if (distanceToCompounds != null && euclideanDistance)
@@ -457,7 +459,7 @@ public class ExportData
 			((Sammon3DEmbedder) embed).enableTanimoto();
 		}
 
-		Properties props = MappingWorkflow.createMappingWorkflow(datasetFile, features, null, embed);
+		Properties props = MappingWorkflow.createMappingWorkflow(datasetFile, features, fragmentSettings, null, embed);
 		CheSMapping mapping = MappingWorkflow.createMappingFromMappingWorkflow(props, "");
 		ClusteringData clusteringData = mapping.doMapping();
 		ClusteringImpl clustering = new ClusteringImpl();
@@ -487,7 +489,7 @@ public class ExportData
 
 		//String input = "/home/martin/data/valium.csv";
 		String input = "/home/martin/data/caco2.sdf";
-		scriptExport(input, new DescriptorSelection("integrated"), "/tmp/data.csv", false, 0.1, null, false);
+		scriptExport(input, new DescriptorSelection("integrated"), null, "/tmp/data.csv", false, 0.1, null, false);
 
 	}
 
