@@ -198,7 +198,7 @@ public abstract class ColorEditorPanel extends JPanel
 		@Override
 		public boolean accept(CompoundProperty p)
 		{
-			return p instanceof NominalProperty && !(p instanceof FragmentProperty);
+			return !p.isUndefined() && p instanceof NominalProperty && !(p instanceof FragmentProperty);
 		}
 
 		@Override

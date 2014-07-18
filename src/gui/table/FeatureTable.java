@@ -126,14 +126,12 @@ public class FeatureTable extends DataTable
 				else
 					map = "no";
 				o[i++] = map;
-				o[i++] = p instanceof NumericProperty ? "Numeric"
-						: (p.getCompoundPropertySet().getType() != null ? "Nominal" : "undef.");
+				o[i++] = (p.isUndefined() ? "undef." : (p instanceof NumericProperty ? "Numeric" : "Nominal"));
 				o[i++] = clustering.numMissingValues(p);
 				o[i++] = clustering.numDistinctValues(p);
 				if (p instanceof NumericProperty)
 				{
-					DoubleArraySummary s = DoubleArraySummary.create(clustering
-							.getDoubleValues((NumericProperty) p));
+					DoubleArraySummary s = DoubleArraySummary.create(clustering.getDoubleValues((NumericProperty) p));
 					o[i++] = Double.isNaN(s.getMin()) ? null : s.getMin();
 					o[i++] = Double.isNaN(s.getMedian()) ? null : s.getMedian();
 					o[i++] = Double.isNaN(s.getStdev()) ? null : s.getStdev();
@@ -146,8 +144,8 @@ public class FeatureTable extends DataTable
 					o[i++] = null;
 					o[i++] = null;
 					o[i++] = null;
-					CountedSet<String> set = CountedSet.fromArray(clustering.getStringValues(
-							(NominalProperty) p, null));
+					CountedSet<String> set = CountedSet
+							.fromArray(clustering.getStringValues((NominalProperty) p, null));
 					o[i++] = set.toString();
 				}
 				//			for (Dimensions d : Dimensions.values())

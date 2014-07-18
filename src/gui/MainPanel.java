@@ -135,9 +135,9 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 		if (m == null)
 			throw new IllegalStateException();
 
-		if (p == null)
+		if (p == null || p.isUndefined())
 			return textColor ? ComponentFactory.FOREGROUND : null;
-		else if (p instanceof NominalProperty && p.getCompoundPropertySet().getType() != null)
+		else if (p instanceof NominalProperty)
 		{
 			if (m.getStringValue((NominalProperty) p) == null)
 				return textColor ? ComponentFactory.FOREGROUND : CompoundPropertyUtil.getNullValueColor();
@@ -186,7 +186,7 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 			}
 		}
 		else
-			return textColor ? ComponentFactory.FOREGROUND : null;
+			throw new IllegalStateException();
 	}
 
 	public static enum Translucency

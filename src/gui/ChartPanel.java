@@ -779,13 +779,15 @@ public class ChartPanel extends JPanel
 						if (!cardContents.containsKey(plotKey))
 						{
 							PlotData d = null;
-							if (fProperty instanceof NominalProperty
-									&& fProperty.getCompoundPropertySet().getType() != null)
-								d = new NominalPlotData(fCluster, (NominalProperty) fProperty, fCompounds,
-										fFontSize);
-							else if (fProperty instanceof NumericProperty)
-								d = new NumericPlotData(fCluster, (NumericProperty) fProperty, fCompounds,
-										fFontSize);
+							if (!fProperty.isUndefined())
+							{
+								if (fProperty instanceof NominalProperty)
+									d = new NominalPlotData(fCluster, (NominalProperty) fProperty, fCompounds,
+											fFontSize);
+								else if (fProperty instanceof NumericProperty)
+									d = new NumericPlotData(fCluster, (NumericProperty) fProperty, fCompounds,
+											fFontSize);
+							}
 							if (d != null)
 							{
 								cardContents.put(plotKey, d.getPlot());
@@ -798,9 +800,15 @@ public class ChartPanel extends JPanel
 						setIgnoreRepaint(true);
 
 						featureNameLabel.setText(fProperty.toString());
-						featureSetLabel.setText(fProperty.getCompoundPropertySet().toString());
-						//hack, ommits this for cdk features
-						featureSetLabel.setVisible(fProperty.getCompoundPropertySet().isSizeDynamic());
+						//hack, do not show integrated features, cdk features or openbabel features
+						if (fProperty.getCompoundPropertySet() != null
+								&& fProperty.getCompoundPropertySet().isSizeDynamic())
+						{
+							featureSetLabel.setText(fProperty.getCompoundPropertySet().toString());
+							featureSetLabel.setVisible(true);
+						}
+						else
+							featureSetLabel.setVisible(false);
 						featureValuesLabel.setText("<html>" + clustering.getSummaryStringValue(fProperty, true)
 								+ "</html>");
 						featureDescriptionLabel.setText(fProperty.getDescription() + "");
@@ -818,7 +826,8 @@ public class ChartPanel extends JPanel
 							featureSmartsLabelHeader.setVisible(false);
 						}
 						String usage;
-						if (fProperty.getCompoundPropertySet().isSelectedForMapping())
+						if (fProperty.getCompoundPropertySet() != null
+								&& fProperty.getCompoundPropertySet().isSelectedForMapping())
 						{
 							if (fProperty.numDistinctValues() <= 1)
 								usage = "Ignored for mapping (equal value for each compound)";
