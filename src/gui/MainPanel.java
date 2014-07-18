@@ -596,9 +596,9 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 						&& lastSelectedHighlighter != Highlighter.DEFAULT_HIGHLIGHTER)
 				{
 					if (lastSelectedHighlighter == Highlighter.CLUSTER_HIGHLIGHTER)
-						lastMsg = " (flat sphere highlights cluster assignement).";
+						lastMsg = " (flattened spheroid highlights cluster assignement).";
 					else if (lastSelectedHighlighter instanceof CompoundPropertyHighlighter)
-						lastMsg = " (flat sphere highlights '" + lastSelectedHighlighter + "').";
+						lastMsg = " (flattened spheroid highlights '" + lastSelectedHighlighter + "').";
 				}
 				if (highlighter == Highlighter.DEFAULT_HIGHLIGHTER)
 					guiControler.showMessage("Disable highlighting" + lastMsg);
@@ -1760,9 +1760,9 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 					&& lastSelectedHighlighter != Highlighter.DEFAULT_HIGHLIGHTER)
 			{
 				if (lastSelectedHighlighter == Highlighter.CLUSTER_HIGHLIGHTER)
-					lastMsg = " (flat sphere highlights cluster assignement).";
+					lastMsg = " (flattened spheroid highlights cluster assignement).";
 				else if (lastSelectedHighlighter instanceof CompoundPropertyHighlighter)
-					lastMsg = " (flat sphere highlights '" + lastSelectedHighlighter + "').";
+					lastMsg = " (flattened spheroid highlights '" + lastSelectedHighlighter + "').";
 			}
 			guiControler.showMessage((b ? "Enable" : "Disable") + " highlighting of last selected feature" + lastMsg);
 		}
