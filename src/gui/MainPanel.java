@@ -142,8 +142,7 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 			if (m.getStringValue((NominalProperty) p) == null)
 				return textColor ? ComponentFactory.FOREGROUND : CompoundPropertyUtil.getNullValueColor();
 			else
-				return CompoundPropertyUtil.getNominalColor((NominalProperty) p,
-						m.getStringValue((NominalProperty) p));
+				return CompoundPropertyUtil.getNominalColor((NominalProperty) p, m.getStringValue((NominalProperty) p));
 		}
 		else if (p instanceof NumericProperty)
 		{
@@ -2007,8 +2006,7 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 						if (p.toString().matches(names)
 								&& clustering.numDistinctValues(p) > (clustering.numCompounds() * 3 / 4.0)
 								&& (!names.equals("(?i)^id$") || !names.equals("(?i).*id.*")
-										|| !(p instanceof NumericProperty) || ((NumericProperty) p)
-											.isInteger()))
+										|| !(p instanceof NumericProperty) || ((NumericProperty) p).isInteger()))
 						{
 							compoundDescriptorProperty = p;
 							break;
@@ -2767,7 +2765,7 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 		{
 			public void run()
 			{
-				if (clustering.getActiveCluster() != null)
+				if (clustering.getNumClusters() > 1 && clustering.getActiveCluster() != null)
 					clearClusterActive(true, true);
 				else if (clustering.getActiveCompound() != null)
 					clearCompoundActive(true);
