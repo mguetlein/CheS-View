@@ -384,6 +384,7 @@ public class CompoundListPanel extends JPanel
 		clearSelectedButton = ComponentFactory.createCrossViewButton();
 		filterButton = ComponentFactory.createViewButton(ImageLoader.getImage(ImageLoader.Image.filter14_black),
 				ImageLoader.getImage(ImageLoader.Image.filter14));
+		filterButton.setName("filter-button");//for tests
 		JPanel buttonWrapped = new TransparentViewPanel(new BorderLayout(6, 6));
 		buttonWrapped.add(clearSelectedButton);
 		buttonWrapped.add(filterButton, BorderLayout.SOUTH);

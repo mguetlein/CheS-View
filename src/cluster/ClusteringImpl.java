@@ -1224,7 +1224,7 @@ public class ClusteringImpl implements Zoomable, Clustering
 			if (prop instanceof DistanceToProperty && ((DistanceToProperty) prop).getCompound() == comp)
 				return prop;
 		}
-		Double d[] = new Double[getNumCompounds(true)];
+		Double d[] = new Double[getNumUnfilteredCompounds(true)];
 		for (int i = 0; i < d.length; i++)
 			d[i] = clusteringData.getFeatureDistance(comp.getOrigIndex(), getCompounds().get(i).getOrigIndex());
 
