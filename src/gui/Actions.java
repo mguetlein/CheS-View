@@ -1292,7 +1292,7 @@ public class Actions
 			@Override
 			public void action()
 			{
-				SALIDialog.showDialog(viewControler, clustering);
+				SALIDialog.showDialog(viewControler, clustering, clusterControler);
 			}
 		};
 

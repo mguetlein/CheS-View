@@ -18,6 +18,7 @@ import javax.swing.border.EmptyBorder;
 
 import main.Settings;
 import util.ArrayUtil;
+import cluster.ClusterController;
 import cluster.Clustering;
 import cluster.SALIProperty;
 
@@ -88,8 +89,18 @@ public class SALIDialog extends JDialog
 		setLocationRelativeTo(getOwner());
 	}
 
-	public static void showDialog(ViewControler viewControler, Clustering clustering)
+	public static void showDialog(ViewControler viewControler, Clustering clustering, ClusterController clusterControler)
 	{
+		if (clusterControler.getCompoundFilter() != null)
+		{
+			JOptionPane
+					.showMessageDialog(
+							Settings.TOP_LEVEL_FRAME,
+							"Currently, activity cliffs can only be computed for the complete un-filtered dataset. Please remove compound filter first.",
+							"Message", JOptionPane.OK_OPTION);
+			return;
+		}
+
 		List<CompoundProperty> list = new ArrayList<CompoundProperty>();
 		for (CompoundProperty p : clustering.getProperties())
 		{
