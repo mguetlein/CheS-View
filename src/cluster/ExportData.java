@@ -489,7 +489,7 @@ public class ExportData
 
 		//String input = "/home/martin/data/valium.csv";
 		String input = "/home/martin/data/caco2.sdf";
-		scriptExport(input, new DescriptorSelection("integrated"), null, "/tmp/data.csv", false, 0.1, null, false);
+		scriptExport(input, DescriptorSelection.autoSelectIntegrated(), null, "/tmp/data.csv", false, 0.1, null, false);
 
 	}
 

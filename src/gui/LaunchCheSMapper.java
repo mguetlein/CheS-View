@@ -611,7 +611,7 @@ public class LaunchCheSMapper
 				if (infile == null || outfile == null || featureNames == null)
 					throw new ParseException(
 							"please give dataset-file (-d) and features (-f) and outfile (-o) for feature export");
-				DescriptorSelection features = new DescriptorSelection(cmd.getOptionValue('f'),
+				DescriptorSelection features = DescriptorSelection.select(cmd.getOptionValue('f'),
 						cmd.getOptionValue("integrated-features"), cmd.getOptionValue("ignore-features"),
 						cmd.getOptionValue("numeric-features"), cmd.getOptionValue("nominal-features"));
 				FragmentSettings fragmentSettings = null;
@@ -654,7 +654,7 @@ public class LaunchCheSMapper
 				if (infile == null || outfile == null || featureNames == null)
 					throw new ParseException(
 							"please give dataset-file (-d) and features (-f) and outfile (-o) for workflow export");
-				DescriptorSelection features = new DescriptorSelection(cmd.getOptionValue('f'),
+				DescriptorSelection features = DescriptorSelection.select(cmd.getOptionValue('f'),
 						cmd.getOptionValue("integrated-features"), cmd.getOptionValue("ignore-features"),
 						cmd.getOptionValue("numeric-features"), cmd.getOptionValue("nominal-features"));
 				MappingWorkflow.createAndStoreMappingWorkflow(infile, outfile, features, null,
@@ -678,7 +678,7 @@ public class LaunchCheSMapper
 				{
 					if (infile == null || featureNames == null)
 						throw new ParseException("please give dataset-file (-d) and features (-f) to start viewer");
-					DescriptorSelection features = new DescriptorSelection(cmd.getOptionValue('f'),
+					DescriptorSelection features = DescriptorSelection.select(cmd.getOptionValue('f'),
 							cmd.getOptionValue("integrated-features"), cmd.getOptionValue("ignore-features"),
 							cmd.getOptionValue("numeric-features"), cmd.getOptionValue("nominal-features"));
 					Properties workflow = MappingWorkflow.createMappingWorkflow(infile, features, null);
