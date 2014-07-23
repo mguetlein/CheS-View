@@ -148,9 +148,6 @@ public class LaunchCheSMapper
 
 	public static void main(String args[])
 	{
-		//		args = "-e -f ob -d /home/martin/data/demo/demo.smi --distance-to 1 --distance-measure euclidean -o /tmp/delme.csv"
-		//				.split(" ");
-
 		if (args != null && args.length == 1 && args[0].equals("debug"))
 		{
 			//			setExitOnClose(false);
