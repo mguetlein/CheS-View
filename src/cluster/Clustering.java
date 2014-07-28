@@ -6,12 +6,13 @@ import java.util.List;
 
 import weka.Predictor.PredictionResult;
 import dataInterface.CompoundData;
+import dataInterface.CompoundGroupWithProperties;
 import dataInterface.CompoundProperty;
 import dataInterface.CompoundPropertyOwner;
 import dataInterface.NominalProperty;
 import dataInterface.NumericProperty;
 
-public interface Clustering extends CompoundPropertyOwner
+public interface Clustering extends CompoundGroupWithProperties
 {
 	void addListener(PropertyChangeListener propertyChangeListener);
 
@@ -56,6 +57,9 @@ public interface Clustering extends CompoundPropertyOwner
 	int[] getWatchedCompoundsJmolIdx();
 
 	Cluster getClusterForCompound(Compound c);
+
+	List<CompoundProperty> selectPropertiesAndFeaturesWithDialog(String title, CompoundProperty preselected,
+			boolean addSmiles, boolean addEmbeddingStress, boolean addActivityCliffs, boolean addDistanceTo);
 
 	List<CompoundProperty> getPropertiesAndFeatures();
 

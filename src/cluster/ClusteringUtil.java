@@ -13,7 +13,7 @@ public class ClusteringUtil
 	{
 		List<Vector3f> list = new ArrayList<Vector3f>();
 		for (Cluster cc : c.getClusters())
-			if (cc.size() > 0)
+			if (cc.getNumCompounds() > 0)
 				list.add(cc.getCenter(true));
 		return list;
 	}

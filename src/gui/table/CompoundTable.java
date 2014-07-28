@@ -2,7 +2,6 @@ package gui.table;
 
 import gui.ClickMouseOverTable;
 import gui.ClickMouseOverTable.ClickMouseOverRenderer;
-import gui.MainPanel;
 import gui.ViewControler;
 import gui.swing.ComponentFactory;
 
@@ -10,6 +9,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.List;
 
 import javax.swing.JComponent;
 import javax.swing.JTable;
@@ -31,10 +31,10 @@ import dataInterface.NumericProperty;
 
 public class CompoundTable extends CCDataTable
 {
-
-	public CompoundTable(ViewControler viewControler, ClusterController clusterControler, Clustering clustering)
+	CompoundTable(ViewControler viewControler, ClusterController clusterControler, Clustering clustering,
+			List<CompoundProperty> props)
 	{
-		super(viewControler, clusterControler, clustering);
+		super(viewControler, clusterControler, clustering, props);
 	}
 
 	@Override
@@ -142,8 +142,11 @@ public class CompoundTable extends CCDataTable
 				if (column >= nonPropColumns)
 				{
 					p = props.get(column - nonPropColumns);
-					val = m.getFormattedValue(p) + " (" + StringUtil.formatDouble(clustering.getSpecificity(m, p))
-							+ ")";
+					if (addSpecificityInfo())
+						val = m.getFormattedValue(p) + " (" + StringUtil.formatDouble(clustering.getSpecificity(m, p))
+								+ ")";
+					else
+						val = m.getFormattedValue(p);
 				}
 				else
 					val = value;
@@ -151,7 +154,7 @@ public class CompoundTable extends CCDataTable
 
 				if (column >= nonPropColumns)
 				{
-					Color col = MainPanel.getHighlightColor(viewControler, clustering, m, p, true);
+					Color col = viewControler.getHighlightColor(m, p, true, false);
 					setForeground(col);
 				}
 				else
@@ -186,7 +189,7 @@ public class CompoundTable extends CCDataTable
 	@Override
 	protected boolean addSpecificityInfo()
 	{
-		return true;
+		return false;
 	}
 
 	@Override

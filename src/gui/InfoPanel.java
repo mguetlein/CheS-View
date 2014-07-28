@@ -177,7 +177,7 @@ public class InfoPanel extends JPanel
 		public List<Info> getAdditionalInfo()
 		{
 			List<Info> map = new ArrayList<Info>();
-			map.add(new Info("Num compounds", ((Cluster) selected).size()));
+			map.add(new Info("Num compounds", ((Cluster) selected).getNumCompounds()));
 			for (SubstructureSmartsType t : SubstructureSmartsType.values())
 				if (((Cluster) selected).getSubstructureSmarts(t) != null)
 				{
@@ -214,7 +214,7 @@ public class InfoPanel extends JPanel
 		public List<Info> getAdditionalInfo()
 		{
 			List<Info> map = new ArrayList<Info>();
-			map.add(new Info("Num compounds", ((CompoundSelection) selected).size()));
+			map.add(new Info("Num compounds", ((CompoundSelection) selected).getNumCompounds()));
 			return map;
 		}
 
@@ -418,7 +418,7 @@ public class InfoPanel extends JPanel
 						c.setFont(c.getFont().deriveFont(Font.ITALIC));
 						if (isSelected == false)// && !(selected instanceof Clustering))
 						{
-							Color col = MainPanel.getHighlightColor(viewControler, clustering, selected,
+							Color col = viewControler.getHighlightColor(selected,
 									(CompoundProperty) table.getValueAt(row, 0), true);
 							setForeground(col);
 						}

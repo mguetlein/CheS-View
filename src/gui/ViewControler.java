@@ -12,7 +12,9 @@ import javax.swing.JComponent;
 import util.ArrayUtil;
 import cluster.Clustering;
 import dataInterface.CompoundProperty;
+import dataInterface.CompoundPropertyOwner;
 import dataInterface.CompoundPropertyUtil;
+import dataInterface.CompoundPropertyUtil.NominalColoring;
 import dataInterface.DefaultNominalProperty;
 import dataInterface.NominalProperty;
 import dataInterface.NumericProperty;
@@ -37,6 +39,11 @@ public interface ViewControler
 
 	public static final ColorGradient DEFAULT_COLOR_GRADIENT = new ColorGradient(
 			CompoundPropertyUtil.getHighValueColor(), Color.WHITE, CompoundPropertyUtil.getLowValueColor());
+
+	public Color getHighlightColor(CompoundPropertyOwner m, CompoundProperty p, boolean textColor);
+
+	public Color getHighlightColor(CompoundPropertyOwner m, CompoundProperty p, boolean textColor,
+			boolean blackBackground);
 
 	public DisguiseMode getDisguiseUnHovered();
 
@@ -152,8 +159,8 @@ public interface ViewControler
 
 	static final CompoundProperty COMPOUND_INDEX_PROPERTY = new DefaultNominalProperty(null, "Compound Index",
 			"no-desc");
-	static final CompoundProperty COMPOUND_SMILES_PROPERTY = new DefaultNominalProperty(null,
-			"Compound SMILES", "no-desc");
+	static final CompoundProperty COMPOUND_SMILES_PROPERTY = new DefaultNominalProperty(null, "Compound SMILES",
+			"no-desc");
 
 	public void setCompoundDescriptor(CompoundProperty prop);
 
@@ -247,6 +254,10 @@ public interface ViewControler
 	public void increase2DIconSize(boolean increase);
 
 	public void set2DIconSize(int size);
+
+	public NominalColoring getNominalColoring();
+
+	public void setNominalColoring(NominalColoring nominalColoringValue);
 
 	// to remove
 

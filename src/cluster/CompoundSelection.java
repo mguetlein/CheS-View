@@ -5,6 +5,7 @@ import java.util.HashMap;
 import util.ArraySummary;
 import util.CountedSet;
 import util.DoubleArraySummary;
+import dataInterface.CompoundGroupWithProperties;
 import dataInterface.CompoundProperty;
 import dataInterface.NominalProperty;
 import dataInterface.NumericProperty;
@@ -23,7 +24,7 @@ public class CompoundSelection implements CompoundGroupWithProperties
 	@Override
 	public String toString()
 	{
-		return "Selection of " + size() + " compounds";
+		return "Selection of " + getNumCompounds() + " compounds";
 	}
 
 	public Compound[] getCompounds()
@@ -41,7 +42,7 @@ public class CompoundSelection implements CompoundGroupWithProperties
 
 	private void updateNumeric(NumericProperty p)
 	{
-		Double d[] = new Double[size()];
+		Double d[] = new Double[getNumCompounds()];
 		int i = 0;
 		for (Compound m : compounds)
 			d[i++] = m.getDoubleValue(p);
@@ -50,7 +51,7 @@ public class CompoundSelection implements CompoundGroupWithProperties
 
 	private void updateNominal(NominalProperty p)
 	{
-		String s[] = new String[size()];
+		String s[] = new String[getNumCompounds()];
 		int i = 0;
 		for (Compound m : compounds)
 			s[i++] = m.getStringValue(p);
@@ -61,20 +62,6 @@ public class CompoundSelection implements CompoundGroupWithProperties
 			fSet.rename(key, p.getFormattedValue(key));
 		fSet.setToBack(p.getFormattedNullValue());
 		formattedSummarys.put(p, fSet);
-	}
-
-	@Override
-	public String getStringValue(NominalProperty p)
-	{
-		if (!summarys.containsKey(p))
-			updateNominal(p);
-		@SuppressWarnings("unchecked")
-		CountedSet<String> set = (CountedSet<String>) summarys.get(p);
-		String mode = set.getMode(false);
-		if (set.getCount(mode) > set.getSum(false) * 2 / 3.0)
-			return mode;
-		else
-			return null;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -100,7 +87,7 @@ public class CompoundSelection implements CompoundGroupWithProperties
 			return formattedSummarys.get(p).toString(false);
 	}
 
-	public int size()
+	public int getNumCompounds()
 	{
 		return compounds.length;
 	}

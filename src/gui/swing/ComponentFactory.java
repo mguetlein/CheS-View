@@ -65,6 +65,9 @@ public class ComponentFactory
 	public static Color LIST_ACTIVE_BACKGROUND;
 	public static Color LIST_WATCH_BACKGROUND;
 
+	public static Color FOREGROUND_FOR_BACKGROUND_BLACK = new Color(250, 250, 250);
+	public static Color FOREGROUND_FOR_BACKGROUND_WHITE = new Color(5, 5, 5);
+
 	public static Color LIST_ACTIVE_BACKGROUND_BLACK = new Color(51, 102, 255);
 	public static Color LIST_WATCH_BACKGROUND_BLACK = LIST_ACTIVE_BACKGROUND_BLACK.darker().darker();
 	public static Color LIST_ACTIVE_BACKGROUND_WHITE = new Color(101, 152, 255);
@@ -85,10 +88,10 @@ public class ComponentFactory
 	public static void setBackgroundBlack(Boolean b)
 	{
 		backgroundBlack = b;
+		FOREGROUND = getForeground(b);
 		if (b)
 		{
 			BACKGROUND = Color.BLACK;
-			FOREGROUND = new Color(250, 250, 250);
 			BORDER_FOREGROUND = FOREGROUND;
 			LIST_SELECTION_FOREGROUND = Color.WHITE;
 			LIST_ACTIVE_BACKGROUND = LIST_ACTIVE_BACKGROUND_BLACK;
@@ -97,14 +100,20 @@ public class ComponentFactory
 		else
 		{
 			BACKGROUND = Color.WHITE;
-			FOREGROUND = new Color(5, 5, 5);
 			BORDER_FOREGROUND = Color.LIGHT_GRAY;
 			LIST_SELECTION_FOREGROUND = Color.BLACK;
 			LIST_ACTIVE_BACKGROUND = LIST_ACTIVE_BACKGROUND_WHITE;
 			LIST_WATCH_BACKGROUND = LIST_WATCH_BACKGROUND_WHITE;
 		}
-
 		updateComponents();
+	}
+
+	public static Color getForeground(boolean blackBackground)
+	{
+		if (blackBackground)
+			return FOREGROUND_FOR_BACKGROUND_BLACK;
+		else
+			return FOREGROUND_FOR_BACKGROUND_WHITE;
 	}
 
 	public static void updateComponents()

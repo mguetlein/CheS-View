@@ -58,12 +58,15 @@ import cluster.Compound;
 import cluster.CompoundFilter;
 import cluster.CompoundFilterImpl;
 import data.ClusteringData;
+import dataInterface.CompoundGroupWithProperties;
 import dataInterface.CompoundProperty;
 import dataInterface.CompoundPropertyOwner;
 import dataInterface.CompoundPropertyUtil;
+import dataInterface.CompoundPropertyUtil.NominalColoring;
 import dataInterface.FragmentProperty;
 import dataInterface.NominalProperty;
 import dataInterface.NumericProperty;
+import dataInterface.SingleCompoundPropertyOwner;
 import dataInterface.SubstructureSmartsType;
 
 public class MainPanel extends JPanel implements ViewControler, ClusterController
@@ -75,6 +78,7 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 	private boolean spinEnabled = false;
 	private boolean hideHydrogens = true;
 	private Style style = Style.wireframe;
+	private NominalColoring nominalColoring = NominalColoring.TwoThirdMode;
 
 	DisguiseMode disguiseUnHovered = DisguiseMode.solid;
 	DisguiseMode disguiseUnZoomed = DisguiseMode.translucent;
@@ -112,13 +116,7 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 		}
 	}
 
-	public Color getHighlightColor(CompoundPropertyOwner m, Highlighter h, CompoundProperty p, boolean textColor)
-	{
-		return getHighlightColor(this, clustering, m, h, p, textColor);
-	}
-
-	private static Color getHighlightColor(ViewControler viewControler, Clustering clustering, CompoundPropertyOwner m,
-			Highlighter h, CompoundProperty p, boolean textColor)
+	private Color getHighlightColor(Highlighter h, CompoundPropertyOwner m, CompoundProperty p, boolean textColor)
 	{
 		if (h == Highlighter.CLUSTER_HIGHLIGHTER)
 			if (m instanceof Compound)
@@ -126,30 +124,45 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 			else
 				return null;
 		else
-			return getHighlightColor(viewControler, clustering, m, p, textColor);
+			return getHighlightColor(m, p, textColor);
 	}
 
-	public static Color getHighlightColor(ViewControler viewControler, Clustering clustering, CompoundPropertyOwner m,
-			CompoundProperty p, boolean textColor)
+	public Color getHighlightColor(CompoundPropertyOwner m, CompoundProperty p, boolean textColor)
+	{
+		return getHighlightColor(m, p, textColor, isBlackgroundBlack());
+	}
+
+	public Color getHighlightColor(CompoundPropertyOwner m, CompoundProperty p, boolean textColor,
+			boolean blackBackground)
 	{
 		if (m == null)
 			throw new IllegalStateException();
 
 		if (p == null || p.isUndefined())
-			return textColor ? ComponentFactory.FOREGROUND : null;
+			return textColor ? ComponentFactory.getForeground(blackBackground) : null;
 		else if (p instanceof NominalProperty)
 		{
-			if (m.getStringValue((NominalProperty) p) == null)
-				return textColor ? ComponentFactory.FOREGROUND : CompoundPropertyUtil.getNullValueColor();
+			String val;
+			if (m instanceof CompoundGroupWithProperties)
+				val = CompoundPropertyUtil.getNominalHighlightValue((NominalProperty) p,
+						((CompoundGroupWithProperties) m).getNominalSummary((NominalProperty) p), nominalColoring);
+			else if (m instanceof SingleCompoundPropertyOwner)
+				val = ((SingleCompoundPropertyOwner) m).getStringValue((NominalProperty) p);
 			else
-				return CompoundPropertyUtil.getNominalColor((NominalProperty) p, m.getStringValue((NominalProperty) p));
+				throw new IllegalStateException();
+			if (val == null)
+				return textColor ? ComponentFactory.getForeground(blackBackground) : CompoundPropertyUtil
+						.getNullValueColor();
+			else
+				return CompoundPropertyUtil.getNominalColor((NominalProperty) p, val);
 		}
 		else if (p instanceof NumericProperty)
 		{
 			try
 			{
 				if (m.getDoubleValue((NumericProperty) p) == null)
-					return textColor ? ComponentFactory.FOREGROUND : CompoundPropertyUtil.getNullValueColor();
+					return textColor ? ComponentFactory.getForeground(blackBackground) : CompoundPropertyUtil
+							.getNullValueColor();
 				double val;
 				if (((NumericProperty) p).isLogHighlightingEnabled())
 					val = clustering.getNormalizedLogDoubleValue(m, (NumericProperty) p);
@@ -162,11 +175,11 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 					grad = ((NumericProperty) p).getHighlightColorGradient();
 				else
 					grad = DEFAULT_COLOR_GRADIENT;
-				if (!viewControler.isBlackgroundBlack() && grad.getMed().equals(Color.WHITE))
+				if (!blackBackground && grad.getMed().equals(Color.WHITE))
 				{
 					if (textColor)
 						grad = new ColorGradient(grad.high, Color.GRAY, grad.low);
-					else if (viewControler.isAntialiasEnabled())
+					else if (isAntialiasEnabled())
 						grad = new ColorGradient(grad.high, Color.WHITE, grad.low);
 					else
 						grad = new ColorGradient(grad.high, Color.LIGHT_GRAY, grad.low);
@@ -187,6 +200,30 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 		}
 		else
 			throw new IllegalStateException();
+	}
+
+	@Override
+	public void setNominalColoring(NominalColoring nominalColoring)
+	{
+		if (this.nominalColoring != nominalColoring)
+		{
+			this.nominalColoring = nominalColoring;
+			updateAllClustersAndCompounds(true);
+			fireViewChange(PROPERTY_HIGHLIGHT_COLORS_CHANGED);
+			String msg = "Color groups of nominal feature values according to ";
+			if (nominalColoring == NominalColoring.TwoThirdMode)
+				msg += "most frequent value >= 66%";
+			else if (nominalColoring == NominalColoring.Mode)
+				msg += "most frequent value";
+			else if (nominalColoring == NominalColoring.ActiveValueIncluded)
+				msg += "active value";
+			guiControler.showMessage(msg);
+		}
+	}
+
+	public NominalColoring getNominalColoring()
+	{
+		return nominalColoring;
 	}
 
 	public static enum Translucency
@@ -357,7 +394,8 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 							{
 								if (clustering.isClusterActive())
 								{
-									if (clustering.isCompoundActive() && clustering.getActiveCluster().size() > 1)
+									if (clustering.isCompoundActive()
+											&& clustering.getActiveCluster().getNumCompounds() > 1)
 										clearCompoundActive(true);
 									else
 										clearClusterActive(true, true);
@@ -715,7 +753,7 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 	{
 		if (forceUpdate || selectedHighlightCompoundProperty != clustering.getHighlightProperty())
 			clustering.setHighlighProperty(selectedHighlightCompoundProperty,
-					MainPanel.getHighlightColor(this, clustering, clustering, selectedHighlightCompoundProperty, true));
+					getHighlightColor(clustering, selectedHighlightCompoundProperty, true));
 
 		//		int a = getClustering().getClusterActive().getSelected();
 		for (int j = 0; j < clustering.numClusters(); j++)
@@ -730,7 +768,7 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 	{
 		Cluster c = clustering.getCluster(clusterIndex);
 		boolean watch = clustering.getClusterActive().getSelected() == -1
-				&& clusterIndex == clustering.getClusterWatched().getSelected() && c.size() > 0;
+				&& clusterIndex == clustering.getClusterWatched().getSelected() && c.getNumCompounds() > 0;
 		if (forceUpdate || watch != c.isWatched())
 		{
 			c.setWatched(watch);
@@ -751,7 +789,7 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 		}
 		if (forceUpdate || selectedHighlightCompoundProperty != c.getHighlightProperty())
 			c.setHighlighProperty(selectedHighlightCompoundProperty,
-					MainPanel.getHighlightColor(this, clustering, c, selectedHighlightCompoundProperty, true));
+					getHighlightColor(c, selectedHighlightCompoundProperty, true));
 		c.setHighlightSorting(highlightSorting);
 	}
 
@@ -940,9 +978,9 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 		if (!highlighterLabelsVisible)
 			showLabel = false;
 
-		Color highlightColorCompound = getHighlightColor(m, selectedHighlighter, selectedHighlightCompoundProperty,
+		Color highlightColorCompound = getHighlightColor(selectedHighlighter, m, selectedHighlightCompoundProperty,
 				false);
-		Color highlightColorText = getHighlightColor(m, selectedHighlighter, selectedHighlightCompoundProperty, true);
+		Color highlightColorText = getHighlightColor(selectedHighlighter, m, selectedHighlightCompoundProperty, true);
 
 		String highlightColorString = highlightColorCompound == null ? null : "color "
 				+ ColorUtil.toJMolString(highlightColorCompound);
@@ -972,9 +1010,9 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 			{
 				if (clus == activeCluster)
 				{
-					if (c.size() <= 5)
+					if (c.getNumCompounds() <= 5)
 						translucency = Translucency.ModerateWeak;
-					else if (c.size() <= 15)
+					else if (c.getNumCompounds() <= 15)
 						translucency = Translucency.ModerateStrong;
 					else
 						translucency = Translucency.Strong;
@@ -2212,12 +2250,12 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 	@Override
 	public void setClusterActive(final Cluster c, final boolean animate, boolean clearCompoundActive)
 	{
-		if (c.size() == 0)
+		if (c.getNumCompounds() == 0)
 			throw new IllegalStateException("cluster size is null, remove filter before");
 		if (clearCompoundActive)
 		{
 			boolean anim = animate;
-			if (clustering.getActiveCluster() != null && clustering.getActiveCluster().size() == 1)
+			if (clustering.getActiveCluster() != null && clustering.getActiveCluster().getNumCompounds() == 1)
 				anim = false; // do not animate if there is only one compound in the cluster
 			clearCompoundActive(anim);
 		}
@@ -2285,7 +2323,7 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 			anim = false;
 		else
 		{
-			if (zoomedToCluster && clustering.getActiveCluster().size() == 1)
+			if (zoomedToCluster && clustering.getActiveCluster().getNumCompounds() == 1)
 				anim = false; // do not animate if there is only one compound in the cluster
 			else
 				anim = true;
@@ -2351,7 +2389,7 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 		if (clearCompoundActive)
 		{
 			boolean anim = animate;
-			if (clustering.getActiveCluster() != null && clustering.getActiveCluster().size() == 1)
+			if (clustering.getActiveCluster() != null && clustering.getActiveCluster().getNumCompounds() == 1)
 				anim = false; // do not animate if there is only one compound in the cluster
 			clearCompoundActive(anim);
 		}

@@ -10,6 +10,9 @@ import java.awt.Color;
 import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
@@ -17,7 +20,9 @@ import java.awt.event.WindowEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.net.URI;
+import java.util.List;
 
+import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -32,11 +37,16 @@ import main.Settings;
 import cluster.ClusterController;
 import cluster.Clustering;
 
+import com.jgoodies.forms.factories.ButtonBarFactory;
+
+import dataInterface.CompoundProperty;
+
 public abstract class DataTable extends BlockableFrame
 {
 	protected ViewControler viewControler;
 	protected ClusterController clusterControler;
 	protected Clustering clustering;
+	protected List<CompoundProperty> props;
 
 	protected JTable table;
 	protected DefaultTableModel tableModel;
@@ -45,12 +55,17 @@ public abstract class DataTable extends BlockableFrame
 
 	public DataTable(ViewControler viewControler, ClusterController clusterControler, Clustering clustering)
 	{
+		this(viewControler, clusterControler, clustering, null);
+	}
+
+	public DataTable(ViewControler viewControler, ClusterController clusterControler, Clustering clustering,
+			List<CompoundProperty> props)
+	{
 		super(true);
 		this.viewControler = viewControler;
 		this.clustering = clustering;
 		this.clusterControler = clusterControler;
-
-		addListeners();
+		this.props = props;
 
 		tableModel = createTableModel();
 		table = createTable();
@@ -95,13 +110,50 @@ public abstract class DataTable extends BlockableFrame
 		//					+ Settings.HOMEPAGE_SPECIFICITY + "\">more</a>";
 		p.add(pp, BorderLayout.NORTH);
 		p.add(scroll);
+
+		JButton close = new JButton("Close");
+		close.addActionListener(new ActionListener()
+		{
+			@Override
+			public void actionPerformed(ActionEvent e)
+			{
+				DataTable.this.setVisible(false);
+			}
+		});
+		JButton copy = new JButton("Copy table to clipboard");
+		copy.addActionListener(new ActionListener()
+		{
+			@Override
+			public void actionPerformed(ActionEvent e)
+			{
+				StringBuffer sbf = new StringBuffer();
+				for (int i = 0; i < table.getRowCount(); i++)
+				{
+					for (int j = 0; j < table.getColumnCount(); j++)
+					{
+						sbf.append("\"");
+						sbf.append(table.getValueAt(i, j));
+						sbf.append("\"");
+						if (j < table.getColumnCount() - 1)
+							sbf.append(";");
+					}
+					sbf.append("\n");
+				}
+				StringSelection s = new StringSelection(sbf.toString());
+				Clipboard system = Toolkit.getDefaultToolkit().getSystemClipboard();
+				system.setContents(s, s);
+			}
+		});
+		JPanel buttons = ButtonBarFactory.buildOKHelpBar(close, copy);
+		p.add(buttons, BorderLayout.SOUTH);
+
 		p.setBorder(new EmptyBorder(10, 10, 10, 10));
 		getContentPane().add(p);
 		pack();
 		pack();
 		int scrollBarSize = ((Integer) UIManager.get("ScrollBar.width")).intValue();
-		setSize(new Dimension(Math.min(Settings.TOP_LEVEL_FRAME.getWidth() * 3 / 4, width + 20 + scrollBarSize + 2),
-				getHeight()));
+		setSize(new Dimension(Math.max(buttons.getPreferredSize().width + 20,
+				Math.min(Settings.TOP_LEVEL_FRAME.getWidth() * 3 / 4, width + 20 + scrollBarSize + 2)), getHeight()));
 		setLocationRelativeTo(Settings.TOP_LEVEL_FRAME);
 
 		setVisible(true);

@@ -22,11 +22,11 @@ import util.ColorUtil;
 import util.ObjectUtil;
 import dataInterface.CompoundData;
 import dataInterface.CompoundProperty;
-import dataInterface.CompoundPropertyOwner;
 import dataInterface.NominalProperty;
 import dataInterface.NumericProperty;
+import dataInterface.SingleCompoundPropertyOwner;
 
-public class Compound implements Zoomable, Comparable<Compound>, DoubleNameElement, CompoundPropertyOwner
+public class Compound implements Zoomable, Comparable<Compound>, DoubleNameElement, SingleCompoundPropertyOwner
 {
 	private BitSet bitSet;
 	private BitSet dotModeHideBitSet;
@@ -89,6 +89,7 @@ public class Compound implements Zoomable, Comparable<Compound>, DoubleNameEleme
 		return compoundData.getFormattedValue(property);
 	}
 
+	@Override
 	public String getStringValue(NominalProperty property)
 	{
 		return compoundData.getStringValue(property);

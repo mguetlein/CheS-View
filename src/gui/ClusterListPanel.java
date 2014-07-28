@@ -279,7 +279,7 @@ public class ClusterListPanel extends JPanel
 		if (viewControler.getHighlightedProperty() != null)
 			Arrays.sort(clusters);
 		for (Cluster c : clusters)
-			if (c.size() > 0)
+			if (c.getNumCompounds() > 0)
 				listModel.addElement(c);
 
 		updateListSize();

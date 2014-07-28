@@ -42,7 +42,7 @@ public class ZoomableCompoundGroup implements Zoomable
 		return filteredCompounds.get(index);
 	}
 
-	public int size()
+	public int getNumCompounds()
 	{
 		return filteredCompounds.size();
 	}

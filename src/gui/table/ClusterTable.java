@@ -2,7 +2,6 @@ package gui.table;
 
 import gui.ClickMouseOverTable;
 import gui.ClickMouseOverTable.ClickMouseOverRenderer;
-import gui.MainPanel;
 import gui.ViewControler;
 import gui.swing.ComponentFactory;
 
@@ -10,6 +9,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.List;
 
 import javax.swing.JComponent;
 import javax.swing.JTable;
@@ -26,14 +26,13 @@ import cluster.ClusterController;
 import cluster.Clustering;
 import cluster.Clustering.SelectionListener;
 import dataInterface.CompoundProperty;
-import dataInterface.NominalProperty;
-import dataInterface.NumericProperty;
 
 public class ClusterTable extends CCDataTable
 {
-	public ClusterTable(ViewControler viewControler, ClusterController clusterControler, Clustering clustering)
+	ClusterTable(ViewControler viewControler, ClusterController clusterControler, Clustering clustering,
+			List<CompoundProperty> props)
 	{
-		super(viewControler, clusterControler, clustering);
+		super(viewControler, clusterControler, clustering, props);
 	}
 
 	@Override
@@ -64,14 +63,15 @@ public class ClusterTable extends CCDataTable
 			int i = 0;
 			o[i++] = ++count;
 			o[i++] = c;
-			o[i++] = c.size();
+			o[i++] = c.getNumCompounds();
 			if (i != nonPropColumns)
 				throw new Error();
 			for (CompoundProperty p : props)
-				if (p instanceof NumericProperty)
-					o[i++] = c.getDoubleValue((NumericProperty) p);
-				else
-					o[i++] = c.getStringValue((NominalProperty) p);
+				o[i++] = c.getSummaryStringValue(p, false);
+			//				if (p instanceof NumericProperty)
+			//					o[i++] = c.getDoubleValue((NumericProperty) p);
+			//				else
+			//					o[i++] = c.getStringValue((NominalProperty) p);
 			tableModel.addRow(o);
 		}
 
@@ -141,8 +141,11 @@ public class ClusterTable extends CCDataTable
 				if (column >= nonPropColumns)
 				{
 					p = props.get(column - nonPropColumns);
-					val = c.getFormattedValue(p) + " (" + StringUtil.formatDouble(clustering.getSpecificity(c, p))
-							+ ")";
+					if (addSpecificityInfo())
+						val = c.getFormattedValue(p) + " (" + StringUtil.formatDouble(clustering.getSpecificity(c, p))
+								+ ")";
+					else
+						val = c.getFormattedValue(p);
 				}
 				else
 					val = value;
@@ -150,7 +153,7 @@ public class ClusterTable extends CCDataTable
 
 				if (column >= nonPropColumns)
 				{
-					Color col = MainPanel.getHighlightColor(viewControler, clustering, c, p, true);
+					Color col = viewControler.getHighlightColor(c, p, true, false);
 					setForeground(col);
 				}
 				else
@@ -185,7 +188,7 @@ public class ClusterTable extends CCDataTable
 	@Override
 	protected boolean addSpecificityInfo()
 	{
-		return true;
+		return false;
 	}
 
 	@Override

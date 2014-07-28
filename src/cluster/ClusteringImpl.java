@@ -8,6 +8,7 @@ import java.awt.Color;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Collections;
 import java.util.HashMap;
@@ -23,12 +24,14 @@ import javax.vecmath.Vector3f;
 import main.Settings;
 import main.TaskProvider;
 import util.ArrayUtil;
+import util.CountedSet;
 import util.ListUtil;
 import util.SelectionModel;
 import util.Vector3fUtil;
 import util.VectorUtil;
 import weka.Predictor;
 import weka.Predictor.PredictionResult;
+import alg.embed3d.CorrelationProperty;
 import alg.embed3d.Random3DEmbedder;
 import appdomain.AppDomainComputer;
 import data.ClusteringData;
@@ -141,7 +144,7 @@ public class ClusteringImpl implements Zoomable, Clustering
 
 		numCompounds = 0;
 		for (Cluster c : clusters)
-			numCompounds += c.size();
+			numCompounds += c.getNumCompounds();
 
 		if (View.instance != null) // for export without graphics
 		{
@@ -330,10 +333,22 @@ public class ClusteringImpl implements Zoomable, Clustering
 		return numDistinctValues.get(p);
 	}
 
+	@Override
+	public int getNumCompounds()
+	{
+		return numCompounds();
+	}
+
 	public int numCompounds()
 	{
 		update();
 		return numCompounds;
+	}
+
+	@Override
+	public CountedSet<String> getNominalSummary(NominalProperty p)
+	{
+		return clusteringValues.getNominalSummary(p);
 	}
 
 	public int numClusters()
@@ -541,7 +556,7 @@ public class ClusteringImpl implements Zoomable, Clustering
 		{
 			if (cluster.isSuperimposed() != overlap)
 			{
-				for (int i = 0; i < cluster.size(); i++)
+				for (int i = 0; i < cluster.getNumCompounds(); i++)
 				{
 					bitsets.add(cluster.getCompound(i).getBitSet());
 
@@ -612,7 +627,7 @@ public class ClusteringImpl implements Zoomable, Clustering
 		for (int i = 0; i < numClusters(); i++)
 		{
 			Cluster c = getCluster(i);
-			for (int j = 0; j < c.size(); j++)
+			for (int j = 0; j < c.getNumCompounds(); j++)
 			{
 				l.add(c.getCompound(j));
 				lb.add(clusterIndex == -1 || clusterIndex == i);
@@ -702,7 +717,7 @@ public class ClusteringImpl implements Zoomable, Clustering
 		for (Cluster c : toDel.keySet())
 		{
 			int indices[] = ArrayUtil.toPrimitiveIntArray(toDel.get(c));
-			if (indices.length == c.size())
+			if (indices.length == c.getNumCompounds())
 				clusToDel = ArrayUtil.concat(Cluster.class, clusToDel, new Cluster[] { c });
 			else
 			{
@@ -861,12 +876,6 @@ public class ClusteringImpl implements Zoomable, Clustering
 	}
 
 	@Override
-	public String getStringValue(NominalProperty p)
-	{
-		return clusteringValues.getStringValue(p);
-	}
-
-	@Override
 	public String getFormattedValue(CompoundProperty p)
 	{
 		return getSummaryStringValue(p, false);
@@ -972,7 +981,7 @@ public class ClusteringImpl implements Zoomable, Clustering
 			else
 				return null;
 		}
-		if (c1.size() == jmolIndices.length)
+		if (c1.getNumCompounds() == jmolIndices.length)
 			return c1;
 		else
 			return null;
@@ -1074,6 +1083,46 @@ public class ClusteringImpl implements Zoomable, Clustering
 	public List<CompoundProperty> getPropertiesAndFeatures()
 	{
 		return ListUtil.concat(getProperties(), getFeatures());
+	}
+
+	@Override
+	public List<CompoundProperty> selectPropertiesAndFeaturesWithDialog(String title, CompoundProperty preselected,
+			boolean addSmiles, boolean addEmbeddingStress, boolean addActivityCliffs, boolean addDistanceTo)
+	{
+		List<CompoundProperty> props = new ArrayList<CompoundProperty>();
+		for (CompoundProperty p : getAdditionalProperties())
+		{
+			if (addEmbeddingStress && p instanceof CorrelationProperty)
+				props.add(p);
+			else if (addActivityCliffs && p instanceof SALIProperty)
+				props.add(p);
+			else if (addDistanceTo && p instanceof DistanceToProperty)
+				props.add(p);
+		}
+		for (CompoundProperty p : getProperties())
+			if (addSmiles || (p.getCompoundPropertySet() == null || !p.getCompoundPropertySet().isSmiles()))
+				props.add(p);
+		for (CompoundProperty p : getFeatures())
+			props.add(p);
+		if (props.size() == 0)
+			return props;
+		else
+		{
+			boolean selection[] = new boolean[props.size()];
+			if (preselected == null)
+				Arrays.fill(selection, true);
+			else
+			{
+				for (int i = 0; i < props.size(); i++)
+					if (preselected == props.get(i))
+						selection[i] = true;
+			}
+			Object sel[] = CheckBoxSelectDialog.select(Settings.TOP_LEVEL_FRAME, title, null,
+					ArrayUtil.toArray(CompoundProperty.class, props), selection);
+			if (sel == null)
+				return null;
+			return ArrayUtil.toList(ArrayUtil.cast(CompoundProperty.class, sel));
+		}
 	}
 
 	@Override
@@ -1375,4 +1424,5 @@ public class ClusteringImpl implements Zoomable, Clustering
 	{
 		return Settings.BIG_DATA;
 	}
+
 }

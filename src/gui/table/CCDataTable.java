@@ -11,6 +11,8 @@ import javax.swing.RowSorter;
 import javax.swing.SortOrder;
 import javax.swing.table.DefaultTableModel;
 
+import org.apache.commons.lang.WordUtils;
+
 import cluster.ClusterController;
 import cluster.Clustering;
 import cluster.Compound;
@@ -20,13 +22,28 @@ import dataInterface.NumericProperty;
 public abstract class CCDataTable extends DataTable
 {
 	protected int nonPropColumns;
-	protected List<CompoundProperty> props;
 	protected ClickMouseOverTable table;
 	protected int sortColumn = 1;
 
-	public CCDataTable(ViewControler viewControler, ClusterController clusterControler, Clustering clustering)
+	public static void show(ViewControler viewControler, ClusterController clusterControler, Clustering clustering,
+			boolean cluster)
 	{
-		super(viewControler, clusterControler, clustering);
+		List<CompoundProperty> props = clustering.selectPropertiesAndFeaturesWithDialog("Select features to show in "
+				+ (cluster ? "clusters" : "compounds") + " dialog", viewControler.getHighlightedProperty(), false,
+				!cluster, !cluster, !cluster);
+		if (props != null)
+		{
+			if (cluster)
+				new ClusterTable(viewControler, clusterControler, clustering, props);
+			else
+				new CompoundTable(viewControler, clusterControler, clustering, props);
+		}
+	}
+
+	public CCDataTable(ViewControler viewControler, ClusterController clusterControler, Clustering clustering,
+			List<CompoundProperty> props)
+	{
+		super(viewControler, clusterControler, clustering, props);
 	}
 
 	public abstract String getExtraColumn();
@@ -77,19 +94,10 @@ public abstract class CCDataTable extends DataTable
 			}
 		};
 		model.addColumn("");
-		model.addColumn("Compound");
+		model.addColumn(WordUtils.capitalize(getItemName()));
 		model.addColumn(getExtraColumn());
 		nonPropColumns = model.getColumnCount();
 
-		props = new ArrayList<CompoundProperty>();
-		if (addAdditionalProperties() && clustering.getAdditionalProperties() != null)
-			for (CompoundProperty p : clustering.getAdditionalProperties())
-				props.add(p);
-		for (CompoundProperty p : clustering.getProperties())
-			if (p.getCompoundPropertySet() == null || !p.getCompoundPropertySet().isSmiles())
-				props.add(p);
-		for (CompoundProperty p : clustering.getFeatures())
-			props.add(p);
 		for (CompoundProperty p : props)
 			model.addColumn(p);
 

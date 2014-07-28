@@ -5,8 +5,7 @@ import gui.ViewControler.HighlightMode;
 import gui.property.IntegerProperty;
 import gui.property.Property;
 import gui.property.PropertyPanel;
-import gui.table.ClusterTable;
-import gui.table.CompoundTable;
+import gui.table.CCDataTable;
 import gui.table.FeatureTable;
 import gui.table.TreeView;
 import gui.util.HideUnselectedDialog;
@@ -46,6 +45,7 @@ import cluster.Clustering.SelectionListener;
 import cluster.Compound;
 import cluster.ExportData;
 import dataInterface.CompoundProperty;
+import dataInterface.CompoundPropertyUtil.NominalColoring;
 
 public class Actions
 {
@@ -167,11 +167,13 @@ public class Actions
 	private final static String HIDDEN_APP_DOMAIN = "app-domain";
 	private final static String HIDDEN_INCR_2D_ICON_SIZE = "incr-icon-size";
 	private final static String HIDDEN_DECR_2D_ICON_SIZE = "decr-icon-size";
+	private final static String HIDDEN_TOGGLE_NOM_HIGHLIGHT = "toggle-nom-highlight";
 	private final static String[] HIDDEN_ACTIONS = { HIDDEN_UPDATE_MOUSE_SELECTION_PRESSED,
 			HIDDEN_UPDATE_MOUSE_SELECTION_RELEASED, HIDDEN_DECR_COMPOUND_SIZE, HIDDEN_INCR_COMPOUND_SIZE,
 			HIDDEN_ENABLE_JMOL_POPUP, HIDDEN_INCR_SPIN_SPEED, HIDDEN_DECR_SPIN_SPEED, HIDDEN_INCR_FONT_SIZE,
 			HIDDEN_DECR_FONT_SIZE, HIDDEN_FILTER_FEATURES, HIDDEN_TOGGLE_SORTING, HIDDEN_TREE, HIDDEN_COPY,
-			HIDDEN_PREDICT, HIDDEN_APP_DOMAIN, HIDDEN_INCR_2D_ICON_SIZE, HIDDEN_DECR_2D_ICON_SIZE };
+			HIDDEN_PREDICT, HIDDEN_APP_DOMAIN, HIDDEN_INCR_2D_ICON_SIZE, HIDDEN_DECR_2D_ICON_SIZE,
+			HIDDEN_TOGGLE_NOM_HIGHLIGHT };
 
 	private HashMap<String, Action> actions = new LinkedHashMap<String, Action>();
 
@@ -226,6 +228,7 @@ public class Actions
 		keys.put(HIDDEN_DECR_FONT_SIZE, KeyStroke.getKeyStroke(KeyEvent.VK_MINUS, ActionEvent.ALT_MASK));// | ActionEvent.ALT_MASK));
 		keys.put(HIDDEN_FILTER_FEATURES, KeyStroke.getKeyStroke(KeyEvent.VK_M, ActionEvent.ALT_MASK));
 		keys.put(HIDDEN_TOGGLE_SORTING, KeyStroke.getKeyStroke(KeyEvent.VK_O, ActionEvent.ALT_MASK));
+		keys.put(HIDDEN_TOGGLE_NOM_HIGHLIGHT, KeyStroke.getKeyStroke(KeyEvent.VK_E, ActionEvent.ALT_MASK));
 		keys.put(HIDDEN_TREE, KeyStroke.getKeyStroke(KeyEvent.VK_4, ActionEvent.ALT_MASK));
 		keys.put(HIDDEN_COPY, KeyStroke.getKeyStroke(KeyEvent.VK_C, ActionEvent.CTRL_MASK));
 		keys.put(HIDDEN_PREDICT, KeyStroke.getKeyStroke(KeyEvent.VK_P, ActionEvent.ALT_MASK));
@@ -591,7 +594,7 @@ public class Actions
 			@Override
 			public void action()
 			{
-				new ClusterTable(viewControler, clusterControler, clustering);
+				CCDataTable.show(viewControler, clusterControler, clustering, true);
 			}
 		};
 		new ActionCreator(DATA_COMPOUND_TABLE)
@@ -599,7 +602,7 @@ public class Actions
 			@Override
 			public void action()
 			{
-				new CompoundTable(viewControler, clusterControler, clustering);
+				CCDataTable.show(viewControler, clusterControler, clustering, false);
 			}
 		};
 		new ActionCreator(DATA_FEATURE_TABLE)
@@ -831,7 +834,7 @@ public class Actions
 			{
 				if (size == null)
 				{
-					size = new IntegerProperty("Font size (" + getIncrDecr2DIconKeys() + ")", InfoPanel.ICON_SIZE,
+					size = new IntegerProperty("2D Image Size (" + getIncrDecr2DIconKeys() + ")", InfoPanel.ICON_SIZE,
 							InfoPanel.ICON_SIZE_MIN, InfoPanel.ICON_SIZE_MAX);
 					viewControler.addViewListener(new PropertyChangeListener()
 					{
@@ -1213,6 +1216,19 @@ public class Actions
 				viewControler.setFeatureSortingEnabled(!viewControler.isFeatureSortingEnabled());
 			}
 		};
+		new ActionCreator(HIDDEN_TOGGLE_NOM_HIGHLIGHT)
+		{
+			@Override
+			public void action()
+			{
+				int idx = ArrayUtil.indexOf(NominalColoring.values(), viewControler.getNominalColoring());
+				if (idx == NominalColoring.values().length - 1)
+					idx = 0;
+				else
+					idx++;
+				viewControler.setNominalColoring(NominalColoring.values()[idx]);
+			}
+		};
 		new ActionCreator(HIDDEN_TREE)
 		{
 			@Override
@@ -1231,7 +1247,13 @@ public class Actions
 					StringSelection s = new StringSelection(guiControler.getSelectedString());
 					Clipboard system = Toolkit.getDefaultToolkit().getSystemClipboard();
 					system.setContents(s, s);
+					String str = guiControler.getSelectedString();
+					guiControler.showMessage("Copy string to clipboard: '"
+							+ (str.length() > 50 ? str.substring(0, 48) + ".." : str) + "'");
 				}
+				else
+					guiControler.showMessage("Nothing selected for copying to clipboard");
+
 			}
 		};
 		new ActionCreator(HIDDEN_PREDICT)

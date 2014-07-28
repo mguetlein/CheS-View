@@ -124,7 +124,7 @@ public class TreeView extends BlockableFrame
 					else
 						leafs = ListUtil.concat(leafs, ((MyNode) getChildAt(i)).getLeafs());
 				cluster = clustering.getUniqueClusterForCompounds(ArrayUtil.toArray(leafs));
-				if (cluster != null && cluster.size() != leafs.size())
+				if (cluster != null && cluster.getNumCompounds() != leafs.size())
 					cluster = null;
 				if (cluster != null)
 					mapCluster.put(cluster, this);
@@ -277,7 +277,7 @@ public class TreeView extends BlockableFrame
 					@Override
 					public boolean accept(MyNode n)
 					{
-						return n.getCluster().size() == size;
+						return n.getCluster().getNumCompounds() == size;
 					}
 				});
 			}
@@ -302,7 +302,7 @@ public class TreeView extends BlockableFrame
 					switch (crit)
 					{
 						case size:
-							d[i] = n.getCluster().size();
+							d[i] = n.getCluster().getNumCompounds();
 							break;
 						case uniform:
 							d[i] = n.getUniformity();
@@ -538,7 +538,7 @@ public class TreeView extends BlockableFrame
 							}
 							else if (node.getCluster() != null)
 							{
-								if (node.getCluster().size() == 0)
+								if (node.getCluster().getNumCompounds() == 0)
 									clusterControler.setCompoundFilter(null, true);
 								clusterControler.setClusterActive(node.getCluster(), true, true);
 							}

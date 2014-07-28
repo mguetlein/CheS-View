@@ -21,6 +21,7 @@ import util.Vector3fUtil;
 import cluster.Compound.DisplayName;
 import dataInterface.ClusterData;
 import dataInterface.CompoundData;
+import dataInterface.CompoundGroupWithProperties;
 import dataInterface.CompoundProperty;
 import dataInterface.NominalProperty;
 import dataInterface.NumericProperty;
@@ -47,7 +48,7 @@ public class Cluster extends ZoomableCompoundGroup implements CompoundGroupWithP
 			c.add(new Compound(clusterData.getCompoundClusterIndices().get(count++), d));
 		setCompounds(c);
 
-		displayName.name = getName() + " (#" + size() + ")";
+		displayName.name = getName() + " (#" + getNumCompounds() + ")";
 		displayName.compareIndex = clusterData.getOrigIndex();
 
 		if (View.instance != null) // for export without graphics
@@ -156,10 +157,10 @@ public class Cluster extends ZoomableCompoundGroup implements CompoundGroupWithP
 
 	protected void update()
 	{
-		if (getOrigSize() != size())
-			displayName.name = getName() + " (#" + size() + "/" + getOrigSize() + ")";
+		if (getOrigSize() != getNumCompounds())
+			displayName.name = getName() + " (#" + getNumCompounds() + "/" + getOrigSize() + ")";
 		else
-			displayName.name = getName() + " (#" + size() + ")";
+			displayName.name = getName() + " (#" + getNumCompounds() + ")";
 		super.update();
 	}
 
@@ -420,12 +421,6 @@ public class Cluster extends ZoomableCompoundGroup implements CompoundGroupWithP
 	public String getFormattedValue(CompoundProperty p)
 	{
 		return clusterData.getFormattedValue(p);
-	}
-
-	@Override
-	public String getStringValue(NominalProperty p)
-	{
-		return clusterData.getStringValue(p);
 	}
 
 	public Color getHighlightColorText()

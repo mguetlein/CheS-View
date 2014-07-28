@@ -11,6 +11,7 @@ import util.CountedSet;
 import util.DoubleArraySummary;
 import util.DoubleKeyHashMap;
 import util.ListUtil;
+import dataInterface.CompoundGroupWithProperties;
 import dataInterface.CompoundProperty;
 import dataInterface.CompoundPropertyOwner;
 import dataInterface.CompoundPropertySpecificity;
@@ -112,7 +113,7 @@ public class ClusteringValues
 		{
 			if (!summarys.containsKey(p))
 				updateNormalizedNumericValues(p);
-			if (c.size() == 0)
+			if (c.getNumCompounds() == 0)
 				specificity.put(c, p, CompoundPropertySpecificity.NO_SPEC_AVAILABLE);
 			else
 				specificity.put(
@@ -169,7 +170,7 @@ public class ClusteringValues
 		{
 			if (!summarys.containsKey(p))
 				updateNormalizedNominalValues(p);
-			if (c.size() == 0)
+			if (c.getNumCompounds() == 0)
 				specificity.put(c, p, CompoundPropertySpecificity.NO_SPEC_AVAILABLE);
 			else
 				specificity.put(c, p, CompoundPropertySpecificity.nominalSpecificty(
@@ -274,15 +275,10 @@ public class ClusteringValues
 	}
 
 	@SuppressWarnings("unchecked")
-	public String getStringValue(NominalProperty p)
+	public CountedSet<String> getNominalSummary(NominalProperty p)
 	{
 		if (!summarys.containsKey(p))
 			updateNormalizedValues(p);
-		CountedSet<String> set = (CountedSet<String>) summarys.get(p);
-		String mode = set.getMode(false);
-		if (set.getCount(mode) > set.getSum(false) * 2 / 3.0)
-			return mode;
-		else
-			return null;
+		return (CountedSet<String>) summarys.get(p);
 	}
 }

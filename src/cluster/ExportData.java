@@ -1,6 +1,5 @@
 package cluster;
 
-import gui.CheckBoxSelectDialog;
 import gui.LaunchCheSMapper;
 import io.SDFUtil;
 
@@ -100,29 +99,28 @@ public class ExportData
 			CompoundProperty compoundDescriptorFeature, Script script)
 	{
 		CompoundProperty selectedProps[];
-		List<CompoundProperty> availableProps = new ArrayList<CompoundProperty>();
-		for (CompoundProperty p : clustering.getProperties())
-			availableProps.add(p);
-		for (CompoundProperty p : clustering.getFeatures())
-			availableProps.add(p);
-		for (CompoundProperty p : clustering.getAdditionalProperties())
-			if (script == null || p instanceof DistanceToProperty)
-				availableProps.add(p); // when scripting do not add embedding stress
-
-		if (availableProps.size() == 0) // no features to select
-			selectedProps = new CompoundProperty[0];
 		if (script != null && script.allFeatures)
+		{
+			List<CompoundProperty> availableProps = new ArrayList<CompoundProperty>();
+			for (CompoundProperty p : clustering.getProperties())
+				availableProps.add(p);
+			for (CompoundProperty p : clustering.getFeatures())
+				availableProps.add(p);
+			for (CompoundProperty p : clustering.getAdditionalProperties())
+				if (p instanceof DistanceToProperty)
+					availableProps.add(p); // when scripting do not add embedding stress
+			if (availableProps.size() == 0) // no features to select
+				selectedProps = new CompoundProperty[0];
 			selectedProps = ArrayUtil.toArray(CompoundProperty.class, availableProps);
+		}
 		else
 		{
-			String title = "Select features for SDF/CSV export";
-			selectedProps = ArrayUtil.cast(
-					CompoundProperty.class,
-					CheckBoxSelectDialog.select(Settings.TOP_LEVEL_FRAME, title, null,
-							ArrayUtil.toArray(CompoundProperty.class, availableProps), true));
+			selectedProps = ArrayUtil.toArray(CompoundProperty.class, clustering.selectPropertiesAndFeaturesWithDialog(
+					"Select features for SDF/CSV export", null, true, true, true, true));
 			if (selectedProps == null)//pressed cancel
 				return;
 		}
+
 		List<CompoundProperty> logFeatures = new ArrayList<CompoundProperty>();
 		for (CompoundProperty p : selectedProps)
 			if (p instanceof NumericProperty && ((NumericProperty) p).isLogHighlightingEnabled())
