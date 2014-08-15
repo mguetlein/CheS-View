@@ -29,7 +29,7 @@ public abstract class CCDataTable extends DataTable
 			boolean cluster)
 	{
 		List<CompoundProperty> props = clustering.selectPropertiesAndFeaturesWithDialog("Select features to show in "
-				+ (cluster ? "clusters" : "compounds") + " dialog", viewControler.getHighlightedProperty(), false,
+				+ (cluster ? "cluster" : "compound") + " table.", viewControler.getHighlightedProperty(), false,
 				!cluster, !cluster, !cluster);
 		if (props != null)
 		{

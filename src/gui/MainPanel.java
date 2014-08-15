@@ -22,6 +22,7 @@ import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 
@@ -57,6 +58,7 @@ import cluster.ClusteringUtil;
 import cluster.Compound;
 import cluster.CompoundFilter;
 import cluster.CompoundFilterImpl;
+import cluster.JitteringProvider;
 import data.ClusteringData;
 import dataInterface.CompoundGroupWithProperties;
 import dataInterface.CompoundProperty;
@@ -344,6 +346,7 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 						|| evt.getPropertyName().equals(ClusteringImpl.CLUSTER_CLEAR))
 				{
 					setSuperimpose(false);
+					jitteringLevel = 0;
 					MainPanel.this.guiControler.updateTitle(clustering);
 				}
 			}
@@ -577,13 +580,6 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 			this.style = style;
 			updateAllClustersAndCompounds(false);
 			fireViewChange(PROPERTY_STYLE_CHANGED);
-			if (InfoPanel.ICON_SIZE_AUTOMATIC)
-			{
-				if (style == Style.dots)
-					set2DIconSize(InfoPanel.DEFAULT_ICON_SIZE_DOTS, false);
-				else
-					set2DIconSize(InfoPanel.DEFAULT_ICON_SIZE, false);
-			}
 			if (style == Style.ballsAndSticks)
 				guiControler.showMessage("Draw compounds with balls (atoms) and sticks (bonds).");
 			else if (style == Style.wireframe)
@@ -1736,12 +1732,12 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 		if (larger && ClusteringUtil.COMPOUND_SIZE < ClusteringUtil.COMPOUND_SIZE_MAX)
 		{
 			ClusteringUtil.COMPOUND_SIZE++;
-			updateDensitiy(true);
+			updateDensity(true);
 		}
 		else if (!larger && ClusteringUtil.COMPOUND_SIZE > 0)
 		{
 			ClusteringUtil.COMPOUND_SIZE--;
-			updateDensitiy(false);
+			updateDensity(false);
 		}
 	}
 
@@ -1752,7 +1748,7 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 		{
 			boolean increased = ClusteringUtil.COMPOUND_SIZE < compoundSize;
 			ClusteringUtil.COMPOUND_SIZE = compoundSize;
-			updateDensitiy(increased);
+			updateDensity(increased);
 		}
 	}
 
@@ -1846,7 +1842,130 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 		return ClusteringUtil.COMPOUND_SIZE;
 	}
 
-	private void updateDensitiy(boolean increased)
+	int jitteringLevel = 0;
+
+	@Override
+	public int getJitteringLevel()
+	{
+		return jitteringLevel;
+	}
+
+	private void resetJittering(HashSet<Compound> compounds, boolean skipPositionUpdate)
+	{
+		int idx = clustering.getJitteringResetLevel(compounds);
+		if (idx != -1)
+			setJitteringLevel(idx, compounds, true, skipPositionUpdate);
+	}
+
+	@Override
+	public void setJitteringLevel(int level)
+	{
+		JitteringProvider.showJitterWarning();
+		List<Compound> compounds;
+		if (clustering.isClusterActive())
+			compounds = clustering.getActiveCluster().getCompounds();
+		else
+			compounds = clustering.getCompounds(false);
+		setJitteringLevel(level, new HashSet<Compound>(compounds), false, false);
+	}
+
+	private void setJitteringLevel(final int level, final HashSet<Compound> compounds, final boolean force,
+			final boolean skipPositionUpdate)
+	{
+		if (jitteringLevel != level || force)
+		{
+			if (force)
+				SwingUtil.checkNoAWTEventThread();
+			else
+				SwingUtil.checkIsAWTEventThread();
+
+			if (!force)
+				guiControler.block("jitter");
+			Thread th = new Thread(new Runnable()
+			{
+				@Override
+				public void run()
+				{
+					try
+					{
+						final boolean inc = level > jitteringLevel;
+						if (jitteringLevel == level && force)
+							clustering.updateJittering(level, compounds);
+						else
+						{
+							if (inc)
+							{
+								while (jitteringLevel != level)
+								{
+									jitteringLevel++;
+									clustering.updateJittering(jitteringLevel, compounds);
+								}
+							}
+							else
+							{
+								jitteringLevel = level;
+								clustering.updateJittering(jitteringLevel, compounds);
+							}
+						}
+						SwingUtil.invokeAndWait(new Runnable()
+						{
+							@Override
+							public void run()
+							{
+								if (!skipPositionUpdate)
+									clustering.updatePositions();
+								if (!force)
+								{
+									if (level == 0)
+										guiControler
+												.showMessage("Disable spreading (move compounds back to calculated positions).");
+									else
+										guiControler.showMessage((inc ? "Increase" : "Descrease") + " spread level to "
+												+ level + " (move close compounds apart).");
+								}
+								fireViewChange(PROPERTY_JITTERING_CHANGED);
+								if (!force)
+								{
+									view.suspendAnimation("jitter");
+									if (clustering.isClusterActive())
+										view.zoomTo(clustering.getActiveCluster(), null);
+									else
+										view.zoomTo(clustering, null);
+									view.proceedAnimation("jitter");
+								}
+								for (Compound compound : clustering.getCompounds(true))
+									if (compound.isSphereVisible())
+										view.showSphere(compound, compound.isLastFeatureSphereVisible(), true);
+							}
+						});
+					}
+					catch (Exception e)
+					{
+						Settings.LOGGER.error("jittering failed");
+						Settings.LOGGER.error(e);
+					}
+					finally
+					{
+						if (!force)
+							SwingUtilities.invokeLater(new Runnable()
+							{
+								@Override
+								public void run()
+								{
+									guiControler.unblock("jitter");
+								}
+							});
+					}
+				}
+			});
+			if (!force)
+				th.start();
+			else
+				th.run();
+		}
+	}
+
+	private void updateDensity(boolean increased)
 	{
 		Cluster activeCluster = clustering.getCluster(clustering.getClusterActive().getSelected());
 		if (activeCluster != null && clustering.isSuperimposed())
@@ -2262,6 +2381,9 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 		if (clustering.getNumClusters() == 1)
 			return;
 		//		clearClusterWatched();
+
+		resetJittering(new HashSet<Compound>(c.getCompounds()), false);
+
 		if (!animate)
 			view.suspendAnimation("set cluster active");
 		SwingUtil.invokeAndWait(new Runnable()
@@ -2396,6 +2518,9 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 		if (clustering.getNumClusters() == 1)
 			return;
 		clearClusterWatched();
+
+		resetJittering(new HashSet<Compound>(clustering.getCompounds(false)), false);
+
 		if (!animate)
 			view.suspendAnimation("clear cluster active");
 		SwingUtil.invokeAndWait(new Runnable()
@@ -2508,20 +2633,29 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 		if (selectedHighlightCompoundProperty != null) // otherwise spheres will screw up
 			selectedHighlightCompoundProperty = null;
 
+		final CompoundFilter f;
+		if (compoundFilter != null && filter != null)
+			f = CompoundFilterImpl.combine(clustering, filter, compoundFilter);
+		else
+			f = filter;
 		SwingUtil.invokeAndWait(new Runnable()
 		{
 			@Override
 			public void run()
 			{
 				guiControler.block("update filter");
-				CompoundFilter f;
-				if (compoundFilter != null && filter != null)
-					f = CompoundFilterImpl.combine(clustering, filter, compoundFilter);
-				else
-					f = filter;
 				compoundFilter = f;
 				clustering.setCompoundFilter(null);
 				updateAllClustersAndCompounds(f == null); // force to get cluster-colors right
+			}
+		});
+		if (filter == null) // has to be done outside of awt thread
+			resetJittering(new HashSet<Compound>(clustering.getCompounds(false)), true);
+		SwingUtil.invokeAndWait(new Runnable()
+		{
+			@Override
+			public void run()
+			{
 				clustering.updatePositions(); // update cluster position stuff after compounds are visible again
 				if (f != null)
 				{
@@ -2763,36 +2897,6 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 	public boolean isShowClusteringPropsEnabled()
 	{
 		return true;
-	}
-
-	@Override
-	public void increase2DIconSize(boolean increase)
-	{
-		int newSize = InfoPanel.ICON_SIZE + (InfoPanel.ICON_SIZE_MODIFIER * (increase ? 1 : -1));
-		set2DIconSize(newSize, true);
-	}
-
-	@Override
-	public void set2DIconSize(int size)
-	{
-		set2DIconSize(size, true);
-	}
-
-	private void set2DIconSize(int newSize, boolean manually)
-	{
-		newSize = Math.min(Math.max(newSize, InfoPanel.ICON_SIZE_MIN), InfoPanel.ICON_SIZE_MAX);
-		if (newSize != InfoPanel.ICON_SIZE)
-		{
-			boolean increase = newSize > InfoPanel.ICON_SIZE;
-			InfoPanel.ICON_SIZE = newSize;
-			fireViewChange(PROPERTY_2D_ICON_SIZE_CHANGED);
-			if (manually)
-			{
-				InfoPanel.ICON_SIZE_AUTOMATIC = false;
-				guiControler.showMessage((increase ? "Increase" : "Decrease") + " maximum 2D compound image size to "
-						+ InfoPanel.ICON_SIZE + ".");
-			}
-		}
 	}
 
 	@Override

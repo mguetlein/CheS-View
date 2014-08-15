@@ -377,6 +377,7 @@ public class CompoundListPanel extends JPanel
 		p.setOpaque(false);
 
 		listScrollPane = ComponentFactory.createViewScrollpane(list);
+		guiControler.registerSizeComponent(ComponentSize.COMPOUND_LIST, listScrollPane);
 		JPanel listWrapped = new TransparentViewPanel(new BorderLayout());
 		listWrapped.add(listScrollPane);
 		p.add(listWrapped);
@@ -481,7 +482,8 @@ public class CompoundListPanel extends JPanel
 		if (viewControler.getHighlightedProperty() != null)
 		{
 			// features values are shown on the right, restrict long compound names to show feature values without scroll pane
-			listRenderer.setMaxl1Width(guiControler.getComponentMaxWidth(0.15));
+			listRenderer
+					.setMaxl1Width(guiControler.getComponentMaxWidth((ComponentSize.COMPOUND_LIST.getValue() - 5) * 0.01));
 		}
 		else
 		{
@@ -490,8 +492,10 @@ public class CompoundListPanel extends JPanel
 		}
 
 		listScrollPane.setPreferredSize(null);
-		listScrollPane.setPreferredSize(new Dimension(Math.min(guiControler.getComponentMaxWidth(0.2),
-				listScrollPane.getPreferredSize().width), listScrollPane.getPreferredSize().height));
+		int width = guiControler.getComponentMaxWidth(ComponentSize.COMPOUND_LIST.getValue() * 0.01);
+		if (!guiControler.isAccentuateComponents())
+			width = Math.min(width, listScrollPane.getPreferredSize().width);
+		listScrollPane.setPreferredSize(new Dimension(width, listScrollPane.getPreferredSize().height));
 		listScrollPane.revalidate();
 		listScrollPane.repaint();
 	}

@@ -2,7 +2,7 @@ package gui.table;
 
 import gui.BlockableFrame;
 import gui.GUIControler;
-import gui.InfoPanel;
+import gui.ComponentSize;
 import gui.ViewControler;
 
 import java.awt.BorderLayout;
@@ -639,7 +639,7 @@ public class TreeView extends BlockableFrame
 				{
 					Compound comp = ((Compound) ((MyNode) value).getUserObject());
 					c.setText("<html>" + comp.getDisplayName().toString(true, comp.getHighlightColorText()) + "</html>");
-					int size = guiControler.getComponentMaxWidth(InfoPanel.ICON_SIZE);
+					int size = guiControler.getComponentMaxWidth(ComponentSize.ICON_2D.getValue() * 0.01);
 					Icon icon = comp.getIcon(false, size, size, false);
 					if (icon == null)
 						icon = NO_STRUCTURE;

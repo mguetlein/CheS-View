@@ -34,6 +34,7 @@ import cluster.Clustering;
 import cluster.Clustering.SelectionListener;
 import cluster.ClusteringImpl;
 import cluster.Compound;
+import cluster.JitteringProvider;
 
 import com.jgoodies.forms.builder.DefaultFormBuilder;
 import com.jgoodies.forms.layout.FormLayout;
@@ -47,10 +48,13 @@ public class ControlPanel extends JPanel
 	StyleButton buttonBalls;
 	StyleButton buttonDots;
 
-	ClickableLabel buttonPlus;
-	ClickableLabel buttonMinus;
+	JSlider sliderSize;
+	ClickableLabel buttonPlusSize;
+	ClickableLabel buttonMinusSize;
 
-	JSlider slider;
+	JSlider sliderJitter;
+	ClickableLabel buttonPlusJitter;
+	ClickableLabel buttonMinusJitter;
 
 	JComboBox<Highlighter> highlightCombobox;
 	JComboBox<HighlightSorting> highlightMinMaxCombobox;
@@ -88,12 +92,19 @@ public class ControlPanel extends JPanel
 		}
 		updateSelectedStyle();
 
-		buttonPlus = ComponentFactory.createPlusViewButton();
-		buttonMinus = ComponentFactory.createMinusViewButton();
+		buttonPlusSize = ComponentFactory.createPlusViewButton();
+		buttonMinusSize = ComponentFactory.createMinusViewButton();
 
-		slider = ComponentFactory.createViewSlider(0, viewControler.getCompoundSizeMax(),
+		buttonPlusJitter = ComponentFactory.createPlusViewButton();
+		buttonMinusJitter = ComponentFactory.createMinusViewButton();
+		buttonMinusJitter.setEnabled(viewControler.getJitteringLevel() > 0);
+
+		sliderSize = ComponentFactory.createViewSlider(0, viewControler.getCompoundSizeMax(),
 				viewControler.getCompoundSize());
-		slider.setPreferredSize(new Dimension(100, slider.getPreferredSize().height));
+		sliderSize.setPreferredSize(new Dimension(100, sliderSize.getPreferredSize().height));
+
+		sliderJitter = ComponentFactory.createViewSlider(0, JitteringProvider.STEPS, viewControler.getJitteringLevel());
+		sliderJitter.setPreferredSize(new Dimension(50, sliderJitter.getPreferredSize().height));
 
 		highlightCombobox = ComponentFactory.createViewComboBox(Highlighter.class);
 		loadHighlighters();
@@ -108,12 +119,19 @@ public class ControlPanel extends JPanel
 		buttonClearFeature = ComponentFactory.createCrossViewButton();
 
 		JPanel p = new TransparentViewPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
-		p.add(buttonMinus);
-		p.add(slider);
-		p.add(buttonPlus);
-		p.setBorder(new EmptyBorder(5, 5, 5, 5));
+		p.add(ComponentFactory.createViewLabel("Size: "));
+		p.add(buttonMinusSize);
+		p.add(sliderSize);
+		p.add(buttonPlusSize);
+		p.add(new JLabel("  "));
+		p.add(ComponentFactory.createViewLabel("Spread: "));
+		p.add(buttonMinusJitter);
+		p.add(sliderJitter);
+		p.add(buttonPlusJitter);
+		p.setBorder(new EmptyBorder(5, 5, 2, 5));
 
 		JPanel p1 = new TransparentViewPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
+		//		p1.add(ComponentFactory.createViewLabel("Style: "));
 		p1.add(buttonWire);
 		p1.add(new JLabel(""));
 		p1.add(buttonBalls);
@@ -121,7 +139,7 @@ public class ControlPanel extends JPanel
 		p1.add(buttonDots);
 
 		JPanel p2 = new TransparentViewPanel();
-		p2.add(ComponentFactory.createViewLabel("<html><b>Feature:</b></html>"));
+		p2.add(ComponentFactory.createViewLabel("Feature:"));
 		p2.add(highlightCombobox);
 		p2.add(highlightMinMaxCombobox);
 		JPanel clear = new JPanel(new BorderLayout());
@@ -132,8 +150,8 @@ public class ControlPanel extends JPanel
 
 		DefaultFormBuilder b = new DefaultFormBuilder(new FormLayout("left:p"));
 		b.setLineGapSize(Sizes.pixel(0));
-		b.append(p);
 		b.append(p1);
+		b.append(p);
 		b.append(p2);
 		b.getPanel().setOpaque(false);
 
@@ -160,13 +178,26 @@ public class ControlPanel extends JPanel
 		{
 			public void actionPerformed(ActionEvent e)
 			{
-				viewControler.changeCompoundSize(e.getSource() == buttonPlus);
+				viewControler.changeCompoundSize(e.getSource() == buttonPlusSize);
 			}
 		};
-		buttonPlus.addActionListener(l2);
-		buttonMinus.addActionListener(l2);
+		buttonPlusSize.addActionListener(l2);
+		buttonMinusSize.addActionListener(l2);
 
-		slider.addChangeListener(new ChangeListener()
+		ActionListener l3 = new ActionListener()
+		{
+			public void actionPerformed(ActionEvent e)
+			{
+				if (e.getSource() == buttonPlusJitter && viewControler.getJitteringLevel() < JitteringProvider.STEPS)
+					viewControler.setJitteringLevel(viewControler.getJitteringLevel() + 1);
+				else if (viewControler.getJitteringLevel() > 0)
+					viewControler.setJitteringLevel(viewControler.getJitteringLevel() - 1);
+			}
+		};
+		buttonPlusJitter.addActionListener(l3);
+		buttonMinusJitter.addActionListener(l3);
+
+		sliderSize.addChangeListener(new ChangeListener()
 		{
 			@Override
 			public void stateChanged(ChangeEvent e)
@@ -177,6 +208,21 @@ public class ControlPanel extends JPanel
 				if (!source.getValueIsAdjusting())
 				{
 					viewControler.setCompoundSize((int) source.getValue());
+				}
+			}
+		});
+
+		sliderJitter.addChangeListener(new ChangeListener()
+		{
+			@Override
+			public void stateChanged(ChangeEvent e)
+			{
+				if (selfUpdate)
+					return;
+				JSlider source = (JSlider) e.getSource();
+				if (!source.getValueIsAdjusting())
+				{
+					viewControler.setJitteringLevel((int) source.getValue());
 				}
 			}
 		});
@@ -232,6 +278,7 @@ public class ControlPanel extends JPanel
 			public void compoundActiveChanged(Compound[] c)
 			{
 				updateComboStuff();
+				updateJitteringButtons();
 			}
 		});
 
@@ -259,6 +306,7 @@ public class ControlPanel extends JPanel
 				else if (evt.getPropertyName().equals(ViewControler.PROPERTY_SUPERIMPOSE_CHANGED))
 				{
 					updateComboStuff();
+					updateJitteringButtons();
 				}
 				else if (evt.getPropertyName().equals(ViewControler.PROPERTY_NEW_HIGHLIGHTERS))
 				{
@@ -268,16 +316,18 @@ public class ControlPanel extends JPanel
 				else if (evt.getPropertyName().equals(ViewControler.PROPERTY_DENSITY_CHANGED))
 				{
 					selfUpdate = true;
-					buttonPlus.setEnabled(viewControler.canChangeCompoundSize(true));
-					buttonMinus.setEnabled(viewControler.canChangeCompoundSize(false));
-					slider.setEnabled(viewControler.canChangeCompoundSize(false));
-					slider.setValue(viewControler.getCompoundSize());
+					buttonPlusSize.setEnabled(viewControler.canChangeCompoundSize(true));
+					buttonMinusSize.setEnabled(viewControler.canChangeCompoundSize(false));
+					sliderSize.setEnabled(viewControler.canChangeCompoundSize(false));
+					sliderSize.setValue(viewControler.getCompoundSize());
 					selfUpdate = false;
 				}
 				else if (evt.getPropertyName().equals(ViewControler.PROPERTY_FONT_SIZE_CHANGED))
 					updateComboSize();
 				else if (evt.getPropertyName().equals(ViewControler.PROPERTY_STYLE_CHANGED))
 					updateSelectedStyle();
+				else if (evt.getPropertyName().equals(ViewControler.PROPERTY_JITTERING_CHANGED))
+					updateJitteringButtons();
 			}
 		});
 
@@ -292,6 +342,23 @@ public class ControlPanel extends JPanel
 				}
 			}
 		});
+	}
+
+	private void updateJitteringButtons()
+	{
+		selfUpdate = true;
+		boolean enable = true;
+		if (viewControler.isSuperimpose() || clustering.isCompoundActive())
+			enable = false;
+		if (clustering.isClusterActive() && clustering.getActiveCluster().getNumCompounds() < 2)
+			enable = false;
+		else if (!clustering.isClusterActive() && clustering.getNumCompounds() < 2)
+			enable = false;
+		buttonPlusJitter.setEnabled(enable && viewControler.getJitteringLevel() < JitteringProvider.STEPS);
+		buttonMinusJitter.setEnabled(enable && viewControler.getJitteringLevel() > 0);
+		sliderJitter.setEnabled(enable);
+		sliderJitter.setValue(viewControler.getJitteringLevel());
+		selfUpdate = false;
 	}
 
 	private void updateSelectedStyle()

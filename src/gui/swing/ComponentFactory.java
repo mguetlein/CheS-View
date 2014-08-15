@@ -54,12 +54,14 @@ import javax.swing.table.TableColumn;
 
 import main.ScreenSetup;
 import main.Settings;
+import util.ColorUtil;
 import util.SwingUtil;
 
 public class ComponentFactory
 {
 	public static Color BACKGROUND;
 	public static Color FOREGROUND;
+	public static Color FOREGROUND_DISABLED;
 	public static Color BORDER_FOREGROUND;
 	public static Color LIST_SELECTION_FOREGROUND;
 	public static Color LIST_ACTIVE_BACKGROUND;
@@ -67,6 +69,7 @@ public class ComponentFactory
 
 	public static Color FOREGROUND_FOR_BACKGROUND_BLACK = new Color(250, 250, 250);
 	public static Color FOREGROUND_FOR_BACKGROUND_WHITE = new Color(5, 5, 5);
+	public static final int DISABLED_TRANSPARENT = 100; //0 = fully transparent, 255= opaque
 
 	public static Color LIST_ACTIVE_BACKGROUND_BLACK = new Color(51, 102, 255);
 	public static Color LIST_WATCH_BACKGROUND_BLACK = LIST_ACTIVE_BACKGROUND_BLACK.darker().darker();
@@ -89,6 +92,7 @@ public class ComponentFactory
 	{
 		backgroundBlack = b;
 		FOREGROUND = getForeground(b);
+		FOREGROUND_DISABLED = ColorUtil.transparent(FOREGROUND, DISABLED_TRANSPARENT);
 		if (b)
 		{
 			BACKGROUND = Color.BLACK;
@@ -645,6 +649,14 @@ public class ComponentFactory
 			super(text, icon, horizontalAlignment);
 		}
 
+		Boolean myEnabled = null;
+
+		public void setEnabled(boolean enabled)
+		{
+			myEnabled = enabled;
+			updateUI();
+		}
+
 		public void addActionListener(final ActionListener l)
 		{
 			addMouseListener(new MouseAdapter()
@@ -652,7 +664,8 @@ public class ComponentFactory
 				@Override
 				public void mousePressed(MouseEvent e)
 				{
-					l.actionPerformed(new ActionEvent(ClickableLabel.this, 0, "button clicked"));
+					if (myEnabled == null || myEnabled)
+						l.actionPerformed(new ActionEvent(ClickableLabel.this, 0, "button clicked"));
 				}
 			});
 		}
@@ -669,18 +682,27 @@ public class ComponentFactory
 		}
 		else
 			ic = null;
-		final ClickableLabel c = new ClickableLabel(string, ic, SwingConstants.LEFT)
+		ClickableLabel c = new ClickableLabel(string, ic, SwingConstants.LEFT)
 		{
 			public void updateUI()
 			{
 				super.updateUI();
-				setForeground(FOREGROUND);
 				setBackground(BACKGROUND);
+				setForeground(FOREGROUND);
 				if (ic != null)
 				{
-					icon.setColor(FOREGROUND);
+					if (myEnabled == null || myEnabled)
+					{
+						icon.setColor(FOREGROUND);
+						ic.setColor(FOREGROUND);
+					}
+					else
+					{
+						icon.setColor(FOREGROUND_DISABLED);
+						ic.setColor(FOREGROUND_DISABLED);
+					}
 					icon.setSize((int) (ScreenSetup.INSTANCE.getFontSize() * 0.55));
-					ic.setColor(FOREGROUND);
+
 				}
 				else
 				{
@@ -795,13 +817,16 @@ public class ComponentFactory
 		//		p.setPreferredSize(new Dimension(500, 100));
 		//		p.add(ComponentFactory.createViewButton("testing"));
 
-		p.add(ComponentFactory.createMinusViewButton());
+		ClickableLabel b = ComponentFactory.createMinusViewButton();
+		b.setEnabled(false);
+		p.add(b);
 		p.add(ComponentFactory.createCrossViewButton());
 		p.add(ComponentFactory.createPlusViewButton());
+
 		//		p.add(ComponentFactory.createViewButton("X"), new Insets(0, 5, 0, 5));
 		//		p.add(ComponentFactory.createViewButton("X"), new Insets(0, 6, 0, 6));
 		//		p.add(ComponentFactory.createViewSlider(0, 100, 33));
-		SwingUtil.showInDialog(p);
+		SwingUtil.showInDialog(p, null, null, null, null, 1);
 
 		System.exit(0);
 	}

@@ -270,7 +270,7 @@ public class Compound implements Zoomable, Comparable<Compound>, DoubleNameEleme
 
 	public Vector3f getPosition(boolean scaled)
 	{
-		Vector3f v = new Vector3f(compoundData.getPosition());
+		Vector3f v = new Vector3f(JitteringProvider.getPosition(compoundData));
 		if (scaled)
 			v.scale(ClusteringUtil.SCALE);
 		return v;

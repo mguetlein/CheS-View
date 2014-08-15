@@ -1,5 +1,7 @@
 package gui;
 
+import gui.property.IntegerProperty;
+import gui.property.Property;
 import gui.swing.ComponentFactory;
 
 import java.awt.Dimension;
@@ -15,8 +17,10 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
+import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JPopupMenu;
 import javax.swing.KeyStroke;
@@ -28,6 +32,7 @@ import main.Settings;
 import org.jmol.util.DefaultLogger;
 import org.jmol.util.Logger;
 
+import util.ColorUtil;
 import util.ScreenUtil;
 import util.SwingUtil;
 import util.ThreadUtil;
@@ -128,6 +133,18 @@ public class CheSViewer implements GUIControler
 				return Actions.instance().performAction(e.getSource(), keyStroke, !frame.isUndecorated());
 			}
 		});
+
+		for (IntegerProperty integerProperty : ComponentSize.MAX_WIDTH)
+		{
+			integerProperty.addPropertyChangeListener(new PropertyChangeListener()
+			{
+				@Override
+				public void propertyChange(PropertyChangeEvent evt)
+				{
+					fireEvent(PROPERTY_VIEWER_SIZE_CHANGED);
+				}
+			});
+		}
 
 		setFullScreen(false, true);
 	}
@@ -395,5 +412,57 @@ public class CheSViewer implements GUIControler
 	public void setSelectedString(String s)
 	{
 		selectedString = s;
+	}
+
+	HashMap<Property, JComponent> propComps = new HashMap<Property, JComponent>();
+	HashMap<Property, Boolean> propHideComp = new HashMap<Property, Boolean>();
+	boolean accentuate = false;
+
+	@Override
+	public void registerSizeComponent(Property p, JComponent c)
+	{
+		propComps.put(p, c);
+	}
+
+	@Override
+	public boolean isAccentuateComponents()
+	{
+		return accentuate;
+	}
+
+	@Override
+	public void setAccentuateSizeComponents(boolean b)
+	{
+		for (Property p : propComps.keySet())
+		{
+			JComponent c = propComps.get(p);
+			if (b == true)
+			{
+				accentuate = true;
+				if (!c.isVisible())
+				{
+					c.setVisible(true);
+					propHideComp.put(p, true);
+				}
+				else
+					propHideComp.put(p, false);
+				//				SwingUtil.setDebugBorder(c, p.getHighlightColor());
+				c.setOpaque(true);
+				c.setBackground(ColorUtil.transparent(p.getHighlightColor(), 100));
+			}
+			else
+			{
+				accentuate = false;
+				//				SwingUtil.removeDebugBorder(c);
+				c.setOpaque(false);
+				if (propHideComp.get(p))
+				{
+					c.setVisible(false);
+					propHideComp.put(p, false);
+				}
+
+			}
+		}
+		fireEvent(PROPERTY_VIEWER_SIZE_CHANGED);
 	}
 }

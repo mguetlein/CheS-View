@@ -92,6 +92,8 @@ public class ClusteringImpl implements Zoomable, Clustering
 	CompoundProperty highlightProperty;
 	Color highlightColorText;
 
+	JitteringProvider jittering;
+
 	public ClusteringImpl()
 	{
 		listeners = new Vector<PropertyChangeListener>();
@@ -376,6 +378,8 @@ public class ClusteringImpl implements Zoomable, Clustering
 		clusteringValues.clear();
 		compoundSelections.clear();
 		dirty = true;
+
+		jittering = null;
 
 		getClusterActive().clearSelection();
 		fire(CLUSTER_CLEAR, old, clusters);
@@ -1078,7 +1082,6 @@ public class ClusteringImpl implements Zoomable, Clustering
 		return getCompoundWatched().getSelectedIndices();
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	public List<CompoundProperty> getPropertiesAndFeatures()
 	{
@@ -1425,4 +1428,17 @@ public class ClusteringImpl implements Zoomable, Clustering
 		return Settings.BIG_DATA;
 	}
 
+	public void updateJittering(int level, Set<Compound> compounds)
+	{
+		if (jittering == null)
+			jittering = new JitteringProvider(this);
+		jittering.updateJittering(level, compounds);
+	}
+
+	public int getJitteringResetLevel(Set<Compound> compounds)
+	{
+		if (jittering == null)
+			return -1;
+		return jittering.getJitteringResetLevel(compounds);
+	}
 }

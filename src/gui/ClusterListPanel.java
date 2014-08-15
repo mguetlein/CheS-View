@@ -309,8 +309,10 @@ public class ClusterListPanel extends JPanel
 		clusterList.setVisibleRowCount(rowCount);
 
 		scroll.setPreferredSize(null);
-		scroll.setPreferredSize(new Dimension(Math.min(guiControler.getComponentMaxWidth(1 / 7.0),
-				scroll.getPreferredSize().width), scroll.getPreferredSize().height));
+		int width = guiControler.getComponentMaxWidth(ComponentSize.CLUSTER_LIST.getValue() * 0.01);
+		if (!guiControler.isAccentuateComponents())
+			width = Math.min(width, scroll.getPreferredSize().width);
+		scroll.setPreferredSize(new Dimension(width, scroll.getPreferredSize().height));
 		scroll.revalidate();
 		scroll.repaint();
 	}
@@ -384,6 +386,7 @@ public class ClusterListPanel extends JPanel
 		panel.setLayout(layout);
 		CellConstraints cc = new CellConstraints();
 		scroll = ComponentFactory.createViewScrollpane(clusterList);
+		guiControler.registerSizeComponent(ComponentSize.CLUSTER_LIST, scroll);
 		clusterPanel = new TransparentViewPanel(new BorderLayout(5, 5));
 		clusterPanel.add(scroll);
 		panel.add(clusterPanel, cc.xy(1, 1));

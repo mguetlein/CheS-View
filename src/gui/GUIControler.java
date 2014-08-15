@@ -1,7 +1,10 @@
 package gui;
 
+import gui.property.Property;
+
 import java.beans.PropertyChangeListener;
 
+import javax.swing.JComponent;
 import javax.swing.JPopupMenu;
 
 import cluster.Clustering;
@@ -38,4 +41,11 @@ public interface GUIControler extends Blockable
 	public void setSelectedString(String s);
 
 	public String getSelectedString();
+
+	public void setAccentuateSizeComponents(boolean b);
+
+	public void registerSizeComponent(Property p, JComponent c);
+
+	public boolean isAccentuateComponents();
+
 }

@@ -3,6 +3,7 @@ package gui;
 import gui.MultiImageIcon.Layout;
 import gui.MultiImageIcon.Orientation;
 import gui.ViewControler.FeatureFilter;
+import gui.ViewControler.Style;
 import gui.swing.ComponentFactory;
 import gui.util.Highlighter;
 
@@ -47,6 +48,7 @@ import cluster.ClusteringImpl;
 import cluster.Compound;
 import cluster.CompoundSelection;
 import cluster.SALIProperty;
+import data.CDKCompoundIcon;
 import dataInterface.CompoundProperty;
 import dataInterface.CompoundPropertyOwner;
 import dataInterface.CompoundPropertyUtil;
@@ -54,28 +56,28 @@ import dataInterface.SubstructureSmartsType;
 
 public class InfoPanel extends JPanel
 {
-	private static final double INTERACTIVE_MAX_SIZE_TOTAL = 0.20;
-	private static final double INTERACTIVE_MAX_SIZE_COL_0 = 0.125;
-	private static final double INTERACTIVE_MAX_SIZE_COL_1 = 1.0;
-
-	//	private static final double FIXED_MAX_SIZE_TOTAL = 0.15;
-	//	private static final double FIXED_MAX_SIZE_COL_0 = 0.075;
-	//	private static final double FIXED_MAX_SIZE_COL_1 = 0.075;
-	//private static final boolean USE_GLOBAL_MIN_WIDTH = false;
-
-	private static final double FIXED_MAX_SIZE_TOTAL = INTERACTIVE_MAX_SIZE_TOTAL;
-	private static final double FIXED_MAX_SIZE_COL_0 = INTERACTIVE_MAX_SIZE_TOTAL * 0.5;
-	private static final double FIXED_MAX_SIZE_COL_1 = INTERACTIVE_MAX_SIZE_TOTAL * 0.5;
 	private static final boolean USE_GLOBAL_MIN_WIDTH = true;
 
-	public static final int ICON_SIZE_MIN = 5;
-	public static final int ICON_SIZE_MAX = 40;
-	public static final int ICON_SIZE_MODIFIER = 1;
-	public static int ICON_SIZE = 15;//FIXED_MAX_SIZE_TOTAL;
+	private static double getMaxSizeTotal()
+	{
+		return ComponentSize.INFO_TABLE.getValue() * 0.01;
+	}
 
-	public static boolean ICON_SIZE_AUTOMATIC = true;
-	public static final int DEFAULT_ICON_SIZE = 15;
-	public static final int DEFAULT_ICON_SIZE_DOTS = 25;
+	private static double getMaxSizeCol(int col, boolean interactive)
+	{
+		if (interactive)
+		{
+			if (col == 0)
+				return getMaxSizeTotal() * 0.60;
+			else
+				return 100.0;
+		}
+		else
+		{
+			return getMaxSizeTotal() * 0.5;
+		}
+
+	}
 
 	Clustering clustering;
 	ClusterController clusterControler;
@@ -475,10 +477,9 @@ public class InfoPanel extends JPanel
 				}
 
 			int width = ComponentFactory.packColumn(table, 0, 2,
-					guiControler.getComponentMaxWidth(interactive ? INTERACTIVE_MAX_SIZE_COL_0 : FIXED_MAX_SIZE_COL_0),
-					true);
+					guiControler.getComponentMaxWidth(getMaxSizeCol(0, interactive)), true);
 			width += ComponentFactory.packColumn(table, 1, 2,
-					guiControler.getComponentMaxWidth(interactive ? INTERACTIVE_MAX_SIZE_COL_1 : FIXED_MAX_SIZE_COL_1));
+					guiControler.getComponentMaxWidth(getMaxSizeCol(1, interactive)));
 			if (USE_GLOBAL_MIN_WIDTH)
 				globalMinWidth = Math.max(globalMinWidth, width);
 			else if (interactive)
@@ -609,11 +610,11 @@ public class InfoPanel extends JPanel
 				clusterCompoundLayout.show(clusterCompoundPanel, card);
 				cardToPanel.get(currentCard).update();
 
-				if (card == CARD_COMPOUND)
+				if (card == CARD_COMPOUND || guiControler.isAccentuateComponents())
 				{
 					compoundIconLabel.setVisible(false);
 					compoundIconPanel.setVisible(true);
-					final Compound fCompound = (Compound) selected;
+					final Compound fCompound = card == CARD_COMPOUND ? (Compound) selected : null;
 					Thread th = new Thread(new Runnable()
 					{
 						public void run()
@@ -623,14 +624,19 @@ public class InfoPanel extends JPanel
 								public void run()
 								{
 									ImageIcon icon = null;
-									if (currentCard == CARD_COMPOUND
-											&& cardToPanel.get(currentCard).selected == fCompound)
+									if (guiControler.isAccentuateComponents()
+											|| (currentCard == CARD_COMPOUND && cardToPanel.get(currentCard).selected == fCompound))
 									{
-										int size = guiControler.getComponentMaxWidth(ICON_SIZE / 100.0);
-										icon = fCompound.getIcon(viewControler.isBlackgroundBlack(), size, size, true);
+										int size = getIconWidth();
+										if (fCompound != null)
+											icon = fCompound.getIcon(viewControler.isBlackgroundBlack(), size, size,
+													true);
+										else
+											icon = CDKCompoundIcon.createDemoIcon(viewControler.isBlackgroundBlack(),
+													size, size, Layout.vertical, true);
 									}
-									if (currentCard == CARD_COMPOUND
-											&& cardToPanel.get(currentCard).selected == fCompound) // after icon is loaded
+									if (guiControler.isAccentuateComponents()
+											|| (currentCard == CARD_COMPOUND && cardToPanel.get(currentCard).selected == fCompound))// after icon is loaded
 									{
 										compoundIconLabel.setIcon(icon);
 										compoundIconLabel.setVisible(true);
@@ -651,7 +657,12 @@ public class InfoPanel extends JPanel
 			}
 		}
 		selfUpdate = false;
+	}
 
+	private int getIconWidth()
+	{
+		return guiControler.getComponentMaxWidth((viewControler.getStyle() == Style.dots ? ComponentSize.ICON_2D_DOTS
+				: ComponentSize.ICON_2D).getValue() * 0.01);
 	}
 
 	public InfoPanel(ViewControler viewControler, ClusterController clusterControler, Clustering clustering,
@@ -710,7 +721,7 @@ public class InfoPanel extends JPanel
 				if (evt.getPropertyName().equals(ViewControler.PROPERTY_HIGHLIGHT_CHANGED)
 						|| evt.getPropertyName().equals(ViewControler.PROPERTY_NEW_HIGHLIGHTERS)
 						|| evt.getPropertyName().equals(ViewControler.PROPERTY_BACKGROUND_CHANGED)
-						|| evt.getPropertyName().equals(ViewControler.PROPERTY_2D_ICON_SIZE_CHANGED))
+						|| evt.getPropertyName().equals(ViewControler.PROPERTY_STYLE_CHANGED))
 				{
 					update(true);
 				}
@@ -726,6 +737,16 @@ public class InfoPanel extends JPanel
 				{
 					update(true);
 				}
+			}
+		});
+
+		guiControler.addPropertyChangeListener(new PropertyChangeListener()
+		{
+			@Override
+			public void propertyChange(PropertyChangeEvent evt)
+			{
+				if (evt.getPropertyName().equals(GUIControler.PROPERTY_VIEWER_SIZE_CHANGED))
+					update(true);
 			}
 		});
 
@@ -764,6 +785,7 @@ public class InfoPanel extends JPanel
 		compoundIconPanel = new JPanel(new BorderLayout());
 		compoundIconPanel.setOpaque(false);
 		compoundIconPanel.add(compoundIconLabel, BorderLayout.NORTH);
+		guiControler.registerSizeComponent(ComponentSize.ICON_2D, compoundIconLabel);
 
 		clusterCompoundLayout = new CardLayout();
 		clusterCompoundPanel = new JPanel(clusterCompoundLayout)
@@ -774,22 +796,24 @@ public class InfoPanel extends JPanel
 				if (cardToPanel.get(currentCard) == null)
 					return new Dimension(0, 0);
 				Dimension dim = super.getPreferredSize();
-				int minWidth;
-				if (USE_GLOBAL_MIN_WIDTH)
-					minWidth = globalMinWidth;
-				else if (cardToPanel.get(currentCard).interactive)
-					minWidth = cardToPanel.get(currentCard).minWidth_interact;
+				int maxWidth = guiControler.getComponentMaxWidth(getMaxSizeTotal());
+				if (guiControler.isAccentuateComponents())
+					dim.width = maxWidth;
 				else
-					minWidth = cardToPanel.get(currentCard).minWidth_fix;
-
-				dim.width = Math
-						.min(dim.width,
-								Math.min(
-										guiControler.getComponentMaxWidth(cardToPanel.get(currentCard).interactive ? INTERACTIVE_MAX_SIZE_TOTAL
-												: FIXED_MAX_SIZE_TOTAL), minWidth));
+				{
+					int minWidth;
+					if (USE_GLOBAL_MIN_WIDTH)
+						minWidth = globalMinWidth;
+					else if (cardToPanel.get(currentCard).interactive)
+						minWidth = cardToPanel.get(currentCard).minWidth_interact;
+					else
+						minWidth = cardToPanel.get(currentCard).minWidth_fix;
+					dim.width = Math.min(dim.width, Math.min(maxWidth, minWidth));
+				}
 				return dim;
 			}
 		};
+		guiControler.registerSizeComponent(ComponentSize.INFO_TABLE, clusterCompoundPanel);
 		clusterCompoundPanel.setOpaque(false);
 		clusterCompoundPanel.setVisible(false);
 
@@ -815,7 +839,6 @@ public class InfoPanel extends JPanel
 
 	HashSet<String> propNames = new HashSet<String>();
 
-	@SuppressWarnings("unchecked")
 	private List<CompoundProperty> getPropList()
 	{
 		if (propNames.size() == 0)
