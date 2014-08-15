@@ -5,6 +5,7 @@ import gui.DescriptionListCellRenderer;
 import gui.LaunchCheSMapper;
 import gui.LinkButton;
 import gui.SimpleImageIcon;
+import gui.StringImageIcon;
 import gui.ViewControler.Style;
 
 import java.awt.Color;
@@ -16,7 +17,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.image.BufferedImage;
 import java.lang.reflect.Array;
+import java.util.HashMap;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -829,5 +832,39 @@ public class ComponentFactory
 		SwingUtil.showInDialog(p, null, null, null, null, 1);
 
 		System.exit(0);
+	}
+
+	private static HashMap<String, BufferedImage> chesMapperStringImages = new HashMap<String, BufferedImage>();
+
+	public static BufferedImage getCheSMapperStringImage()
+	{
+		float fontsize = ScreenSetup.INSTANCE.getFontSize() + 2.0f;
+		StringBuffer b = new StringBuffer();
+		b.append(fontsize);
+		b.append("#");
+		b.append(isBackgroundBlack());
+		String k = b.toString();
+		if (!chesMapperStringImages.containsKey(k))
+		{
+			StringImageIcon ic = new StringImageIcon("CheS-Mapper", ComponentFactory.createViewLabel("").getFont()
+					.deriveFont(Font.BOLD, fontsize), FOREGROUND_DISABLED);
+			ic.setBackground(BACKGROUND);
+			ic.setInsets(new Insets(3, 3, 3, 3));
+			chesMapperStringImages.put(k, (BufferedImage) ic.getImage());
+
+			//			ImageIcon ic2 = ImageLoader.getImage(ImageLoader.Image.ches_mapper_icon);
+			//			MultiImageIcon ic3 = new MultiImageIcon(ic, ic2, MultiImageIcon.Layout.horizontal,
+			//					MultiImageIcon.Orientation.center, 0);
+			//			BufferedImage img = new BufferedImage(ic3.getIconWidth() + 6, ic3.getIconHeight() + 6,
+			//					BufferedImage.TYPE_INT_ARGB);
+			//			Graphics2D g = img.createGraphics();
+			//			//g.setComposite(AlphaComposite.Src);
+			//			g.setColor(BACKGROUND);
+			//			g.fillRect(0, 0, ic3.getIconWidth() + 6, ic3.getIconHeight() + 6);
+			//			ic3.paintIcon(null, g, 3, 3);
+			//			g.dispose();
+			//			chesMapperStringImages.put(k, img);
+		}
+		return chesMapperStringImages.get(k);
 	}
 }

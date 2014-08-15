@@ -6,7 +6,9 @@ import gui.swing.TransparentViewLabel;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.FontMetrics;
+import java.awt.Graphics;
 import java.awt.LayoutManager;
+import java.awt.image.BufferedImage;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -106,6 +108,14 @@ public class ClusterPanel extends JPanel
 
 		add(mainPanel);
 		setOpaque(false);
+	}
+
+	public void paint(Graphics g)
+	{
+		super.paint(g);
+
+		BufferedImage ic = ComponentFactory.getCheSMapperStringImage();
+		g.drawImage(ic, getWidth() - ic.getWidth(), getHeight() - ic.getHeight(), this);
 	}
 
 	public void init(ClusteringData clusteredDataset)
