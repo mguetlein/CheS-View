@@ -130,6 +130,7 @@ public interface ViewControler
 	public static final String PROPERTY_FEATURE_SORTING_CHANGED = "propertyFeatureSortingChanged";
 	public static final String PROPERTY_COMPOUND_FILTER_CHANGED = "propertyCompoundFilterChanged";
 	public static final String PROPERTY_SINGLE_COMPOUND_SELECTION_ENABLED = "propertySingleCompoundSelectionEnabled";
+	public static final String PROPERTY_JITTERING_CHANGED = "propertyJitteringChanged";
 
 	public boolean isHighlighterLabelsVisible();
 
