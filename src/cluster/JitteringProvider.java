@@ -12,8 +12,8 @@ import java.util.Set;
 
 import javax.vecmath.Vector3f;
 
-import jitter.Jitterable;
 import jitter.Jittering;
+import jitter.NNComputer;
 import main.Settings;
 import util.ArrayUtil;
 import util.DoubleKeyHashMap;
@@ -50,9 +50,13 @@ public class JitteringProvider
 		 * the interval chunks are not equi-distant but using a log-scale  
 		 */
 		minDistances = new float[STEPS + 1];
-		Jittering j = create(c.getCompounds(), null, 1);
-		float dist = j.getMinMinDist();
-		float add = (j.getMaxMinDist() - j.getMinMinDist()) * 0.5f;
+		Vector3f v[] = new Vector3f[c.getCompounds().size()];
+		for (int i = 0; i < v.length; i++)
+			v[i] = c.getCompounds().get(i).getPosition();
+		NNComputer nn = new NNComputer(v);
+		nn.computeNaive();
+		float dist = nn.getMinMinDist();
+		float add = (nn.getMaxMinDist() - nn.getMinMinDist()) * 0.5f;
 		double log[] = ArrayUtil.toPrimitiveDoubleArray(MathUtil.logBinning(STEPS, 1.2));
 		for (int i = 1; i <= STEPS; i++)
 			minDistances[i] = dist + add * (float) log[i];
@@ -78,52 +82,26 @@ public class JitteringProvider
 			return staticInstance.getPosition(c, staticInstance.currentLevel);
 	}
 
-	private Jittering create(List<Compound> compounds, int level)
+	private Jittering createFromCompounds(List<Compound> compounds, int level, float minDist)
 	{
 		List<CompoundData> d = new ArrayList<CompoundData>();
-		List<Vector3f[]> o = new ArrayList<Vector3f[]>();
 		for (Compound c : compounds)
-		{
 			d.add(c.getCompoundData());
-			o.add(new Vector3f[] { new Vector3f(0, 0, 0) });
-		}
-		return create(d, o, level);
+		return create(d, level, minDist);
 	}
 
-	private Jittering create(List<CompoundData> d, List<Vector3f[]> o, final int level)
+	private Jittering create(List<CompoundData> d, int level, float minDist)
 	{
-		class MyJitterable implements Jitterable
-		{
-			Vector3f p;
-			Vector3f o[];
-
-			public MyJitterable(CompoundData d, Vector3f o[])
-			{
-				if (level <= 0)
-					throw new IllegalArgumentException();
-				else if (level == 1)
-					p = new Vector3f(d.getPosition());
-				else
-					p = new Vector3f(JitteringProvider.this.getPosition(d, level - 1));
-				this.o = o;
-			}
-
-			@Override
-			public Vector3f getPosition()
-			{
-				return p;
-			}
-
-			@Override
-			public Vector3f[] getOffsets()
-			{
-				return o;
-			}
-		}
-		Jitterable jObjects[] = new Jitterable[d.size()];
-		for (int i = 0; i < jObjects.length; i++)
-			jObjects[i] = new MyJitterable(d.get(i), (o != null ? o.get(i) : null));
-		return new Jittering(jObjects, new Random());
+		if (level <= 0)
+			throw new IllegalArgumentException();
+		Vector3f v[] = new Vector3f[d.size()];
+		if (level == 1)
+			for (int i = 0; i < v.length; i++)
+				v[i] = new Vector3f(d.get(i).getPosition());
+		else
+			for (int i = 0; i < v.length; i++)
+				v[i] = new Vector3f(JitteringProvider.this.getPosition(d.get(i), level - 1));
+		return new Jittering(v, minDist, new Random());
 	}
 
 	public void updateJittering(int level, Set<Compound> compounds)
@@ -131,11 +109,11 @@ public class JitteringProvider
 		Settings.LOGGER.info("Set jittering level to " + level);
 		if (level == 0)
 		{
-			//do nothing
+			//do nothing, use orig positions
 		}
 		else if (sets.size() > level && SetUtil.isSubSet(sets.get(level), compounds))
 		{
-			//System.err.println("jittering positions cached");
+			//do nothing, positions have already been computed
 		}
 		else
 		{
@@ -160,8 +138,7 @@ public class JitteringProvider
 	private void jitter(List<Compound> c, final int level)
 	{
 		Settings.LOGGER.info("Compute jittering for " + c.size() + " compounds for level " + level);
-		Jittering j = create(c, level);
-		j.setMinDist(minDistances[level]);
+		Jittering j = createFromCompounds(c, level, minDistances[level]);
 		j.jitter();
 		for (int i = 0; i < c.size(); i++)
 			positions.put(c.get(i).getCompoundData(), level, j.getPosition(i));
