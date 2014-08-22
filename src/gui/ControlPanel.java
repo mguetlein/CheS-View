@@ -318,7 +318,8 @@ public class ControlPanel extends JPanel
 					selfUpdate = true;
 					buttonPlusSize.setEnabled(viewControler.canChangeCompoundSize(true));
 					buttonMinusSize.setEnabled(viewControler.canChangeCompoundSize(false));
-					sliderSize.setEnabled(viewControler.canChangeCompoundSize(false));
+					sliderSize.setEnabled(viewControler.canChangeCompoundSize(false)
+							|| viewControler.canChangeCompoundSize(true));
 					sliderSize.setValue(viewControler.getCompoundSize());
 					selfUpdate = false;
 				}
@@ -347,13 +348,7 @@ public class ControlPanel extends JPanel
 	private void updateJitteringButtons()
 	{
 		selfUpdate = true;
-		boolean enable = true;
-		if (viewControler.isSuperimpose() || clustering.isCompoundActive())
-			enable = false;
-		if (clustering.isClusterActive() && clustering.getActiveCluster().getNumCompounds() < 2)
-			enable = false;
-		else if (!clustering.isClusterActive() && clustering.getNumCompounds() < 2)
-			enable = false;
+		boolean enable = viewControler.canJitter();
 		buttonPlusJitter.setEnabled(enable && viewControler.getJitteringLevel() < JitteringProvider.STEPS);
 		buttonMinusJitter.setEnabled(enable && viewControler.getJitteringLevel() > 0);
 		sliderJitter.setEnabled(enable);

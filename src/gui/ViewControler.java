@@ -259,6 +259,8 @@ public interface ViewControler
 
 	public void setJitteringLevel(int level);
 
+	public boolean canJitter();
+
 	// to remove
 
 	//	public void setZoomToSingleActiveCompounds(boolean b);

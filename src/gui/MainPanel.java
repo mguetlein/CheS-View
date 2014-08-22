@@ -1713,6 +1713,20 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 	}
 
 	@Override
+	public boolean canJitter()
+	{
+		if (isSuperimpose())
+			return false;
+		if (view.getZoomTarget() instanceof Compound)
+			return false;
+		if (clustering.isClusterActive() && clustering.getActiveCluster().getNumCompounds() < 2)
+			return false;
+		else if (!clustering.isClusterActive() && clustering.getNumCompounds() < 2)
+			return false;
+		return true;
+	}
+
+	@Override
 	public boolean canChangeCompoundSize(boolean larger)
 	{
 		if (larger && ClusteringUtil.COMPOUND_SIZE == ClusteringUtil.COMPOUND_SIZE_MAX)
@@ -1912,6 +1926,13 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 							@Override
 							public void run()
 							{
+								Compound active[] = new Compound[0];
+								if (clustering.isClusterActive())
+								{
+									active = clustering.getActiveCompounds();
+									if (active.length > 0)
+										clustering.getCompoundActive().clearSelection();
+								}
 								if (!skipPositionUpdate)
 									clustering.updatePositions();
 								if (!force)
@@ -1936,6 +1957,13 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 								for (Compound compound : clustering.getCompounds(true))
 									if (compound.isSphereVisible())
 										view.showSphere(compound, compound.isLastFeatureSphereVisible(), true);
+								if (active.length > 0)
+								{
+									if (active.length == 1) // do not zoom in
+										toggleCompoundActive(active[0]);
+									else
+										setCompoundActive(active, false);
+								}
 							}
 						});
 					}

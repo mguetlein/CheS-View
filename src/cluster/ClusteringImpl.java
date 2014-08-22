@@ -1295,7 +1295,7 @@ public class ClusteringImpl implements Zoomable, Clustering
 		boolean classification = true;
 		for (CompoundProperty p : getProperties())
 		{
-			if (p.toString().equals("activity"))
+			if (p.toString().matches("(?i).*activity.*"))
 				clazz = p;
 			else if (p.toString().equals("LC50_mmol_log"))
 			{
