@@ -8,6 +8,7 @@ import gui.util.CompoundPropertyHighlighter;
 import gui.util.Highlighter;
 
 import java.awt.Color;
+import java.awt.Dimension;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -66,6 +67,7 @@ import dataInterface.NumericProperty;
 public class LaunchCheSMapper
 {
 	private static boolean initialized = false;
+	private static boolean showWarningDialogOnStartUp = true;
 
 	public static void init()
 	{
@@ -269,6 +271,8 @@ public class LaunchCheSMapper
 		Options options = new Options();
 		options.addOption(paramOption('y', "screen-setup",
 				"for expert users, should be one of debug|screenshot|video|small_screen", "setup-mode"));
+		options.addOption(longParamOption("window-size", "window size in <width>x<height>", "window-size"));
+
 		options.addOption(option('p', "no-properties",
 				"for expert users, prevent ches-mapper from reading property file with saved settings"));
 		options.addOption(option('h', "help", "show this help output"));
@@ -351,7 +355,6 @@ public class LaunchCheSMapper
 				"enable endpoint-highlighting (log + reverse) for a feature", "endpoint-highlight feature"));
 		options.addOption(longParamOption("select-compounds", "pre select compound/s (comma seperated compound index)",
 				"selected compound/s"));
-		//		options.addOption(longParamOption("dimension", "viewer dimension (<width>x<height>)", "viewer dimension"));
 		options.addOption(longOption("background-white", "set background to white"));
 		options.addOption(longOption("full-screen", "start in full-screen"));
 		options.addOption(longOption("big-data",
@@ -372,6 +375,8 @@ public class LaunchCheSMapper
 		options.addOption(longOption("verbose", "print more messages"));
 		options.addOption(longParamOption("keep-redundant",
 				"keep-redundant features for mapping and exporting (default: false)", "true/false"));
+
+		options.addOption(longOption("no-warning-dialog", "does not show mapping warning dialog on startup"));
 
 		CommandLineParser parser = new BasicParser();
 		try
@@ -520,6 +525,8 @@ public class LaunchCheSMapper
 
 			if (cmd.hasOption("verbose"))
 				TaskProvider.setPrintVerbose(true);
+			if (cmd.hasOption("no-warning-dialog"))
+				showWarningDialogOnStartUp = false;
 
 			ScreenSetup screenSetup;
 			if (cmd.hasOption('y'))
@@ -539,15 +546,22 @@ public class LaunchCheSMapper
 			}
 			else
 				screenSetup = ScreenSetup.DEFAULT;
-			// 			not tested
-			//			if (cmd.hasOption("dimension"))
-			//			{
-			//				String s[] = cmd.getOptionValue("dimension").split("x");
-			//				Dimension dim = new Dimension(Integer.parseInt(s[0]), Integer.parseInt(s[1]));
-			//				screenSetup.setWizardSize(dim);
-			//				screenSetup.setViewerSize(dim);
-			//				screenSetup.setFullScreenSize(fullScreenSize);
-			//			}
+			if (cmd.hasOption("window-size"))
+			{
+				String sc = cmd.getOptionValue("window-size");
+				try
+				{
+					String s[] = sc.split("x");
+					Dimension dim = new Dimension(Integer.parseInt(s[0]), Integer.parseInt(s[1]));
+					screenSetup.setWizardSize(dim);
+					screenSetup.setViewerSize(dim);
+					screenSetup.setFullScreenSize(dim);
+				}
+				catch (Exception e)
+				{
+					throw new IllegalArgumentException("window-size should be <width>x<height> is: " + sc);
+				}
+			}
 
 			boolean loadProperties = true;
 			if (cmd.hasOption('p'))
@@ -849,6 +863,8 @@ public class LaunchCheSMapper
 			});
 			while (!CheSViewer.getFrame().isShowing())
 				ThreadUtil.sleep(100);
+
+			waitingDialog.setShowWarningDialog(showWarningDialogOnStartUp);
 			waitingDialog.setWarningDialogOwner(CheSViewer.getFrame());
 			task.finish();
 		}

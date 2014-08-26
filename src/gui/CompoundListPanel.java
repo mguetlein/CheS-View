@@ -7,6 +7,7 @@ import gui.swing.TransparentViewPanel;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
@@ -35,8 +36,6 @@ import cluster.Clustering;
 import cluster.Clustering.SelectionListener;
 import cluster.ClusteringImpl;
 import cluster.Compound;
-
-import com.lowagie.text.Font;
 
 public class CompoundListPanel extends JPanel
 {
