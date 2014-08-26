@@ -578,7 +578,7 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 			}
 			guiControler.block("changing style");
 			this.style = style;
-			updateAllClustersAndCompounds(false);
+			updateAllClustersAndCompounds(true);//force because of bounding boxes
 			fireViewChange(PROPERTY_STYLE_CHANGED);
 			if (style == Style.ballsAndSticks)
 				guiControler.showMessage("Draw compounds with balls (atoms) and sticks (bonds).");
@@ -621,7 +621,7 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 			else
 				selectedHighlightCompoundProperty = null;
 
-			updateAllClustersAndCompounds(false);
+			updateAllClustersAndCompounds(true);//force to make sure that sphere positions is right (otherwise - dots - change size - b&s - feature failes)
 			fireViewChange(PROPERTY_HIGHLIGHT_CHANGED);
 			if (showMessage)
 			{
@@ -1949,9 +1949,9 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 								{
 									view.suspendAnimation("jitter");
 									if (clustering.isClusterActive())
-										view.zoomTo(clustering.getActiveCluster(), null);
+										view.centerAt(clustering.getActiveCluster());
 									else
-										view.zoomTo(clustering, null);
+										view.centerAt(clustering);
 									view.proceedAnimation("jitter");
 								}
 								for (Compound compound : clustering.getCompounds(true))
@@ -2013,12 +2013,12 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 		if (activeCluster != null)
 		{
 			Settings.LOGGER.info("zooming out - cluster");
-			view.zoomTo(activeCluster, null);
+			view.centerAt(activeCluster);
 		}
 		else
 		{
 			Settings.LOGGER.info("zooming out - home");
-			view.zoomTo(clustering, null);
+			view.centerAt(clustering);
 		}
 		for (Compound compound : clustering.getCompounds(true))
 			if (compound.isSphereVisible())

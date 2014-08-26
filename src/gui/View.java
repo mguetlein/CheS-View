@@ -115,6 +115,11 @@ public class View
 		}
 	}
 
+	public synchronized void centerAt(Zoomable zoomable)
+	{
+		zoomTo(zoomable, null, null, true);
+	}
+
 	public synchronized void zoomTo(Zoomable zoomable, AnimationSpeed speed)
 	{
 		zoomTo(zoomable, speed, null);
@@ -128,6 +133,12 @@ public class View
 	}
 
 	public synchronized void zoomTo(final Zoomable zoomable, final AnimationSpeed speed, Boolean superimposed)
+	{
+		zoomTo(zoomable, speed, superimposed, false);
+	}
+
+	private synchronized void zoomTo(final Zoomable zoomable, final AnimationSpeed speed, Boolean superimposed,
+			boolean onlyCentering)
 	{
 		if (superimposed == null)
 			superimposed = zoomable.isSuperimposed();
@@ -148,10 +159,11 @@ public class View
 
 		// much better, adjust the rotation radius instead
 		viewer.setRotationRadius(diameter / 10.0f, true);
+
 		//Settings.LOGGER.warn("Rot radius A " + viewer.getRotationRadius());
 		int zoom = 10;
 
-		if (isAnimated())
+		if (isAnimated() && !onlyCentering)
 		{
 			checkNoAWT();
 			final int finalZoom = zoom;
@@ -165,15 +177,30 @@ public class View
 					+ " " + finalZoom;
 			//			Settings.LOGGER.warn("XX zoom> " + cmd);
 			viewer.scriptWait(cmd);
+
+			System.out.println("resetting navigtion point");
+			//viewer.setBooleanProperty("windowCentered", false);
+			viewer.setBooleanProperty("windowCentered", true);
+
 			if (setAntialiasBackOn)
 				setAntialiasOn(true);
 			zoomedTo = zoomable;
 		}
 		else
 		{
-			String cmd = "zoomto 0 " + Vector3fUtil.toString(center) + " " + zoom;
+			if (!onlyCentering)
+			{
+				String cmd = "zoomto 0 " + Vector3fUtil.toString(center) + " " + zoom;
+				viewer.scriptWait(cmd);
+			}
+			else
+			{
+				// cannot use the setNewRotationCenter method
+				// problem is that it calculates a new setRotationRadius and uses the old zoom factor 10
+				// viewer.setNewRotationCenter(new Point3f(zoomable.getCenter(superimposed)));
+				viewer.setRotationCenterWithoutRadius(new Point3f(zoomable.getCenter(superimposed)));
+			}
 			zoomedTo = zoomable;
-			viewer.scriptWait(cmd);
 		}
 
 	}
