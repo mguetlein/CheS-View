@@ -21,7 +21,6 @@ import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -42,7 +41,6 @@ import util.DefaultComparator;
 import util.ObjectUtil;
 import util.SequentialWorkerThread;
 import util.StringUtil;
-import util.ToStringComparator;
 import cluster.Cluster;
 import cluster.ClusterController;
 import cluster.Clustering;
@@ -567,48 +565,36 @@ public class ChartPanel extends JPanel
 
 		public NominalPlotData(Cluster c, NominalProperty p, Compound ms[], int fontsize)
 		{
-			Compound m = ms.length > 0 ? ms[0] : null;
+			// TODO rewrite this code
+			// * add counted-set for compounds as well?
+			// * remove old getStringValues() method (second param is not needed)
+			// * fix order
 
-			String v[] = clustering.getStringValues(p, m);
+			String v[] = clustering.getStringValues(p, null);
 			CountedSet<String> datasetSet = CountedSet.fromArray(v);
 			List<String> datasetValues = datasetSet.values(new DefaultComparator<String>());
 
 			CountedSet<String> clusterSet = null;
 			if (c != null)
 			{
-				v = c.getStringValues(p, m);
+				v = c.getStringValues(p, null);
 				clusterSet = CountedSet.fromArray(v);
-				List<String> clusterValues = clusterSet.values(new DefaultComparator<String>());
-
-				boolean newVal = false;
-				for (String vv : clusterValues)
-					if (!datasetValues.contains(vv))
-					{
-						newVal = true;
-						datasetValues.add(vv);
-					}
-				if (newVal)
-					Collections.sort(datasetValues, new ToStringComparator());
 			}
-			String compoundVal = null;
-			if (m != null && m.getStringValue(p) != null)
-			{
-				compoundVal = m.getStringValue(p);
 
-				if (!datasetValues.contains(compoundVal))
-				{
-					datasetValues.add(compoundVal);
-					Collections.sort(datasetValues, new ToStringComparator());
-				}
-			}
 			data = new LinkedHashMap<String, List<Double>>();
-			if (m != null)
+			double compoundCounts[] = new double[datasetValues.size()];
+			int count = 0;
+			for (String o : datasetValues)
 			{
-				List<Double> compoundCounts = new ArrayList<Double>();
-				for (String o : datasetValues)
-					compoundCounts.add(compoundVal.equals(o) ? 1.0 : 0.0);
-				data.put(m.toString(), compoundCounts);
+				for (Compound m : ms)
+					if (ObjectUtil.equals(m.getStringValue(p), o))
+						compoundCounts[count]++;
+				count++;
 			}
+			if (ms.length == 1)
+				data.put(ms[0].toString(), ArrayUtil.toList(compoundCounts));
+			else if (ms.length > 1)
+				data.put("Selected compounds", ArrayUtil.toList(compoundCounts));
 			if (c != null)
 			{
 				List<Double> clusterCounts = new ArrayList<Double>();
@@ -674,24 +660,32 @@ public class ChartPanel extends JPanel
 
 		if (chartPanel instanceof StackedBarPlot)
 		{
-			if (mIndex != -1)
-				throw new IllegalArgumentException(
-						"does NOT help much in terms of visualisation (color code should be enough), difficult to realize in terms of color brightness");
-
 			Color cols[] = CompoundPropertyUtil.getNominalColors((NominalProperty) property);
-			if (cIndex == -1)
+			if (dIndex == 0)
 			{
-				chartPanel.setSeriesColor(dIndex, ColorUtil.grayscale(cols[0]));
-				((StackedBarPlot) chartPanel).setSeriesCategoryColors(dIndex, cols);
+				chartPanel.setSeriesColor(0, ColorUtil.grayscale(cols[0]));
+				((StackedBarPlot) chartPanel).setSeriesCategoryColors(0, cols);
+			}
+			else if (dIndex == 1)
+			{
+				chartPanel.setSeriesColor(1, ColorUtil.grayscale(cols[0].darker().darker().darker()));
+				chartPanel.setSeriesColor(0, ColorUtil.grayscale(cols[0]).brighter());
+
+				((StackedBarPlot) chartPanel).setSeriesCategoryColors(1,
+						ColorUtil.darker(ColorUtil.darker(ColorUtil.darker(cols))));
+				((StackedBarPlot) chartPanel).setSeriesCategoryColors(0, ColorUtil.brighter(cols));
 			}
 			else
 			{
-				chartPanel.setSeriesColor(dIndex, ColorUtil.grayscale(cols[0].darker().darker().darker()));
-				chartPanel.setSeriesColor(cIndex, ColorUtil.grayscale(cols[0]).brighter());
+				chartPanel.setSeriesColor(2, ColorUtil.grayscale(cols[0].darker().darker().darker()));
+				chartPanel.setSeriesColor(1, ColorUtil.grayscale(cols[0]).brighter());
+				chartPanel.setSeriesColor(0, ColorUtil.grayscale(cols[0]).brighter().brighter().brighter().brighter());
 
-				((StackedBarPlot) chartPanel).setSeriesCategoryColors(dIndex,
+				((StackedBarPlot) chartPanel).setSeriesCategoryColors(2,
 						ColorUtil.darker(ColorUtil.darker(ColorUtil.darker(cols))));
-				((StackedBarPlot) chartPanel).setSeriesCategoryColors(cIndex, ColorUtil.brighter(cols));
+				((StackedBarPlot) chartPanel).setSeriesCategoryColors(1, ColorUtil.brighter(cols));
+				((StackedBarPlot) chartPanel).setSeriesCategoryColors(0,
+						ColorUtil.brighter(ColorUtil.brighter(ColorUtil.brighter(ColorUtil.brighter(cols)))));
 			}
 		}
 		else
@@ -739,9 +733,10 @@ public class ChartPanel extends JPanel
 		if (comps.length == 0)
 			comps = clustering.getWatchedCompounds();
 
-		if (prop instanceof NominalProperty)
+		if (prop instanceof NominalProperty && comps.length == 1)
 		{
-			//does NOT help much in terms of visualisation (color code should be enough), difficult to realize in terms of color brightness
+			//does NOT help much in terms of visualisation for 1 compound (color code should be enough)
+			//difficult to realize in terms of color brightness
 			comps = new Compound[0];
 		}
 
