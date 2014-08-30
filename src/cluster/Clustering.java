@@ -156,6 +156,8 @@ public interface Clustering extends CompoundGroupWithProperties
 
 	void addPredictionFeature(CompoundProperty clazz, PredictionResult p);
 
+	NumericProperty addLogFeature(NumericProperty p);
+
 	public CompoundSelection getCompoundSelection(Compound[] c);
 
 	boolean isRandomEmbedding();

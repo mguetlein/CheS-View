@@ -170,9 +170,7 @@ public interface ViewControler
 
 	public void updateMouseSelection(boolean buttonDown);
 
-	public Boolean isHighlightLogEnabled();
-
-	public void setHighlightColors(ColorGradient g, boolean log, NumericProperty props[]);
+	public void setHighlightColors(ColorGradient g, NumericProperty props[]);
 
 	public void setHighlightColors(Color g[], NominalProperty props[]);
 

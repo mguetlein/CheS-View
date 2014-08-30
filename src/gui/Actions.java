@@ -48,6 +48,7 @@ import cluster.Compound;
 import cluster.ExportData;
 import dataInterface.CompoundProperty;
 import dataInterface.CompoundPropertyUtil.NominalColoring;
+import dataInterface.NumericProperty;
 
 public class Actions
 {
@@ -108,8 +109,9 @@ public class Actions
 	private final static String EDIT_SHOW_SALI = "edit-show-sali";
 	private final static String EDIT_SUPERIMPOSE = "edit-superimpose";
 	private final static String EDIT_SELECT_LAST_FEATURE = "edit-select-last-feature";
+	private final static String EDIT_LOG_TRANSFORM = "edit-log-transform";
 	private final static String[] EDIT_ACTIONS = { EDIT_SUPERIMPOSE, EDIT_SHOW_DISTANCE, EDIT_SHOW_SALI,
-			EDIT_SELECT_LAST_FEATURE };
+			EDIT_SELECT_LAST_FEATURE, EDIT_LOG_TRANSFORM };
 
 	private final static String EXPORT_SELECTED = "export-selected";
 	private final static String EXPORT_UNSELECTED = "export-unselected";
@@ -188,6 +190,7 @@ public class Actions
 		keys.put(EDIT_SHOW_DISTANCE, KeyStroke.getKeyStroke(KeyEvent.VK_D, ActionEvent.ALT_MASK));
 		keys.put(EDIT_SUPERIMPOSE, KeyStroke.getKeyStroke(KeyEvent.VK_U, ActionEvent.ALT_MASK));
 		keys.put(EDIT_SELECT_LAST_FEATURE, KeyStroke.getKeyStroke(KeyEvent.VK_A, ActionEvent.ALT_MASK));
+		keys.put(EDIT_LOG_TRANSFORM, KeyStroke.getKeyStroke(KeyEvent.VK_L, ActionEvent.ALT_MASK));
 
 		keys.put(FILTER_SELECTED, KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, ActionEvent.ALT_MASK));
 		keys.put(FILTER_UNSELECTED, KeyStroke.getKeyStroke(KeyEvent.VK_INSERT, ActionEvent.ALT_MASK));
@@ -396,6 +399,7 @@ public class Actions
 			actions.get(EDIT_SUPERIMPOSE).setEnabled(viewControler.isSingleClusterSpreadable());
 		else
 			actions.get(EDIT_SUPERIMPOSE).setEnabled(viewControler.isAllClustersSpreadable());
+		actions.get(EDIT_LOG_TRANSFORM).setEnabled(viewControler.getHighlightedProperty() instanceof NumericProperty);
 	}
 
 	private void filter(AbstractAction action)
@@ -1256,6 +1260,16 @@ public class Actions
 			public void action()
 			{
 				SALIDialog.showDialog(viewControler, clustering, clusterControler);
+			}
+		};
+		new ActionCreator(EDIT_LOG_TRANSFORM)
+		{
+			@Override
+			public void action()
+			{
+				NumericProperty p = clustering.addLogFeature((NumericProperty) viewControler.getHighlightedProperty());
+				if (p != null)
+					viewControler.setHighlighter(p);
 			}
 		};
 

@@ -477,8 +477,9 @@ public class LaunchCheSMapper
 										p = (NumericProperty) ((CompoundPropertyHighlighter) hi).getProperty();
 						if (p == null)
 							throw new Error("feature not found: " + cmd.getOptionValue("endpoint-highlight"));
+						p = clustering.addLogFeature(p);
 						view.setHighlightColors(new ColorGradient(new Color(100, 255, 100), Color.WHITE,
-								CompoundPropertyUtil.getHighValueColor()), true, new NumericProperty[] { p });
+								CompoundPropertyUtil.getHighValueColor()), new NumericProperty[] { p });
 						ThreadUtil.sleep(2000);
 					}
 					if (cmd.hasOption("full-screen"))

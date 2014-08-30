@@ -165,11 +165,7 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 				if (m.getDoubleValue((NumericProperty) p) == null)
 					return textColor ? ComponentFactory.getForeground(blackBackground) : CompoundPropertyUtil
 							.getNullValueColor();
-				double val;
-				if (((NumericProperty) p).isLogHighlightingEnabled())
-					val = clustering.getNormalizedLogDoubleValue(m, (NumericProperty) p);
-				else
-					val = clustering.getNormalizedDoubleValue(m, (NumericProperty) p);
+				double val = clustering.getNormalizedDoubleValue(m, (NumericProperty) p);
 				if (Double.isNaN(val) || Double.isInfinite(val))
 					throw new NullPointerException("not null, but nan or infinite");
 				ColorGradient grad;
@@ -2230,31 +2226,20 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 	}
 
 	@Override
-	public Boolean isHighlightLogEnabled()
-	{
-		if (selectedHighlightCompoundProperty instanceof NumericProperty)
-			return ((NumericProperty) selectedHighlightCompoundProperty).isLogHighlightingEnabled();
-		else
-			return false;
-	}
-
-	@Override
-	public void setHighlightColors(ColorGradient g, boolean log, NumericProperty props[])
+	public void setHighlightColors(ColorGradient g, NumericProperty props[])
 	{
 		boolean fire = false;
 		for (NumericProperty p : props)
 		{
-			if (p == selectedHighlightCompoundProperty
-					&& (!g.equals(p.getHighlightColorGradient()) || p.isLogHighlightingEnabled() != log))
+			if (p == selectedHighlightCompoundProperty && (!g.equals(p.getHighlightColorGradient())))
 				fire = true;
 			p.setHighlightColorGradient(g);
-			p.setLogHighlightingEnabled(log);
 		}
 		if (fire)
 		{
 			updateAllClustersAndCompounds(true);
 			fireViewChange(PROPERTY_HIGHLIGHT_COLORS_CHANGED);
-			guiControler.showMessage("Change color gradient or log transformation for highlighting.");
+			guiControler.showMessage("Change color gradient for highlighting.");
 		}
 	}
 

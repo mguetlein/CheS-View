@@ -22,7 +22,6 @@ import main.Settings;
 import util.ArrayUtil;
 import util.DoubleKeyHashMap;
 import util.FileUtil;
-import util.ListUtil;
 import util.ObjectUtil;
 import util.StringUtil;
 import workflow.MappingWorkflow;
@@ -121,18 +120,6 @@ public class ExportData
 				return;
 		}
 
-		List<CompoundProperty> logFeatures = new ArrayList<CompoundProperty>();
-		for (CompoundProperty p : selectedProps)
-			if (p instanceof NumericProperty && ((NumericProperty) p).isLogHighlightingEnabled())
-				logFeatures.add(p);
-		if (logFeatures.size() > 0)
-		{
-			int ret = JOptionPane.showConfirmDialog(Settings.TOP_LEVEL_FRAME, "Add log-transformation for feature/s: "
-					+ ListUtil.toString(logFeatures));
-			if (ret != JOptionPane.OK_OPTION)
-				logFeatures.clear();
-		}
-
 		DoubleKeyHashMap<Integer, String, Object> featureValues = new DoubleKeyHashMap<Integer, String, Object>();
 		for (Integer j : compoundOrigIndices)
 		{
@@ -189,14 +176,6 @@ public class ExportData
 						val = "";
 					featureValues.put(j, prop, val);
 				}
-			for (CompoundProperty c : logFeatures)
-			{
-				String prop = CompoundPropertyUtil.propToExportString(c) + "_log";
-				Double val = clustering.getCompounds().get(j).getDoubleValue((NumericProperty) c);
-				if (val != null)
-					val = Math.log10(val);
-				featureValues.put(j, prop, val == null ? "" : val);
-			}
 		}
 		List<String> skipRedundant = new ArrayList<String>();
 		for (CompoundProperty p : CompoundPropertyUtil.getRedundantFeatures(ArrayUtil.toList(selectedProps),

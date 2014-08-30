@@ -18,7 +18,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.Vector;
 
-import javax.swing.JOptionPane;
 import javax.vecmath.Vector3f;
 
 import main.Settings;
@@ -41,6 +40,7 @@ import dataInterface.CompoundData;
 import dataInterface.CompoundProperty;
 import dataInterface.CompoundPropertyOwner;
 import dataInterface.CompoundPropertyUtil;
+import dataInterface.DefaultNumericProperty;
 import dataInterface.NominalProperty;
 import dataInterface.NumericProperty;
 import dataInterface.SubstructureSmartsType;
@@ -1212,15 +1212,6 @@ public class ClusteringImpl implements Zoomable, Clustering
 			if (prop instanceof SALIProperty)
 				oldProps = ArrayUtil.push(CompoundProperty.class, oldProps, prop);
 
-		boolean log = false;
-		if (p instanceof NumericProperty && ((NumericProperty) p).isLogHighlightingEnabled())
-		{
-			int ret = JOptionPane.showConfirmDialog(Settings.TOP_LEVEL_FRAME,
-					"Use log-transformated value for computation of activity cliffs (maximum SALI values)?",
-					"Use log-transformation?", JOptionPane.YES_NO_OPTION);
-			log = (ret == JOptionPane.YES_OPTION);
-		}
-
 		Double d[] = new Double[getNumCompounds(true)];
 		String domain[] = null;
 		if (p instanceof NominalProperty)
@@ -1237,10 +1228,7 @@ public class ClusteringImpl implements Zoomable, Clustering
 			{
 				if (comp.getDoubleValue((NumericProperty) p) != null)
 				{
-					if (!log)
-						d[count] = getNormalizedDoubleValue(comp, (NumericProperty) p);
-					else
-						d[count] = getNormalizedLogDoubleValue(comp, (NumericProperty) p);
+					d[count] = getNormalizedDoubleValue(comp, (NumericProperty) p);
 				}
 				count++;
 			}
@@ -1257,7 +1245,7 @@ public class ClusteringImpl implements Zoomable, Clustering
 		}
 
 		List<SALIProperty> l = SALIProperty.create(d, clusteringData.getFeatureDistanceMatrix().getValues(),
-				(log ? "Log-transformed " : "") + p);
+				p.toString());
 		addNewAdditionalProperties(ListUtil.toArray(l), oldProps);
 		return l.get(0);
 	}
@@ -1283,6 +1271,22 @@ public class ClusteringImpl implements Zoomable, Clustering
 		DistanceToProperty dp = new DistanceToProperty(comp, clusteringData.getEmbeddingDistanceMeasure(), d);
 		addNewAdditionalProperty(dp, null);
 		return dp;
+	}
+
+	HashMap<NumericProperty, NumericProperty> logProps = new HashMap<NumericProperty, NumericProperty>();
+
+	@Override
+	public NumericProperty addLogFeature(NumericProperty p)
+	{
+		if (!logProps.containsKey(p))
+		{
+			Double d[] = p.getDoubleValues();
+			NumericProperty l = new DefaultNumericProperty("Log(" + p.getName() + ")",
+					"Log conversion (to base 10) of " + p.getName(), ArrayUtil.log(d));
+			addNewAdditionalProperty(l, null);
+			logProps.put(p, l);
+		}
+		return logProps.get(p);
 	}
 
 	CompoundProperty pred;

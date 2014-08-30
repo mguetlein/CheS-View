@@ -19,7 +19,6 @@ import javax.swing.JCheckBox;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 
-import main.Settings;
 import util.ArrayUtil;
 import cluster.Clustering;
 import dataInterface.CompoundProperty;
@@ -152,7 +151,7 @@ public abstract class ColorEditorPanel extends JPanel
 		{
 			NumericProperty props[] = ArrayUtil.cast(NumericProperty.class, selector.getSelected());
 			if (props.length > 0)
-				viewControler.setHighlightColors(colorGradientProperty.getValue(), logHighlighting.isSelected(), props);
+				viewControler.setHighlightColors(colorGradientProperty.getValue(), props);
 		}
 
 		JCheckBox logHighlighting;
@@ -167,11 +166,6 @@ public abstract class ColorEditorPanel extends JPanel
 
 			setBorder(new EmptyBorder(10, 10, 10, 10));
 			JPanel p = new JPanel(new BorderLayout(10, 10));
-
-			logHighlighting = new JCheckBox(Settings.text("action.highlight-colors.log"),
-					viewControler.isHighlightLogEnabled());
-			logHighlighting.setToolTipText(Settings.text("action.highlight-colors.log.description"));
-			p.add(logHighlighting, BorderLayout.NORTH);
 
 			ColorGradient grad;
 			if (isPropertySelectedInViewer()
