@@ -2769,7 +2769,7 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 						});
 
 						final Task task = TaskProvider.initTask("Chemical space mapping");
-						new TaskDialog(task, Settings.TOP_LEVEL_FRAME);
+						final TaskDialog taskDialog = new TaskDialog(task, Settings.TOP_LEVEL_FRAME);
 						final ClusteringData d = wwd.getChesMapping().doMapping();
 						SwingUtil.invokeAndWait(new Runnable()
 						{
@@ -2778,6 +2778,7 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 							{
 								if (d != null)
 								{
+									d.setCheSMappingWarningOwner(taskDialog);
 									clustering.newClustering(d);
 									clustering.initFeatureNormalization();
 									task.finish();

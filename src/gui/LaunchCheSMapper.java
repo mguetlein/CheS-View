@@ -851,6 +851,7 @@ public class LaunchCheSMapper
 			start();
 			return;
 		}
+		clusteringData.setCheSMappingWarningOwner(waitingDialog);
 
 		try
 		{ // starting Viewer

@@ -31,6 +31,7 @@ import util.VectorUtil;
 import weka.Predictor;
 import weka.Predictor.PredictionResult;
 import alg.embed3d.CorrelationProperty;
+import alg.embed3d.EqualPositionProperty;
 import alg.embed3d.Random3DEmbedder;
 import appdomain.AppDomainComputer;
 import data.ClusteringData;
@@ -896,9 +897,15 @@ public class ClusteringImpl implements Zoomable, Clustering
 		return clusteringData.getAdditionalProperties();
 	}
 
-	public CompoundProperty getEmbeddingQualityProperty()
+	public CorrelationProperty getEmbeddingQualityProperty()
 	{
 		return clusteringData.getEmbeddingQualityProperty();
+	}
+
+	@Override
+	public EqualPositionProperty getEqualPosProperty()
+	{
+		return clusteringData.getEqualPosProperty();
 	}
 
 	//	public CompoundProperty[] getAppDomainProperties()
@@ -1275,14 +1282,21 @@ public class ClusteringImpl implements Zoomable, Clustering
 
 	HashMap<NumericProperty, NumericProperty> logProps = new HashMap<NumericProperty, NumericProperty>();
 
+	public static class LogProperty extends DefaultNumericProperty
+	{
+		public LogProperty(NumericProperty p)
+		{
+			super("Log(" + p.getName() + ")", "Log conversion (to base 10) of " + p.getName(), ArrayUtil.log(p
+					.getDoubleValues()));
+		}
+	}
+
 	@Override
 	public NumericProperty addLogFeature(NumericProperty p)
 	{
 		if (!logProps.containsKey(p))
 		{
-			Double d[] = p.getDoubleValues();
-			NumericProperty l = new DefaultNumericProperty("Log(" + p.getName() + ")",
-					"Log conversion (to base 10) of " + p.getName(), ArrayUtil.log(d));
+			NumericProperty l = new LogProperty(p);
 			addNewAdditionalProperty(l, null);
 			logProps.put(p, l);
 		}
@@ -1444,5 +1458,17 @@ public class ClusteringImpl implements Zoomable, Clustering
 		if (jittering == null)
 			return -1;
 		return jittering.getJitteringResetLevel(compounds);
+	}
+
+	@Override
+	public boolean doCheSMappingWarningsExist()
+	{
+		return clusteringData.doCheSMappingWarningsExist();
+	}
+
+	@Override
+	public void showCheSMappingWarnings()
+	{
+		clusteringData.showCheSMappingWarnings();
 	}
 }

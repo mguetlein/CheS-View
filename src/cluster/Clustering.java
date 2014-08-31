@@ -5,6 +5,8 @@ import java.beans.PropertyChangeListener;
 import java.util.List;
 
 import weka.Predictor.PredictionResult;
+import alg.embed3d.CorrelationProperty;
+import alg.embed3d.EqualPositionProperty;
 import dataInterface.CompoundData;
 import dataInterface.CompoundGroupWithProperties;
 import dataInterface.CompoundProperty;
@@ -119,7 +121,9 @@ public interface Clustering extends CompoundGroupWithProperties
 
 	List<CompoundProperty> getAdditionalProperties();
 
-	CompoundProperty getEmbeddingQualityProperty();
+	CorrelationProperty getEmbeddingQualityProperty();
+
+	EqualPositionProperty getEqualPosProperty();
 
 	Compound getCompoundWithJmolIndex(int convertRowIndexToModel);
 
@@ -173,5 +177,9 @@ public interface Clustering extends CompoundGroupWithProperties
 	boolean isBigDataMode();
 
 	void computeAppDomain();
+
+	boolean doCheSMappingWarningsExist();
+
+	void showCheSMappingWarnings();
 
 }

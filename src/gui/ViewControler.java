@@ -217,7 +217,7 @@ public interface ViewControler
 				case SelectedForMapping:
 					return "Show features selected for mapping";
 				case UsedForMapping:
-					return "Show features acutally used for mapping (ommit redundant/single-valued features)";
+					return "Show features used for mapping (no redundant/single-valued features)";
 				case Filled:
 					return "Show '_filled' features";
 				case Real:

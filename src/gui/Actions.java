@@ -150,8 +150,9 @@ public class Actions
 			HIGHLIGHT_DECR_SPHERE_TRANSLUCENCY, HIGHLIGHT_INCR_SPHERE_TRANSLUCENCY };
 
 	private final static String HELP_DOCU = "help-docu";
+	private final static String HELP_WARNINGS = "help-warnings";
 	private final static String HELP_ABOUT = "help-about";
-	private final static String[] HELP_ACTIONS = { HELP_DOCU, HELP_ABOUT };
+	private final static String[] HELP_ACTIONS = { HELP_DOCU, HELP_WARNINGS, HELP_ABOUT };
 
 	private final static String HIDDEN_UPDATE_MOUSE_SELECTION_PRESSED = "hidden-update-mouse-selection-pressed";
 	private final static String HIDDEN_UPDATE_MOUSE_SELECTION_RELEASED = "hidden-update-mouse-selection-released";
@@ -399,7 +400,7 @@ public class Actions
 			actions.get(EDIT_SUPERIMPOSE).setEnabled(viewControler.isSingleClusterSpreadable());
 		else
 			actions.get(EDIT_SUPERIMPOSE).setEnabled(viewControler.isAllClustersSpreadable());
-		actions.get(EDIT_LOG_TRANSFORM).setEnabled(viewControler.getHighlightedProperty() instanceof NumericProperty);
+		actions.get(HELP_WARNINGS).setEnabled(clustering.doCheSMappingWarningsExist());
 	}
 
 	private void filter(AbstractAction action)
@@ -897,6 +898,15 @@ public class Actions
 				}
 			}
 		};
+		new ActionCreator(HELP_WARNINGS)
+		{
+			@Override
+			public void action()
+			{
+				if (clustering.doCheSMappingWarningsExist())
+					clustering.showCheSMappingWarnings();
+			}
+		};
 		new ActionCreator(HELP_ABOUT)
 		{
 			@Override
@@ -1262,7 +1272,7 @@ public class Actions
 				SALIDialog.showDialog(viewControler, clustering, clusterControler);
 			}
 		};
-		new ActionCreator(EDIT_LOG_TRANSFORM)
+		new ActionCreator(EDIT_LOG_TRANSFORM, null, ViewControler.PROPERTY_HIGHLIGHT_CHANGED)
 		{
 			@Override
 			public void action()
@@ -1270,6 +1280,12 @@ public class Actions
 				NumericProperty p = clustering.addLogFeature((NumericProperty) viewControler.getHighlightedProperty());
 				if (p != null)
 					viewControler.setHighlighter(p);
+			}
+
+			@Override
+			public boolean isEnabled()
+			{
+				return viewControler.getHighlightedProperty() instanceof NumericProperty;
 			}
 		};
 

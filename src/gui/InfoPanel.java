@@ -144,9 +144,14 @@ public class InfoPanel extends JPanel
 		{
 			List<Info> map = new ArrayList<Info>();
 			map.add(new Info("Num compounds", clustering.getNumCompounds(false)));
+			if (clustering.getEqualPosProperty() != null)
+			{
+				map.add(new Info("Distinct 3D positions", clustering.getEqualPosProperty().numDistinct3DPositions(),
+						viewControler.getHighlighter(clustering.getEqualPosProperty())));
+			}
 			map.add(new Info("Cluster algorithm", clustering.getClusterAlgorithm(), Highlighter.CLUSTER_HIGHLIGHTER));
-			if (clustering.getNumClusters() > 1)
-				map.add(new Info("Num clusters", clustering.getNumClusters(), Highlighter.CLUSTER_HIGHLIGHTER));
+			//			if (clustering.getNumClusters() > 1)
+			//				map.add(new Info("Num clusters", clustering.getNumClusters(), Highlighter.CLUSTER_HIGHLIGHTER));
 			Highlighter stress = clustering.getEmbeddingQualityProperty() != null ? viewControler
 					.getHighlighter(clustering.getEmbeddingQualityProperty()) : Highlighter.DEFAULT_HIGHLIGHTER;
 			map.add(new Info("3D Embedding", clustering.getEmbedAlgorithm(), stress));

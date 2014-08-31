@@ -20,6 +20,7 @@ import main.Settings;
 import util.ArrayUtil;
 import cluster.ClusterController;
 import cluster.Clustering;
+import cluster.ClusteringImpl.LogProperty;
 import cluster.SALIProperty;
 
 import com.jgoodies.forms.builder.DefaultFormBuilder;
@@ -103,6 +104,9 @@ public class SALIDialog extends JDialog
 		}
 
 		List<CompoundProperty> list = new ArrayList<CompoundProperty>();
+		for (CompoundProperty p : clustering.getAdditionalProperties())
+			if (p instanceof LogProperty)
+				list.add(p);
 		for (CompoundProperty p : clustering.getProperties())
 		{
 			if (p instanceof NumericProperty || ((NominalProperty) p).getDomain().length == 2)
