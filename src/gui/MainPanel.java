@@ -1342,6 +1342,8 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 			clustering.getClusterActive().setSelected(0);
 	}
 
+	int ctrlHintCount = 3;
+
 	private void updateCompoundActiveSelection(int mIndex[], int mIndexOld[])
 	{
 		int activeCluster = clustering.getClusterActive().getSelected();
@@ -1386,7 +1388,17 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 					if (view.getZoomTarget() != z && view.isAnimated())
 					{
 						if (z instanceof Compound)
-							guiControler.showMessage("Zoom to compound '" + z + "'.");
+						{
+							String msg = "Zoom to compound '" + z + "'.";
+							if (ctrlHintCount > 0)
+							{
+								msg = "<html>"
+										+ msg
+										+ "<br><small>Hold down 'Ctrl'-key to select (multiple) compounds without zooming in.</small></html>";
+								ctrlHintCount--;
+							}
+							guiControler.showMessage(msg);
+						}
 						else if (clustering.getNumClusters() == 1)
 							guiControler.showMessage("Zoom out to show all compounds.");
 						else
@@ -1956,7 +1968,7 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 								if (active.length > 0)
 								{
 									if (active.length == 1) // do not zoom in
-										toggleCompoundActive(active[0]);
+										toggleCompoundActive(active[0], false);
 									else
 										setCompoundActive(active, false);
 								}
@@ -2486,9 +2498,16 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 	@Override
 	public void toggleCompoundActive(final Compound c)
 	{
+		toggleCompoundActive(c, true);
+	}
+
+	private void toggleCompoundActive(final Compound c, boolean viaCtrlDown)
+	{
 		if (getCompoundFilter() != null)
 			if (!getCompoundFilter().accept(c))
 				throw new IllegalStateException("compound is filtered out, remove filter before");
+		if (viaCtrlDown)
+			ctrlHintCount = 0;
 
 		SwingUtil.invokeAndWait(new Runnable()
 		{
