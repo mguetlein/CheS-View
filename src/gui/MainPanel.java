@@ -1392,9 +1392,11 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 							String msg = "Zoom to compound '" + z + "'.";
 							if (ctrlHintCount > 0)
 							{
-								msg = "<html>"
+								msg = "<html><p align=\"center\">"
 										+ msg
-										+ "<br><small>Hold down 'Ctrl'-key to select (multiple) compounds without zooming in.</small></html>";
+										+ "<br><span style=\"font-size:"
+										+ (int) (ScreenSetup.INSTANCE.getFontSize() * 0.8)
+										+ "px\">Hold down 'Ctrl'-key to select (multiple) compounds without zooming in.</span></p></html>";
 								ctrlHintCount--;
 							}
 							guiControler.showMessage(msg);
