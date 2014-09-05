@@ -18,9 +18,14 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.lang.reflect.Array;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
+import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -123,8 +128,13 @@ public class ComponentFactory
 			return FOREGROUND_FOR_BACKGROUND_WHITE;
 	}
 
+	private static List<PropertyChangeListener> updateUIListeners = new ArrayList<PropertyChangeListener>();
+
 	public static void updateComponents()
 	{
+		if (updateUIListeners != null)
+			for (PropertyChangeListener p : updateUIListeners)
+				p.propertyChange(new PropertyChangeEvent(Settings.TOP_LEVEL_FRAME, "updateComponents", false, true));
 		if (Settings.TOP_LEVEL_FRAME != null)
 			SwingUtilities.updateComponentTreeUI(Settings.TOP_LEVEL_FRAME);
 	}
@@ -231,7 +241,8 @@ public class ComponentFactory
 				super.updateUI();
 				setForeground(FOREGROUND);
 				setFont(getFont().deriveFont((float) ScreenSetup.INSTANCE.getFontSize()));
-				setIcon(isBackgroundBlack() ? iconBlack : iconWhite);
+				if (iconBlack != null)
+					setIcon(isBackgroundBlack() ? iconBlack : iconWhite);
 			}
 
 			@Override
@@ -250,7 +261,8 @@ public class ComponentFactory
 					return preferredSize.getPreferredSize(super.getPreferredSize());
 			}
 		};
-		l.setIcon(isBackgroundBlack() ? iconBlack : iconWhite);
+		if (iconBlack != null)
+			l.setIcon(isBackgroundBlack() ? iconBlack : iconWhite);
 		l.setToolTipText(text);
 		return l;
 	}
@@ -749,6 +761,33 @@ public class ComponentFactory
 		c.setFocusable(false);
 		c.setBorder(new CompoundBorder(new LineBorder(FOREGROUND, 1), new EmptyBorder(new Insets(1, 1, 1, 1))));
 		return c;
+	}
+
+	private static ImageIcon createBasicViewStringImageIcon(String s)
+	{
+		int size = 10; //dynamically compute size according to orig size does not work well in chartpanel
+		if (ScreenSetup.INSTANCE.getFontSize() >= 15)
+			size = 12;
+		if (ScreenSetup.INSTANCE.getFontSize() >= 21)
+			size = 14;
+		StringImageIcon sIcon = new StringImageIcon(s, createViewLabel().getFont().deriveFont((float) size), FOREGROUND);
+		sIcon.setDrawBorder(true);
+		sIcon.setInsets(new Insets(1, 3, 1, 3));
+		return sIcon;
+	}
+
+	public static Icon createViewStringImageIcon(final String string)
+	{
+		final ImageIcon icon = new ImageIcon(createBasicViewStringImageIcon(string).getImage());
+		updateUIListeners.add(new PropertyChangeListener()
+		{
+			@Override
+			public void propertyChange(PropertyChangeEvent evt)
+			{
+				icon.setImage(createBasicViewStringImageIcon(string).getImage());
+			}
+		});
+		return icon;
 	}
 
 	public static JTextArea createViewTextArea(String text, boolean editable, boolean wrap)

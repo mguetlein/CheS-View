@@ -256,6 +256,7 @@ public class ChartPanel extends JPanel
 			}
 		});
 
+		featureSmartsLabel.setIcon(ComponentFactory.createViewStringImageIcon("show"));
 		featureSmartsLabel.addMouseListener(new MouseAdapter()
 		{
 			@Override

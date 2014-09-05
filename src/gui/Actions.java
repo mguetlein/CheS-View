@@ -200,7 +200,6 @@ public class Actions
 		keys.put(EXPORT_WORKFLOW, KeyStroke.getKeyStroke(KeyEvent.VK_W, ActionEvent.ALT_MASK));
 
 		keys.put(VIEW_HOME, KeyStroke.getKeyStroke("HOME"));
-		keys.put(VIEW_FULL_SCREEN, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, ActionEvent.ALT_MASK));
 		keys.put(VIEW_DRAW_HYDROGENS, KeyStroke.getKeyStroke(KeyEvent.VK_H, ActionEvent.ALT_MASK));
 		//		keys.put(VIEW_HIDE_UNSELECTED, KeyStroke.getKeyStroke(KeyEvent.VK_V, ActionEvent.ALT_MASK));
 		keys.put(VIEW_SPIN, KeyStroke.getKeyStroke(KeyEvent.VK_S, ActionEvent.ALT_MASK));
@@ -235,6 +234,14 @@ public class Actions
 		keys.put(HIDDEN_COPY, KeyStroke.getKeyStroke(KeyEvent.VK_C, ActionEvent.CTRL_MASK));
 		keys.put(HIDDEN_PREDICT, KeyStroke.getKeyStroke(KeyEvent.VK_P, ActionEvent.ALT_MASK));
 		keys.put(HIDDEN_APP_DOMAIN, KeyStroke.getKeyStroke(KeyEvent.VK_Z, ActionEvent.ALT_MASK));
+	}
+
+	private void updateFullScreenKey()
+	{
+		if (guiControler.isFullScreen())
+			keys.put(VIEW_FULL_SCREEN, KeyStroke.getKeyStroke("ESCAPE"));
+		else
+			keys.put(VIEW_FULL_SCREEN, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, ActionEvent.ALT_MASK));
 	}
 
 	public static String keyStrokeToText(KeyStroke keystroke)
@@ -457,6 +464,7 @@ public class Actions
 
 	private void setAccelerators()
 	{
+		updateFullScreenKey();
 		for (String action : actions.keySet())
 		{
 			KeyStroke keyStroke = keys.get(action);
@@ -741,6 +749,7 @@ public class Actions
 			public void action()
 			{
 				guiControler.setFullScreen(!guiControler.isFullScreen());
+				setAccelerators();
 			}
 
 			@Override

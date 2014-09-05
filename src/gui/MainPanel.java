@@ -1331,6 +1331,11 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 		else
 			view.zoomTo(clustering, null);
 		view.proceedAnimation("new clustering");
+
+		if (clustering.isRandomEmbedding())
+			guiControler.showMessage(clustering.getName());
+		else
+			guiControler.showMessage("Chemical space mapping of " + clustering.getName());
 	}
 
 	private void updateClusterRemoved()
@@ -1727,7 +1732,7 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 	{
 		if (isSuperimpose())
 			return false;
-		if (view.getZoomTarget() instanceof Compound)
+		if (clustering.getActiveCompounds().length == 1 && zoomToSingleSelectedCompound)
 			return false;
 		if (clustering.isClusterActive() && clustering.getActiveCluster().getNumCompounds() < 2)
 			return false;
@@ -2762,7 +2767,6 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 		{
 			public void run()
 			{
-
 				try
 				{
 					JFrame top = Settings.TOP_LEVEL_FRAME;
@@ -2777,7 +2781,6 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 					if (wwd.getReturnValue() == CheSMapperWizard.RETURN_VALUE_FINISH)
 					{
 						guiControler.blockMessages();
-
 						clearClusterActive(true, true);
 						SwingUtil.invokeAndWait(new Runnable()
 						{
@@ -2789,7 +2792,8 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 							}
 						});
 
-						final Task task = TaskProvider.initTask("Chemical space mapping");
+						final Task task = TaskProvider.initTask("Chemical space mapping of "
+								+ wwd.getChesMapping().getDatasetFile().getName());
 						final TaskDialog taskDialog = new TaskDialog(task, Settings.TOP_LEVEL_FRAME);
 						final ClusteringData d = wwd.getChesMapping().doMapping();
 						SwingUtil.invokeAndWait(new Runnable()
@@ -2800,6 +2804,7 @@ public class MainPanel extends JPanel implements ViewControler, ClusterControlle
 								if (d != null)
 								{
 									d.setCheSMappingWarningOwner(taskDialog);
+									guiControler.unblockMessages();
 									clustering.newClustering(d);
 									clustering.initFeatureNormalization();
 									task.finish();

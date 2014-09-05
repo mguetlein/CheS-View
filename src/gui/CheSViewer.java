@@ -202,77 +202,70 @@ public class CheSViewer implements GUIControler
 		if (clustering == null)
 			throw new Error("clustering is null");
 
-		frame = new BlockableFrame(true);
+		boolean showMsg = true;
+		if (frame == null)
+		{
+			frame = new BlockableFrame(true);
+			Settings.TOP_LEVEL_FRAME = frame;
+			frame.addComponentListener(new ComponentAdapter()
+			{
+				public void componentMoved(ComponentEvent e)
+				{
+					Settings.TOP_LEVEL_FRAME_SCREEN = ScreenUtil.getScreen(frame);
+				}
+
+				public void componentResized(ComponentEvent e)
+				{
+					ComponentFactory.updateComponents();
+					fireEvent(PROPERTY_VIEWER_SIZE_CHANGED);
+				}
+			});
+			frame.getContentPane().add(clusterPanel);
+			frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+			frame.addWindowListener(new WindowAdapter()
+			{
+				@Override
+				public void windowClosing(WindowEvent e)
+				{
+					super.windowClosing(e);
+					LaunchCheSMapper.exit(frame);
+				};
+			});
+			frame.setIconImage(Settings.CHES_MAPPER_IMAGE.getImage());
+			showMsg = false;
+		}
+
 		updateTitle(clustering);
-		Settings.TOP_LEVEL_FRAME = frame;
-
-		frame.addComponentListener(new ComponentAdapter()
-		{
-			public void componentMoved(ComponentEvent e)
-			{
-				Settings.TOP_LEVEL_FRAME_SCREEN = ScreenUtil.getScreen(frame);
-			}
-
-			public void componentResized(ComponentEvent e)
-			{
-				ComponentFactory.updateComponents();
-				fireEvent(PROPERTY_VIEWER_SIZE_CHANGED);
-			}
-		});
-
 		frame.setUndecorated(undecorated);
+		frame.setJMenuBar(undecorated ? null : menuBar);
 
-		if (!undecorated)
-			frame.setJMenuBar(menuBar);
-
-		frame.setSize(size);
-		if (location == null)
-			ScreenSetup.INSTANCE.centerOnScreen(frame);
-		else
-			frame.setLocation(location);
-
-		frame.getContentPane().add(clusterPanel);
-
-		frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-		frame.addWindowListener(new WindowAdapter()
+		if (undecorated)
 		{
-			@Override
-			public void windowClosing(WindowEvent e)
-			{
-				super.windowClosing(e);
-				LaunchCheSMapper.exit(frame);
-			};
-		});
-
-		frame.setIconImage(Settings.CHES_MAPPER_IMAGE.getImage());
-		frame.setVisible(true);
-		//		SwingUtilities.invokeLater(new Runnable()
-		//		{
-		//			@Override
-		//			public void run()
-		//			{
-		//				clusterPanel.requestFocus();
-		//			}
-		//		});
-		//
-		//		frame.addWindowFocusListener(new WindowAdapter()
-		//		{
-		//			public void windowGainedFocus(WindowEvent e)
-		//			{
-		//				if (focusComponent != null)
-		//					focusComponent.requestFocus();
-		//				else
-		//					clusterPanel.requestFocus();
-		//			}
-		//		});
-
-		String msg;
-		if (frame.isUndecorated())
-			msg = "Press 'ALT+ENTER' to leave fullscreen mode";
+			frame.setSize(size);//the fullscreen size was just derived from the current screen (if not overriden manually)
+			ScreenUtil.getGraphicsDevice(Settings.TOP_LEVEL_FRAME_SCREEN).setFullScreenWindow(frame);
+			frame.setResizable(false);
+			frame.setAlwaysOnTop(true);
+		}
 		else
-			msg = "Press 'ALT+ENTER' for fullscreen mode";
-		showMessage(msg);
+		{
+			frame.setSize(size);
+			if (location == null)
+				ScreenSetup.INSTANCE.centerOnScreen(frame);
+			else
+				frame.setLocation(location);
+			frame.setResizable(true);
+			frame.setAlwaysOnTop(false);
+		}
 
+		frame.setVisible(true);
+		Settings.TOP_LEVEL_FRAME_SCREEN = ScreenUtil.getScreen(frame);
+		if (showMsg)
+		{
+			if (frame.isUndecorated())
+				showMessage("Press 'ESCAPE' to leave fullscreen mode");
+			else
+				showMessage("Press 'ALT+ENTER' for fullscreen mode");
+		}
 		SwingUtilities.invokeLater(new Runnable()
 		{
 			@Override

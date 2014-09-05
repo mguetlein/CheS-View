@@ -842,7 +842,7 @@ public class LaunchCheSMapper
 			return;
 		}
 
-		Task task = TaskProvider.initTask("Chemical space mapping");
+		Task task = TaskProvider.initTask("Chemical space mapping of " + mapping.getDatasetFile().getName());
 		TaskDialog waitingDialog = new TaskDialog(task, Settings.TOP_LEVEL_FRAME_SCREEN);
 		final ClusteringData clusteringData = mapping.doMapping();
 		if (clusteringData == null) //mapping failed
