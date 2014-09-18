@@ -832,7 +832,7 @@ public class ClusteringImpl implements Zoomable, Clustering
 	@Override
 	public boolean isRandomEmbedding()
 	{
-		return clusteringData.getThreeDEmbedder() instanceof Random3DEmbedder;
+		return clusteringData != null && clusteringData.getThreeDEmbedder() instanceof Random3DEmbedder;
 	}
 
 	@Override
@@ -1463,7 +1463,7 @@ public class ClusteringImpl implements Zoomable, Clustering
 	@Override
 	public boolean doCheSMappingWarningsExist()
 	{
-		return clusteringData.doCheSMappingWarningsExist();
+		return clusteringData != null && clusteringData.doCheSMappingWarningsExist();
 	}
 
 	@Override
