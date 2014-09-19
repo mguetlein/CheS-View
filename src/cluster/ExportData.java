@@ -1,8 +1,11 @@
 package cluster;
 
 import gui.LaunchCheSMapper;
+import gui.Message;
+import gui.MessageLabel;
 import io.SDFUtil;
 
+import java.awt.BorderLayout;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -16,6 +19,8 @@ import java.util.Set;
 
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.border.EmptyBorder;
 
 import main.CheSMapping;
 import main.Settings;
@@ -313,6 +318,15 @@ public class ExportData
 				dir = System.getProperty("user.home");
 			JFileChooser f = new JFileChooser(dir);//origSDFFile);
 			f.setDialogTitle("Save to SDF/CSV file (according to filename extension)");
+			JPanel p = new JPanel(new BorderLayout());
+			MessageLabel m = new MessageLabel(
+					Message.infoMessage("By default the data is exportet in SDF format. Add '.csv' to the filename to export in CSV format."));
+			m.setBorder(new EmptyBorder(5, 5, 5, 5));
+			p.add(m, BorderLayout.NORTH);
+			f.setAccessory(p);
+			//			MessagePanel p = new MessagePanel();
+			//			p.add
+
 			int i = f.showSaveDialog(Settings.TOP_LEVEL_FRAME);
 			if (i != JFileChooser.APPROVE_OPTION)
 				return;
