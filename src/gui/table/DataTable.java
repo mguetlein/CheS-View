@@ -127,6 +127,15 @@ public abstract class DataTable extends BlockableFrame
 			public void actionPerformed(ActionEvent e)
 			{
 				StringBuffer sbf = new StringBuffer();
+				for (int j = 0; j < table.getColumnCount(); j++)
+				{
+					sbf.append("\"");
+					sbf.append(table.getColumnName(j));
+					sbf.append("\"");
+					if (j < table.getColumnCount() - 1)
+						sbf.append(";");
+				}
+				sbf.append("\n");
 				for (int i = 0; i < table.getRowCount(); i++)
 				{
 					for (int j = 0; j < table.getColumnCount(); j++)
