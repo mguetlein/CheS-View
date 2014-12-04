@@ -30,6 +30,11 @@
 	   	<groupId>org.chesmapper.map</groupId>
 	   	<artifactId>CheS-Map</artifactId>
 	   	<version>2.6.0</version>
-	  </dependency>	  
+	  </dependency>
+	<dependency>
+		<groupId>net.sourceforge.jmol</groupId>
+		<artifactId>Jmol</artifactId>
+		<version>13.0.9.modified</version>
+	</dependency>
   </dependencies>  
 </project>
