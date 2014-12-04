@@ -1,11 +1,5 @@
 package org.chesmapper.view.gui.swing;
 
-import gui.BorderImageIcon;
-import gui.DescriptionListCellRenderer;
-import gui.LinkButton;
-import gui.SimpleImageIcon;
-import gui.StringImageIcon;
-
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -62,9 +56,13 @@ import org.chesmapper.map.main.ScreenSetup;
 import org.chesmapper.map.main.Settings;
 import org.chesmapper.view.gui.LaunchCheSMapper;
 import org.chesmapper.view.gui.ViewControler.Style;
-
-import util.ColorUtil;
-import util.SwingUtil;
+import org.mg.javalib.gui.BorderImageIcon;
+import org.mg.javalib.gui.DescriptionListCellRenderer;
+import org.mg.javalib.gui.LinkButton;
+import org.mg.javalib.gui.SimpleImageIcon;
+import org.mg.javalib.gui.StringImageIcon;
+import org.mg.javalib.util.ColorUtil;
+import org.mg.javalib.util.SwingUtil;
 
 public class ComponentFactory
 {

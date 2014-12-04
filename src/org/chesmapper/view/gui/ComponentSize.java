@@ -1,8 +1,8 @@
 package org.chesmapper.view.gui;
 
-import gui.property.IntegerProperty;
-
 import java.awt.Color;
+
+import org.mg.javalib.gui.property.IntegerProperty;
 
 public class ComponentSize
 {

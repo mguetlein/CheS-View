@@ -6,10 +6,9 @@ import org.chesmapper.map.dataInterface.CompoundGroupWithProperties;
 import org.chesmapper.map.dataInterface.CompoundProperty;
 import org.chesmapper.map.dataInterface.NominalProperty;
 import org.chesmapper.map.dataInterface.NumericProperty;
-
-import util.ArraySummary;
-import util.CountedSet;
-import util.DoubleArraySummary;
+import org.mg.javalib.util.ArraySummary;
+import org.mg.javalib.util.CountedSet;
+import org.mg.javalib.util.DoubleArraySummary;
 
 public class CompoundSelection implements CompoundGroupWithProperties
 {

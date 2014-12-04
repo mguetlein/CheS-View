@@ -1,14 +1,13 @@
 package org.chesmapper.view.gui;
 
-import gui.Blockable;
-import gui.property.Property;
-
 import java.beans.PropertyChangeListener;
 
 import javax.swing.JComponent;
 import javax.swing.JPopupMenu;
 
 import org.chesmapper.view.cluster.Clustering;
+import org.mg.javalib.gui.Blockable;
+import org.mg.javalib.gui.property.Property;
 
 public interface GUIControler extends Blockable
 {

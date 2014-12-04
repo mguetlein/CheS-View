@@ -2,7 +2,7 @@ package org.chesmapper.view.cluster;
 
 import java.util.List;
 
-import util.ListUtil;
+import org.mg.javalib.util.ListUtil;
 
 public class CompoundFilterImpl implements CompoundFilter
 {

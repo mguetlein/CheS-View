@@ -1,7 +1,5 @@
 package org.chesmapper.view.gui;
 
-import gui.property.ColorGradient;
-
 import java.awt.Color;
 import java.beans.PropertyChangeListener;
 import java.util.HashMap;
@@ -18,8 +16,8 @@ import org.chesmapper.map.dataInterface.SubstructureSmartsType;
 import org.chesmapper.map.dataInterface.CompoundPropertyUtil.NominalColoring;
 import org.chesmapper.view.cluster.Clustering;
 import org.chesmapper.view.gui.util.Highlighter;
-
-import util.ArrayUtil;
+import org.mg.javalib.gui.property.ColorGradient;
+import org.mg.javalib.util.ArrayUtil;
 
 public interface ViewControler
 {

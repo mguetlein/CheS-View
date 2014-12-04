@@ -1,7 +1,5 @@
 package org.chesmapper.view.gui;
 
-import gui.property.ColorGradient;
-
 import java.awt.Color;
 import java.awt.Dimension;
 import java.util.ArrayList;
@@ -52,17 +50,17 @@ import org.chesmapper.view.gui.ViewControler.HighlightMode;
 import org.chesmapper.view.gui.ViewControler.Style;
 import org.chesmapper.view.gui.util.CompoundPropertyHighlighter;
 import org.chesmapper.view.gui.util.Highlighter;
-
-import task.Task;
-import task.TaskDialog;
-import util.ArrayUtil;
-import util.FileUtil;
-import util.IntegerUtil;
-import util.ScreenUtil;
-import util.StringLineAdder;
-import util.SwingUtil;
-import util.ThreadUtil;
-import weka.WekaPropertyUtil;
+import org.mg.javalib.gui.property.ColorGradient;
+import org.mg.javalib.task.Task;
+import org.mg.javalib.task.TaskDialog;
+import org.mg.javalib.util.ArrayUtil;
+import org.mg.javalib.util.FileUtil;
+import org.mg.javalib.util.IntegerUtil;
+import org.mg.javalib.util.ScreenUtil;
+import org.mg.javalib.util.StringLineAdder;
+import org.mg.javalib.util.SwingUtil;
+import org.mg.javalib.util.ThreadUtil;
+import org.mg.javalib.weka.WekaPropertyUtil;
 
 public class LaunchCheSMapper
 {

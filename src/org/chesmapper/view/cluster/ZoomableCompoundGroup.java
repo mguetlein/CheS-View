@@ -7,9 +7,8 @@ import java.util.Vector;
 import javax.vecmath.Vector3f;
 
 import org.chesmapper.view.gui.Zoomable;
-
-import util.ArrayUtil;
-import util.Vector3fUtil;
+import org.mg.javalib.util.ArrayUtil;
+import org.mg.javalib.util.Vector3fUtil;
 
 public class ZoomableCompoundGroup implements Zoomable
 {

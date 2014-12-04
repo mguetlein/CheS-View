@@ -1,7 +1,5 @@
 package org.chesmapper.view.gui.table;
 
-import gui.BlockableFrame;
-
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Graphics;
@@ -39,18 +37,18 @@ import org.chesmapper.view.cluster.Clustering.SelectionListener;
 import org.chesmapper.view.gui.ComponentSize;
 import org.chesmapper.view.gui.GUIControler;
 import org.chesmapper.view.gui.ViewControler;
-
-import util.ArrayUtil;
-import util.CountedSet;
-import util.DoubleArraySummary;
-import util.ListUtil;
-import util.ObjectUtil;
-import util.StringUtil;
-import util.SwingUtil;
-import dist.NonNullSimilartiy;
-import dist.SimilarityMeasure;
-import dist.SimpleMatchingSimilartiy;
-import dist.TanimotoSimilartiy;
+import org.mg.javalib.dist.NonNullSimilartiy;
+import org.mg.javalib.dist.SimilarityMeasure;
+import org.mg.javalib.dist.SimpleMatchingSimilartiy;
+import org.mg.javalib.dist.TanimotoSimilartiy;
+import org.mg.javalib.gui.BlockableFrame;
+import org.mg.javalib.util.ArrayUtil;
+import org.mg.javalib.util.CountedSet;
+import org.mg.javalib.util.DoubleArraySummary;
+import org.mg.javalib.util.ListUtil;
+import org.mg.javalib.util.ObjectUtil;
+import org.mg.javalib.util.StringUtil;
+import org.mg.javalib.util.SwingUtil;
 
 public class TreeView extends BlockableFrame
 {

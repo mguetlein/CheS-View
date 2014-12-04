@@ -11,13 +11,12 @@ import org.chesmapper.map.dataInterface.CompoundPropertySpecificity;
 import org.chesmapper.map.dataInterface.NominalProperty;
 import org.chesmapper.map.dataInterface.NumericProperty;
 import org.chesmapper.map.main.TaskProvider;
-
-import util.ArraySummary;
-import util.ArrayUtil;
-import util.CountedSet;
-import util.DoubleArraySummary;
-import util.DoubleKeyHashMap;
-import util.ListUtil;
+import org.mg.javalib.util.ArraySummary;
+import org.mg.javalib.util.ArrayUtil;
+import org.mg.javalib.util.CountedSet;
+import org.mg.javalib.util.DoubleArraySummary;
+import org.mg.javalib.util.DoubleKeyHashMap;
+import org.mg.javalib.util.ListUtil;
 
 public class ClusteringValues
 {

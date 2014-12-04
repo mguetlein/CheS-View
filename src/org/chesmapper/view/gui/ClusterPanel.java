@@ -19,9 +19,8 @@ import org.chesmapper.view.cluster.ClusterController;
 import org.chesmapper.view.cluster.Clustering;
 import org.chesmapper.view.gui.swing.ComponentFactory;
 import org.chesmapper.view.gui.swing.TransparentViewLabel;
-
-import util.StringUtil;
-import util.ThreadUtil;
+import org.mg.javalib.util.StringUtil;
+import org.mg.javalib.util.ThreadUtil;
 
 import com.jgoodies.forms.layout.CellConstraints;
 import com.jgoodies.forms.layout.FormLayout;

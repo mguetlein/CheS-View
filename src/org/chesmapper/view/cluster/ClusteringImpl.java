@@ -1,7 +1,5 @@
 package org.chesmapper.view.cluster;
 
-import gui.CheckBoxSelectDialog;
-
 import java.awt.Color;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -39,13 +37,13 @@ import org.chesmapper.map.weka.Predictor;
 import org.chesmapper.map.weka.Predictor.PredictionResult;
 import org.chesmapper.view.gui.View;
 import org.chesmapper.view.gui.Zoomable;
-
-import util.ArrayUtil;
-import util.CountedSet;
-import util.ListUtil;
-import util.SelectionModel;
-import util.Vector3fUtil;
-import util.VectorUtil;
+import org.mg.javalib.gui.CheckBoxSelectDialog;
+import org.mg.javalib.util.ArrayUtil;
+import org.mg.javalib.util.CountedSet;
+import org.mg.javalib.util.ListUtil;
+import org.mg.javalib.util.SelectionModel;
+import org.mg.javalib.util.Vector3fUtil;
+import org.mg.javalib.util.VectorUtil;
 
 public class ClusteringImpl implements Zoomable, Clustering
 {

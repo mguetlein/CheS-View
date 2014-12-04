@@ -1,10 +1,5 @@
 package org.chesmapper.view.gui;
 
-import gui.TextPanel;
-import gui.property.IntegerProperty;
-import gui.property.Property;
-import gui.property.PropertyPanel;
-
 import java.awt.BorderLayout;
 import java.awt.Desktop;
 import java.awt.Toolkit;
@@ -47,10 +42,13 @@ import org.chesmapper.view.gui.table.FeatureTable;
 import org.chesmapper.view.gui.table.TreeView;
 import org.chesmapper.view.gui.util.HideUnselectedDialog;
 import org.chesmapper.view.gui.util.SALIDialog;
-
-import util.ArrayUtil;
-import util.CollectionUtil;
-import util.SwingUtil;
+import org.mg.javalib.gui.TextPanel;
+import org.mg.javalib.gui.property.IntegerProperty;
+import org.mg.javalib.gui.property.Property;
+import org.mg.javalib.gui.property.PropertyPanel;
+import org.mg.javalib.util.ArrayUtil;
+import org.mg.javalib.util.CollectionUtil;
+import org.mg.javalib.util.SwingUtil;
 
 public class Actions
 {

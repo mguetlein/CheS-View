@@ -1,7 +1,5 @@
 package org.chesmapper.view.gui;
 
-import gui.DescriptionListCellRenderer;
-
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
@@ -36,6 +34,7 @@ import org.chesmapper.view.gui.swing.ComponentFactory.ClickableLabel;
 import org.chesmapper.view.gui.swing.ComponentFactory.StyleButton;
 import org.chesmapper.view.gui.util.CompoundPropertyHighlighter;
 import org.chesmapper.view.gui.util.Highlighter;
+import org.mg.javalib.gui.DescriptionListCellRenderer;
 
 import com.jgoodies.forms.builder.DefaultFormBuilder;
 import com.jgoodies.forms.layout.FormLayout;

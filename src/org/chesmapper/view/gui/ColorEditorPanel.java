@@ -1,12 +1,5 @@
 package org.chesmapper.view.gui;
 
-import gui.CheckBoxSelectPanel;
-import gui.ColorSequenceEditor;
-import gui.property.ColorGradient;
-import gui.property.ColorGradientProperty;
-import gui.property.ColorProperty;
-import gui.property.PropertyPanel;
-
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -27,8 +20,13 @@ import org.chesmapper.map.dataInterface.NumericProperty;
 import org.chesmapper.view.cluster.Clustering;
 import org.chesmapper.view.gui.util.CompoundPropertyHighlighter;
 import org.chesmapper.view.gui.util.Highlighter;
-
-import util.ArrayUtil;
+import org.mg.javalib.gui.CheckBoxSelectPanel;
+import org.mg.javalib.gui.ColorSequenceEditor;
+import org.mg.javalib.gui.property.ColorGradient;
+import org.mg.javalib.gui.property.ColorGradientProperty;
+import org.mg.javalib.gui.property.ColorProperty;
+import org.mg.javalib.gui.property.PropertyPanel;
+import org.mg.javalib.util.ArrayUtil;
 
 public abstract class ColorEditorPanel extends JPanel
 {

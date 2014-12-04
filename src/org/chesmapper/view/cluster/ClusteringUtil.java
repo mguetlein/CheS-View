@@ -5,7 +5,7 @@ import java.util.List;
 
 import javax.vecmath.Vector3f;
 
-import util.Vector3fUtil;
+import org.mg.javalib.util.Vector3fUtil;
 
 public class ClusteringUtil
 {

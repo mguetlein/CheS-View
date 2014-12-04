@@ -1,7 +1,5 @@
 package org.chesmapper.view.cluster;
 
-import gui.DoubleNameListCellRenderer.DoubleNameElement;
-
 import java.awt.Color;
 import java.util.BitSet;
 import java.util.HashMap;
@@ -21,9 +19,9 @@ import org.chesmapper.view.gui.ViewControler;
 import org.chesmapper.view.gui.Zoomable;
 import org.chesmapper.view.gui.MainPanel.Translucency;
 import org.chesmapper.view.gui.ViewControler.Style;
-
-import util.ColorUtil;
-import util.ObjectUtil;
+import org.mg.javalib.gui.DoubleNameListCellRenderer.DoubleNameElement;
+import org.mg.javalib.util.ColorUtil;
+import org.mg.javalib.util.ObjectUtil;
 
 public class Compound implements Zoomable, Comparable<Compound>, DoubleNameElement, SingleCompoundPropertyOwner
 {

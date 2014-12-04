@@ -1,7 +1,5 @@
 package org.chesmapper.view.gui;
 
-import gui.ResolutionPanel;
-
 import java.awt.Color;
 import java.awt.Dimension;
 import java.beans.PropertyChangeEvent;
@@ -24,11 +22,11 @@ import org.chesmapper.view.cluster.Compound;
 import org.chesmapper.view.gui.MainPanel.JmolPanel;
 import org.jmol.export.dialog.Dialog;
 import org.jmol.viewer.Viewer;
-
-import util.DoubleArraySummary;
-import util.FileUtil;
-import util.SwingUtil;
-import util.Vector3fUtil;
+import org.mg.javalib.gui.ResolutionPanel;
+import org.mg.javalib.util.DoubleArraySummary;
+import org.mg.javalib.util.FileUtil;
+import org.mg.javalib.util.SwingUtil;
+import org.mg.javalib.util.Vector3fUtil;
 
 public class View
 {

@@ -1,9 +1,5 @@
 package org.chesmapper.view.gui;
 
-import gui.BlockableFrame;
-import gui.property.IntegerProperty;
-import gui.property.Property;
-
 import java.awt.Dimension;
 import java.awt.KeyEventDispatcher;
 import java.awt.KeyboardFocusManager;
@@ -34,11 +30,13 @@ import org.chesmapper.view.cluster.Clustering;
 import org.chesmapper.view.gui.swing.ComponentFactory;
 import org.jmol.util.DefaultLogger;
 import org.jmol.util.Logger;
-
-import util.ColorUtil;
-import util.ScreenUtil;
-import util.SwingUtil;
-import util.ThreadUtil;
+import org.mg.javalib.gui.BlockableFrame;
+import org.mg.javalib.gui.property.IntegerProperty;
+import org.mg.javalib.gui.property.Property;
+import org.mg.javalib.util.ColorUtil;
+import org.mg.javalib.util.ScreenUtil;
+import org.mg.javalib.util.SwingUtil;
+import org.mg.javalib.util.ThreadUtil;
 
 public class CheSViewer implements GUIControler
 {

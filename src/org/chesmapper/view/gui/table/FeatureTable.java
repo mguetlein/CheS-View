@@ -23,10 +23,9 @@ import org.chesmapper.view.cluster.Clustering;
 import org.chesmapper.view.gui.ViewControler;
 import org.chesmapper.view.gui.util.CompoundPropertyHighlighter;
 import org.chesmapper.view.gui.util.Highlighter;
-
-import util.CountedSet;
-import util.DoubleArraySummary;
-import util.StringUtil;
+import org.mg.javalib.util.CountedSet;
+import org.mg.javalib.util.DoubleArraySummary;
+import org.mg.javalib.util.StringUtil;
 
 public class FeatureTable extends DataTable
 {

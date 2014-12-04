@@ -1,7 +1,5 @@
 package org.chesmapper.view.cluster;
 
-import gui.DoubleNameListCellRenderer.DoubleNameElement;
-
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.BitSet;
@@ -22,11 +20,11 @@ import org.chesmapper.map.dataInterface.SubstructureSmartsType;
 import org.chesmapper.view.cluster.Compound.DisplayName;
 import org.chesmapper.view.gui.View;
 import org.chesmapper.view.gui.ViewControler.HighlightSorting;
-
-import util.ArrayUtil;
-import util.CountedSet;
-import util.ObjectUtil;
-import util.Vector3fUtil;
+import org.mg.javalib.gui.DoubleNameListCellRenderer.DoubleNameElement;
+import org.mg.javalib.util.ArrayUtil;
+import org.mg.javalib.util.CountedSet;
+import org.mg.javalib.util.ObjectUtil;
+import org.mg.javalib.util.Vector3fUtil;
 
 public class Cluster extends ZoomableCompoundGroup implements CompoundGroupWithProperties, DoubleNameElement,
 		Comparable<Cluster>

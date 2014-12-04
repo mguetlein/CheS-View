@@ -1,7 +1,5 @@
 package org.chesmapper.view.gui.util;
 
-import gui.TextPanel;
-
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -24,8 +22,8 @@ import org.chesmapper.view.cluster.Clustering;
 import org.chesmapper.view.cluster.SALIProperty;
 import org.chesmapper.view.cluster.ClusteringImpl.LogProperty;
 import org.chesmapper.view.gui.ViewControler;
-
-import util.ArrayUtil;
+import org.mg.javalib.gui.TextPanel;
+import org.mg.javalib.util.ArrayUtil;
 
 import com.jgoodies.forms.builder.DefaultFormBuilder;
 import com.jgoodies.forms.factories.ButtonBarFactory;

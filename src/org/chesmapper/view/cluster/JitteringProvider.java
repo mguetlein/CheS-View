@@ -1,7 +1,5 @@
 package org.chesmapper.view.cluster;
 
-import gui.MessagePanel;
-
 import java.awt.Dimension;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -14,14 +12,14 @@ import javax.vecmath.Vector3f;
 import org.chesmapper.map.dataInterface.CompoundData;
 import org.chesmapper.map.main.Settings;
 import org.chesmapper.view.gui.LaunchCheSMapper;
-
-import jitter.Jittering;
-import jitter.NNComputer;
-import util.ArrayUtil;
-import util.DoubleKeyHashMap;
-import util.MathUtil;
-import util.SetUtil;
-import util.SwingUtil;
+import org.mg.javalib.gui.MessagePanel;
+import org.mg.javalib.jitter.Jittering;
+import org.mg.javalib.jitter.NNComputer;
+import org.mg.javalib.util.ArrayUtil;
+import org.mg.javalib.util.DoubleKeyHashMap;
+import org.mg.javalib.util.MathUtil;
+import org.mg.javalib.util.SetUtil;
+import org.mg.javalib.util.SwingUtil;
 
 public class JitteringProvider
 {

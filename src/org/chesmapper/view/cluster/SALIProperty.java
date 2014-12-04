@@ -10,8 +10,7 @@ import javax.swing.JOptionPane;
 
 import org.chesmapper.map.dataInterface.DefaultNumericProperty;
 import org.chesmapper.map.main.Settings;
-
-import util.DoubleArraySummary;
+import org.mg.javalib.util.DoubleArraySummary;
 
 public class SALIProperty extends DefaultNumericProperty
 {

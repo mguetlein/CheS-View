@@ -1,7 +1,5 @@
 package org.chesmapper.view.gui;
 
-import gui.property.ColorGradient;
-
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -61,15 +59,15 @@ import org.chesmapper.view.gui.util.SubstructureHighlighter;
 import org.jmol.adapter.smarter.SmarterJmolAdapter;
 import org.jmol.api.JmolAdapter;
 import org.jmol.api.JmolSimpleViewer;
-
-import task.Task;
-import task.TaskDialog;
-import util.ArrayUtil;
-import util.ColorUtil;
-import util.ObjectUtil;
-import util.StringUtil;
-import util.SwingUtil;
-import util.ThreadUtil;
+import org.mg.javalib.gui.property.ColorGradient;
+import org.mg.javalib.task.Task;
+import org.mg.javalib.task.TaskDialog;
+import org.mg.javalib.util.ArrayUtil;
+import org.mg.javalib.util.ColorUtil;
+import org.mg.javalib.util.ObjectUtil;
+import org.mg.javalib.util.StringUtil;
+import org.mg.javalib.util.SwingUtil;
+import org.mg.javalib.util.ThreadUtil;
 
 public class MainPanel extends JPanel implements ViewControler, ClusterController
 {

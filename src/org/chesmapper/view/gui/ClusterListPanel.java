@@ -1,9 +1,5 @@
 package org.chesmapper.view.gui;
 
-import gui.DoubleNameListCellRenderer;
-import gui.MouseOverList;
-import gui.DoubleNameListCellRenderer.DoubleNameElement;
-
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -36,8 +32,10 @@ import org.chesmapper.view.cluster.Clustering.SelectionListener;
 import org.chesmapper.view.gui.swing.ComponentFactory;
 import org.chesmapper.view.gui.swing.TransparentViewPanel;
 import org.chesmapper.view.gui.swing.ComponentFactory.ClickableLabel;
-
-import util.ImageLoader;
+import org.mg.javalib.gui.DoubleNameListCellRenderer;
+import org.mg.javalib.gui.MouseOverList;
+import org.mg.javalib.gui.DoubleNameListCellRenderer.DoubleNameElement;
+import org.mg.javalib.util.ImageLoader;
 
 import com.jgoodies.forms.layout.CellConstraints;
 import com.jgoodies.forms.layout.FormLayout;

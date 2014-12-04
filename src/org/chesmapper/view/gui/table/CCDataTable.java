@@ -1,7 +1,5 @@
 package org.chesmapper.view.gui.table;
 
-import gui.ClickMouseOverTable;
-
 import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,6 +15,7 @@ import org.chesmapper.view.cluster.ClusterController;
 import org.chesmapper.view.cluster.Clustering;
 import org.chesmapper.view.cluster.Compound;
 import org.chesmapper.view.gui.ViewControler;
+import org.mg.javalib.gui.ClickMouseOverTable;
 
 public abstract class CCDataTable extends DataTable
 {

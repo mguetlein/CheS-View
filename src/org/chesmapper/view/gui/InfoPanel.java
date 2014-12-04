@@ -1,10 +1,5 @@
 package org.chesmapper.view.gui;
 
-import gui.BorderImageIcon;
-import gui.MultiImageIcon;
-import gui.MultiImageIcon.Layout;
-import gui.MultiImageIcon.Orientation;
-
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Color;
@@ -50,12 +45,15 @@ import org.chesmapper.view.gui.ViewControler.FeatureFilter;
 import org.chesmapper.view.gui.ViewControler.Style;
 import org.chesmapper.view.gui.swing.ComponentFactory;
 import org.chesmapper.view.gui.util.Highlighter;
-
-import util.ImageLoader;
-import util.ImageLoader.Image;
-import util.ListUtil;
-import util.SwingUtil;
-import util.ThreadUtil;
+import org.mg.javalib.gui.BorderImageIcon;
+import org.mg.javalib.gui.MultiImageIcon;
+import org.mg.javalib.gui.MultiImageIcon.Layout;
+import org.mg.javalib.gui.MultiImageIcon.Orientation;
+import org.mg.javalib.util.ImageLoader;
+import org.mg.javalib.util.ListUtil;
+import org.mg.javalib.util.SwingUtil;
+import org.mg.javalib.util.ThreadUtil;
+import org.mg.javalib.util.ImageLoader.Image;
 
 public class InfoPanel extends JPanel
 {

@@ -1,8 +1,5 @@
 package org.chesmapper.view.gui.table;
 
-import gui.BlockableFrame;
-import gui.LinkButton;
-
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Desktop;
@@ -37,6 +34,8 @@ import org.chesmapper.view.cluster.ClusterController;
 import org.chesmapper.view.cluster.Clustering;
 import org.chesmapper.view.gui.ViewControler;
 import org.chesmapper.view.gui.swing.ComponentFactory;
+import org.mg.javalib.gui.BlockableFrame;
+import org.mg.javalib.gui.LinkButton;
 
 import com.jgoodies.forms.factories.ButtonBarFactory;
 

@@ -1,8 +1,5 @@
 package org.chesmapper.view.gui.table;
 
-import gui.ClickMouseOverTable;
-import gui.ClickMouseOverTable.ClickMouseOverRenderer;
-
 import java.awt.Color;
 import java.awt.Component;
 import java.beans.PropertyChangeEvent;
@@ -27,8 +24,9 @@ import org.chesmapper.view.cluster.Compound;
 import org.chesmapper.view.cluster.Clustering.SelectionListener;
 import org.chesmapper.view.gui.ViewControler;
 import org.chesmapper.view.gui.swing.ComponentFactory;
-
-import util.StringUtil;
+import org.mg.javalib.gui.ClickMouseOverTable;
+import org.mg.javalib.gui.ClickMouseOverTable.ClickMouseOverRenderer;
+import org.mg.javalib.util.StringUtil;
 
 public class CompoundTable extends CCDataTable
 {

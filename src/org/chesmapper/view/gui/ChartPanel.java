@@ -1,10 +1,5 @@
 package org.chesmapper.view.gui;
 
-import freechart.AbstractFreeChartPanel;
-import freechart.FreeChartPanel.ChartMouseSelectionListener;
-import freechart.HistogramPanel;
-import freechart.StackedBarPlot;
-
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Color;
@@ -48,14 +43,17 @@ import org.chesmapper.view.gui.swing.TransparentViewPanel;
 import org.chesmapper.view.gui.swing.ComponentFactory.ClickableLabel;
 import org.chesmapper.view.gui.swing.ComponentFactory.DimensionProvider;
 import org.chesmapper.view.gui.util.Highlighter;
-
-import util.ArrayUtil;
-import util.ColorUtil;
-import util.CountedSet;
-import util.DefaultComparator;
-import util.ObjectUtil;
-import util.SequentialWorkerThread;
-import util.StringUtil;
+import org.mg.javalib.freechart.AbstractFreeChartPanel;
+import org.mg.javalib.freechart.HistogramPanel;
+import org.mg.javalib.freechart.StackedBarPlot;
+import org.mg.javalib.freechart.FreeChartPanel.ChartMouseSelectionListener;
+import org.mg.javalib.util.ArrayUtil;
+import org.mg.javalib.util.ColorUtil;
+import org.mg.javalib.util.CountedSet;
+import org.mg.javalib.util.DefaultComparator;
+import org.mg.javalib.util.ObjectUtil;
+import org.mg.javalib.util.SequentialWorkerThread;
+import org.mg.javalib.util.StringUtil;
 
 import com.jgoodies.forms.builder.DefaultFormBuilder;
 import com.jgoodies.forms.layout.FormLayout;
