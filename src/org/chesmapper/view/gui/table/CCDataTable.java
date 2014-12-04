@@ -8,7 +8,7 @@ import javax.swing.RowSorter;
 import javax.swing.SortOrder;
 import javax.swing.table.DefaultTableModel;
 
-import org.apache.commons.lang.WordUtils;
+import org.apache.commons.lang3.text.WordUtils;
 import org.chesmapper.map.dataInterface.CompoundProperty;
 import org.chesmapper.map.dataInterface.NumericProperty;
 import org.chesmapper.view.cluster.ClusterController;

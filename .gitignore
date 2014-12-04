@@ -5,3 +5,4 @@ structural_alerts
 ignore/
 structural_fragments
 .classpath
+/target/

@@ -7,18 +7,18 @@ import java.util.HashMap;
 import javax.swing.ImageIcon;
 import javax.vecmath.Vector3f;
 
-import org.apache.commons.lang.StringEscapeUtils;
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.chesmapper.map.dataInterface.CompoundData;
 import org.chesmapper.map.dataInterface.CompoundProperty;
 import org.chesmapper.map.dataInterface.NominalProperty;
 import org.chesmapper.map.dataInterface.NumericProperty;
 import org.chesmapper.map.dataInterface.SingleCompoundPropertyOwner;
 import org.chesmapper.map.main.Settings;
+import org.chesmapper.view.gui.MainPanel.Translucency;
 import org.chesmapper.view.gui.View;
 import org.chesmapper.view.gui.ViewControler;
-import org.chesmapper.view.gui.Zoomable;
-import org.chesmapper.view.gui.MainPanel.Translucency;
 import org.chesmapper.view.gui.ViewControler.Style;
+import org.chesmapper.view.gui.Zoomable;
 import org.mg.javalib.gui.DoubleNameListCellRenderer.DoubleNameElement;
 import org.mg.javalib.util.ColorUtil;
 import org.mg.javalib.util.ObjectUtil;
@@ -119,7 +119,7 @@ public class Compound implements Zoomable, Comparable<Compound>, DoubleNameEleme
 		{
 			StringBuffer b = new StringBuffer();
 			if (html)
-				b.append(StringEscapeUtils.escapeHtml(name));
+				b.append(StringEscapeUtils.escapeHtml4(name));
 			else
 				b.append(name);
 			if (valDisplay != null && !valDisplay.equals(name))
@@ -130,7 +130,7 @@ public class Compound implements Zoomable, Comparable<Compound>, DoubleNameEleme
 					if (highlightColor != null)
 						b.append("<font color='" + ColorUtil.toHtml(highlightColor) + "'>");
 					b.append("<i>");
-					b.append(StringEscapeUtils.escapeHtml(valDisplay));
+					b.append(StringEscapeUtils.escapeHtml4(valDisplay));
 					b.append("</i>");
 					if (highlightColor != null)
 						b.append("</font>");
