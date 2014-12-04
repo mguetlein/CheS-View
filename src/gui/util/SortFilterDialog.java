@@ -21,7 +21,8 @@ import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.border.EmptyBorder;
 
-import main.Settings;
+import org.chesmapper.map.main.Settings;
+
 import cluster.Clustering;
 
 import com.jgoodies.forms.builder.DefaultFormBuilder;

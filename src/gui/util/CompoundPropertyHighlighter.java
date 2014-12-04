@@ -2,7 +2,7 @@ package gui.util;
 
 import java.util.HashMap;
 
-import dataInterface.CompoundProperty;
+import org.chesmapper.map.dataInterface.CompoundProperty;
 
 public class CompoundPropertyHighlighter extends Highlighter
 {

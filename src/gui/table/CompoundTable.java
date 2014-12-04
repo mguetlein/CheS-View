@@ -20,14 +20,15 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableRowSorter;
 
+import org.chesmapper.map.dataInterface.CompoundProperty;
+import org.chesmapper.map.dataInterface.NominalProperty;
+import org.chesmapper.map.dataInterface.NumericProperty;
+
 import util.StringUtil;
 import cluster.ClusterController;
 import cluster.Clustering;
 import cluster.Clustering.SelectionListener;
 import cluster.Compound;
-import dataInterface.CompoundProperty;
-import dataInterface.NominalProperty;
-import dataInterface.NumericProperty;
 
 public class CompoundTable extends CCDataTable
 {

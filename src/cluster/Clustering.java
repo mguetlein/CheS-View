@@ -4,15 +4,15 @@ import java.awt.Color;
 import java.beans.PropertyChangeListener;
 import java.util.List;
 
-import weka.Predictor.PredictionResult;
-import alg.embed3d.CorrelationProperty;
-import alg.embed3d.EqualPositionProperty;
-import dataInterface.CompoundData;
-import dataInterface.CompoundGroupWithProperties;
-import dataInterface.CompoundProperty;
-import dataInterface.CompoundPropertyOwner;
-import dataInterface.NominalProperty;
-import dataInterface.NumericProperty;
+import org.chesmapper.map.alg.embed3d.CorrelationProperty;
+import org.chesmapper.map.alg.embed3d.EqualPositionProperty;
+import org.chesmapper.map.dataInterface.CompoundData;
+import org.chesmapper.map.dataInterface.CompoundGroupWithProperties;
+import org.chesmapper.map.dataInterface.CompoundProperty;
+import org.chesmapper.map.dataInterface.CompoundPropertyOwner;
+import org.chesmapper.map.dataInterface.NominalProperty;
+import org.chesmapper.map.dataInterface.NumericProperty;
+import org.chesmapper.map.weka.Predictor.PredictionResult;
 
 public interface Clustering extends CompoundGroupWithProperties
 {

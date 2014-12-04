@@ -19,14 +19,15 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableRowSorter;
 
+import org.chesmapper.map.dataInterface.CompoundProperty;
+import org.chesmapper.map.dataInterface.NominalProperty;
+import org.chesmapper.map.dataInterface.NumericProperty;
+
 import util.CountedSet;
 import util.DoubleArraySummary;
 import util.StringUtil;
 import cluster.ClusterController;
 import cluster.Clustering;
-import dataInterface.CompoundProperty;
-import dataInterface.NominalProperty;
-import dataInterface.NumericProperty;
 
 public class FeatureTable extends DataTable
 {

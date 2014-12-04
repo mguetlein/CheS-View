@@ -18,8 +18,9 @@ import javax.swing.JPopupMenu;
 import javax.swing.JRadioButtonMenuItem;
 import javax.swing.ToolTipManager;
 
-import main.ScreenSetup;
-import main.Settings;
+import org.chesmapper.map.main.ScreenSetup;
+import org.chesmapper.map.main.Settings;
+
 import cluster.ClusterController;
 import cluster.Clustering;
 

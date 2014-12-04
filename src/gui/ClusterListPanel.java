@@ -28,7 +28,8 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
-import main.ScreenSetup;
+import org.chesmapper.map.main.ScreenSetup;
+
 import util.ImageLoader;
 import cluster.Cluster;
 import cluster.ClusterController;

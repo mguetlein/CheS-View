@@ -20,12 +20,13 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableRowSorter;
 
+import org.chesmapper.map.dataInterface.CompoundProperty;
+
 import util.StringUtil;
 import cluster.Cluster;
 import cluster.ClusterController;
 import cluster.Clustering;
 import cluster.Clustering.SelectionListener;
-import dataInterface.CompoundProperty;
 
 public class ClusterTable extends CCDataTable
 {

@@ -12,12 +12,12 @@ import javax.swing.SortOrder;
 import javax.swing.table.DefaultTableModel;
 
 import org.apache.commons.lang.WordUtils;
+import org.chesmapper.map.dataInterface.CompoundProperty;
+import org.chesmapper.map.dataInterface.NumericProperty;
 
 import cluster.ClusterController;
 import cluster.Clustering;
 import cluster.Compound;
-import dataInterface.CompoundProperty;
-import dataInterface.NumericProperty;
 
 public abstract class CCDataTable extends DataTable
 {

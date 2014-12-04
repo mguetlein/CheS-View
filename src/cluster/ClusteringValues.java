@@ -4,19 +4,20 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import main.TaskProvider;
+import org.chesmapper.map.dataInterface.CompoundGroupWithProperties;
+import org.chesmapper.map.dataInterface.CompoundProperty;
+import org.chesmapper.map.dataInterface.CompoundPropertyOwner;
+import org.chesmapper.map.dataInterface.CompoundPropertySpecificity;
+import org.chesmapper.map.dataInterface.NominalProperty;
+import org.chesmapper.map.dataInterface.NumericProperty;
+import org.chesmapper.map.main.TaskProvider;
+
 import util.ArraySummary;
 import util.ArrayUtil;
 import util.CountedSet;
 import util.DoubleArraySummary;
 import util.DoubleKeyHashMap;
 import util.ListUtil;
-import dataInterface.CompoundGroupWithProperties;
-import dataInterface.CompoundProperty;
-import dataInterface.CompoundPropertyOwner;
-import dataInterface.CompoundPropertySpecificity;
-import dataInterface.NominalProperty;
-import dataInterface.NumericProperty;
 
 public class ClusteringValues
 {

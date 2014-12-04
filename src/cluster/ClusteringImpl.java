@@ -20,31 +20,32 @@ import java.util.Vector;
 
 import javax.vecmath.Vector3f;
 
-import main.Settings;
-import main.TaskProvider;
+import org.chesmapper.map.alg.embed3d.CorrelationProperty;
+import org.chesmapper.map.alg.embed3d.EqualPositionProperty;
+import org.chesmapper.map.alg.embed3d.Random3DEmbedder;
+import org.chesmapper.map.appdomain.AppDomainComputer;
+import org.chesmapper.map.data.ClusteringData;
+import org.chesmapper.map.data.CompoundDataImpl;
+import org.chesmapper.map.dataInterface.ClusterData;
+import org.chesmapper.map.dataInterface.CompoundData;
+import org.chesmapper.map.dataInterface.CompoundProperty;
+import org.chesmapper.map.dataInterface.CompoundPropertyOwner;
+import org.chesmapper.map.dataInterface.CompoundPropertyUtil;
+import org.chesmapper.map.dataInterface.DefaultNumericProperty;
+import org.chesmapper.map.dataInterface.NominalProperty;
+import org.chesmapper.map.dataInterface.NumericProperty;
+import org.chesmapper.map.dataInterface.SubstructureSmartsType;
+import org.chesmapper.map.main.Settings;
+import org.chesmapper.map.main.TaskProvider;
+import org.chesmapper.map.weka.Predictor;
+import org.chesmapper.map.weka.Predictor.PredictionResult;
+
 import util.ArrayUtil;
 import util.CountedSet;
 import util.ListUtil;
 import util.SelectionModel;
 import util.Vector3fUtil;
 import util.VectorUtil;
-import weka.Predictor;
-import weka.Predictor.PredictionResult;
-import alg.embed3d.CorrelationProperty;
-import alg.embed3d.EqualPositionProperty;
-import alg.embed3d.Random3DEmbedder;
-import appdomain.AppDomainComputer;
-import data.ClusteringData;
-import data.CompoundDataImpl;
-import dataInterface.ClusterData;
-import dataInterface.CompoundData;
-import dataInterface.CompoundProperty;
-import dataInterface.CompoundPropertyOwner;
-import dataInterface.CompoundPropertyUtil;
-import dataInterface.DefaultNumericProperty;
-import dataInterface.NominalProperty;
-import dataInterface.NumericProperty;
-import dataInterface.SubstructureSmartsType;
 
 public class ClusteringImpl implements Zoomable, Clustering
 {

@@ -33,13 +33,13 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableRowSorter;
 
-import main.Settings;
+import org.chesmapper.map.dataInterface.CompoundProperty;
+import org.chesmapper.map.main.Settings;
+
 import cluster.ClusterController;
 import cluster.Clustering;
 
 import com.jgoodies.forms.factories.ButtonBarFactory;
-
-import dataInterface.CompoundProperty;
 
 public abstract class DataTable extends BlockableFrame
 {

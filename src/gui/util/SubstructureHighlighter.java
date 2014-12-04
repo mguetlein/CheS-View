@@ -2,7 +2,7 @@ package gui.util;
 
 import java.util.HashMap;
 
-import dataInterface.SubstructureSmartsType;
+import org.chesmapper.map.dataInterface.SubstructureSmartsType;
 
 public class SubstructureHighlighter extends Highlighter
 {

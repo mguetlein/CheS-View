@@ -16,7 +16,8 @@ import javax.swing.JDialog;
 import javax.swing.JRadioButton;
 import javax.swing.border.EmptyBorder;
 
-import main.Settings;
+import org.chesmapper.map.main.Settings;
+
 import cluster.Clustering;
 
 import com.jgoodies.forms.builder.DefaultFormBuilder;

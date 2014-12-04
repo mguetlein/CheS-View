@@ -60,8 +60,9 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 
-import main.ScreenSetup;
-import main.Settings;
+import org.chesmapper.map.main.ScreenSetup;
+import org.chesmapper.map.main.Settings;
+
 import util.ColorUtil;
 import util.SwingUtil;
 

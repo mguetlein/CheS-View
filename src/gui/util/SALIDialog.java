@@ -16,7 +16,11 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.border.EmptyBorder;
 
-import main.Settings;
+import org.chesmapper.map.dataInterface.CompoundProperty;
+import org.chesmapper.map.dataInterface.NominalProperty;
+import org.chesmapper.map.dataInterface.NumericProperty;
+import org.chesmapper.map.main.Settings;
+
 import util.ArrayUtil;
 import cluster.ClusterController;
 import cluster.Clustering;
@@ -26,10 +30,6 @@ import cluster.SALIProperty;
 import com.jgoodies.forms.builder.DefaultFormBuilder;
 import com.jgoodies.forms.factories.ButtonBarFactory;
 import com.jgoodies.forms.layout.FormLayout;
-
-import dataInterface.CompoundProperty;
-import dataInterface.NominalProperty;
-import dataInterface.NumericProperty;
 
 public class SALIDialog extends JDialog
 {

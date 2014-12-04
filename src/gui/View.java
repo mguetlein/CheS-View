@@ -17,9 +17,8 @@ import java.util.List;
 import javax.vecmath.Point3f;
 import javax.vecmath.Vector3f;
 
-import main.PropHandler;
-import main.Settings;
-
+import org.chesmapper.map.main.PropHandler;
+import org.chesmapper.map.main.Settings;
 import org.jmol.export.dialog.Dialog;
 import org.jmol.viewer.Viewer;
 

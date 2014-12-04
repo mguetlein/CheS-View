@@ -27,7 +27,8 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
-import main.ScreenSetup;
+import org.chesmapper.map.main.ScreenSetup;
+
 import util.ArrayUtil;
 import util.ImageLoader;
 import cluster.Cluster;

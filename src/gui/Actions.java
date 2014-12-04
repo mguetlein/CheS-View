@@ -35,20 +35,21 @@ import javax.swing.JPanel;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 
-import main.Settings;
+import org.chesmapper.map.dataInterface.CompoundProperty;
+import org.chesmapper.map.dataInterface.NumericProperty;
+import org.chesmapper.map.dataInterface.CompoundPropertyUtil.NominalColoring;
+import org.chesmapper.map.main.Settings;
+import org.chesmapper.map.workflow.MappingWorkflow;
+
 import util.ArrayUtil;
 import util.CollectionUtil;
 import util.SwingUtil;
-import workflow.MappingWorkflow;
 import cluster.Cluster;
 import cluster.ClusterController;
 import cluster.Clustering;
 import cluster.Clustering.SelectionListener;
 import cluster.Compound;
 import cluster.ExportData;
-import dataInterface.CompoundProperty;
-import dataInterface.CompoundPropertyUtil.NominalColoring;
-import dataInterface.NumericProperty;
 
 public class Actions
 {

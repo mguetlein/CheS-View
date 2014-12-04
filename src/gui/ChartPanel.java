@@ -32,8 +32,15 @@ import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
 
-import main.ScreenSetup;
-import main.Settings;
+import org.chesmapper.map.dataInterface.CompoundProperty;
+import org.chesmapper.map.dataInterface.CompoundPropertyUtil;
+import org.chesmapper.map.dataInterface.FragmentProperty;
+import org.chesmapper.map.dataInterface.NominalProperty;
+import org.chesmapper.map.dataInterface.NumericProperty;
+import org.chesmapper.map.gui.SmartsViewDialog;
+import org.chesmapper.map.main.ScreenSetup;
+import org.chesmapper.map.main.Settings;
+
 import util.ArrayUtil;
 import util.ColorUtil;
 import util.CountedSet;
@@ -53,12 +60,6 @@ import cluster.CompoundFilterImpl;
 import com.jgoodies.forms.builder.DefaultFormBuilder;
 import com.jgoodies.forms.layout.FormLayout;
 import com.jgoodies.forms.layout.Sizes;
-
-import dataInterface.CompoundProperty;
-import dataInterface.CompoundPropertyUtil;
-import dataInterface.FragmentProperty;
-import dataInterface.NominalProperty;
-import dataInterface.NumericProperty;
 
 public class ChartPanel extends JPanel
 {

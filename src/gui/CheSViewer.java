@@ -26,9 +26,9 @@ import javax.swing.JPopupMenu;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 
-import main.ScreenSetup;
-import main.Settings;
-
+import org.chesmapper.map.data.ClusteringData;
+import org.chesmapper.map.main.ScreenSetup;
+import org.chesmapper.map.main.Settings;
 import org.jmol.util.DefaultLogger;
 import org.jmol.util.Logger;
 
@@ -38,7 +38,6 @@ import util.SwingUtil;
 import util.ThreadUtil;
 import cluster.ClusterController;
 import cluster.Clustering;
-import data.ClusteringData;
 
 public class CheSViewer implements GUIControler
 {

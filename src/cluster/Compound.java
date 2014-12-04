@@ -14,17 +14,16 @@ import java.util.HashMap;
 import javax.swing.ImageIcon;
 import javax.vecmath.Vector3f;
 
-import main.Settings;
-
 import org.apache.commons.lang.StringEscapeUtils;
+import org.chesmapper.map.dataInterface.CompoundData;
+import org.chesmapper.map.dataInterface.CompoundProperty;
+import org.chesmapper.map.dataInterface.NominalProperty;
+import org.chesmapper.map.dataInterface.NumericProperty;
+import org.chesmapper.map.dataInterface.SingleCompoundPropertyOwner;
+import org.chesmapper.map.main.Settings;
 
 import util.ColorUtil;
 import util.ObjectUtil;
-import dataInterface.CompoundData;
-import dataInterface.CompoundProperty;
-import dataInterface.NominalProperty;
-import dataInterface.NumericProperty;
-import dataInterface.SingleCompoundPropertyOwner;
 
 public class Compound implements Zoomable, Comparable<Compound>, DoubleNameElement, SingleCompoundPropertyOwner
 {

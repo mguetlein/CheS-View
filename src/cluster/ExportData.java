@@ -22,26 +22,27 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 
-import main.CheSMapping;
-import main.Settings;
+import org.chesmapper.map.alg.embed3d.ThreeDEmbedder;
+import org.chesmapper.map.alg.embed3d.WekaPCA3DEmbedder;
+import org.chesmapper.map.alg.embed3d.r.Sammon3DEmbedder;
+import org.chesmapper.map.data.ClusteringData;
+import org.chesmapper.map.data.DatasetFile;
+import org.chesmapper.map.dataInterface.CompoundData;
+import org.chesmapper.map.dataInterface.CompoundProperty;
+import org.chesmapper.map.dataInterface.CompoundPropertyUtil;
+import org.chesmapper.map.dataInterface.NominalProperty;
+import org.chesmapper.map.dataInterface.NumericProperty;
+import org.chesmapper.map.main.CheSMapping;
+import org.chesmapper.map.main.Settings;
+import org.chesmapper.map.workflow.MappingWorkflow;
+import org.chesmapper.map.workflow.MappingWorkflow.DescriptorSelection;
+import org.chesmapper.map.workflow.MappingWorkflow.FragmentSettings;
+
 import util.ArrayUtil;
 import util.DoubleKeyHashMap;
 import util.FileUtil;
 import util.ObjectUtil;
 import util.StringUtil;
-import workflow.MappingWorkflow;
-import workflow.MappingWorkflow.DescriptorSelection;
-import workflow.MappingWorkflow.FragmentSettings;
-import alg.embed3d.ThreeDEmbedder;
-import alg.embed3d.WekaPCA3DEmbedder;
-import alg.embed3d.r.Sammon3DEmbedder;
-import data.ClusteringData;
-import data.DatasetFile;
-import dataInterface.CompoundData;
-import dataInterface.CompoundProperty;
-import dataInterface.CompoundPropertyUtil;
-import dataInterface.NominalProperty;
-import dataInterface.NumericProperty;
 
 public class ExportData
 {

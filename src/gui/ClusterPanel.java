@@ -16,7 +16,9 @@ import javax.swing.OverlayLayout;
 import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
 
-import main.ScreenSetup;
+import org.chesmapper.map.data.ClusteringData;
+import org.chesmapper.map.main.ScreenSetup;
+
 import util.StringUtil;
 import util.ThreadUtil;
 import cluster.ClusterController;
@@ -24,8 +26,6 @@ import cluster.Clustering;
 
 import com.jgoodies.forms.layout.CellConstraints;
 import com.jgoodies.forms.layout.FormLayout;
-
-import data.ClusteringData;
 
 public class ClusterPanel extends JPanel
 {

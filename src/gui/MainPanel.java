@@ -34,10 +34,21 @@ import javax.swing.JPopupMenu;
 import javax.swing.SwingUtilities;
 import javax.vecmath.Vector3f;
 
-import main.ScreenSetup;
-import main.Settings;
-import main.TaskProvider;
-
+import org.chesmapper.map.data.ClusteringData;
+import org.chesmapper.map.dataInterface.CompoundGroupWithProperties;
+import org.chesmapper.map.dataInterface.CompoundProperty;
+import org.chesmapper.map.dataInterface.CompoundPropertyOwner;
+import org.chesmapper.map.dataInterface.CompoundPropertyUtil;
+import org.chesmapper.map.dataInterface.FragmentProperty;
+import org.chesmapper.map.dataInterface.NominalProperty;
+import org.chesmapper.map.dataInterface.NumericProperty;
+import org.chesmapper.map.dataInterface.SingleCompoundPropertyOwner;
+import org.chesmapper.map.dataInterface.SubstructureSmartsType;
+import org.chesmapper.map.dataInterface.CompoundPropertyUtil.NominalColoring;
+import org.chesmapper.map.gui.CheSMapperWizard;
+import org.chesmapper.map.main.ScreenSetup;
+import org.chesmapper.map.main.Settings;
+import org.chesmapper.map.main.TaskProvider;
 import org.jmol.adapter.smarter.SmarterJmolAdapter;
 import org.jmol.api.JmolAdapter;
 import org.jmol.api.JmolSimpleViewer;
@@ -59,17 +70,6 @@ import cluster.Compound;
 import cluster.CompoundFilter;
 import cluster.CompoundFilterImpl;
 import cluster.JitteringProvider;
-import data.ClusteringData;
-import dataInterface.CompoundGroupWithProperties;
-import dataInterface.CompoundProperty;
-import dataInterface.CompoundPropertyOwner;
-import dataInterface.CompoundPropertyUtil;
-import dataInterface.CompoundPropertyUtil.NominalColoring;
-import dataInterface.FragmentProperty;
-import dataInterface.NominalProperty;
-import dataInterface.NumericProperty;
-import dataInterface.SingleCompoundPropertyOwner;
-import dataInterface.SubstructureSmartsType;
 
 public class MainPanel extends JPanel implements ViewControler, ClusterController
 {

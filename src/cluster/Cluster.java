@@ -14,18 +14,19 @@ import java.util.List;
 
 import javax.vecmath.Vector3f;
 
+import org.chesmapper.map.dataInterface.ClusterData;
+import org.chesmapper.map.dataInterface.CompoundData;
+import org.chesmapper.map.dataInterface.CompoundGroupWithProperties;
+import org.chesmapper.map.dataInterface.CompoundProperty;
+import org.chesmapper.map.dataInterface.NominalProperty;
+import org.chesmapper.map.dataInterface.NumericProperty;
+import org.chesmapper.map.dataInterface.SubstructureSmartsType;
+
 import util.ArrayUtil;
 import util.CountedSet;
 import util.ObjectUtil;
 import util.Vector3fUtil;
 import cluster.Compound.DisplayName;
-import dataInterface.ClusterData;
-import dataInterface.CompoundData;
-import dataInterface.CompoundGroupWithProperties;
-import dataInterface.CompoundProperty;
-import dataInterface.NominalProperty;
-import dataInterface.NumericProperty;
-import dataInterface.SubstructureSmartsType;
 
 public class Cluster extends ZoomableCompoundGroup implements CompoundGroupWithProperties, DoubleNameElement,
 		Comparable<Cluster>
@@ -39,7 +40,7 @@ public class Cluster extends ZoomableCompoundGroup implements CompoundGroupWithP
 	private HighlightSorting highlightSorting;
 	private boolean showLabel = false;
 
-	public Cluster(dataInterface.ClusterData clusterData)
+	public Cluster(org.chesmapper.map.dataInterface.ClusterData clusterData)
 	{
 		this.clusterData = clusterData;
 		List<Compound> c = new ArrayList<Compound>();

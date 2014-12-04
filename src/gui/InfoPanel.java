@@ -35,6 +35,12 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
+import org.chesmapper.map.data.CDKCompoundIcon;
+import org.chesmapper.map.dataInterface.CompoundProperty;
+import org.chesmapper.map.dataInterface.CompoundPropertyOwner;
+import org.chesmapper.map.dataInterface.CompoundPropertyUtil;
+import org.chesmapper.map.dataInterface.SubstructureSmartsType;
+
 import util.ImageLoader;
 import util.ImageLoader.Image;
 import util.ListUtil;
@@ -48,11 +54,6 @@ import cluster.ClusteringImpl;
 import cluster.Compound;
 import cluster.CompoundSelection;
 import cluster.SALIProperty;
-import data.CDKCompoundIcon;
-import dataInterface.CompoundProperty;
-import dataInterface.CompoundPropertyOwner;
-import dataInterface.CompoundPropertyUtil;
-import dataInterface.SubstructureSmartsType;
 
 public class InfoPanel extends JPanel
 {

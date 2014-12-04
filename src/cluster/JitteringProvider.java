@@ -12,15 +12,16 @@ import java.util.Set;
 
 import javax.vecmath.Vector3f;
 
+import org.chesmapper.map.dataInterface.CompoundData;
+import org.chesmapper.map.main.Settings;
+
 import jitter.Jittering;
 import jitter.NNComputer;
-import main.Settings;
 import util.ArrayUtil;
 import util.DoubleKeyHashMap;
 import util.MathUtil;
 import util.SetUtil;
 import util.SwingUtil;
-import dataInterface.CompoundData;
 
 public class JitteringProvider
 {

@@ -19,13 +19,14 @@ import javax.swing.JCheckBox;
 import javax.swing.JPanel;
 import javax.swing.border.EmptyBorder;
 
+import org.chesmapper.map.dataInterface.CompoundProperty;
+import org.chesmapper.map.dataInterface.CompoundPropertyUtil;
+import org.chesmapper.map.dataInterface.FragmentProperty;
+import org.chesmapper.map.dataInterface.NominalProperty;
+import org.chesmapper.map.dataInterface.NumericProperty;
+
 import util.ArrayUtil;
 import cluster.Clustering;
-import dataInterface.CompoundProperty;
-import dataInterface.CompoundPropertyUtil;
-import dataInterface.FragmentProperty;
-import dataInterface.NominalProperty;
-import dataInterface.NumericProperty;
 
 public abstract class ColorEditorPanel extends JPanel
 {

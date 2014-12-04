@@ -27,8 +27,13 @@ import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 
-import main.ScreenSetup;
-import main.Settings;
+import org.chesmapper.map.data.DistanceUtil;
+import org.chesmapper.map.dataInterface.CompoundData;
+import org.chesmapper.map.dataInterface.CompoundProperty;
+import org.chesmapper.map.dataInterface.NominalProperty;
+import org.chesmapper.map.main.ScreenSetup;
+import org.chesmapper.map.main.Settings;
+
 import util.ArrayUtil;
 import util.CountedSet;
 import util.DoubleArraySummary;
@@ -42,10 +47,6 @@ import cluster.Clustering;
 import cluster.Clustering.SelectionListener;
 import cluster.Compound;
 import cluster.CompoundFilterImpl;
-import data.DistanceUtil;
-import dataInterface.CompoundData;
-import dataInterface.CompoundProperty;
-import dataInterface.NominalProperty;
 import dist.NonNullSimilartiy;
 import dist.SimilarityMeasure;
 import dist.SimpleMatchingSimilartiy;

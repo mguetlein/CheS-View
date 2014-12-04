@@ -9,16 +9,17 @@ import java.util.HashMap;
 
 import javax.swing.JComponent;
 
+import org.chesmapper.map.dataInterface.CompoundProperty;
+import org.chesmapper.map.dataInterface.CompoundPropertyOwner;
+import org.chesmapper.map.dataInterface.CompoundPropertyUtil;
+import org.chesmapper.map.dataInterface.DefaultNominalProperty;
+import org.chesmapper.map.dataInterface.NominalProperty;
+import org.chesmapper.map.dataInterface.NumericProperty;
+import org.chesmapper.map.dataInterface.SubstructureSmartsType;
+import org.chesmapper.map.dataInterface.CompoundPropertyUtil.NominalColoring;
+
 import util.ArrayUtil;
 import cluster.Clustering;
-import dataInterface.CompoundProperty;
-import dataInterface.CompoundPropertyOwner;
-import dataInterface.CompoundPropertyUtil;
-import dataInterface.CompoundPropertyUtil.NominalColoring;
-import dataInterface.DefaultNominalProperty;
-import dataInterface.NominalProperty;
-import dataInterface.NumericProperty;
-import dataInterface.SubstructureSmartsType;
 
 public interface ViewControler
 {

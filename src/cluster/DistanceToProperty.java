@@ -1,7 +1,7 @@
 package cluster;
 
-import alg.DistanceMeasure;
-import dataInterface.DefaultNumericProperty;
+import org.chesmapper.map.alg.DistanceMeasure;
+import org.chesmapper.map.dataInterface.DefaultNumericProperty;
 
 public class DistanceToProperty extends DefaultNumericProperty
 {

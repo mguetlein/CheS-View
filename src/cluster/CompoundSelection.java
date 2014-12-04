@@ -2,13 +2,14 @@ package cluster;
 
 import java.util.HashMap;
 
+import org.chesmapper.map.dataInterface.CompoundGroupWithProperties;
+import org.chesmapper.map.dataInterface.CompoundProperty;
+import org.chesmapper.map.dataInterface.NominalProperty;
+import org.chesmapper.map.dataInterface.NumericProperty;
+
 import util.ArraySummary;
 import util.CountedSet;
 import util.DoubleArraySummary;
-import dataInterface.CompoundGroupWithProperties;
-import dataInterface.CompoundProperty;
-import dataInterface.NominalProperty;
-import dataInterface.NumericProperty;
 
 public class CompoundSelection implements CompoundGroupWithProperties
 {
